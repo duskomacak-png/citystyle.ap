@@ -13,22 +13,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function loadClientApp() {
   const app = document.getElementById("app");
-  app.innerHTML = `<div class="loading-box">Učitavanje...</div>`;
 
-  const urlSlug = window.App.getUrlParam("salon");
+  try {
+    const urlSlug = window.App?.getUrlParam("salon");
 
-  if (urlSlug) {
+    // Root citystyle.app must show platform landing.
+    // Salon opens only from QR/link: ?salon=slug
+    if (!urlSlug) {
+      renderPlatformLanding();
+      return;
+    }
+
+    app.innerHTML = `<div class="loading-box">Učitavanje salona...</div>`;
     await loadSalon(urlSlug, true);
-    return;
+  } catch (err) {
+    console.error("CityStyle start error:", err);
+    renderPlatformLanding();
   }
-
-  const savedSlug = window.App.getSavedSalonSlug();
-  if (savedSlug) {
-    await loadSalon(savedSlug, false);
-    return;
-  }
-
-  renderPlatformLanding();
 }
 
 async function loadSalon(slug, saveThisSalon = true) {

@@ -62,6 +62,7 @@ function escapeJs(value) {
 
 async function checkSalonAccess(slug) {
   if (!slug) return { data: null, error: "Nedostaje salon slug." };
+  if (!window.db) return { data: null, error: "Supabase nije učitan." };
 
   const { data, error } = await window.db
     .from("salons")

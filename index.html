@@ -9,6 +9,15 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
   <link rel="stylesheet" href="assets/css/style.css">
+  <script>
+    // NUCLEAR CACHE FIX: remove old service workers/caches that were holding the loading screen.
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+    }
+    if (window.caches) {
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/config.js"></script>
   <script src="assets/js/main.js"></script>
@@ -17,11 +26,60 @@
 </head>
 <body>
   <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>
-  <main id="app" class="container"><div class="loading-box">Učitavanje...</div></main>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(console.error));
-    }
-  </script>
+  <main id="app" class="container">
+    <section class="landing-page">
+      <header class="landing-nav">
+        <div class="brand-mark">
+          <div class="brand-icon">CS</div>
+          <strong>CITYSTYLE<span>.APP</span></strong>
+        </div>
+        <div class="landing-actions">
+          <a class="btn btn-dark" href="salon/">Ulaz za salon</a>
+          <a class="btn btn-primary subtle-admin-link" href="admin/">Admin</a>
+        </div>
+      </header>
+
+      <section class="landing-hero">
+        <div class="hero-copy">
+          <span class="eyebrow">Platforma za frizerske i beauty salone</span>
+          <h1>Online prostor za salone i njihove klijente.</h1>
+          <p>
+            CityStyle povezuje salone i klijente preko jednostavnog QR koda.
+            Za zakazivanje posetite vaš frizerski ili beauty salon i skenirajte njihov QR kod.
+          </p>
+          <div class="hero-buttons">
+            <a class="btn btn-primary" href="salon/">Ulaz za vlasnike salona</a>
+            <a class="btn btn-dark" href="#how-it-works">Kako radi?</a>
+          </div>
+        </div>
+
+        <div class="phone-preview-card">
+          <div class="mock-phone">
+            <div class="mock-phone-top"></div>
+            <div class="mock-logo">City Style</div>
+            <div class="mock-images"><span></span><span></span><span></span></div>
+            <div class="mock-service-row"><b>Šišanje</b><span>1.500 RSD</span></div>
+            <div class="mock-service-row"><b>Feniranje</b><span>1.200 RSD</span></div>
+            <div class="mock-service-row"><b>Farbanje</b><span>4.500 RSD</span></div>
+            <button class="mock-button" type="button">Zakaži termin</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="how-it-works" class="landing-grid">
+        <div class="landing-card"><div class="landing-icon">1</div><h3>Salon dobija svoj QR kod</h3><p>Svaki salon ima poseban link i QR kod koji vodi direktno na njegovu stranicu.</p></div>
+        <div class="landing-card"><div class="landing-icon">2</div><h3>Klijent skenira QR</h3><p>Klijent ne bira salon ručno. QR ga vodi baš kod njegovog frizera.</p></div>
+        <div class="landing-card"><div class="landing-icon">3</div><h3>Termin ide pravom salonu</h3><p>Klijent bira uslugu, datum i slobodan termin. Salon vidi zahtev u svom panelu.</p></div>
+      </section>
+
+      <section class="info-section">
+        <div class="card"><h2>Za klijente</h2><p class="muted">Posetite vaš salon, skenirajte njihov QR kod i zakažite termin bez naloga.</p></div>
+        <div class="card"><h2>Za vlasnike salona</h2><p class="muted">Salon uređuje usluge, cene, radno vreme, slike, logo i prati termine na jednom mestu.</p></div>
+        <div class="card qr-card"><h2>Direktan ulaz preko QR koda</h2><div class="fake-qr">▦</div><p class="muted">QR kod vodi u tačan salon, ne u listu svih salona.</p></div>
+      </section>
+
+      <footer class="landing-footer"><span>CityStyle.app</span><span>Platforma za online zakazivanje termina.</span></footer>
+    </section>
+  </main>
 </body>
 </html>
