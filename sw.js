@@ -1,12 +1,12 @@
 // sw.js
 const CACHE_NAME = "citystyle-v1.1.0";
 const APP_SHELL = [
-  "/", "/index.html", "/admin/index.html", "/salon/index.html",
-  "/assets/css/style.css",
-  "/assets/js/config.js", "/assets/js/main.js", "/assets/js/auth.js",
-  "/assets/js/booking-logic.js", "/assets/js/client.js", "/assets/js/salon.js",
-  "/assets/js/admin.js", "/assets/js/storage.js",
-  "/manifest.json", "/assets/icons/icon-192.png", "/assets/icons/icon-512.png"
+  "./", "index.html", "admin/index.html", "salon/index.html",
+  "assets/css/style.css",
+  "assets/js/config.js", "assets/js/main.js", "assets/js/auth.js",
+  "assets/js/booking-logic.js", "assets/js/client.js", "assets/js/salon.js",
+  "assets/js/admin.js", "assets/js/storage.js",
+  "manifest.json", "assets/icons/icon-192.png", "assets/icons/icon-512.png"
 ];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(async cache => {

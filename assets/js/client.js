@@ -72,8 +72,8 @@ function renderPlatformLanding() {
           <strong>CITYSTYLE<span>.APP</span></strong>
         </div>
         <div class="landing-actions">
-          <a class="btn btn-dark" href="/salon/">Ulaz za salon</a>
-          <a class="btn btn-primary subtle-admin-link" href="/admin/">Admin</a>
+          <a class="btn btn-dark" href="salon/">Ulaz za salon</a>
+          <a class="btn btn-primary subtle-admin-link" href="admin/">Admin</a>
         </div>
       </header>
 
@@ -86,7 +86,7 @@ function renderPlatformLanding() {
             Za zakazivanje posetite vaš frizerski ili beauty salon i skenirajte njihov QR kod.
           </p>
           <div class="hero-buttons">
-            <a class="btn btn-primary" href="/salon/">Ulaz za vlasnike salona</a>
+            <a class="btn btn-primary" href="salon/">Ulaz za vlasnike salona</a>
             <button class="btn btn-dark" type="button" onclick="scrollToHowItWorks()">Kako radi?</button>
           </div>
         </div>
