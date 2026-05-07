@@ -75,8 +75,8 @@ function renderPlatformLanding() {
 
   const app = document.getElementById("app");
   app.innerHTML = `
-    <section class="landing-page">
-      <header class="landing-nav">
+    <section class="landing-page platform-text-page">
+      <header class="landing-nav simple-nav">
         <div class="brand-mark">
           <div class="brand-icon">CS</div>
           <strong>CITYSTYLE<span>.APP</span></strong>
@@ -87,78 +87,29 @@ function renderPlatformLanding() {
         </div>
       </header>
 
-      <section class="landing-hero">
-        <div class="hero-copy">
-          <span class="eyebrow">Platforma za frizerske i beauty salone</span>
-          <h1>Online prostor za salone i njihove klijente.</h1>
-          <p>
-            CityStyle povezuje salone i klijente preko jednostavnog QR koda. 
-            Za zakazivanje posetite vaš frizerski ili beauty salon i skenirajte njihov QR kod.
-          </p>
-          <div class="hero-buttons">
-            <a class="btn btn-primary" href="salon/">Ulaz za vlasnike salona</a>
-            <button class="btn btn-dark" type="button" onclick="window.App.installApp()">Preuzmi CityStyle app</button>
-            <button class="btn btn-dark" type="button" onclick="scrollToHowItWorks()">Kako radi?</button>
-          </div>
+      <section class="platform-text-card">
+        <span class="eyebrow">Platforma za frizerske i beauty salone</span>
+        <h1>Šta je CityStyle.app?</h1>
+        <p>
+          CityStyle.app je online prostor za frizerske i beauty salone. Svaki salon na platformi dobija svoj digitalni profil, svoj QR kod i svoj link za zakazivanje termina.
+        </p>
+        <p>
+          Klijent ne traži salon ručno. Poseti svoj salon, skenira QR kod i otvara se baš stranica tog salona. Tu vidi usluge, cene, radno vreme i može da pošalje zahtev za termin.
+        </p>
+        <p>
+          Vlasnik salona preko svog panela uređuje usluge, cene, radno vreme, logo i prati termine. Glavni admin dodaje salone, pravi QR linkove, prati uplate i može ručno aktivirati ili blokirati salon.
+        </p>
+        <div class="hero-buttons simple-buttons">
+          <a class="btn btn-primary" href="salon/">Ulaz za vlasnike salona</a>
+          <button class="btn btn-dark" type="button" onclick="window.App.installApp()">Preuzmi CityStyle app</button>
         </div>
-
-        <div class="phone-preview-card">
-          <div class="mock-phone">
-            <div class="mock-phone-top"></div>
-            <div class="mock-logo">City Style</div>
-            <div class="mock-images">
-              <span></span><span></span><span></span>
-            </div>
-            <div class="mock-service-row"><b>Šišanje</b><span>1.500 RSD</span></div>
-            <div class="mock-service-row"><b>Feniranje</b><span>1.200 RSD</span></div>
-            <div class="mock-service-row"><b>Farbanje</b><span>4.500 RSD</span></div>
-            <button class="mock-button">Zakaži termin</button>
-          </div>
-        </div>
+        <p class="muted small-note">
+          Za zakazivanje termina koristite QR kod koji ste dobili od svog salona.
+        </p>
       </section>
-
-      <section id="how-it-works" class="landing-grid">
-        <div class="landing-card">
-          <div class="landing-icon">1</div>
-          <h3>Salon dobija svoj QR kod</h3>
-          <p>Svaki salon ima poseban link i QR kod koji vodi direktno na njegovu stranicu.</p>
-        </div>
-        <div class="landing-card">
-          <div class="landing-icon">2</div>
-          <h3>Klijent skenira QR</h3>
-          <p>Klijent ne bira salon ručno. QR ga vodi baš kod njegovog frizera.</p>
-        </div>
-        <div class="landing-card">
-          <div class="landing-icon">3</div>
-          <h3>Termin ide pravom salonu</h3>
-          <p>Klijent bira uslugu, datum i slobodan termin. Salon vidi zahtev u svom panelu.</p>
-        </div>
-      </section>
-
-      <section class="info-section">
-        <div class="card">
-          <h2>Za klijente</h2>
-          <p class="muted">Posetite vaš salon, skenirajte njihov QR kod i zakažite termin bez naloga.</p>
-        </div>
-        <div class="card">
-          <h2>Za vlasnike salona</h2>
-          <p class="muted">Salon uređuje usluge, cene, radno vreme, logo i prati termine na jednom mestu.</p>
-        </div>
-        <div class="card qr-card">
-          <h2>Direktan ulaz preko QR koda</h2>
-          <div class="fake-qr">▦</div>
-          <p class="muted">QR kod vodi u tačan salon, ne u listu svih salona.</p>
-        </div>
-      </section>
-
-      <footer class="landing-footer">
-        <span>CityStyle.app</span>
-        <span>Platforma za online zakazivanje termina.</span>
-      </footer>
     </section>
   `;
 }
-
 function scrollToHowItWorks() {
   document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" });
 }
