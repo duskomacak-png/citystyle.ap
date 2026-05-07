@@ -25,8 +25,16 @@ async function loadClientApp() {
       return;
     }
 
-    // Root citystyle.app is always the platform landing page.
-    // Clients enter a salon only through ?salon=slug from that salon's QR/link.
+    // Root citystyle.app in normal browser is the platform landing page.
+    // If the app was installed from a salon page, open that saved salon directly.
+    const savedSlug = window.App?.getSavedSalonSlug?.();
+    const isStandalone = window.App?.isStandaloneMode?.() === true;
+    if (savedSlug && isStandalone) {
+      app.innerHTML = `<div class="loading-box">Učitavanje salona...</div>`;
+      await loadSalon(savedSlug, false);
+      return;
+    }
+
     renderPlatformLanding();
   } catch (err) {
     console.error("CityStyle start error:", err);
@@ -203,6 +211,7 @@ async function renderSalonHome() {
         <div class="client-actions">
           <button class="btn btn-primary" type="button" onclick="showBookingForm()">Zakaži termin</button>
           <button class="btn btn-dark" type="button" onclick="showServices()">Usluge i cene</button>
+          <button class="btn btn-dark" type="button" onclick="window.App.installSalonApp(currentSalon.slug)">Preuzmi app ovog salona</button>
         </div>
       </div>
 

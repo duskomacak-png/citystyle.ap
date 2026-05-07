@@ -92,7 +92,10 @@ function clearSavedSalon() {
   removeLocal(window.APP_CONFIG.salonStorageKey);
 }
 
-
+function isStandaloneMode() {
+  return window.matchMedia?.("(display-mode: standalone)")?.matches === true ||
+    window.navigator.standalone === true;
+}
 
 function getAppBaseUrl() {
   const origin = window.location.origin;
@@ -232,5 +235,6 @@ window.App = {
   getQrImageUrl,
   installApp,
   installSalonApp,
-  updateManifestForSalon
+  updateManifestForSalon,
+  isStandaloneMode
 };
