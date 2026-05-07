@@ -53,7 +53,7 @@ async function salonLogin(email, code) {
   const cleanCode = String(code || "").trim();
 
   if (!cleanEmail || !cleanCode) {
-    window.App.showMessage("Unesite email salona i kod firme.", "error");
+    window.App.showMessage("Unesite email biznisa i kod firme.", "error");
     return null;
   }
 
@@ -71,7 +71,7 @@ async function salonLogin(email, code) {
   }
 
   if (data.status !== "active") {
-    window.App.showMessage("Vaš salon je blokiran. Kontaktirajte administratora.", "error");
+    window.App.showMessage("Vaš profil je trenutno blokiran. Kontaktirajte administratora.", "error");
     return null;
   }
 
@@ -94,7 +94,7 @@ function getSalonSession() {
 
 function salonLogout() {
   window.App.removeLocal(window.APP_CONFIG.salonSessionKey);
-  window.App.showMessage("Salon je odjavljen.", "info");
+  window.App.showMessage("Korisnik je odjavljen.", "info");
 }
 
 window.Auth = {

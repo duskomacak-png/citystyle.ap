@@ -1,7 +1,7 @@
 {
-  "name": "CityStyle - Platforma za salone",
+  "name": "CityStyle - Digitalni kontakt preko QR koda",
   "short_name": "CityStyle",
-  "description": "Platforma za online zakazivanje termina u salonima preko QR koda.",
+  "description": "Platforma za lakši kontakt između biznisa i korisnika preko QR koda.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

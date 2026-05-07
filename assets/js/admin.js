@@ -65,16 +65,16 @@ function renderAdminDashboard() {
   document.getElementById("admin-content").innerHTML = `
     <div class="admin-toolbar">
       <div>
-        <h2>Saloni</h2>
-        <p class="muted">Upravljanje salonima, statusima, uplatama i QR linkovima.</p>
+        <h2>Biznis profili</h2>
+        <p class="muted">Upravljanje biznis profilima, statusima, uplatama i QR linkovima.</p>
       </div>
       <div class="toolbar-actions">
-        <button class="btn btn-primary" type="button" onclick="showAddSalonForm()">Dodaj salon</button>
+        <button class="btn btn-primary" type="button" onclick="showAddSalonForm()">Dodaj biznis profil</button>
         <button class="btn btn-dark" type="button" onclick="handleAdminLogout()">Odjavi se</button>
       </div>
     </div>
     <div id="admin-stats" class="stats-grid"></div>
-    <div id="salons-list"><div class="loading-box">Učitavanje salona...</div></div>
+    <div id="salons-list"><div class="loading-box">Učitavanje profila...</div></div>
   `;
 }
 
@@ -100,14 +100,14 @@ async function loadSalonsList() {
   const expiredCount = items.filter(s => isPaymentExpired(s.paid_until)).length;
 
   stats.innerHTML = `
-    <div class="stat-card"><span>Ukupno salona</span><strong>${items.length}</strong></div>
+    <div class="stat-card"><span>Ukupno profila</span><strong>${items.length}</strong></div>
     <div class="stat-card"><span>Aktivni</span><strong>${activeCount}</strong></div>
     <div class="stat-card"><span>Blokirani</span><strong>${blockedCount}</strong></div>
     <div class="stat-card danger"><span>Uplata istekla</span><strong>${expiredCount}</strong></div>
   `;
 
   if (!items.length) {
-    list.innerHTML = `<div class="card center"><h3>Nema dodatih salona</h3><p class="muted">Dodajte prvi salon kako biste generisali njegov link i QR kod.</p></div>`;
+    list.innerHTML = `<div class="card center"><h3>Nema dodatih profila</h3><p class="muted">Dodajte prvi biznis profil kako biste generisali njegov link i QR kod.</p></div>`;
     return;
   }
 
@@ -144,8 +144,8 @@ function renderSalonCard(salon) {
         <div><span>Uplaćeno do</span><strong>${salon.paid_until ? window.App.formatDate(salon.paid_until) : "—"}</strong></div>
         <div><span>Cena</span><strong>${Number(salon.monthly_price || 9.99).toFixed(2)} ${adminEscapeHtml(salon.currency || "EUR")}</strong></div>
       </div>
-      ${expired ? `<div class="warning-box">Uplata je istekla. Salon ostaje aktivan dok ga administrator ručno ne blokira.</div>` : ""}
-      <div class="link-box"><small>Link salona:</small><input readonly value="${salonLink}"></div>
+      ${expired ? `<div class="warning-box">Uplata je istekla. Profil ostaje aktivan dok ga administrator ručno ne blokira.</div>` : ""}
+      <div class="link-box"><small>Link profila:</small><input readonly value="${salonLink}"></div>
       <div class="card-actions">
         <button class="btn btn-dark" type="button" onclick="copySalonLink('${salon.slug}')">Kopiraj link</button>
         <button class="btn btn-dark" type="button" onclick="showQrForSalon('${salon.slug}', '${adminEscapeJs(salon.salon_name)}')">QR kod</button>
@@ -158,14 +158,14 @@ function renderSalonCard(salon) {
 }
 
 async function showAddSalonForm() {
-  const name = prompt("Naziv salona:");
+  const name = prompt("Naziv biznisa:");
   if (!name) return;
-  const email = prompt("Email vlasnika salona:");
+  const email = prompt("Email vlasnika biznisa:");
   if (!email) return;
-  const code = prompt("Kod firme / salona (npr. CS-1001):");
+  const code = prompt("Kod firme / profila (npr. CS-1001):");
   if (!code) return;
   const city = prompt("Grad / mesto:", "") || null;
-  const phone = prompt("Telefon salona:", "") || null;
+  const phone = prompt("Telefon biznisa:", "") || null;
 
   const cleanName = name.trim();
   const cleanEmail = email.trim().toLowerCase();
@@ -196,13 +196,13 @@ async function showAddSalonForm() {
 
   if (error) {
     console.error(error);
-    window.App.showMessage("Greška pri dodavanju salona: " + error.message, "error");
+    window.App.showMessage("Greška pri dodavanju profila: " + error.message, "error");
     return;
   }
 
   await createDefaultWorkingHours(salon.id);
   await createDefaultSettings(salon.id, cleanName, phone, city);
-  window.App.showMessage("Salon je uspešno dodat.", "success");
+  window.App.showMessage("Biznis profil je uspešno dodat.", "success");
   await loadSalonsList();
 }
 
@@ -224,7 +224,7 @@ async function createDefaultSettings(salonId, salonName, phone, city) {
   await window.db.from("salon_settings").upsert({
     salon_id: salonId,
     welcome_title: `Dobrodošli u ${salonName}`,
-    welcome_text: "Zakažite svoj termin brzo i jednostavno.",
+    welcome_text: "Pošaljite zahtev ili zakažite termin brzo i jednostavno.",
     phone,
     address: city || null
   }, { onConflict: "salon_id" });
@@ -247,20 +247,20 @@ async function extendPayment(id, currentPaidUntil) {
 
 async function toggleSalonStatus(id, currentStatus) {
   const newStatus = currentStatus === "active" ? "blocked" : "active";
-  if (!confirm(newStatus === "blocked" ? "Da li želite da blokirate ovaj salon?" : "Da li želite da aktivirate ovaj salon?")) return;
+  if (!confirm(newStatus === "blocked" ? "Da li želite da blokirate ovaj profil?" : "Da li želite da aktivirate ovaj profil?")) return;
   const { error } = await window.db.from("salons").update({ status: newStatus }).eq("id", id);
   if (error) {
-    window.App.showMessage("Greška pri promeni statusa salona.", "error");
+    window.App.showMessage("Greška pri promeni statusa profila.", "error");
     return;
   }
   await loadSalonsList();
 }
 
 async function deleteSalon(id) {
-  if (!confirm("Da li želite da sklonite ovaj salon iz aktivne liste?")) return;
+  if (!confirm("Da li želite da sklonite ovaj profil iz aktivne liste?")) return;
   const { error } = await window.db.from("salons").update({ is_deleted: true, status: "deleted" }).eq("id", id);
   if (error) {
-    window.App.showMessage("Greška pri brisanju salona.", "error");
+    window.App.showMessage("Greška pri brisanju profila.", "error");
     return;
   }
   await loadSalonsList();
@@ -269,7 +269,7 @@ async function deleteSalon(id) {
 function copySalonLink(slug) {
   const link = window.App.getSalonPublicLink(slug);
   navigator.clipboard.writeText(link).then(() => {
-    window.App.showMessage("Link salona je kopiran.", "success");
+    window.App.showMessage("Link profila je kopiran.", "success");
   }).catch(() => prompt("Kopiraj link:", link));
 }
 
@@ -280,9 +280,9 @@ function showQrForSalon(slug, salonName) {
   modal.className = "modal-backdrop";
   modal.innerHTML = `
     <div class="modal-card">
-      <h2>QR kod</h2>
+      <h2>QR kod profila</h2>
       <p class="muted">${adminEscapeHtml(salonName)}</p>
-      <img class="qr-img" src="${qrUrl}" alt="QR kod za salon">
+      <img class="qr-img" src="${qrUrl}" alt="QR kod za profil">
       <div class="link-box"><input readonly value="${link}"></div>
       <button class="btn btn-primary" type="button" onclick="copySalonLink('${slug}')">Kopiraj link</button>
       <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>

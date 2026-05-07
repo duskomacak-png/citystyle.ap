@@ -48,15 +48,15 @@ function bindSalonLogout() {
 }
 
 function renderSalonLogin() {
-  document.getElementById("salon-name").textContent = "Salon panel";
-  document.getElementById("salon-status-text").textContent = "Unesite email adresu salona i kod firme koji vam je dodelio administrator.";
+  document.getElementById("salon-name").textContent = "Biznis panel";
+  document.getElementById("salon-status-text").textContent = "Unesite email adresu biznisa i kod firme koji vam je dodelio administrator.";
   document.getElementById("salon-tabs").classList.add("hidden");
   document.getElementById("salon-logout-btn").classList.add("hidden");
   document.getElementById("salon-content").innerHTML = `
     <div class="card login-card">
-      <h2>Ulaz za salon</h2>
-      <p class="muted">Unesite email adresu salona i kod firme koji vam je dodelio administrator.</p>
-      <label>Email salona</label>
+      <h2>Ulaz za biznis</h2>
+      <p class="muted">Unesite email adresu biznisa i kod firme koji vam je dodelio administrator.</p>
+      <label>Email biznisa</label>
       <input id="salon-login-email" type="email" placeholder="salon@email.com">
       <label>Kod firme</label>
       <input id="salon-login-code" type="text" placeholder="CS-1001">
@@ -103,20 +103,20 @@ async function loadSalonFromSession(salonId) {
 
 function renderBlockedSalon(salon) {
   document.getElementById("salon-name").textContent = salon.salon_name || "Salon";
-  document.getElementById("salon-status-text").textContent = "Salon je blokiran.";
+  document.getElementById("salon-status-text").textContent = "Profil je blokiran.";
   document.getElementById("salon-tabs").classList.add("hidden");
   document.getElementById("salon-logout-btn").classList.remove("hidden");
   document.getElementById("salon-content").innerHTML = `
-    <div class="card center"><h2>Vaš salon je trenutno blokiran</h2><p>Kontaktirajte administratora.</p></div>
+    <div class="card center"><h2>Vaš profil je trenutno blokiran</h2><p>Kontaktirajte administratora.</p></div>
   `;
 }
 
 function renderSalonDashboard() {
-  document.getElementById("salon-name").textContent = currentSalon.salon_name || "Salon panel";
+  document.getElementById("salon-name").textContent = currentSalon.salon_name || "Biznis panel";
   const expired = isPaymentExpired(currentSalon.paid_until);
   document.getElementById("salon-status-text").innerHTML = expired
-    ? `Aktivan salon • <span class="danger-text">Uplata istekla</span>`
-    : `Aktivan salon`;
+    ? `Aktivan profil • <span class="danger-text">Uplata istekla</span>`
+    : `Aktivan profil`;
   document.getElementById("salon-tabs").classList.remove("hidden");
   document.getElementById("salon-logout-btn").classList.remove("hidden");
 }
@@ -175,8 +175,8 @@ async function renderAppointments() {
   content.innerHTML = `
     <div class="section-head paper-section-head">
       <div>
-        <h2>Termini</h2>
-        <p class="muted">Pregled zakazanih termina po datumu, vremenu, usluzi i klijentu.</p>
+        <h2>Zahtevi / termini</h2>
+        <p class="muted">Pregled zahteva i zakazanih termina po datumu, vremenu, usluzi i korisniku.</p>
       </div>
       <button class="btn btn-dark btn-small" type="button" onclick="renderAppointments()">Osveži</button>
     </div>
@@ -187,7 +187,7 @@ async function renderAppointments() {
         <select id="appointment-filter" onchange="changeAppointmentFilter()">
           <option value="active" ${statusFilter === "active" ? "selected" : ""}>Aktivni termini</option>
           <option value="today" ${statusFilter === "today" ? "selected" : ""}>Današnji termini</option>
-          <option value="date" ${statusFilter === "date" ? "selected" : ""}>Termini po datumu</option>
+          <option value="date" ${statusFilter === "date" ? "selected" : ""}>Zahtevi / termini po datumu</option>
           <option value="done" ${statusFilter === "done" ? "selected" : ""}>Završeni termini</option>
           <option value="cancelled" ${statusFilter === "cancelled" ? "selected" : ""}>Otkazani termini</option>
         </select>
@@ -200,8 +200,8 @@ async function renderAppointments() {
 
     ${items.length ? renderAppointmentPaperList(items) : `
       <div class="card center">
-        <h3>Nema zakazanih termina za izabrani prikaz</h3>
-        <p class="muted">Kada klijent zakaže termin, podaci će se prikazati u ovoj listi.</p>
+        <h3>Nema zahteva za izabrani prikaz</h3>
+        <p class="muted">Kada korisnik pošalje zahtev ili zakaže termin, podaci će se prikazati u ovoj listi.</p>
       </div>
     `}
   `;
@@ -438,7 +438,7 @@ function getAppointmentStatusLabel(status) {
 async function renderServices() {
   const content = document.getElementById("salon-content");
   content.innerHTML = `
-    <div class="section-head"><div><h2>Usluge</h2><p class="muted">Dodajte i uredite usluge koje klijenti mogu izabrati prilikom zakazivanja.</p></div><button class="btn btn-primary" type="button" onclick="showAddServiceForm()">Dodaj uslugu</button></div>
+    <div class="section-head"><div><h2>Usluge / ponuda</h2><p class="muted">Dodajte i uredite usluge koje korisnici mogu izabrati prilikom slanja zahteva ili zakazivanja.</p></div><button class="btn btn-primary" type="button" onclick="showAddServiceForm()">Dodaj uslugu</button></div>
     <div id="service-form-box"></div>
     <div id="services-list" class="cards"><div class="loading-box">Učitavanje usluga...</div></div>
   `;
@@ -523,7 +523,7 @@ async function deleteService(id) {
 
 async function renderWorkingHours() {
   document.getElementById("salon-content").innerHTML = `
-    <div class="section-head"><div><h2>Radno vreme</h2><p class="muted">Podesite dane i vreme kada salon prima online termine.</p></div></div>
+    <div class="section-head"><div><h2>Radno vreme</h2><p class="muted">Podesite dane i vreme kada biznis prima online zahteve ili termine.</p></div></div>
     <div class="card"><div id="hours-form"><div class="loading-box">Učitavanje radnog vremena...</div></div><button class="btn btn-primary" type="button" onclick="saveWorkingHours()">Sačuvaj radno vreme</button></div>
   `;
   await loadWorkingHours();
@@ -572,18 +572,18 @@ async function renderSalonSettings() {
   const salonLink = window.App.getSalonPublicLink(currentSalon.slug);
   const qrUrl = window.App.getQrImageUrl(salonLink, 260);
   document.getElementById("salon-content").innerHTML = `
-    <div class="section-head"><div><h2>Podešavanja salona</h2><p class="muted">Uredite osnovne podatke koje klijenti vide na stranici salona.</p></div></div>
+    <div class="section-head"><div><h2>Podešavanja salona</h2><p class="muted">Uredite osnovne podatke koje korisnici vide na javnoj stranici profila.</p></div></div>
     <div class="card center">
-      <h3>QR kod salona</h3>
-      <p class="muted">Ovaj QR kod vodi klijente direktno na stranicu vašeg salona. Svaki salon ima svoj jedinstveni link i QR kod.</p>
-      <img class="qr-img" src="${qrUrl}" alt="QR kod salona">
+      <h3>QR kod profila</h3>
+      <p class="muted">Ovaj QR kod vodi korisnike direktno na javnu stranicu vašeg profila. Svaki salon ima svoj jedinstveni link i QR kod.</p>
+      <img class="qr-img" src="${qrUrl}" alt="QR kod profila">
       <div class="link-box"><small>Link za klijente:</small><input readonly value="${salonLink}"></div>
       <div class="card-actions" style="justify-content:center">
         <button class="btn btn-primary" type="button" onclick="copyMySalonLink()">Kopiraj link</button>
         <a class="btn btn-dark" href="${salonLink}" target="_blank" rel="noopener">Otvori stranicu salona</a>
       </div>
     </div>
-    <div class="card"><h3>Logo salona</h3><p class="muted">Salon može postaviti samo svoj logo. Dodatne slike/galerija su isključene zbog jednostavnosti.</p><input type="file" id="logo-upload" accept="image/png,image/jpeg,image/webp"><button class="btn btn-primary" type="button" onclick="uploadLogo()">Postavi logo</button><div id="current-logo" class="image-preview-box"></div></div>
+    <div class="card"><h3>Logo profila</h3><p class="muted">Salon može postaviti samo svoj logo. Dodatne slike/galerija su isključene zbog jednostavnosti.</p><input type="file" id="logo-upload" accept="image/png,image/jpeg,image/webp"><button class="btn btn-primary" type="button" onclick="uploadLogo()">Postavi logo</button><div id="current-logo" class="image-preview-box"></div></div>
     <div class="card"><h3>Tekst dobrodošlice</h3><label>Naslov</label><input id="welcome-title" type="text" placeholder="Dobrodošli u naš salon"><label>Tekst</label><textarea id="welcome-text" rows="4" placeholder="Zakažite svoj termin brzo i jednostavno."></textarea><label>Telefon</label><input id="salon-phone" type="text" placeholder="060/123-456"><label>Adresa</label><input id="salon-address" type="text" placeholder="Adresa salona"><button class="btn btn-primary" type="button" onclick="saveSettings()">Sačuvaj podešavanja</button></div>
   `;
   await loadCurrentSettings();
@@ -610,7 +610,7 @@ async function saveSettings() {
   };
   const { error } = await window.db.from("salon_settings").upsert(payload, { onConflict: "salon_id" });
   if (error) return window.App.showMessage("Greška pri čuvanju podešavanja.", "error");
-  window.App.showMessage("Podešavanja su sačuvana.", "success");
+  window.App.showMessage("Podešavanja profila su sačuvana.", "success");
 }
 
 async function uploadLogo() {
@@ -629,8 +629,8 @@ function copyMySalonLink() {
   if (!currentSalon?.slug) return;
   const link = window.App.getSalonPublicLink(currentSalon.slug);
   navigator.clipboard.writeText(link).then(() => {
-    window.App.showMessage("Link salona je kopiran.", "success");
-  }).catch(() => prompt("Kopiraj link salona:", link));
+    window.App.showMessage("Link profila je kopiran.", "success");
+  }).catch(() => prompt("Kopiraj link profila:", link));
 }
 
 function isPaymentExpired(paidUntil) {
