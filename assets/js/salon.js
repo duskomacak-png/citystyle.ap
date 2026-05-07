@@ -627,10 +627,25 @@ async function renderSalonSettings() {
         <a class="btn btn-dark" href="${salonLink}" target="_blank" rel="noopener">Otvori stranicu salona</a>
       </div>
     </div>
-    <div class="card"><h3>Logo profila</h3><p class="muted">Salon može postaviti samo svoj logo. Dodatne slike/galerija su isključene zbog jednostavnosti.</p><input type="file" id="logo-upload" accept="image/png,image/jpeg,image/webp"><button class="btn btn-primary" type="button" onclick="uploadLogo()">Postavi logo</button><div id="current-logo" class="image-preview-box"></div></div>
-    <div class="card"><h3>Tekst dobrodošlice</h3><label>Naslov</label><input id="welcome-title" type="text" placeholder="Dobrodošli u naš salon"><label>Tekst</label><textarea id="welcome-text" rows="4" placeholder="Zakažite svoj termin brzo i jednostavno."></textarea><label>Telefon</label><input id="salon-phone" type="text" placeholder="+381 64 123 4567"><p class="field-help">Unesite broj sa pozivnim brojem države ako želite WhatsApp kontakt.</p><label>Adresa</label><input id="salon-address" type="text" placeholder="Adresa salona"><button class="btn btn-primary" type="button" onclick="saveSettings()">Sačuvaj podešavanja</button></div>
+    <div class="card"><h3>Logo profila</h3><p class="muted">Ovde postavljate logo koji će se prikazati na javnoj stranici ispod QR linka/profila.</p><input type="file" id="logo-upload" accept="image/png,image/jpeg,image/webp"><button class="btn btn-primary" type="button" onclick="uploadLogo()">Postavi / promeni logo</button><div id="current-logo" class="image-preview-box"></div></div>
+    <div class="card settings-text-card">
+      <h3>Tekst koji se prikazuje ispod loga</h3>
+      <p class="muted">Sva polja ispod se prikazuju na javnoj stranici profila, odmah ispod loga i naziva biznisa.</p>
+      <label>Naslov ispod loga</label>
+      <input id="welcome-title" type="text" placeholder="Dobrodošli u naš profil">
+      <label>Opis / poruka korisnicima</label>
+      <textarea id="welcome-text" rows="4" placeholder="Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev."></textarea>
+      <label>Telefon koji korisnici vide</label>
+      <input id="salon-phone" type="text" placeholder="+381 64 123 4567">
+      <p class="field-help">Unesite broj sa pozivnim brojem države ako želite WhatsApp ili direktan poziv.</p>
+      <label>Adresa / lokacija</label>
+      <input id="salon-address" type="text" placeholder="Adresa ili mesto poslovanja">
+      <div class="settings-preview" id="settings-public-preview"></div>
+      <button class="btn btn-primary" type="button" onclick="saveSettings()">Sačuvaj podešavanja</button>
+    </div>
   `;
   await loadCurrentSettings();
+  bindSettingsPreview();
 }
 
 async function loadCurrentSettings() {
@@ -642,6 +657,31 @@ async function loadCurrentSettings() {
     document.getElementById("salon-address").value = settings.address || "";
     if (settings.logo_url) document.getElementById("current-logo").innerHTML = `<img src="${salonEscapeHtml(settings.logo_url)}" alt="Logo" class="preview-logo">`;
   }
+  updateSettingsPreview();
+}
+
+function bindSettingsPreview() {
+  ["welcome-title", "welcome-text", "salon-phone", "salon-address"].forEach(id => {
+    document.getElementById(id)?.addEventListener("input", updateSettingsPreview);
+  });
+}
+
+function updateSettingsPreview() {
+  const box = document.getElementById("settings-public-preview");
+  if (!box) return;
+  const title = document.getElementById("welcome-title")?.value.trim() || "Naslov ispod loga";
+  const text = document.getElementById("welcome-text")?.value.trim() || "Opis koji korisnik vidi na javnoj stranici profila.";
+  const phone = document.getElementById("salon-phone")?.value.trim();
+  const address = document.getElementById("salon-address")?.value.trim();
+  box.innerHTML = `
+    <div class="preview-label">Pregled javnog prikaza ispod loga</div>
+    <div class="public-preview-box">
+      <strong>${salonEscapeHtml(title)}</strong>
+      <p>${salonEscapeHtml(text)}</p>
+      ${phone ? `<span>📞 ${salonEscapeHtml(phone)}</span>` : ""}
+      ${address ? `<span>📍 ${salonEscapeHtml(address)}</span>` : ""}
+    </div>
+  `;
 }
 
 async function saveSettings() {
@@ -654,7 +694,8 @@ async function saveSettings() {
   };
   const { error } = await window.db.from("salon_settings").upsert(payload, { onConflict: "salon_id" });
   if (error) return window.App.showMessage("Greška pri čuvanju podešavanja.", "error");
-  window.App.showMessage("Podešavanja profila su sačuvana.", "success");
+  await loadCurrentSettings();
+  window.App.showMessage("Podešavanja su sačuvana. Tekst, telefon i adresa sada se prikazuju na javnoj stranici profila.", "success");
 }
 
 async function uploadLogo() {

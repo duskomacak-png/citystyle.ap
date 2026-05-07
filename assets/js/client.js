@@ -167,8 +167,16 @@ async function renderSalonHome() {
         `}
 
         <h1>${escapeHtml(currentSalon.salon_name)}</h1>
-        ${settings?.welcome_title ? `<h2 class="welcome-title">${escapeHtml(settings.welcome_title)}</h2>` : ""}
-        <p class="intro-text">${escapeHtml(settings?.welcome_text || "Dobrodošli. Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev.")}</p>
+        <div class="public-profile-text">
+          ${settings?.welcome_title ? `<h2 class="welcome-title">${escapeHtml(settings.welcome_title)}</h2>` : ""}
+          <p class="intro-text">${escapeHtml(settings?.welcome_text || "Dobrodošli. Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev.")}</p>
+          ${(settings?.phone || settings?.address) ? `
+            <div class="public-profile-contact">
+              ${settings?.phone ? `<a href="tel:${escapeHtml(window.App.normalizePhoneForTel ? window.App.normalizePhoneForTel(settings.phone) : settings.phone)}">📞 ${escapeHtml(settings.phone)}</a>` : ""}
+              ${settings?.address ? `<span>📍 ${escapeHtml(settings.address)}</span>` : ""}
+            </div>
+          ` : ""}
+        </div>
 
         <div class="client-actions">
           <button class="btn btn-primary" type="button" onclick="showBookingForm()">Pošalji zahtev</button>

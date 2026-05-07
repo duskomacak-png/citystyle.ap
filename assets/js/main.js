@@ -262,6 +262,18 @@ window.addEventListener("appinstalled", () => {
   showMessage("CityStyle je dodat na početni ekran.", "success");
 });
 
+
+  function normalizePhoneForTel(phone) {
+    const raw = String(phone || "").trim();
+    if (!raw) return "";
+    const digits = raw.replace(/\D/g, "");
+    if (!digits) return "";
+    if (raw.startsWith("+")) return `+${digits}`;
+    if (raw.startsWith("00")) return `+${digits.slice(2)}`;
+    if (digits.startsWith("0") && digits.length >= 8) return `+381${digits.slice(1)}`;
+    if (/^(381|387|385|382|389|386|49|43)\d{6,}$/.test(digits)) return `+${digits}`;
+    return digits;
+  }
 window.App = {
   getUrlParam,
   saveLocal,
@@ -274,6 +286,7 @@ window.App = {
   escapeHtml,
   escapeJs,
   formatServicePrice,
+    normalizePhoneForTel,
   normalizeCurrency,
   checkSalonAccess,
   saveCurrentSalon,
