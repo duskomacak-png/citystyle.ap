@@ -344,7 +344,7 @@ async function renderSalonSettings() {
   const salonLink = window.App.getSalonPublicLink(currentSalon.slug);
   const qrUrl = window.App.getQrImageUrl(salonLink, 260);
   document.getElementById("salon-content").innerHTML = `
-    <div class="section-head"><div><h2>Podešavanja salona</h2><p class="muted">Logo, slike, tekst i jedinstveni QR kod salona.</p></div></div>
+    <div class="section-head"><div><h2>Podešavanja salona</h2><p class="muted">Logo, tekst i jedinstveni QR kod salona.</p></div></div>
     <div class="card center">
       <h3>Jedinstveni QR kod salona</h3>
       <p class="muted">Ovaj QR vodi direktno u ovaj salon. Svaki salon ima svoj poseban link i QR kod.</p>
@@ -355,8 +355,7 @@ async function renderSalonSettings() {
         <a class="btn btn-dark" href="${salonLink}" target="_blank" rel="noopener">Otvori stranicu salona</a>
       </div>
     </div>
-    <div class="card"><h3>Logo salona</h3><input type="file" id="logo-upload" accept="image/png,image/jpeg,image/webp"><button class="btn btn-primary" type="button" onclick="uploadLogo()">Postavi logo</button><div id="current-logo" class="image-preview-box"></div></div>
-    <div class="card"><h3>Slike za početnu stranu</h3><p class="muted">Najviše 5 aktivnih slika.</p><input type="file" id="home-images" accept="image/png,image/jpeg,image/webp" multiple><button class="btn btn-primary" type="button" onclick="uploadHomeImages()">Dodaj slike</button><div id="current-images" class="image-grid"></div></div>
+    <div class="card"><h3>Logo salona</h3><p class="muted">Salon može postaviti samo svoj logo. Dodatne slike/galerija su isključene zbog jednostavnosti.</p><input type="file" id="logo-upload" accept="image/png,image/jpeg,image/webp"><button class="btn btn-primary" type="button" onclick="uploadLogo()">Postavi logo</button><div id="current-logo" class="image-preview-box"></div></div>
     <div class="card"><h3>Tekst dobrodošlice</h3><label>Naslov</label><input id="welcome-title" type="text" placeholder="Dobrodošli u naš salon"><label>Tekst</label><textarea id="welcome-text" rows="4" placeholder="Zakažite svoj termin brzo i jednostavno."></textarea><label>Telefon</label><input id="salon-phone" type="text" placeholder="060/123-456"><label>Adresa</label><input id="salon-address" type="text" placeholder="Adresa salona"><button class="btn btn-primary" type="button" onclick="saveSettings()">Sačuvaj podešavanja</button></div>
   `;
   await loadCurrentSettings();
@@ -371,7 +370,6 @@ async function loadCurrentSettings() {
     document.getElementById("salon-address").value = settings.address || "";
     if (settings.logo_url) document.getElementById("current-logo").innerHTML = `<img src="${salonEscapeHtml(settings.logo_url)}" alt="Logo" class="preview-logo">`;
   }
-  await loadCurrentImages();
 }
 
 async function saveSettings() {
@@ -395,34 +393,7 @@ async function uploadLogo() {
   const { error } = await window.db.from("salon_settings").upsert({ salon_id: currentSalonId, logo_url: url }, { onConflict: "salon_id" });
   if (error) return window.App.showMessage("Logo nije sačuvan.", "error");
   await loadCurrentSettings();
-}
-
-async function uploadHomeImages() {
-  const files = Array.from(document.getElementById("home-images")?.files || []);
-  if (!files.length) return window.App.showMessage("Izaberite slike.", "error");
-  const { data: existingImages } = await window.db.from("home_images").select("id").eq("salon_id", currentSalonId).eq("active", true);
-  if ((existingImages?.length || 0) + files.length > 5) return window.App.showMessage("Možete imati najviše 5 aktivnih slika.", "error");
-  for (const file of files) {
-    const url = await window.StorageHelper.uploadImage(file, currentSalonId, "home");
-    if (url) await window.db.from("home_images").insert({ salon_id: currentSalonId, image_url: url, active: true, sort_order: 100 });
-  }
-  await loadCurrentImages();
-}
-
-async function loadCurrentImages() {
-  const box = document.getElementById("current-images");
-  if (!box) return;
-  const { data: images, error } = await window.db.from("home_images").select("*").eq("salon_id", currentSalonId).eq("active", true).order("sort_order", { ascending: true });
-  if (error) { box.innerHTML = `<p class="error-text">Greška pri učitavanju slika.</p>`; return; }
-  if (!images?.length) { box.innerHTML = `<p class="muted">Još nema dodatih slika.</p>`; return; }
-  box.innerHTML = images.map(img => `<div class="image-item"><img src="${salonEscapeHtml(img.image_url)}" alt="Slika"><button class="btn btn-danger btn-small" type="button" onclick="deleteHomeImage('${img.id}', '${salonEscapeJs(img.image_url)}')">Obriši</button></div>`).join("");
-}
-
-async function deleteHomeImage(id, imageUrl) {
-  if (!confirm("Obrisati ovu sliku?")) return;
-  await window.StorageHelper.deleteImage(imageUrl);
-  await window.db.from("home_images").update({ active: false }).eq("id", id).eq("salon_id", currentSalonId);
-  await loadCurrentImages();
+  window.App.showMessage("Logo je postavljen.", "success");
 }
 
 

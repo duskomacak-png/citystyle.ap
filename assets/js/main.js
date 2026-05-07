@@ -139,14 +139,52 @@ function showInstallButton() {
   btn.id = "install-app-btn";
   btn.className = "install-floating-btn";
   btn.type = "button";
-  btn.textContent = "📱 Sačuvaj na telefon";
-  btn.addEventListener("click", installApp);
+  btn.textContent = getSavedSalonSlug() ? "📱 Preuzmi app salona" : "📱 Sačuvaj na telefon";
+  btn.addEventListener("click", () => installApp());
   document.body.appendChild(btn);
+}
+
+async function installSalonApp(slug) {
+  if (slug) saveCurrentSalon(slug);
+  updateManifestForSalon(slug || getSavedSalonSlug());
+  await installApp();
+}
+
+function updateManifestForSalon(slug) {
+  if (!slug) return;
+  const baseManifest = {
+    name: "CityStyle - Salon",
+    short_name: "CityStyle",
+    description: "Prečica za direktno zakazivanje termina u izabranom salonu.",
+    start_url: `${getAppBaseUrl()}?salon=${encodeURIComponent(slug)}`,
+    scope: getAppBaseUrl(),
+    display: "standalone",
+    background_color: "#0b0b0f",
+    theme_color: "#b91c1c",
+    orientation: "portrait",
+    icons: [
+      { src: `${getAppBaseUrl()}assets/icons/icon-192.png`, sizes: "192x192", type: "image/png", purpose: "any maskable" },
+      { src: `${getAppBaseUrl()}assets/icons/icon-512.png`, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+    ]
+  };
+  try {
+    const blob = new Blob([JSON.stringify(baseManifest)], { type: "application/manifest+json" });
+    const url = URL.createObjectURL(blob);
+    let link = document.querySelector('link[rel="manifest"]');
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "manifest";
+      document.head.appendChild(link);
+    }
+    link.href = url;
+  } catch (err) {
+    console.warn("Dynamic manifest nije postavljen:", err);
+  }
 }
 
 async function installApp() {
   if (!deferredPrompt) {
-    showMessage("Na iPhone-u: Share → Add to Home Screen.", "info");
+    showMessage("Na iPhone-u: Share → Add to Home Screen. Salon je već zapamćen u ovoj aplikaciji.", "info");
     return;
   }
 
@@ -154,7 +192,7 @@ async function installApp() {
   const choice = await deferredPrompt.userChoice;
 
   if (choice.outcome === "accepted") {
-    showMessage("Aplikacija je dodata na telefon.", "success");
+    showMessage("App salona je dodata na telefon.", "success");
     document.getElementById("install-app-btn")?.remove();
   } else {
     showMessage("Instalacija je otkazana.", "info");
@@ -185,5 +223,7 @@ window.App = {
   getAppPath,
   getSalonPublicLink,
   getQrImageUrl,
-  installApp
+  installApp,
+  installSalonApp,
+  updateManifestForSalon
 };

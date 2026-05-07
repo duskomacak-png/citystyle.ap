@@ -16,16 +16,24 @@ async function loadClientApp() {
 
   try {
     const urlSlug = window.App?.getUrlParam("salon");
+    const forcePlatform = window.App?.getUrlParam("platform") === "1" || window.App?.getUrlParam("home") === "1";
 
-    // Root citystyle.app must show platform landing.
-    // Salon opens only from QR/link: ?salon=slug
-    if (!urlSlug) {
-      renderPlatformLanding();
+    // QR/link salon page: ?salon=slug
+    if (urlSlug) {
+      app.innerHTML = `<div class="loading-box">Učitavanje salona...</div>`;
+      await loadSalon(urlSlug, true);
       return;
     }
 
-    app.innerHTML = `<div class="loading-box">Učitavanje salona...</div>`;
-    await loadSalon(urlSlug, true);
+    // Installed PWA / shortcut: open the last saved salon, not generic platform.
+    const savedSlug = window.App?.getSavedSalonSlug?.();
+    if (savedSlug && !forcePlatform) {
+      app.innerHTML = `<div class="loading-box">Učitavanje vašeg salona...</div>`;
+      await loadSalon(savedSlug, false);
+      return;
+    }
+
+    renderPlatformLanding();
   } catch (err) {
     console.error("CityStyle start error:", err);
     renderPlatformLanding();
@@ -131,7 +139,7 @@ function renderPlatformLanding() {
         </div>
         <div class="card">
           <h2>Za vlasnike salona</h2>
-          <p class="muted">Salon uređuje usluge, cene, radno vreme, slike, logo i prati termine na jednom mestu.</p>
+          <p class="muted">Salon uređuje usluge, cene, radno vreme, logo i prati termine na jednom mestu.</p>
         </div>
         <div class="card qr-card">
           <h2>Direktan ulaz preko QR koda</h2>
@@ -178,13 +186,6 @@ async function renderSalonHome() {
     .eq("salon_id", currentSalon.id)
     .maybeSingle();
 
-  const { data: images } = await window.db
-    .from("home_images")
-    .select("*")
-    .eq("salon_id", currentSalon.id)
-    .eq("active", true)
-    .order("sort_order", { ascending: true });
-
   const { data: workingHours } = await window.db
     .from("working_hours")
     .select("*")
@@ -204,16 +205,10 @@ async function renderSalonHome() {
         ${settings?.welcome_title ? `<h2 class="welcome-title">${escapeHtml(settings.welcome_title)}</h2>` : ""}
         <p class="intro-text">${escapeHtml(settings?.welcome_text || "Zakažite svoj termin brzo i jednostavno.")}</p>
 
-        ${images?.length ? `
-          <div class="image-slider">
-            ${images.map(img => `<img src="${escapeHtml(img.image_url)}" alt="Slika salona" class="slider-image">`).join("")}
-          </div>
-        ` : ""}
-
         <div class="client-actions">
           <button class="btn btn-primary" type="button" onclick="showBookingForm()">Zakaži termin</button>
           <button class="btn btn-dark" type="button" onclick="showServices()">Usluge i cene</button>
-          <button class="btn btn-dark" type="button" onclick="window.App.installApp()">Sačuvaj salon na telefon</button>
+          <button class="btn btn-dark" type="button" onclick="window.App.installSalonApp(currentSalon?.slug)">Preuzmi app ovog salona</button>
           <button class="btn btn-dark" type="button" onclick="window.App.clearSavedSalon(); renderPlatformLanding();">Početna platforme</button>
         </div>
       </div>
