@@ -149,6 +149,7 @@ function renderSalonCard(salon) {
       <div class="card-actions">
         <button class="btn btn-dark" type="button" onclick="copySalonLink('${salon.slug}')">Kopiraj link</button>
         <button class="btn btn-dark" type="button" onclick="showQrForSalon('${salon.slug}', '${adminEscapeJs(salon.salon_name)}')">QR kod</button>
+        <button class="btn btn-dark" type="button" onclick="editSalonProfile('${salon.id}')">Izmeni</button>
         <button class="btn btn-dark" type="button" onclick="extendPayment('${salon.id}', '${salon.paid_until || ""}')">Produži uplatu</button>
         <button class="btn ${salon.status === "active" ? "btn-warning" : "btn-success"}" type="button" onclick="toggleSalonStatus('${salon.id}', '${salon.status}')">${salon.status === "active" ? "Blokiraj" : "Aktiviraj"}</button>
         <button class="btn btn-danger" type="button" onclick="deleteSalon('${salon.id}')">Obriši</button>
@@ -228,6 +229,92 @@ async function createDefaultSettings(salonId, salonName, phone, city) {
     phone,
     address: city || null
   }, { onConflict: "salon_id" });
+}
+
+async function editSalonProfile(id) {
+  const { data: salon, error } = await window.db
+    .from("salons")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !salon) {
+    console.error(error);
+    window.App.showMessage("Profil nije pronađen.", "error");
+    return;
+  }
+
+  const name = prompt("Naziv biznisa:", salon.salon_name || "");
+  if (name === null) return;
+
+  const email = prompt("Email vlasnika biznisa:", salon.owner_email || "");
+  if (email === null) return;
+
+  const code = prompt("Kod firme / profila:", salon.company_code || "");
+  if (code === null) return;
+
+  const city = prompt("Grad / mesto:", salon.city || "");
+  if (city === null) return;
+
+  const phone = prompt("Telefon biznisa:", salon.phone || "");
+  if (phone === null) return;
+
+  const changeSlug = confirm(
+    "Da li želite da izmenite i link/slug profila?\n\n" +
+    "Ako promenite slug, stari QR kod i stari link više neće voditi na ovaj profil.\n" +
+    "Za ispravku samo imena firme kliknite Cancel / Otkaži."
+  );
+
+  let slug = salon.slug;
+  if (changeSlug) {
+    const enteredSlug = prompt("Slug profila / link:", salon.slug || createSlug(name));
+    if (enteredSlug === null) return;
+    slug = createSlug(enteredSlug);
+    if (!slug) {
+      window.App.showMessage("Slug ne može biti prazan.", "error");
+      return;
+    }
+  }
+
+  const cleanName = name.trim();
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanCode = code.trim();
+  const cleanCity = city.trim() || null;
+  const cleanPhone = phone.trim() || null;
+
+  if (!cleanName || !cleanEmail || !cleanCode) {
+    window.App.showMessage("Naziv, email i kod firme su obavezni.", "error");
+    return;
+  }
+
+  const { error: updateError } = await window.db
+    .from("salons")
+    .update({
+      salon_name: cleanName,
+      owner_email: cleanEmail,
+      company_code: cleanCode,
+      city: cleanCity,
+      phone: cleanPhone,
+      slug
+    })
+    .eq("id", id);
+
+  if (updateError) {
+    console.error(updateError);
+    window.App.showMessage("Greška pri izmeni profila: " + updateError.message, "error");
+    return;
+  }
+
+  await window.db
+    .from("salon_settings")
+    .upsert({
+      salon_id: id,
+      phone: cleanPhone,
+      address: cleanCity
+    }, { onConflict: "salon_id" });
+
+  window.App.showMessage("Profil je izmenjen.", "success");
+  await loadSalonsList();
 }
 
 async function extendPayment(id, currentPaidUntil) {
