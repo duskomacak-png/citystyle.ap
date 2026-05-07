@@ -342,8 +342,8 @@ function showBookingForm() {
       </div>
 
       <label>Broj telefona / WhatsApp</label>
-      <input id="client-phone" type="tel" inputmode="tel" placeholder="064 123 4567">
-      <p class="field-help">Izaberite državu i unesite lokalni broj. Ako unesete broj sa +, aplikacija će ga koristiti direktno.</p>
+      <input id="client-phone" type="tel" inputmode="tel" placeholder="64 123 4567">
+      <p class="field-help">Izaberite državu i unesite lokalni broj. Ako krenete sa nulom, aplikacija je automatski uklanja prema izabranoj državi. Ako unesete broj sa +, koristi se direktno.</p>
 
       <label>Napomena</label>
       <textarea id="client-note" rows="3" placeholder="Opcionalno"></textarea>
@@ -354,6 +354,7 @@ function showBookingForm() {
 
   document.getElementById("booking-service").addEventListener("change", handleBookingChange);
   document.getElementById("booking-date").addEventListener("change", handleBookingChange);
+  setupPhoneCountryAutoZero();
 
   if (selectedService) handleBookingChange();
   box.scrollIntoView({ behavior: "smooth" });
@@ -413,6 +414,52 @@ function selectTime(time, btn) {
   if (timeView) timeView.value = time;
 }
 
+
+function setupPhoneCountryAutoZero() {
+  const countrySelect = document.getElementById("client-phone-country");
+  const phoneInput = document.getElementById("client-phone");
+
+  if (!countrySelect || !phoneInput) return;
+
+  const placeholderMap = {
+    "381": "64 123 4567",
+    "387": "61 123 456",
+    "385": "91 123 4567",
+    "382": "67 123 456",
+    "386": "40 123 456",
+    "389": "70 123 456",
+    "49": "151 12345678",
+    "43": "660 1234567"
+  };
+
+  function updatePlaceholder() {
+    const countryCode = countrySelect.value || "381";
+    phoneInput.placeholder = placeholderMap[countryCode] || "64 123 4567";
+  }
+
+  function removeLocalLeadingZero() {
+    const raw = phoneInput.value || "";
+    const leftSpaces = raw.match(/^\s*/)?.[0] || "";
+    const value = raw.slice(leftSpaces.length);
+
+    // Ako korisnik unese međunarodni format, ne diramo broj.
+    if (!value || value.startsWith("+") || value.startsWith("00")) return;
+
+    const cleaned = value.replace(/^0+/, "");
+
+    if (cleaned !== value) {
+      phoneInput.value = leftSpaces + cleaned;
+      phoneInput.setSelectionRange(phoneInput.value.length, phoneInput.value.length);
+    }
+  }
+
+  updatePlaceholder();
+  phoneInput.addEventListener("input", removeLocalLeadingZero);
+  countrySelect.addEventListener("change", () => {
+    updatePlaceholder();
+    removeLocalLeadingZero();
+  });
+}
 
 function normalizeClientPhoneForStorage(phone, countryCode = "381") {
   const raw = String(phone || "").trim();
