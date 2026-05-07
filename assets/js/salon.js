@@ -25,6 +25,7 @@ async function initSalonPanel() {
   window.App?.clearSavedSalon?.();
   bindSalonTabs();
   bindSalonLogout();
+  bindSalonInstall();
 
   const session = window.Auth.getSalonSession();
   if (!session?.salon_id) {
@@ -41,11 +42,19 @@ function bindSalonTabs() {
   });
 }
 
+function bindSalonInstall() {
+  document.getElementById("salon-install-btn")?.addEventListener("click", async () => {
+    window.App?.clearSavedSalon?.();
+    await window.App?.installOwnerApp?.();
+  });
+}
+
 function bindSalonLogout() {
   document.getElementById("salon-logout-btn")?.addEventListener("click", () => {
     window.Auth.salonLogout();
     currentSalon = null;
     currentSalonId = null;
+    document.getElementById("salon-install-btn")?.classList.add("hidden");
     renderSalonLogin();
   });
 }
@@ -55,6 +64,7 @@ function renderSalonLogin() {
   document.getElementById("salon-status-text").textContent = "Unesite email adresu biznisa i kod firme koji vam je dodelio administrator.";
   document.getElementById("salon-tabs").classList.add("hidden");
   document.getElementById("salon-logout-btn").classList.add("hidden");
+  document.getElementById("salon-install-btn")?.classList.add("hidden");
   document.getElementById("salon-content").innerHTML = `
     <div class="card login-card">
       <h2>Ulaz za vlasnika biznisa</h2>
@@ -110,6 +120,7 @@ function renderBlockedSalon(salon) {
   document.getElementById("salon-status-text").textContent = "Profil je blokiran.";
   document.getElementById("salon-tabs").classList.add("hidden");
   document.getElementById("salon-logout-btn").classList.remove("hidden");
+  document.getElementById("salon-install-btn")?.classList.remove("hidden");
   document.getElementById("salon-content").innerHTML = `
     <div class="card center"><h2>Vaš profil je trenutno blokiran</h2><p>Kontaktirajte administratora.</p></div>
   `;
@@ -123,6 +134,7 @@ function renderSalonDashboard() {
     : `Aktivan profil`;
   document.getElementById("salon-tabs").classList.remove("hidden");
   document.getElementById("salon-logout-btn").classList.remove("hidden");
+  document.getElementById("salon-install-btn")?.classList.remove("hidden");
 }
 
 function setActiveTab(section) {

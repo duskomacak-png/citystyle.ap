@@ -18,7 +18,10 @@
   <main class="salon-panel">
     <header class="panel-header">
       <div><h1 id="salon-name">Biznis panel</h1><p id="salon-status-text">Učitavanje profila...</p></div>
-      <button id="salon-logout-btn" class="btn btn-dark" type="button">Odjavi se</button>
+      <div class="panel-header-actions">
+        <button id="salon-install-btn" class="btn btn-dark hidden" type="button">Preuzmi panel vlasnika</button>
+        <button id="salon-logout-btn" class="btn btn-dark" type="button">Odjavi se</button>
+      </div>
     </header>
     <nav class="panel-tabs" id="salon-tabs">
       <button type="button" data-section="appointments" class="active">Zahtevi / termini</button>

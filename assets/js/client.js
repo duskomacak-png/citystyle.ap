@@ -28,10 +28,17 @@ async function loadClientApp() {
       return;
     }
 
-    // Root citystyle.app in normal browser is the platform landing page.
-    // If the app was installed from a salon page, open that saved salon directly.
-    const savedSlug = window.App?.getSavedSalonSlug?.();
+    // If an owner installed CityStyle and is already logged in, open the owner panel directly.
     const isStandalone = window.App?.isStandaloneMode?.() === true;
+    const ownerSession = window.App?.getLocal?.(window.APP_CONFIG?.salonSessionKey || "citystyle_salon_session");
+    if (!forcePlatform && isStandalone && ownerSession?.salon_id) {
+      window.location.href = window.App.getAppPath("salon/");
+      return;
+    }
+
+    // Root citystyle.app in normal browser is the platform landing page.
+    // If the app was installed from a public profile page, open that saved profile directly.
+    const savedSlug = window.App?.getSavedSalonSlug?.();
     if (savedSlug && isStandalone) {
       app.innerHTML = `<div class="loading-box">Učitavanje profila...</div>`;
       await loadSalon(savedSlug, false);

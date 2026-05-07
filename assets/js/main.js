@@ -196,14 +196,51 @@ function showInstallButton() {
   btn.className = "install-floating-btn";
   btn.type = "button";
   btn.textContent = "📱 Preuzmi CityStyle app";
-  btn.addEventListener("click", () => installApp());
+  btn.addEventListener("click", () => installApp("Na iPhone-u: Share → Add to Home Screen.", "CityStyle je dodat na telefon."));
   document.body.appendChild(btn);
 }
 
 async function installSalonApp(slug) {
   if (slug) saveCurrentSalon(slug);
   updateManifestForSalon(slug || getSavedSalonSlug());
-  await installApp();
+  await installApp("Na iPhone-u: Share → Add to Home Screen. Ova prečica pamti otvoreni profil.", "App profila je dodata na telefon.");
+}
+
+async function installOwnerApp() {
+  clearSavedSalon();
+  updateManifestForOwner();
+  await installApp("Na iPhone-u: otvorite ovaj panel u Safari browseru, pritisnite Share i izaberite Add to Home Screen. Panel vlasnika ostaje zapamćen.", "Panel vlasnika je dodat na telefon.");
+}
+
+function updateManifestForOwner() {
+  const baseManifest = {
+    name: "CityStyle - Panel vlasnika",
+    short_name: "CityStyle",
+    description: "Prečica za direktan ulaz u panel vlasnika biznisa.",
+    start_url: getAppPath("salon/"),
+    scope: getAppBaseUrl(),
+    display: "standalone",
+    background_color: "#0b0b0f",
+    theme_color: "#b91c1c",
+    orientation: "portrait",
+    icons: [
+      { src: `${getAppBaseUrl()}assets/icons/icon-192.png`, sizes: "192x192", type: "image/png", purpose: "any maskable" },
+      { src: `${getAppBaseUrl()}assets/icons/icon-512.png`, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+    ]
+  };
+  try {
+    const blob = new Blob([JSON.stringify(baseManifest)], { type: "application/manifest+json" });
+    const url = URL.createObjectURL(blob);
+    let link = document.querySelector('link[rel="manifest"]');
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "manifest";
+      document.head.appendChild(link);
+    }
+    link.href = url;
+  } catch (err) {
+    console.warn("Owner manifest nije postavljen:", err);
+  }
 }
 
 function updateManifestForSalon(slug) {
@@ -238,9 +275,9 @@ function updateManifestForSalon(slug) {
   }
 }
 
-async function installApp() {
+async function installApp(noPromptMessage = "Na iPhone-u: Share → Add to Home Screen.", successMessage = "CityStyle je dodat na telefon.") {
   if (!deferredPrompt) {
-    showMessage("Na iPhone-u: Share → Add to Home Screen. Salon je već zapamćen u ovoj aplikaciji.", "info");
+    showMessage(noPromptMessage, "info");
     return;
   }
 
@@ -248,7 +285,7 @@ async function installApp() {
   const choice = await deferredPrompt.userChoice;
 
   if (choice.outcome === "accepted") {
-    showMessage("App salona je dodata na telefon.", "success");
+    showMessage(successMessage, "success");
     document.getElementById("install-app-btn")?.remove();
   } else {
     showMessage("Instalacija je otkazana.", "info");
@@ -298,6 +335,8 @@ window.App = {
   getQrImageUrl,
   installApp,
   installSalonApp,
+  installOwnerApp,
+  updateManifestForOwner,
   updateManifestForSalon,
   isStandaloneMode
 };
