@@ -1,7 +1,5 @@
 // assets/js/admin.js
 
-const escapeHtml = (value) => window.App.escapeHtml(value);
-const escapeJs = (value) => window.App.escapeJs(value);
 
 document.addEventListener("DOMContentLoaded", () => loadAdminPanel());
 

@@ -6,7 +6,6 @@ let selectedService = null;
 let selectedDate = null;
 let selectedTime = null;
 
-const escapeHtml = (value) => window.App.escapeHtml(value);
 
 document.addEventListener("DOMContentLoaded", () => {
   loadClientApp();

@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = "citystyle-v1.1.0";
+const CACHE_NAME = "citystyle-v1.1.1";
 const APP_SHELL = [
   "./", "index.html", "admin/index.html", "salon/index.html",
   "assets/css/style.css",
@@ -28,5 +28,5 @@ self.addEventListener("fetch", event => {
     event.respondWith(fetch(request));
     return;
   }
-  event.respondWith(caches.match(request).then(cached => cached || fetch(request).catch(() => request.mode === "navigate" ? caches.match("/index.html") : null)));
+  event.respondWith(caches.match(request).then(cached => cached || fetch(request).catch(() => request.mode === "navigate" ? caches.match("index.html") : null)));
 });
