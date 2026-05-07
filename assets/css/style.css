@@ -56,177 +56,190 @@
   }
 }
 
-/* ==============================
-   Salon appointments: Excel view
-============================== */
-.filter-box {
-  min-width: 220px;
+/* Paper / Excel-style salon appointment list */
+.paper-section-head h2 {
+  letter-spacing: -0.6px;
 }
-.filter-box label {
-  margin-top: 0;
+
+.paper-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) minmax(180px, 240px);
+  gap: 12px;
+  align-items: end;
+  padding: 14px;
 }
-.excel-card {
-  background: #f8fafc;
-  color: #111827;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: var(--radius);
+
+.paper-toolbar label {
+  margin: 0;
+}
+
+.paper-list-card {
+  padding: 0;
   overflow: hidden;
-  box-shadow: var(--shadow);
-  margin: 14px 0;
 }
-.appointments-table-wrap {
-  width: 100%;
+
+.paper-table-wrap {
   overflow-x: auto;
 }
-.appointments-table {
+
+.paper-appointments-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 820px;
-  background: #ffffff;
-  color: #111827;
+  min-width: 860px;
+  background: rgba(5, 5, 8, 0.28);
 }
-.appointments-table th,
-.appointments-table td {
-  border: 1px solid #d1d5db;
-  padding: 10px 12px;
+
+.paper-appointments-table th,
+.paper-appointments-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 12px 10px;
   text-align: left;
   vertical-align: middle;
   font-size: 14px;
 }
-.appointments-table th {
-  background: #e5e7eb;
-  color: #111827;
+
+.paper-appointments-table th {
+  color: #f4f4f5;
+  background: rgba(255,255,255,0.035);
   font-weight: 900;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-.appointments-table tbody tr:nth-child(even) {
-  background: #f9fafb;
-}
-.appointments-table a {
-  color: #111827;
-  font-weight: 800;
-}
-.table-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.empty-table-box {
-  padding: 22px;
-  text-align: center;
-  color: #111827;
-}
-.empty-table-box .muted {
-  color: #4b5563;
+  white-space: nowrap;
 }
 
-/* ==============================
-   Client booking dropdown polish
-============================== */
-.client-price-card .price-list,
-.price-list {
-  display: grid;
-  gap: 8px;
-  margin-top: 12px;
+.paper-appointments-table td {
+  color: #e4e4e7;
 }
-.price-row {
+
+.paper-appointments-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.phone-link {
+  color: #f4f4f5;
+  text-decoration: none;
+  font-weight: 800;
+}
+
+.paper-row-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.btn-paper {
+  padding: 7px 9px;
+  font-size: 12px;
+  border-radius: 9px;
+  white-space: nowrap;
+}
+
+.paper-mobile-list {
+  display: none;
+}
+
+.paper-mobile-item {
+  padding: 14px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255,255,255,0.018);
+}
+
+.paper-mobile-item:last-child {
+  border-bottom: 0;
+}
+
+.paper-mobile-top {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-  border: 1px solid var(--line);
-  background: #0b0b10;
-  border-radius: 14px;
-  padding: 13px;
-}
-.price-row span {
-  display: block;
-  color: var(--muted);
-  font-size: 13px;
-  margin-top: 2px;
-}
-.booking-step {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 18px;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: rgba(255,255,255,.03);
-}
-.booking-step span {
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  background: var(--red);
-  color: #fff;
-  font-weight: 900;
-}
-.booking-step h3 {
-  margin: 0;
-}
-.booking-service-select {
-  font-weight: 800;
-  border-color: rgba(220, 38, 38, .45);
-}
-.service-summary {
-  margin-top: 10px;
-  border: 1px solid rgba(220, 38, 38, .28);
-  border-radius: 14px;
-  padding: 12px;
-  background: rgba(220, 38, 38, .08);
-}
-.service-summary strong,
-.service-summary span {
-  display: inline-block;
-  margin-right: 10px;
-}
-.service-summary strong {
-  color: #fff;
-}
-.service-summary span {
-  color: #fecaca;
-  font-weight: 800;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 10px;
 }
 
-@media (max-width: 720px) {
-  .appointments-table,
-  .appointments-table thead,
-  .appointments-table tbody,
-  .appointments-table th,
-  .appointments-table td,
-  .appointments-table tr {
-    display: block;
-    min-width: 0;
-    width: 100%;
+.paper-mobile-top strong {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.paper-mobile-top span:not(.status-pill) {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.paper-mobile-main {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.paper-mobile-main b {
+  font-size: 17px;
+}
+
+.paper-mobile-main span,
+.paper-mobile-main a {
+  color: #f4f4f5;
+}
+
+/* Cleaner client booking form */
+.booking-paper-card {
+  border-color: rgba(239, 68, 68, 0.18);
+}
+
+.booking-service-dropdown {
+  font-weight: 800;
+  font-size: 15px;
+  background: #09090d;
+}
+
+.selected-service-summary {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.025);
+}
+
+.selected-service-summary strong {
+  color: #ffffff;
+}
+
+.booking-two-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.booking-submit-btn {
+  width: 100%;
+  margin-top: 16px;
+  padding: 15px 18px;
+}
+
+@media (max-width: 760px) {
+  .paper-toolbar {
+    grid-template-columns: 1fr;
   }
-  .appointments-table thead {
+
+  .paper-table-wrap {
     display: none;
   }
-  .appointments-table tr {
-    margin: 10px;
-    border: 1px solid #d1d5db;
-    border-radius: 14px;
-    overflow: hidden;
-    background: #fff;
+
+  .paper-mobile-list {
+    display: block;
   }
-  .appointments-table td {
+
+  .paper-row-actions {
     display: grid;
-    grid-template-columns: 120px 1fr;
-    border: 0;
-    border-bottom: 1px solid #e5e7eb;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .appointments-table td::before {
-    content: attr(data-label);
-    font-weight: 900;
-    color: #4b5563;
+
+  .btn-paper {
+    width: 100%;
+    padding: 9px 8px;
   }
-  .table-actions {
-    justify-content: flex-start;
+
+  .booking-two-cols {
+    grid-template-columns: 1fr;
   }
 }

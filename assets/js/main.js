@@ -23,6 +23,20 @@ function removeLocal(key) {
   localStorage.removeItem(key);
 }
 
+function setSessionValue(key, value) {
+  try { sessionStorage.setItem(key, JSON.stringify(value)); } catch (err) { console.warn("sessionStorage write error", err); }
+}
+
+function getSessionValue(key) {
+  try {
+    const value = sessionStorage.getItem(key);
+    return value ? JSON.parse(value) : null;
+  } catch (err) {
+    console.warn("sessionStorage read error", err);
+    return null;
+  }
+}
+
 function showMessage(message, type = "info") {
   const oldToast = document.querySelector(".app-toast");
   if (oldToast) oldToast.remove();
@@ -221,6 +235,8 @@ window.App = {
   saveLocal,
   getLocal,
   removeLocal,
+  setSessionValue,
+  getSessionValue,
   showMessage,
   formatDate,
   escapeHtml,

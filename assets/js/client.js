@@ -187,18 +187,15 @@ function renderClientServicesPreview() {
   }
 
   return `
-    <div class="card client-price-card">
+    <div class="card">
       <h2>Usluge i cene</h2>
-      <p class="muted">Pregled usluga salona. Za zakazivanje kliknite „Zakaži termin” i izaberite uslugu iz padajućeg menija.</p>
-      <div class="price-list">
+      <p class="muted">Izaberite uslugu ili kliknite „Zakaži termin”.</p>
+      <div class="service-list">
         ${services.map(service => `
-          <div class="price-row">
-            <div>
-              <strong>${escapeHtml(service.name)}</strong>
-              <span>${Number(service.duration_minutes || 0)} min</span>
-            </div>
+          <button class="service-select-card" type="button" onclick="selectServiceById('${service.id}')">
+            <div><strong>${escapeHtml(service.name)}</strong><span>${Number(service.duration_minutes || 0)} min</span></div>
             <b>${Number(service.price || 0).toLocaleString("sr-RS")} RSD</b>
-          </div>
+          </button>
         `).join("")}
       </div>
     </div>
@@ -236,7 +233,25 @@ function renderClientWorkingHours(hours) {
 function showServices() {
   const box = document.getElementById("client-extra");
   if (!box) return;
-  box.innerHTML = renderClientServicesPreview();
+
+  if (!services.length) {
+    box.innerHTML = `<div class="card"><h2>Usluge i cene</h2><p class="muted">Salon još nije dodao usluge.</p></div>`;
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="card">
+      <h2>Usluge i cene</h2>
+      <div class="service-list">
+        ${services.map(service => `
+          <button class="service-select-card" type="button" onclick="selectServiceById('${service.id}')">
+            <div><strong>${escapeHtml(service.name)}</strong><span>${Number(service.duration_minutes || 0)} min</span></div>
+            <b>${Number(service.price || 0).toLocaleString("sr-RS")} RSD</b>
+          </button>
+        `).join("")}
+      </div>
+    </div>
+  `;
   box.scrollIntoView({ behavior: "smooth" });
 }
 
@@ -263,50 +278,50 @@ function showBookingForm() {
   selectedTime = null;
 
   box.innerHTML = `
-    <div class="card booking-card">
+    <div class="card booking-card booking-paper-card">
       <h2>Zakaži termin</h2>
-      <div class="booking-step">
-        <span>1</span>
-        <div>
-          <h3>Izaberite uslugu</h3>
-          <p class="muted">U padajućem meniju su usluge, cene i trajanje.</p>
-        </div>
-      </div>
+      <p class="muted">Izaberite uslugu, datum i slobodno vreme.</p>
 
-      <label>Usluga</label>
-      <select id="booking-service" class="booking-service-select">
-        <option value="">Izaberi uslugu</option>
+      <label>Usluga i cena</label>
+      <select id="booking-service" class="booking-service-dropdown">
+        <option value="">Izaberite uslugu</option>
         ${services.map(service => `
           <option value="${service.id}" ${selectedService?.id === service.id ? "selected" : ""}>
             ${escapeHtml(service.name)} — ${Number(service.price || 0).toLocaleString("sr-RS")} RSD — ${Number(service.duration_minutes || 0)} min
           </option>
         `).join("")}
       </select>
-      <div id="booking-service-summary" class="service-summary muted">Izaberite uslugu da vidite cenu, trajanje i slobodne termine.</div>
+      <div id="selected-service-summary" class="selected-service-summary muted">Prvo izaberite uslugu.</div>
 
-      <div class="booking-step">
-        <span>2</span>
+      <div class="booking-two-cols">
         <div>
-          <h3>Izaberite datum i termin</h3>
+          <label>Datum</label>
+          <input id="booking-date" type="date" min="${today}" value="${today}">
+        </div>
+        <div>
+          <label>Izabrani termin</label>
+          <input id="selected-time-view" type="text" value="Još nije izabran" disabled>
         </div>
       </div>
-
-      <label>Datum</label>
-      <input id="booking-date" type="date" min="${today}" value="${today}">
 
       <label>Slobodni termini</label>
       <div id="time-slots" class="time-grid"><p class="muted">Izaberite uslugu i datum.</p></div>
 
-      <label>Ime i prezime</label>
-      <input id="client-name" type="text" placeholder="Ana Petrović">
-
-      <label>Telefon</label>
-      <input id="client-phone" type="tel" placeholder="060/123-456">
+      <div class="booking-two-cols">
+        <div>
+          <label>Ime i prezime</label>
+          <input id="client-name" type="text" placeholder="Ana Petrović">
+        </div>
+        <div>
+          <label>Telefon</label>
+          <input id="client-phone" type="tel" placeholder="060/123-456">
+        </div>
+      </div>
 
       <label>Napomena</label>
       <textarea id="client-note" rows="3" placeholder="Opcionalno"></textarea>
 
-      <button class="btn btn-primary" type="button" onclick="submitAppointment()">Pošalji zahtev</button>
+      <button class="btn btn-primary booking-submit-btn" type="button" onclick="submitAppointment()">Zakaži termin</button>
     </div>
   `;
 
@@ -323,20 +338,18 @@ async function handleBookingChange() {
   selectedTime = null;
   selectedService = services.find(s => String(s.id) === String(serviceId)) || null;
 
-  const summary = document.getElementById("booking-service-summary");
+  const summary = document.getElementById("selected-service-summary");
   if (!selectedService || !selectedDate) {
-    if (summary) summary.innerHTML = "Izaberite uslugu da vidite cenu, trajanje i slobodne termine.";
     document.getElementById("time-slots").innerHTML = `<p class="muted">Izaberite uslugu i datum.</p>`;
+    if (summary) summary.textContent = "Prvo izaberite uslugu.";
     return;
   }
 
   if (summary) {
-    summary.innerHTML = `
-      <strong>${escapeHtml(selectedService.name)}</strong>
-      <span>${Number(selectedService.price || 0).toLocaleString("sr-RS")} RSD</span>
-      <span>${Number(selectedService.duration_minutes || 0)} min</span>
-    `;
+    summary.innerHTML = `<strong>${escapeHtml(selectedService.name)}</strong> • ${Number(selectedService.price || 0).toLocaleString("sr-RS")} RSD • ${Number(selectedService.duration_minutes || 0)} min`;
   }
+  const timeView = document.getElementById("selected-time-view");
+  if (timeView) timeView.value = "Još nije izabran";
 
   await loadAvailableTimes();
 }
@@ -365,6 +378,8 @@ function selectTime(time, btn) {
   selectedTime = time;
   document.querySelectorAll(".time-slot").forEach(el => el.classList.remove("selected"));
   btn.classList.add("selected");
+  const timeView = document.getElementById("selected-time-view");
+  if (timeView) timeView.value = time;
 }
 
 async function submitAppointment() {
