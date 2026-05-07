@@ -1,6 +1,22 @@
 // assets/js/admin.js
 
 
+function adminEscapeHtml(value) {
+  return window.App?.escapeHtml ? window.App.escapeHtml(value) : String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function adminEscapeJs(value) {
+  return window.App?.escapeJs ? window.App.escapeJs(value) : String(value || "")
+    .replaceAll("\\", "\\\\")
+    .replaceAll("'", "\\'");
+}
+
+
 document.addEventListener("DOMContentLoaded", () => loadAdminPanel());
 
 async function loadAdminPanel() {
@@ -95,7 +111,17 @@ async function loadSalonsList() {
     return;
   }
 
-  list.innerHTML = `<div class="cards">${items.map(renderSalonCard).join("")}</div>`;
+  try {
+    list.innerHTML = `<div class="cards">${items.map(renderSalonCard).join("")}</div>`;
+  } catch (err) {
+    console.error("Admin render salon cards error:", err);
+    list.innerHTML = `
+      <div class="card">
+        <h3>Greška pri prikazu salona</h3>
+        <p class="error-text">Salon postoji u bazi, ali prikaz kartice je pukao. Uploaduj najnoviju verziju aplikacije.</p>
+      </div>
+    `;
+  }
 }
 
 function renderSalonCard(salon) {
@@ -107,22 +133,22 @@ function renderSalonCard(salon) {
     <div class="card salon-card">
       <div class="salon-card-head">
         <div>
-          <h3>${escapeHtml(salon.salon_name)}</h3>
-          <p class="muted">${escapeHtml(salon.owner_email)} | ${escapeHtml(salon.company_code)}</p>
+          <h3>${adminEscapeHtml(salon.salon_name)}</h3>
+          <p class="muted">${adminEscapeHtml(salon.owner_email)} | ${adminEscapeHtml(salon.company_code)}</p>
         </div>
         <span class="status-pill ${statusClass}">${salon.status === "active" ? "Aktivan" : "Blokiran"}</span>
       </div>
       <div class="info-grid">
-        <div><span>Slug</span><strong>${escapeHtml(salon.slug)}</strong></div>
+        <div><span>Slug</span><strong>${adminEscapeHtml(salon.slug)}</strong></div>
         <div><span>Uplaćeno od</span><strong>${salon.paid_from ? window.App.formatDate(salon.paid_from) : "—"}</strong></div>
         <div><span>Uplaćeno do</span><strong>${salon.paid_until ? window.App.formatDate(salon.paid_until) : "—"}</strong></div>
-        <div><span>Cena</span><strong>${Number(salon.monthly_price || 9.99).toFixed(2)} ${escapeHtml(salon.currency || "EUR")}</strong></div>
+        <div><span>Cena</span><strong>${Number(salon.monthly_price || 9.99).toFixed(2)} ${adminEscapeHtml(salon.currency || "EUR")}</strong></div>
       </div>
       ${expired ? `<div class="warning-box">Uplata je istekla — salon se ne blokira automatski.</div>` : ""}
       <div class="link-box"><small>Link salona:</small><input readonly value="${salonLink}"></div>
       <div class="card-actions">
         <button class="btn btn-dark" type="button" onclick="copySalonLink('${salon.slug}')">Kopiraj link</button>
-        <button class="btn btn-dark" type="button" onclick="showQrForSalon('${salon.slug}', '${escapeJs(salon.salon_name)}')">QR kod</button>
+        <button class="btn btn-dark" type="button" onclick="showQrForSalon('${salon.slug}', '${adminEscapeJs(salon.salon_name)}')">QR kod</button>
         <button class="btn btn-dark" type="button" onclick="extendPayment('${salon.id}', '${salon.paid_until || ""}')">Produži uplatu</button>
         <button class="btn ${salon.status === "active" ? "btn-warning" : "btn-success"}" type="button" onclick="toggleSalonStatus('${salon.id}', '${salon.status}')">${salon.status === "active" ? "Blokiraj" : "Aktiviraj"}</button>
         <button class="btn btn-danger" type="button" onclick="deleteSalon('${salon.id}')">Obriši</button>
@@ -255,7 +281,7 @@ function showQrForSalon(slug, salonName) {
   modal.innerHTML = `
     <div class="modal-card">
       <h2>QR kod</h2>
-      <p class="muted">${escapeHtml(salonName)}</p>
+      <p class="muted">${adminEscapeHtml(salonName)}</p>
       <img class="qr-img" src="${qrUrl}" alt="QR kod za salon">
       <div class="link-box"><input readonly value="${link}"></div>
       <button class="btn btn-primary" type="button" onclick="copySalonLink('${slug}')">Kopiraj link</button>
