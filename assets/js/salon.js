@@ -3,6 +3,7 @@
 let currentSalon = null;
 let currentSalonId = null;
 let currentSection = "appointments";
+let appointmentCache = [];
 const salonEscapeHtml = (value) => window.App.escapeHtml(value);
 const salonEscapeJs = (value) => window.App.escapeJs(value);
 
@@ -170,6 +171,7 @@ async function renderAppointments() {
   }
 
   const items = appointments || [];
+  appointmentCache = items;
   content.innerHTML = `
     <div class="section-head paper-section-head">
       <div>
@@ -249,8 +251,8 @@ function renderAppointmentRow(a) {
       <td>${name}</td>
       <td><a href="tel:${phone}" class="phone-link">${phone}</a></td>
       <td>${price}</td>
-      <td><span class="status-pill ${salonEscapeHtml(a.status)}">${getAppointmentStatusLabel(a.status)}</span></td>
-      <td><div class="paper-row-actions">${renderAppointmentActionButtons(a)}</div></td>
+      <td>${renderAppointmentStatusSelect(a)}</td>
+      <td><div class="paper-row-actions compact-actions">${renderAppointmentActionButtons(a)}</div></td>
     </tr>
   `;
 }
@@ -265,7 +267,7 @@ function renderAppointmentMobileRow(a) {
     <div class="paper-mobile-item">
       <div class="paper-mobile-top">
         <div><strong>${time}</strong><span>${date}</span></div>
-        <span class="status-pill ${salonEscapeHtml(a.status)}">${getAppointmentStatusLabel(a.status)}</span>
+        ${renderAppointmentStatusSelect(a)}
       </div>
       <div class="paper-mobile-main">
         <b>${service}</b>
@@ -277,19 +279,107 @@ function renderAppointmentMobileRow(a) {
   `;
 }
 
+function renderAppointmentStatusSelect(a) {
+  const id = salonEscapeHtml(a.id);
+  const status = salonEscapeHtml(a.status || "new");
+  return `
+    <select class="status-select ${status}" onchange="handleAppointmentStatusChange('${id}', this.value)">
+      <option value="new" ${a.status === "new" ? "selected" : ""}>Novo</option>
+      <option value="confirmed" ${a.status === "confirmed" ? "selected" : ""}>Potvrđeno</option>
+      <option value="done" ${a.status === "done" ? "selected" : ""}>Završeno</option>
+      <option value="cancelled" ${a.status === "cancelled" ? "selected" : ""}>Otkazano</option>
+    </select>
+  `;
+}
+
 function renderAppointmentActionButtons(a) {
   const id = salonEscapeHtml(a.id);
-  const buttons = [];
-  if (a.status === "new") {
-    buttons.push(`<button class="btn btn-success btn-paper" type="button" onclick="updateAppointmentStatus('${id}', 'confirmed')">Potvrdi</button>`);
+  const safePhone = normalizePhoneForTel(a.client_phone || "");
+  return `
+    <button class="btn btn-success btn-paper" type="button" onclick="openClientMessage('${id}', 'confirmed')">Poruka</button>
+    <a class="btn btn-dark btn-paper" href="tel:${safePhone}">Pozovi</a>
+    <button class="btn btn-danger btn-paper" type="button" onclick="deleteAppointment('${id}')">Obriši</button>
+  `;
+}
+
+async function handleAppointmentStatusChange(id, status) {
+  // Browseri ne dozvoljavaju da web app sama pošalje poruku.
+  // Zato odmah na klik vlasnika otvaramo WhatsApp sa gotovom porukom;
+  // vlasnik samo pritisne Send/Pošalji.
+  if (status === "confirmed") {
+    openClientMessage(id, "confirmed");
   }
-  if (a.status === "new" || a.status === "confirmed") {
-    buttons.push(`<button class="btn btn-primary btn-paper" type="button" onclick="updateAppointmentStatus('${id}', 'done')">Završeno</button>`);
-    buttons.push(`<button class="btn btn-warning btn-paper" type="button" onclick="updateAppointmentStatus('${id}', 'no_show')">Nije došao/la</button>`);
-    buttons.push(`<button class="btn btn-danger btn-paper" type="button" onclick="updateAppointmentStatus('${id}', 'cancelled')">Otkaži</button>`);
+  if (status === "cancelled") {
+    openClientMessage(id, "cancelled");
   }
-  buttons.push(`<button class="btn btn-dark btn-paper" type="button" onclick="deleteAppointment('${id}')">Obriši</button>`);
-  return buttons.join("");
+
+  await updateAppointmentStatus(id, status, false);
+}
+
+function getAppointmentById(id) {
+  return appointmentCache.find(item => String(item.id) === String(id)) || null;
+}
+
+function buildClientMessage(appointment, type = "confirmed") {
+  const salonName = currentSalon?.salon_name || "salon";
+  const clientName = appointment.client_name || "";
+  const service = appointment.service_name_snapshot || "usluga";
+  const date = window.App.formatDate(appointment.appointment_date);
+  const time = String(appointment.appointment_time || "").slice(0, 5);
+
+  if (type === "cancelled") {
+    return `Poštovani/a ${clientName},
+
+vaš termin u salonu ${salonName} za ${date} u ${time} je otkazan.
+
+Usluga: ${service}
+
+Molimo zakažite novi termin ili kontaktirajte salon.
+${salonName}`;
+  }
+
+  return `Poštovani/a ${clientName},
+
+vaš termin u salonu ${salonName} je potvrđen.
+
+Usluga: ${service}
+Datum: ${date}
+Vreme: ${time}
+
+Vidimo se.
+${salonName}`;
+}
+
+function openClientMessage(id, type = "confirmed") {
+  const appointment = getAppointmentById(id);
+  if (!appointment) {
+    window.App.showMessage("Termin nije pronađen.", "error");
+    return;
+  }
+
+  const phone = normalizePhoneForWhatsApp(appointment.client_phone || "");
+  if (!phone) {
+    window.App.showMessage("Broj telefona nije ispravan.", "error");
+    return;
+  }
+
+  const text = buildClientMessage(appointment, type);
+  const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+  window.open(url, "_blank");
+}
+
+function normalizePhoneForTel(phone) {
+  const digits = String(phone || "").replace(/[^0-9+]/g, "");
+  return digits || "";
+}
+
+function normalizePhoneForWhatsApp(phone) {
+  let digits = String(phone || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("00")) digits = digits.slice(2);
+  if (digits.startsWith("0")) digits = "381" + digits.slice(1);
+  if (!digits.startsWith("381") && digits.length <= 9) digits = "381" + digits;
+  return digits;
 }
 
 function changeAppointmentFilter() {
@@ -306,7 +396,7 @@ function changeAppointmentDateFilter() {
   renderAppointments();
 }
 
-async function updateAppointmentStatus(id, status) {
+async function updateAppointmentStatus(id, status, notifyClient = false) {
   const updateData = { status };
   if (status === "confirmed") updateData.confirmed_at = new Date().toISOString();
   if (status === "cancelled") updateData.cancelled_at = new Date().toISOString();
@@ -319,8 +409,14 @@ async function updateAppointmentStatus(id, status) {
     return;
   }
 
+  if (status === "confirmed") window.App.showMessage("Termin je potvrđen. Otvara se gotova WhatsApp poruka.", "success");
   if (status === "done") window.App.showMessage("Termin je završen i više ne zauzima slobodan termin.", "success");
   if (status === "cancelled" || status === "no_show") window.App.showMessage("Termin je sklonjen iz aktivnih termina.", "success");
+
+  if (notifyClient) {
+    openClientMessage(id, status === "cancelled" ? "cancelled" : "confirmed");
+  }
+
   await renderAppointments();
 }
 

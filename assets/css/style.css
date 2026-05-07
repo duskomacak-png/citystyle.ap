@@ -243,3 +243,60 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Compact appointment status dropdown + prepared client message actions */
+.status-select {
+  width: auto;
+  min-width: 126px;
+  padding: 7px 28px 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  border: 1px solid var(--line);
+  background: #111118;
+  color: #ffffff;
+}
+
+.status-select.new {
+  border-color: rgba(202, 138, 4, 0.35);
+  background: rgba(202, 138, 4, 0.12);
+  color: #fde68a;
+}
+
+.status-select.confirmed {
+  border-color: rgba(22, 163, 74, 0.35);
+  background: rgba(22, 163, 74, 0.14);
+  color: #86efac;
+}
+
+.status-select.done {
+  border-color: rgba(59, 130, 246, 0.35);
+  background: rgba(59, 130, 246, 0.14);
+  color: #bfdbfe;
+}
+
+.status-select.cancelled,
+.status-select.no_show {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.14);
+  color: #fca5a5;
+}
+
+.compact-actions {
+  gap: 5px;
+}
+
+.compact-actions .btn-paper,
+.paper-row-actions .btn-paper {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 760px) {
+  .status-select {
+    width: 100%;
+    min-width: 0;
+  }
+}
