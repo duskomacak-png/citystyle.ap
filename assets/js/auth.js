@@ -20,7 +20,7 @@ async function adminLogin(email, password) {
   }
 
   if (cleanEmail !== window.APP_CONFIG.platformAdminEmail) {
-    window.App.showMessage("Samo glavni admin može da pristupi.", "error");
+    window.App.showMessage("Samo glavni administrator može da pristupi.", "error");
     return null;
   }
 
@@ -36,7 +36,7 @@ async function adminLogin(email, password) {
 
   if (data?.user?.email !== window.APP_CONFIG.platformAdminEmail) {
     await window.db.auth.signOut();
-    window.App.showMessage("Ovaj nalog nema admin pristup.", "error");
+    window.App.showMessage("Ovaj nalog nema administratorski pristup.", "error");
     return null;
   }
 
@@ -45,7 +45,7 @@ async function adminLogin(email, password) {
 
 async function adminLogout() {
   await window.db.auth.signOut();
-  window.App.showMessage("Admin je odjavljen.", "info");
+  window.App.showMessage("Administrator je odjavljen.", "info");
 }
 
 async function salonLogin(email, code) {

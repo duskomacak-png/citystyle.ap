@@ -52,8 +52,8 @@ async function loadSalon(slug, saveThisSalon = true) {
     app.innerHTML = `
       <div class="card center">
         <h2>Online zakazivanje trenutno nije dostupno</h2>
-        <p class="muted">Salon nije pronađen ili je trenutno blokiran.</p>
-        <button class="btn btn-dark" type="button" onclick="renderPlatformLanding()">Početna platforme</button>
+        <p class="muted">Online zakazivanje trenutno nije dostupno za ovaj salon.</p>
+        <button class="btn btn-dark" type="button" onclick="renderPlatformLanding()">Početna strana platforme</button>
       </div>
     `;
     return;
@@ -82,8 +82,7 @@ function renderPlatformLanding() {
           <strong>CITYSTYLE<span>.APP</span></strong>
         </div>
         <div class="landing-actions">
-          <a class="btn btn-dark" href="salon/">Ulaz za salon</a>
-          <a class="btn btn-primary subtle-admin-link" href="admin/">Admin</a>
+          <a class="btn btn-primary subtle-admin-link" href="admin/">Admin panel</a>
         </div>
       </header>
 
@@ -91,20 +90,20 @@ function renderPlatformLanding() {
         <span class="eyebrow">Platforma za frizerske i beauty salone</span>
         <h1>Šta je CityStyle.app?</h1>
         <p>
-          CityStyle.app je online prostor za frizerske i beauty salone. Svaki salon na platformi dobija svoj digitalni profil, svoj QR kod i svoj link za zakazivanje termina.
+          CityStyle.app je online platforma za frizerske, kozmetičke i beauty salone. Svaki salon dobija svoj digitalni profil, jedinstveni QR kod i link preko kog klijenti mogu jednostavno zakazati termin.
         </p>
         <p>
-          Klijent ne traži salon ručno. Poseti svoj salon, skenira QR kod i otvara se baš stranica tog salona. Tu vidi usluge, cene, radno vreme i može da pošalje zahtev za termin.
+          Ako ste klijent, posetite svoj salon i skenirajte njihov QR kod. QR kod vas vodi direktno na stranicu tog salona, gde možete izabrati uslugu, datum i slobodan termin.
         </p>
         <p>
-          Vlasnik salona preko svog panela uređuje usluge, cene, radno vreme, logo i prati termine. Glavni admin dodaje salone, pravi QR linkove, prati uplate i može ručno aktivirati ili blokirati salon.
+          Ako ste vlasnik salona, preko svog panela možete uređivati usluge, cene, radno vreme, logo i pratiti sve zakazane termine.
         </p>
         <div class="hero-buttons simple-buttons">
-          <a class="btn btn-primary" href="salon/">Ulaz za vlasnike salona</a>
+          <a class="btn btn-primary" href="salon/">Ulaz za salon</a>
           <button class="btn btn-dark" type="button" onclick="window.App.installApp()">Preuzmi CityStyle app</button>
         </div>
         <p class="muted small-note">
-          Za zakazivanje termina koristite QR kod koji ste dobili od svog salona.
+          Za zakazivanje termina koristite QR kod koji ste dobili u svom salonu.
         </p>
       </section>
     </section>
@@ -157,10 +156,10 @@ async function renderSalonHome() {
 
         <h1>${escapeHtml(currentSalon.salon_name)}</h1>
         ${settings?.welcome_title ? `<h2 class="welcome-title">${escapeHtml(settings.welcome_title)}</h2>` : ""}
-        <p class="intro-text">${escapeHtml(settings?.welcome_text || "Zakažite svoj termin brzo i jednostavno.")}</p>
+        <p class="intro-text">${escapeHtml(settings?.welcome_text || "Dobrodošli. Izaberite uslugu, datum i slobodan termin.")}</p>
 
         <div class="client-actions">
-          <button class="btn btn-primary" type="button" onclick="showBookingForm()">Zakaži termin</button>
+          <button class="btn btn-primary" type="button" onclick="showBookingForm()">Pošalji zahtev za termin</button>
           <button class="btn btn-dark" type="button" onclick="showServices()">Usluge i cene</button>
           <button class="btn btn-dark" type="button" onclick="window.App.installSalonApp(currentSalon.slug)">Preuzmi app ovog salona</button>
         </div>
@@ -181,7 +180,7 @@ function renderClientServicesPreview() {
     return `
       <div class="card center">
         <h2>Usluge i cene</h2>
-        <p class="muted">Salon još nije dodao usluge.</p>
+        <p class="muted">Salon trenutno nema dostupne usluge za online zakazivanje.</p>
       </div>
     `;
   }
@@ -189,7 +188,7 @@ function renderClientServicesPreview() {
   return `
     <div class="card">
       <h2>Usluge i cene</h2>
-      <p class="muted">Izaberite uslugu ili kliknite „Zakaži termin”.</p>
+      <p class="muted">Izaberite uslugu za zakazivanje termina.</p>
       <div class="service-list">
         ${services.map(service => `
           <button class="service-select-card" type="button" onclick="selectServiceById('${service.id}')">
@@ -235,7 +234,7 @@ function showServices() {
   if (!box) return;
 
   if (!services.length) {
-    box.innerHTML = `<div class="card"><h2>Usluge i cene</h2><p class="muted">Salon još nije dodao usluge.</p></div>`;
+    box.innerHTML = `<div class="card"><h2>Usluge i cene</h2><p class="muted">Salon trenutno nema dostupne usluge za online zakazivanje.</p></div>`;
     return;
   }
 
@@ -269,7 +268,7 @@ function showBookingForm() {
   if (!box) return;
 
   if (!services.length) {
-    box.innerHTML = `<div class="card"><h2>Zakazivanje nije dostupno</h2><p class="muted">Salon još nije dodao usluge.</p></div>`;
+    box.innerHTML = `<div class="card"><h2>Zakazivanje nije dostupno</h2><p class="muted">Salon trenutno nema dostupne usluge za online zakazivanje.</p></div>`;
     return;
   }
 
@@ -279,8 +278,8 @@ function showBookingForm() {
 
   box.innerHTML = `
     <div class="card booking-card booking-paper-card">
-      <h2>Zakaži termin</h2>
-      <p class="muted">Izaberite uslugu, datum i slobodno vreme.</p>
+      <h2>Zakažite termin</h2>
+      <p class="muted">Izaberite uslugu, datum i slobodan termin.</p>
 
       <label>Usluga i cena</label>
       <select id="booking-service" class="booking-service-dropdown">
@@ -313,7 +312,7 @@ function showBookingForm() {
           <input id="client-name" type="text" placeholder="Ana Petrović">
         </div>
         <div>
-          <label>Telefon</label>
+          <label>Broj telefona</label>
           <input id="client-phone" type="tel" placeholder="060/123-456">
         </div>
       </div>
@@ -321,7 +320,7 @@ function showBookingForm() {
       <label>Napomena</label>
       <textarea id="client-note" rows="3" placeholder="Opcionalno"></textarea>
 
-      <button class="btn btn-primary booking-submit-btn" type="button" onclick="submitAppointment()">Zakaži termin</button>
+      <button class="btn btn-primary booking-submit-btn" type="button" onclick="submitAppointment()">Pošalji zahtev za termin</button>
     </div>
   `;
 
@@ -429,8 +428,8 @@ async function submitAppointment() {
 
   document.getElementById("booking-box").innerHTML = `
     <div class="card center">
-      <h2>Zahtev je poslat ✅</h2>
-      <p class="muted">Salon će potvrditi vaš termin.</p>
+      <h2>Zahtev za termin je poslat ✅</h2>
+      <p class="muted">Salon će vas kontaktirati radi potvrde termina.</p>
       <p><strong>${escapeHtml(selectedService.name)}</strong></p>
       <p>${window.App.formatDate(selectedDate)} u ${selectedTime}</p>
     </div>

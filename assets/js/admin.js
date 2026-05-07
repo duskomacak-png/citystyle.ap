@@ -36,8 +36,8 @@ async function loadAdminPanel() {
 function renderAdminLogin() {
   document.getElementById("admin-content").innerHTML = `
     <div class="card login-card">
-      <h2>Admin login</h2>
-      <p class="muted">Pristup ima samo duskomacak@gmail.com.</p>
+      <h2>Prijava administratora</h2>
+      <p class="muted">Pristup administratorskom panelu ima samo ovlašćeni nalog.</p>
       <label>Email</label>
       <input id="admin-email" type="email" placeholder="duskomacak@gmail.com">
       <label>Lozinka</label>
@@ -66,10 +66,10 @@ function renderAdminDashboard() {
     <div class="admin-toolbar">
       <div>
         <h2>Saloni</h2>
-        <p class="muted">Dodavanje salona, QR linkovi, statusi i uplate.</p>
+        <p class="muted">Upravljanje salonima, statusima, uplatama i QR linkovima.</p>
       </div>
       <div class="toolbar-actions">
-        <button class="btn btn-primary" type="button" onclick="showAddSalonForm()">+ Dodaj salon</button>
+        <button class="btn btn-primary" type="button" onclick="showAddSalonForm()">Dodaj salon</button>
         <button class="btn btn-dark" type="button" onclick="handleAdminLogout()">Odjavi se</button>
       </div>
     </div>
@@ -100,14 +100,14 @@ async function loadSalonsList() {
   const expiredCount = items.filter(s => isPaymentExpired(s.paid_until)).length;
 
   stats.innerHTML = `
-    <div class="stat-card"><span>Ukupno</span><strong>${items.length}</strong></div>
+    <div class="stat-card"><span>Ukupno salona</span><strong>${items.length}</strong></div>
     <div class="stat-card"><span>Aktivni</span><strong>${activeCount}</strong></div>
     <div class="stat-card"><span>Blokirani</span><strong>${blockedCount}</strong></div>
     <div class="stat-card danger"><span>Uplata istekla</span><strong>${expiredCount}</strong></div>
   `;
 
   if (!items.length) {
-    list.innerHTML = `<div class="card center"><h3>Nema salona</h3><p class="muted">Dodaj prvi salon.</p></div>`;
+    list.innerHTML = `<div class="card center"><h3>Nema dodatih salona</h3><p class="muted">Dodajte prvi salon kako biste generisali njegov link i QR kod.</p></div>`;
     return;
   }
 
@@ -144,7 +144,7 @@ function renderSalonCard(salon) {
         <div><span>Uplaćeno do</span><strong>${salon.paid_until ? window.App.formatDate(salon.paid_until) : "—"}</strong></div>
         <div><span>Cena</span><strong>${Number(salon.monthly_price || 9.99).toFixed(2)} ${adminEscapeHtml(salon.currency || "EUR")}</strong></div>
       </div>
-      ${expired ? `<div class="warning-box">Uplata je istekla — salon se ne blokira automatski.</div>` : ""}
+      ${expired ? `<div class="warning-box">Uplata je istekla. Salon ostaje aktivan dok ga administrator ručno ne blokira.</div>` : ""}
       <div class="link-box"><small>Link salona:</small><input readonly value="${salonLink}"></div>
       <div class="card-actions">
         <button class="btn btn-dark" type="button" onclick="copySalonLink('${salon.slug}')">Kopiraj link</button>
@@ -247,17 +247,17 @@ async function extendPayment(id, currentPaidUntil) {
 
 async function toggleSalonStatus(id, currentStatus) {
   const newStatus = currentStatus === "active" ? "blocked" : "active";
-  if (!confirm(newStatus === "blocked" ? "Blokirati salon?" : "Aktivirati salon?")) return;
+  if (!confirm(newStatus === "blocked" ? "Da li želite da blokirate ovaj salon?" : "Da li želite da aktivirate ovaj salon?")) return;
   const { error } = await window.db.from("salons").update({ status: newStatus }).eq("id", id);
   if (error) {
-    window.App.showMessage("Greška pri promeni statusa.", "error");
+    window.App.showMessage("Greška pri promeni statusa salona.", "error");
     return;
   }
   await loadSalonsList();
 }
 
 async function deleteSalon(id) {
-  if (!confirm("Skloniti salon? Ovo je soft-delete.")) return;
+  if (!confirm("Da li želite da sklonite ovaj salon iz aktivne liste?")) return;
   const { error } = await window.db.from("salons").update({ is_deleted: true, status: "deleted" }).eq("id", id);
   if (error) {
     window.App.showMessage("Greška pri brisanju salona.", "error");
