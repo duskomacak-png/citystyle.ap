@@ -20,6 +20,9 @@ const salonDays = [
 document.addEventListener("DOMContentLoaded", () => initSalonPanel());
 
 async function initSalonPanel() {
+  // Owner panel must not behave like a client-installed salon shortcut.
+  // This prevents the owner app shortcut from reopening the public client profile.
+  window.App?.clearSavedSalon?.();
   bindSalonTabs();
   bindSalonLogout();
 
@@ -66,6 +69,7 @@ function renderSalonLogin() {
 }
 
 async function handleSalonLogin() {
+  window.App?.clearSavedSalon?.();
   const email = document.getElementById("salon-login-email").value.trim().toLowerCase();
   const code = document.getElementById("salon-login-code").value.trim();
   const salon = await window.Auth.salonLogin(email, code);
@@ -614,9 +618,16 @@ async function saveWorkingHours() {
 
 async function renderSalonSettings() {
   const salonLink = window.App.getSalonPublicLink(currentSalon.slug);
+  const previewLink = `${salonLink}${salonLink.includes("?") ? "&" : "?"}ownerPreview=1`;
   const qrUrl = window.App.getQrImageUrl(salonLink, 260);
   document.getElementById("salon-content").innerHTML = `
-    <div class="section-head"><div><h2>Podešavanja salona</h2><p class="muted">Uredite osnovne podatke koje korisnici vide na javnoj stranici profila.</p></div></div>
+    <div class="section-head">
+      <div>
+        <h2>Podešavanje profila</h2>
+        <p class="muted">Uredite podatke koje korisnici vide na javnoj stranici profila.</p>
+      </div>
+      <a class="btn btn-primary" href="${previewLink}">Pogledaj javnu stranicu</a>
+    </div>
     <div class="card center">
       <h3>QR kod profila</h3>
       <p class="muted">Ovaj QR kod vodi korisnike direktno na javnu stranicu vašeg profila. Svaki salon ima svoj jedinstveni link i QR kod.</p>
@@ -624,7 +635,7 @@ async function renderSalonSettings() {
       <div class="link-box"><small>Link za klijente:</small><input readonly value="${salonLink}"></div>
       <div class="card-actions" style="justify-content:center">
         <button class="btn btn-primary" type="button" onclick="copyMySalonLink()">Kopiraj link</button>
-        <a class="btn btn-dark" href="${salonLink}" target="_blank" rel="noopener">Otvori stranicu salona</a>
+        <a class="btn btn-dark" href="${previewLink}">Pogledaj javnu stranicu</a>
       </div>
     </div>
     <div class="card"><h3>Logo profila</h3><p class="muted">Ovde postavljate logo koji će se prikazati na javnoj stranici ispod QR linka/profila.</p><input type="file" id="logo-upload" accept="image/png,image/jpeg,image/webp"><button class="btn btn-primary" type="button" onclick="uploadLogo()">Postavi / promeni logo</button><div id="current-logo" class="image-preview-box"></div></div>
@@ -642,7 +653,10 @@ async function renderSalonSettings() {
       <label>Adresa / lokacija</label>
       <input id="salon-address" type="text" placeholder="Adresa ili mesto poslovanja">
       <div class="settings-preview" id="settings-public-preview"></div>
-      <button class="btn btn-primary" type="button" onclick="saveSettings()">Sačuvaj podešavanja</button>
+      <div class="card-actions settings-main-actions">
+        <button class="btn btn-primary" type="button" onclick="saveSettings()">Sačuvaj podešavanja</button>
+        <button class="btn btn-dark" type="button" onclick="saveSettingsAndPreview()">Sačuvaj i pogledaj javnu stranicu</button>
+      </div>
     </div>
   `;
   await loadCurrentSettings();
@@ -697,6 +711,14 @@ async function saveSettings() {
   if (error) return window.App.showMessage("Greška pri čuvanju podešavanja.", "error");
   await loadCurrentSettings();
   window.App.showMessage("Podešavanja su sačuvana. Javni naziv, tekst, telefon i adresa sada se prikazuju na javnoj stranici profila.", "success");
+}
+
+async function saveSettingsAndPreview() {
+  await saveSettings();
+  if (!currentSalon?.slug) return;
+  const salonLink = window.App.getSalonPublicLink(currentSalon.slug);
+  const previewLink = `${salonLink}${salonLink.includes("?") ? "&" : "?"}ownerPreview=1`;
+  window.location.href = previewLink;
 }
 
 async function uploadLogo() {

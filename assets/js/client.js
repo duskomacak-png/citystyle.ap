@@ -5,6 +5,7 @@ let services = [];
 let selectedService = null;
 let selectedDate = null;
 let selectedTime = null;
+let ownerPreviewMode = false;
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -17,11 +18,13 @@ async function loadClientApp() {
   try {
     const urlSlug = window.App?.getUrlParam("salon");
     const forcePlatform = window.App?.getUrlParam("platform") === "1" || window.App?.getUrlParam("home") === "1";
+    ownerPreviewMode = window.App?.getUrlParam("ownerPreview") === "1" || window.App?.getUrlParam("preview") === "owner";
 
     // QR/link salon page: ?salon=slug
+    // If the owner opens public preview from /salon/, do NOT save this as client shortcut.
     if (urlSlug) {
       app.innerHTML = `<div class="loading-box">Učitavanje profila...</div>`;
-      await loadSalon(urlSlug, true);
+      await loadSalon(urlSlug, !ownerPreviewMode);
       return;
     }
 
@@ -161,6 +164,15 @@ async function renderSalonHome() {
 
   app.innerHTML = `
     <section class="client-page">
+      ${ownerPreviewMode ? `
+        <div class="owner-preview-bar">
+          <div>
+            <strong>Pregled javne stranice</strong>
+            <span>Ovako korisnik vidi vaš profil.</span>
+          </div>
+          <a class="btn btn-primary" href="${window.App.getAppPath('salon/')}">Nazad u panel vlasnika</a>
+        </div>
+      ` : ""}
       <div class="hero-card salon-header">
         ${settings?.logo_url ? `
           <img src="${escapeHtml(settings.logo_url)}" alt="${escapeHtml(publicName)} logo" class="salon-logo">
@@ -182,7 +194,7 @@ async function renderSalonHome() {
         <div class="client-actions">
           <button class="btn btn-primary" type="button" onclick="showBookingForm()">Pošalji zahtev</button>
           <button class="btn btn-dark" type="button" onclick="showServices()">Usluge / ponuda</button>
-          <button class="btn btn-dark" type="button" onclick="window.App.installSalonApp(currentSalon.slug)">Preuzmi app ovog profila</button>
+          ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="window.App.installSalonApp(currentSalon.slug)">Preuzmi app ovog profila</button>`}
         </div>
       </div>
 
