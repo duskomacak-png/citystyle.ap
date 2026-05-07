@@ -343,7 +343,7 @@ function showBookingForm() {
 
       <label>Broj telefona / WhatsApp</label>
       <input id="client-phone" type="tel" inputmode="tel" placeholder="64 123 4567">
-      <p class="field-help">Izaberite državu i unesite lokalni broj. Ako krenete sa nulom, aplikacija je automatski uklanja prema izabranoj državi. Ako unesete broj sa +, koristi se direktno.</p>
+      <p class="field-help">Izaberite državu i unesite lokalni broj. Možete uneti broj sa nulom ili bez nule. Aplikacija će ga sačuvati u ispravnom WhatsApp formatu prema izabranoj državi. Ako unesete broj sa +, koristi se direktno.</p>
 
       <label>Napomena</label>
       <textarea id="client-note" rows="3" placeholder="Opcionalno"></textarea>
@@ -422,43 +422,25 @@ function setupPhoneCountryAutoZero() {
   if (!countrySelect || !phoneInput) return;
 
   const placeholderMap = {
-    "381": "64 123 4567",
-    "387": "61 123 456",
-    "385": "91 123 4567",
-    "382": "67 123 456",
-    "386": "40 123 456",
-    "389": "70 123 456",
+    "381": "064 123 4567 ili 64 123 4567",
+    "387": "061 123 456 ili 61 123 456",
+    "385": "091 123 4567 ili 91 123 4567",
+    "382": "067 123 456 ili 67 123 456",
+    "386": "040 123 456 ili 40 123 456",
+    "389": "070 123 456 ili 70 123 456",
     "49": "151 12345678",
     "43": "660 1234567"
   };
 
   function updatePlaceholder() {
     const countryCode = countrySelect.value || "381";
-    phoneInput.placeholder = placeholderMap[countryCode] || "64 123 4567";
+    phoneInput.placeholder = placeholderMap[countryCode] || "064 123 4567 ili 64 123 4567";
   }
 
-  function removeLocalLeadingZero() {
-    const raw = phoneInput.value || "";
-    const leftSpaces = raw.match(/^\s*/)?.[0] || "";
-    const value = raw.slice(leftSpaces.length);
-
-    // Ako korisnik unese međunarodni format, ne diramo broj.
-    if (!value || value.startsWith("+") || value.startsWith("00")) return;
-
-    const cleaned = value.replace(/^0+/, "");
-
-    if (cleaned !== value) {
-      phoneInput.value = leftSpaces + cleaned;
-      phoneInput.setSelectionRange(phoneInput.value.length, phoneInput.value.length);
-    }
-  }
-
+  // Namerno ne brišemo nulu dok korisnik kuca.
+  // Korisnik može uneti 064... ili 64..., a submit funkcija čuva ispravan WhatsApp format.
   updatePlaceholder();
-  phoneInput.addEventListener("input", removeLocalLeadingZero);
-  countrySelect.addEventListener("change", () => {
-    updatePlaceholder();
-    removeLocalLeadingZero();
-  });
+  countrySelect.addEventListener("change", updatePlaceholder);
 }
 
 function normalizeClientPhoneForStorage(phone, countryCode = "381") {
