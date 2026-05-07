@@ -48,15 +48,15 @@ function bindSalonLogout() {
 }
 
 function renderSalonLogin() {
-  document.getElementById("salon-name").textContent = "Biznis panel";
+  document.getElementById("salon-name").textContent = "Panel vlasnika biznisa";
   document.getElementById("salon-status-text").textContent = "Unesite email adresu biznisa i kod firme koji vam je dodelio administrator.";
   document.getElementById("salon-tabs").classList.add("hidden");
   document.getElementById("salon-logout-btn").classList.add("hidden");
   document.getElementById("salon-content").innerHTML = `
     <div class="card login-card">
-      <h2>Ulaz za biznis</h2>
+      <h2>Ulaz za vlasnika biznisa</h2>
       <p class="muted">Unesite email adresu biznisa i kod firme koji vam je dodelio administrator.</p>
-      <label>Email biznisa</label>
+      <label>Email vlasnika / biznisa</label>
       <input id="salon-login-email" type="email" placeholder="salon@email.com">
       <label>Kod firme</label>
       <input id="salon-login-code" type="text" placeholder="CS-1001">
@@ -112,7 +112,7 @@ function renderBlockedSalon(salon) {
 }
 
 function renderSalonDashboard() {
-  document.getElementById("salon-name").textContent = currentSalon.salon_name || "Biznis panel";
+  document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
   const expired = isPaymentExpired(currentSalon.paid_until);
   document.getElementById("salon-status-text").innerHTML = expired
     ? `Aktivan profil • <span class="danger-text">Uplata istekla</span>`

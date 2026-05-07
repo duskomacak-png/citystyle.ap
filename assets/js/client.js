@@ -87,23 +87,26 @@ function renderPlatformLanding() {
       </header>
 
       <section class="platform-text-card">
-        <span class="eyebrow">Platforma za lakši kontakt između biznisa i korisnika</span>
+        <span class="eyebrow">Platforma za prijave termina, kvarova, upita i zahteva preko QR koda</span>
         <h1>Šta je CityStyle.app?</h1>
         <p>
-          CityStyle.app je online platforma koja pomaže salonima, majstorima, servisima i manjim firmama da lakše stupe u kontakt sa svojim korisnicima preko QR koda.
+          CityStyle.app je online platforma koja pomaže salonima, majstorima, servisima i manjim firmama da lakše primaju prijave i zahteve svojih korisnika.
         </p>
         <p>
-          Svaki biznis dobija svoj digitalni profil, jedinstveni QR kod i link. Korisnik skenira QR kod i direktno otvara stranicu tog biznisa, gde može zakazati termin, poslati upit ili prijaviti problem.
+          Svaki biznis dobija svoj digitalni profil, jedinstveni QR kod i link. Korisnik skenira QR kod i direktno otvara stranicu tog biznisa, gde može zakazati termin, poslati upit, prijaviti kvar, reklamaciju ili zatražiti uslugu.
         </p>
         <p>
-          Platforma je namenjena biznisima koji žele jednostavan način da primaju zahteve korisnika bez komplikovanih aplikacija, izgubljenih poruka i nepotrebnog traženja kontakta.
+          Platforma je namenjena biznisima koji žele jednostavan način da prikupe zahteve korisnika bez izgubljenih poruka, nepotrebnog traženja kontakta i stalnog objašnjavanja preko telefona.
+        </p>
+        <p>
+          Vlasnik biznisa preko svog panela uređuje profil, ponudu, radno vreme, logo i prati sve prijave korisnika na jednom mestu.
         </p>
         <div class="hero-buttons simple-buttons">
-          <a class="btn btn-primary" href="salon/">Ulaz za biznis</a>
+          <a class="btn btn-primary" href="salon/">Ulaz za vlasnika biznisa</a>
           <button class="btn btn-dark" type="button" onclick="window.App.installApp()">Preuzmi CityStyle app</button>
         </div>
         <p class="muted small-note">
-          Za pristup konkretnom biznisu koristite QR kod koji ste dobili od tog biznisa.
+          Za pristup konkretnom biznisu koristite QR kod ili link koji ste dobili od tog biznisa.
         </p>
       </section>
     </section>
@@ -434,5 +437,5 @@ async function submitAppointment() {
       <p>${window.App.formatDate(selectedDate)} u ${selectedTime}</p>
     </div>
   `;
-  window.App.showMessage("Zahtev za termin je poslat.", "success");
+  window.App.showMessage("Zahtev je poslat.", "success");
 }
