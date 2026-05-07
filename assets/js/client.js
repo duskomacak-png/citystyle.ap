@@ -228,16 +228,19 @@ function renderClientWorkingHours(hours) {
   const rows = order.map(day => {
     const h = (hours || []).find(row => Number(row.day_of_week) === day);
     if (!h || h.is_closed) {
-      return `<div class="service-row"><div><strong>${dayNames[day]}</strong><span>Zatvoreno</span></div><b>—</b></div>`;
+      return `<div class="service-row hours-list-row"><div><strong>${dayNames[day]}</strong><span>Zatvoreno</span></div><b>—</b></div>`;
     }
-    return `<div class="service-row"><div><strong>${dayNames[day]}</strong><span>Radno vreme</span></div><b>${String(h.open_time).slice(0,5)}–${String(h.close_time).slice(0,5)}</b></div>`;
+    return `<div class="service-row hours-list-row"><div><strong>${dayNames[day]}</strong><span>Radno vreme</span></div><b>${String(h.open_time).slice(0,5)}–${String(h.close_time).slice(0,5)}</b></div>`;
   }).join("");
 
   return `
-    <div class="card">
-      <h2>Radno vreme</h2>
-      <div class="service-list">${rows}</div>
-    </div>
+    <details class="card client-hours-panel">
+      <summary>
+        <span>Radno vreme</span>
+        <small>Prikaži raspored</small>
+      </summary>
+      <div class="service-list hours-list">${rows}</div>
+    </details>
   `;
 }
 

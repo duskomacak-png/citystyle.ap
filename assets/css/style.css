@@ -357,3 +357,74 @@
     font-size: 15px;
   }
 }
+
+/* Client working hours collapsed panel */
+.client-hours-panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.client-hours-panel summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  font-weight: 900;
+}
+
+.client-hours-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.client-hours-panel summary::after {
+  content: "⌄";
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: #171720;
+  border: 1px solid var(--line);
+  color: #fff;
+  font-size: 18px;
+  transition: transform 0.18s ease;
+}
+
+.client-hours-panel[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.client-hours-panel summary small {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.client-hours-panel .hours-list {
+  padding: 0 18px 18px;
+  margin-top: 0;
+}
+
+.client-hours-panel .hours-list-row {
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 600px) {
+  .client-hours-panel summary {
+    padding: 14px 14px;
+  }
+
+  .client-hours-panel summary small {
+    font-size: 12px;
+  }
+
+  .client-hours-panel .hours-list {
+    padding: 0 14px 14px;
+  }
+}
