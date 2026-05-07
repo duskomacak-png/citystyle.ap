@@ -100,7 +100,7 @@ async function loadSalonsList() {
 
 function renderSalonCard(salon) {
   const expired = isPaymentExpired(salon.paid_until);
-  const salonLink = `${window.location.origin}/?salon=${encodeURIComponent(salon.slug)}`;
+  const salonLink = window.App.getSalonPublicLink(salon.slug);
   const statusClass = salon.status === "active" ? "active" : "blocked";
 
   return `
@@ -241,15 +241,15 @@ async function deleteSalon(id) {
 }
 
 function copySalonLink(slug) {
-  const link = `${window.location.origin}/?salon=${encodeURIComponent(slug)}`;
+  const link = window.App.getSalonPublicLink(slug);
   navigator.clipboard.writeText(link).then(() => {
     window.App.showMessage("Link salona je kopiran.", "success");
   }).catch(() => prompt("Kopiraj link:", link));
 }
 
 function showQrForSalon(slug, salonName) {
-  const link = `${window.location.origin}/?salon=${encodeURIComponent(slug)}`;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(link)}`;
+  const link = window.App.getSalonPublicLink(slug);
+  const qrUrl = window.App.getQrImageUrl(link, 280);
   const modal = document.createElement("div");
   modal.className = "modal-backdrop";
   modal.innerHTML = `

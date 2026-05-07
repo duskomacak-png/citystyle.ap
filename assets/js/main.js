@@ -92,6 +92,37 @@ function clearSavedSalon() {
   removeLocal(window.APP_CONFIG.salonStorageKey);
 }
 
+
+
+function getAppBaseUrl() {
+  const origin = window.location.origin;
+  const path = window.location.pathname || "/";
+
+  // GitHub Pages project site: https://user.github.io/citystyle.app/
+  if (window.location.hostname.endsWith("github.io")) {
+    const parts = path.split("/").filter(Boolean);
+    if (parts.length > 0) {
+      return `${origin}/${parts[0]}/`;
+    }
+  }
+
+  // Custom domain: https://citystyle.app/
+  return `${origin}/`;
+}
+
+function getAppPath(path = "") {
+  const cleanPath = String(path || "").replace(/^\/+/, "");
+  return `${getAppBaseUrl()}${cleanPath}`;
+}
+
+function getSalonPublicLink(slug) {
+  return `${getAppBaseUrl()}?salon=${encodeURIComponent(slug)}`;
+}
+
+function getQrImageUrl(link, size = 280) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(link)}`;
+}
+
 // PWA install prompt
 let deferredPrompt = null;
 
@@ -150,5 +181,9 @@ window.App = {
   saveCurrentSalon,
   getSavedSalonSlug,
   clearSavedSalon,
+  getAppBaseUrl,
+  getAppPath,
+  getSalonPublicLink,
+  getQrImageUrl,
   installApp
 };

@@ -185,6 +185,12 @@ async function renderSalonHome() {
     .eq("active", true)
     .order("sort_order", { ascending: true });
 
+  const { data: workingHours } = await window.db
+    .from("working_hours")
+    .select("*")
+    .eq("salon_id", currentSalon.id)
+    .order("day_of_week", { ascending: true });
+
   app.innerHTML = `
     <section class="client-page">
       <div class="hero-card salon-header">
@@ -212,9 +218,67 @@ async function renderSalonHome() {
         </div>
       </div>
 
-      <div id="client-extra"></div>
+      <div id="client-extra">
+        ${renderClientServicesPreview()}
+        ${renderClientWorkingHours(workingHours || [])}
+      </div>
       <div id="booking-box"></div>
     </section>
+  `;
+}
+
+
+function renderClientServicesPreview() {
+  if (!services.length) {
+    return `
+      <div class="card center">
+        <h2>Usluge i cene</h2>
+        <p class="muted">Salon još nije dodao usluge.</p>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="card">
+      <h2>Usluge i cene</h2>
+      <p class="muted">Izaberite uslugu ili kliknite „Zakaži termin”.</p>
+      <div class="service-list">
+        ${services.map(service => `
+          <button class="service-select-card" type="button" onclick="selectServiceById('${service.id}')">
+            <div><strong>${escapeHtml(service.name)}</strong><span>${Number(service.duration_minutes || 0)} min</span></div>
+            <b>${Number(service.price || 0).toLocaleString("sr-RS")} RSD</b>
+          </button>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderClientWorkingHours(hours) {
+  const dayNames = {
+    1: "Ponedeljak",
+    2: "Utorak",
+    3: "Sreda",
+    4: "Četvrtak",
+    5: "Petak",
+    6: "Subota",
+    0: "Nedelja"
+  };
+
+  const order = [1, 2, 3, 4, 5, 6, 0];
+  const rows = order.map(day => {
+    const h = (hours || []).find(row => Number(row.day_of_week) === day);
+    if (!h || h.is_closed) {
+      return `<div class="service-row"><div><strong>${dayNames[day]}</strong><span>Zatvoreno</span></div><b>—</b></div>`;
+    }
+    return `<div class="service-row"><div><strong>${dayNames[day]}</strong><span>Radno vreme</span></div><b>${String(h.open_time).slice(0,5)}–${String(h.close_time).slice(0,5)}</b></div>`;
+  }).join("");
+
+  return `
+    <div class="card">
+      <h2>Radno vreme</h2>
+      <div class="service-list">${rows}</div>
+    </div>
   `;
 }
 

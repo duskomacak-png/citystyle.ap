@@ -341,8 +341,20 @@ async function saveWorkingHours() {
 }
 
 async function renderSalonSettings() {
+  const salonLink = window.App.getSalonPublicLink(currentSalon.slug);
+  const qrUrl = window.App.getQrImageUrl(salonLink, 260);
   document.getElementById("salon-content").innerHTML = `
-    <div class="section-head"><div><h2>Podešavanja salona</h2><p class="muted">Logo, slike i tekst koji klijenti vide.</p></div></div>
+    <div class="section-head"><div><h2>Podešavanja salona</h2><p class="muted">Logo, slike, tekst i jedinstveni QR kod salona.</p></div></div>
+    <div class="card center">
+      <h3>Jedinstveni QR kod salona</h3>
+      <p class="muted">Ovaj QR vodi direktno u ovaj salon. Svaki salon ima svoj poseban link i QR kod.</p>
+      <img class="qr-img" src="${qrUrl}" alt="QR kod salona">
+      <div class="link-box"><small>Link za klijente:</small><input readonly value="${salonLink}"></div>
+      <div class="card-actions" style="justify-content:center">
+        <button class="btn btn-primary" type="button" onclick="copyMySalonLink()">Kopiraj link</button>
+        <a class="btn btn-dark" href="${salonLink}" target="_blank" rel="noopener">Otvori stranicu salona</a>
+      </div>
+    </div>
     <div class="card"><h3>Logo salona</h3><input type="file" id="logo-upload" accept="image/png,image/jpeg,image/webp"><button class="btn btn-primary" type="button" onclick="uploadLogo()">Postavi logo</button><div id="current-logo" class="image-preview-box"></div></div>
     <div class="card"><h3>Slike za početnu stranu</h3><p class="muted">Najviše 5 aktivnih slika.</p><input type="file" id="home-images" accept="image/png,image/jpeg,image/webp" multiple><button class="btn btn-primary" type="button" onclick="uploadHomeImages()">Dodaj slike</button><div id="current-images" class="image-grid"></div></div>
     <div class="card"><h3>Tekst dobrodošlice</h3><label>Naslov</label><input id="welcome-title" type="text" placeholder="Dobrodošli u naš salon"><label>Tekst</label><textarea id="welcome-text" rows="4" placeholder="Zakažite svoj termin brzo i jednostavno."></textarea><label>Telefon</label><input id="salon-phone" type="text" placeholder="060/123-456"><label>Adresa</label><input id="salon-address" type="text" placeholder="Adresa salona"><button class="btn btn-primary" type="button" onclick="saveSettings()">Sačuvaj podešavanja</button></div>
@@ -411,6 +423,15 @@ async function deleteHomeImage(id, imageUrl) {
   await window.StorageHelper.deleteImage(imageUrl);
   await window.db.from("home_images").update({ active: false }).eq("id", id).eq("salon_id", currentSalonId);
   await loadCurrentImages();
+}
+
+
+function copyMySalonLink() {
+  if (!currentSalon?.slug) return;
+  const link = window.App.getSalonPublicLink(currentSalon.slug);
+  navigator.clipboard.writeText(link).then(() => {
+    window.App.showMessage("Link salona je kopiran.", "success");
+  }).catch(() => prompt("Kopiraj link salona:", link));
 }
 
 function isPaymentExpired(paidUntil) {
