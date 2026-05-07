@@ -428,3 +428,20 @@
     padding: 0 14px 14px;
   }
 }
+
+
+/* Price range form */
+.price-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.form-help {
+  margin-top: 8px;
+  font-size: 13px;
+}
+@media (max-width: 600px) {
+  .price-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -59,6 +59,38 @@ function formatDate(dateString) {
   });
 }
 
+
+function formatMoney(value) {
+  const n = Number(value || 0);
+  if (!Number.isFinite(n)) return "0";
+  return n.toLocaleString("sr-RS");
+}
+
+function normalizeCurrency(value) {
+  const c = String(value || "RSD").trim().toUpperCase();
+  if (c === "EUR" || c === "€" || c === "EVRO" || c === "EVRI") return "EUR";
+  return "RSD";
+}
+
+function formatServicePrice(item = {}) {
+  const currency = normalizeCurrency(item.currency || item.currency_snapshot || "RSD");
+  const from = Number(item.price ?? item.price_snapshot ?? 0);
+  const toRaw = item.price_to ?? item.price_to_snapshot;
+  const to = toRaw === null || toRaw === undefined || toRaw === "" ? null : Number(toRaw);
+
+  if ((!from || from <= 0) && (!to || to <= 0)) {
+    return "Cena po dogovoru";
+  }
+
+  const suffix = currency === "EUR" ? "EUR" : "RSD";
+
+  if (to && to > from) {
+    return `${formatMoney(from)}–${formatMoney(to)} ${suffix}`;
+  }
+
+  return `${formatMoney(from)} ${suffix}`;
+}
+
 function escapeHtml(value) {
   return String(value || "")
     .replaceAll("&", "&amp;")
@@ -241,6 +273,8 @@ window.App = {
   formatDate,
   escapeHtml,
   escapeJs,
+  formatServicePrice,
+  normalizeCurrency,
   checkSalonAccess,
   saveCurrentSalon,
   getSavedSalonSlug,

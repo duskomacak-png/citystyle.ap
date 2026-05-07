@@ -219,7 +219,7 @@ function renderAppointmentPaperList(items) {
               <th>Usluga</th>
               <th>Ime i prezime</th>
               <th>Telefon</th>
-              <th>Cena</th>
+              <th>Cena / valuta</th>
               <th>Status</th>
               <th>Akcije</th>
             </tr>
@@ -242,7 +242,7 @@ function renderAppointmentRow(a) {
   const service = salonEscapeHtml(a.service_name_snapshot || "Usluga");
   const name = salonEscapeHtml(a.client_name || "—");
   const phone = salonEscapeHtml(a.client_phone || "—");
-  const price = Number(a.price_snapshot || 0).toLocaleString("sr-RS") + " RSD";
+  const price = window.App.formatServicePrice(a);
   return `
     <tr>
       <td>${date}</td>
@@ -458,7 +458,7 @@ async function loadServices() {
   }
   list.innerHTML = services.map(service => `
     <div class="card service-card">
-      <div class="service-row"><div><strong>${salonEscapeHtml(service.name)}</strong><span>${Number(service.duration_minutes || 0)} min</span></div><b>${Number(service.price || 0).toLocaleString("sr-RS")} RSD</b></div>
+      <div class="service-row"><div><strong>${salonEscapeHtml(service.name)}</strong><span>${Number(service.duration_minutes || 0)} min</span></div><b>${window.App.formatServicePrice(service)}</b></div>
       <p class="muted">Status: ${service.active ? "Aktivna" : "Sakrivena"}</p>
       <div class="card-actions">
         <button class="btn btn-dark" type="button" onclick="editService('${service.id}')">Uredi</button>
@@ -481,7 +481,22 @@ async function showAddServiceForm(serviceId = null) {
       <h3>${service ? "Uredi uslugu" : "Nova usluga"}</h3>
       <input id="service-edit-id" type="hidden" value="${service ? salonEscapeHtml(service.id) : ""}">
       <label>Naziv usluge</label><input id="service-name" type="text" value="${service ? salonEscapeHtml(service.name) : ""}" placeholder="Feniranje">
-      <label>Cena</label><input id="service-price" type="number" min="0" value="${service ? Number(service.price || 0) : ""}" placeholder="1200">
+      <div class="price-grid">
+        <div>
+          <label>Cena od</label>
+          <input id="service-price" type="number" min="0" value="${service ? Number(service.price || 0) : ""}" placeholder="500">
+        </div>
+        <div>
+          <label>Cena do</label>
+          <input id="service-price-to" type="number" min="0" value="${service && service.price_to ? Number(service.price_to || 0) : ""}" placeholder="800">
+        </div>
+      </div>
+      <label>Valuta</label>
+      <select id="service-currency">
+        <option value="RSD" ${!service || (service.currency || "RSD") === "RSD" ? "selected" : ""}>Dinari (RSD)</option>
+        <option value="EUR" ${service && service.currency === "EUR" ? "selected" : ""}>Evri (EUR)</option>
+      </select>
+      <p class="muted form-help">Ako usluga ima raspon cene, unesite npr. 500 u “Cena od” i 800 u “Cena do”. Ako je cena po dogovoru, unesite 0.</p>
       <label>Trajanje u minutima</label><input id="service-duration" type="number" min="5" step="5" value="${service ? Number(service.duration_minutes || 0) : ""}" placeholder="45">
       <div class="card-actions"><button class="btn btn-primary" type="button" onclick="saveService()">Sačuvaj</button><button class="btn btn-dark" type="button" onclick="hideAddServiceForm()">Otkaži</button></div>
     </div>`;
@@ -494,15 +509,19 @@ async function saveService() {
   const id = document.getElementById("service-edit-id")?.value || "";
   const name = document.getElementById("service-name")?.value.trim();
   const price = Number(document.getElementById("service-price")?.value || 0);
+  const priceToRaw = document.getElementById("service-price-to")?.value;
+  const priceTo = priceToRaw === "" || priceToRaw === undefined ? null : Number(priceToRaw);
+  const currency = window.App.normalizeCurrency(document.getElementById("service-currency")?.value || "RSD");
   const duration = Number(document.getElementById("service-duration")?.value || 0);
-  if (!name || price < 0 || duration <= 0) return window.App.showMessage("Unesite naziv usluge, cenu i trajanje.", "error");
+  if (!name || price < 0 || (priceTo !== null && priceTo < 0) || duration <= 0) return window.App.showMessage("Unesite naziv usluge, cenu, valutu i trajanje.", "error");
+  if (priceTo !== null && priceTo > 0 && priceTo < price) return window.App.showMessage("Cena do ne može biti manja od cene od.", "error");
   if (id) {
-    const { error } = await window.db.from("services").update({ name, price, duration_minutes: duration }).eq("id", id).eq("salon_id", currentSalonId);
+    const { error } = await window.db.from("services").update({ name, price, price_to: priceTo, currency, duration_minutes: duration }).eq("id", id).eq("salon_id", currentSalonId);
     if (error) return window.App.showMessage("Greška pri izmeni usluge.", "error");
   } else {
     const { data: maxOrder } = await window.db.from("services").select("sort_order").eq("salon_id", currentSalonId).order("sort_order", { ascending: false }).limit(1);
     const newOrder = maxOrder?.length ? Number(maxOrder[0].sort_order || 0) + 1 : 1;
-    const { error } = await window.db.from("services").insert({ salon_id: currentSalonId, name, price, duration_minutes: duration, active: true, sort_order: newOrder });
+    const { error } = await window.db.from("services").insert({ salon_id: currentSalonId, name, price, price_to: priceTo, currency, duration_minutes: duration, active: true, sort_order: newOrder });
     if (error) return window.App.showMessage("Greška pri dodavanju usluge.", "error");
   }
   hideAddServiceForm();

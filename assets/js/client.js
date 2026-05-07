@@ -205,7 +205,7 @@ function renderClientServicesPreview() {
         ${services.map(service => `
           <button class="service-select-card" type="button" onclick="selectServiceById('${service.id}')">
             <div><strong>${escapeHtml(service.name)}</strong><span>${Number(service.duration_minutes || 0)} min</span></div>
-            <b>${Number(service.price || 0).toLocaleString("sr-RS")} RSD</b>
+            <b>${window.App.formatServicePrice(service)}</b>
           </button>
         `).join("")}
       </div>
@@ -260,7 +260,7 @@ function showServices() {
         ${services.map(service => `
           <button class="service-select-card" type="button" onclick="selectServiceById('${service.id}')">
             <div><strong>${escapeHtml(service.name)}</strong><span>${Number(service.duration_minutes || 0)} min</span></div>
-            <b>${Number(service.price || 0).toLocaleString("sr-RS")} RSD</b>
+            <b>${window.App.formatServicePrice(service)}</b>
           </button>
         `).join("")}
       </div>
@@ -301,7 +301,7 @@ function showBookingForm() {
         <option value="">Izaberite uslugu</option>
         ${services.map(service => `
           <option value="${service.id}" ${selectedService?.id === service.id ? "selected" : ""}>
-            ${escapeHtml(service.name)} — ${Number(service.price || 0).toLocaleString("sr-RS")} RSD — ${Number(service.duration_minutes || 0)} min
+            ${escapeHtml(service.name)} — ${window.App.formatServicePrice(service)} — ${Number(service.duration_minutes || 0)} min
           </option>
         `).join("")}
       </select>
@@ -360,7 +360,7 @@ async function handleBookingChange() {
   }
 
   if (summary) {
-    summary.innerHTML = `<strong>${escapeHtml(selectedService.name)}</strong> • ${Number(selectedService.price || 0).toLocaleString("sr-RS")} RSD • ${Number(selectedService.duration_minutes || 0)} min`;
+    summary.innerHTML = `<strong>${escapeHtml(selectedService.name)}</strong> • ${window.App.formatServicePrice(selectedService)} • ${Number(selectedService.duration_minutes || 0)} min`;
   }
   const timeView = document.getElementById("selected-time-view");
   if (timeView) timeView.value = "Još nije izabran";
@@ -436,6 +436,8 @@ async function submitAppointment() {
     status: "new",
     service_name_snapshot: selectedService.name,
     price_snapshot: Number(selectedService.price || 0),
+    price_to_snapshot: selectedService.price_to ? Number(selectedService.price_to) : null,
+    currency_snapshot: window.App.normalizeCurrency(selectedService.currency || "RSD"),
     duration_snapshot: Number(selectedService.duration_minutes || 30)
   });
 
