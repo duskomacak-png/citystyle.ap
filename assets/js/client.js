@@ -25,14 +25,8 @@ async function loadClientApp() {
       return;
     }
 
-    // Installed PWA / shortcut: open the last saved salon, not generic platform.
-    const savedSlug = window.App?.getSavedSalonSlug?.();
-    if (savedSlug && !forcePlatform) {
-      app.innerHTML = `<div class="loading-box">Učitavanje vašeg salona...</div>`;
-      await loadSalon(savedSlug, false);
-      return;
-    }
-
+    // Root citystyle.app is always the platform landing page.
+    // Clients enter a salon only through ?salon=slug from that salon's QR/link.
     renderPlatformLanding();
   } catch (err) {
     console.error("CityStyle start error:", err);
@@ -95,6 +89,7 @@ function renderPlatformLanding() {
           </p>
           <div class="hero-buttons">
             <a class="btn btn-primary" href="salon/">Ulaz za vlasnike salona</a>
+            <button class="btn btn-dark" type="button" onclick="window.App.installApp()">Preuzmi CityStyle app</button>
             <button class="btn btn-dark" type="button" onclick="scrollToHowItWorks()">Kako radi?</button>
           </div>
         </div>
@@ -208,8 +203,6 @@ async function renderSalonHome() {
         <div class="client-actions">
           <button class="btn btn-primary" type="button" onclick="showBookingForm()">Zakaži termin</button>
           <button class="btn btn-dark" type="button" onclick="showServices()">Usluge i cene</button>
-          <button class="btn btn-dark" type="button" onclick="window.App.installSalonApp(currentSalon?.slug)">Preuzmi app ovog salona</button>
-          <button class="btn btn-dark" type="button" onclick="window.App.clearSavedSalon(); renderPlatformLanding();">Početna platforme</button>
         </div>
       </div>
 

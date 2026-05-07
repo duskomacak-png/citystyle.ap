@@ -135,11 +135,18 @@ window.addEventListener("beforeinstallprompt", (event) => {
 function showInstallButton() {
   if (document.getElementById("install-app-btn")) return;
 
+  const path = window.location.pathname || "/";
+  const hasSalonParam = !!getUrlParam("salon");
+
+  // Do not show install button to salon clients or inside admin/salon panels.
+  // Platform install belongs only on the main platform page.
+  if (hasSalonParam || path.includes("/admin") || path.includes("/salon")) return;
+
   const btn = document.createElement("button");
   btn.id = "install-app-btn";
   btn.className = "install-floating-btn";
   btn.type = "button";
-  btn.textContent = getSavedSalonSlug() ? "📱 Preuzmi app salona" : "📱 Sačuvaj na telefon";
+  btn.textContent = "📱 Preuzmi CityStyle app";
   btn.addEventListener("click", () => installApp());
   document.body.appendChild(btn);
 }
