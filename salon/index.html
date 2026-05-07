@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Salon Panel - CityStyle</title>
+  <meta name="theme-color" content="#0b0b0f">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/main.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/storage.js"></script>
+  <script src="../assets/js/salon.js" defer></script>
+</head>
+<body>
+  <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>
+  <main class="salon-panel">
+    <header class="panel-header">
+      <div><h1 id="salon-name">Salon Panel</h1><p id="salon-status-text">Učitavanje salona...</p></div>
+      <button id="salon-logout-btn" class="btn btn-dark" type="button">Odjavi se</button>
+    </header>
+    <nav class="panel-tabs" id="salon-tabs">
+      <button type="button" data-section="appointments" class="active">Termini</button>
+      <button type="button" data-section="services">Usluge</button>
+      <button type="button" data-section="hours">Radno vreme</button>
+      <button type="button" data-section="settings">Podešavanja</button>
+    </nav>
+    <section id="salon-content"><div class="loading-box">Učitavanje salon panela...</div></section>
+  </main>
+</body>
+</html>
