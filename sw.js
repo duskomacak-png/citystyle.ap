@@ -1,6 +1,6 @@
 // sw.js
 // Minimal cache reset service worker for CityStyle.app
-const CACHE_NAME = "citystyle-v19000-price-range";
+const CACHE_NAME = "citystyle-v21000-country-dropdown";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

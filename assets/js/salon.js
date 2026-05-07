@@ -242,6 +242,7 @@ function renderAppointmentRow(a) {
   const service = salonEscapeHtml(a.service_name_snapshot || "Usluga");
   const name = salonEscapeHtml(a.client_name || "—");
   const phone = salonEscapeHtml(a.client_phone || "—");
+  const phoneHref = salonEscapeHtml(normalizePhoneForTel(a.client_phone || ""));
   const price = window.App.formatServicePrice(a);
   return `
     <tr>
@@ -249,7 +250,7 @@ function renderAppointmentRow(a) {
       <td><strong>${time}</strong></td>
       <td>${service}</td>
       <td>${name}</td>
-      <td><a href="tel:${phone}" class="phone-link">${phone}</a></td>
+      <td><a href="tel:${phoneHref}" class="phone-link">${phone}</a></td>
       <td>${price}</td>
       <td>${renderAppointmentStatusSelect(a)}</td>
       <td><div class="paper-row-actions compact-actions">${renderAppointmentActionButtons(a)}</div></td>
@@ -263,6 +264,7 @@ function renderAppointmentMobileRow(a) {
   const service = salonEscapeHtml(a.service_name_snapshot || "Usluga");
   const name = salonEscapeHtml(a.client_name || "—");
   const phone = salonEscapeHtml(a.client_phone || "—");
+  const phoneHref = salonEscapeHtml(normalizePhoneForTel(a.client_phone || ""));
   return `
     <div class="paper-mobile-item">
       <div class="paper-mobile-top">
@@ -272,7 +274,7 @@ function renderAppointmentMobileRow(a) {
       <div class="paper-mobile-main">
         <b>${service}</b>
         <span>${name}</span>
-        <a href="tel:${phone}" class="phone-link">${phone}</a>
+        <a href="tel:${phoneHref}" class="phone-link">${phone}</a>
       </div>
       <div class="paper-row-actions">${renderAppointmentActionButtons(a)}</div>
     </div>
@@ -369,17 +371,40 @@ function openClientMessage(id, type = "confirmed") {
 }
 
 function normalizePhoneForTel(phone) {
-  const digits = String(phone || "").replace(/[^0-9+]/g, "");
+  const raw = String(phone || "").trim();
+  if (!raw) return "";
+
+  const digits = raw.replace(/\D/g, "");
+
+  if (raw.startsWith("+")) return `+${digits}`;
+  if (raw.startsWith("00")) return `+${digits.slice(2)}`;
+  if (digits.startsWith("0")) return `+381${digits.slice(1)}`;
+  if (/^(381|387|385|382|389|386|49|43)\d{6,}$/.test(digits)) return `+${digits}`;
+
   return digits || "";
 }
 
 function normalizePhoneForWhatsApp(phone) {
-  let digits = String(phone || "").replace(/\D/g, "");
+  const raw = String(phone || "").trim();
+  if (!raw) return "";
+
+  const digits = raw.replace(/\D/g, "");
   if (!digits) return "";
-  if (digits.startsWith("00")) digits = digits.slice(2);
-  if (digits.startsWith("0")) digits = "381" + digits.slice(1);
-  if (!digits.startsWith("381") && digits.length <= 9) digits = "381" + digits;
-  return digits;
+
+  // +381, +387, +385...
+  if (raw.startsWith("+")) return digits;
+
+  // 00381, 00387, 00385...
+  if (raw.startsWith("00")) return digits.slice(2);
+
+  // Lokalni srpski format 06... tretiramo kao +381.
+  // Za BiH/Hrvatsku treba uneti +387 / +385 da WhatsApp ode na pravi broj.
+  if (digits.startsWith("0") && digits.length >= 8) return `381${digits.slice(1)}`;
+
+  // Ako je broj već unet bez plusa, ali s pozivnim brojem države.
+  if (/^(381|387|385|382|389|386|49|43)\d{6,}$/.test(digits)) return digits;
+
+  return "";
 }
 
 function changeAppointmentFilter() {
@@ -603,7 +628,7 @@ async function renderSalonSettings() {
       </div>
     </div>
     <div class="card"><h3>Logo profila</h3><p class="muted">Salon može postaviti samo svoj logo. Dodatne slike/galerija su isključene zbog jednostavnosti.</p><input type="file" id="logo-upload" accept="image/png,image/jpeg,image/webp"><button class="btn btn-primary" type="button" onclick="uploadLogo()">Postavi logo</button><div id="current-logo" class="image-preview-box"></div></div>
-    <div class="card"><h3>Tekst dobrodošlice</h3><label>Naslov</label><input id="welcome-title" type="text" placeholder="Dobrodošli u naš salon"><label>Tekst</label><textarea id="welcome-text" rows="4" placeholder="Zakažite svoj termin brzo i jednostavno."></textarea><label>Telefon</label><input id="salon-phone" type="text" placeholder="060/123-456"><label>Adresa</label><input id="salon-address" type="text" placeholder="Adresa salona"><button class="btn btn-primary" type="button" onclick="saveSettings()">Sačuvaj podešavanja</button></div>
+    <div class="card"><h3>Tekst dobrodošlice</h3><label>Naslov</label><input id="welcome-title" type="text" placeholder="Dobrodošli u naš salon"><label>Tekst</label><textarea id="welcome-text" rows="4" placeholder="Zakažite svoj termin brzo i jednostavno."></textarea><label>Telefon</label><input id="salon-phone" type="text" placeholder="+381 64 123 4567"><p class="field-help">Unesite broj sa pozivnim brojem države ako želite WhatsApp kontakt.</p><label>Adresa</label><input id="salon-address" type="text" placeholder="Adresa salona"><button class="btn btn-primary" type="button" onclick="saveSettings()">Sačuvaj podešavanja</button></div>
   `;
   await loadCurrentSettings();
 }

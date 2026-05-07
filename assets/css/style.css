@@ -445,3 +445,16 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Phone country selector help text */
+.field-help {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+  margin: 6px 0 12px;
+}
+.phone-country-select {
+  min-height: 46px;
+}

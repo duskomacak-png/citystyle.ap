@@ -327,10 +327,23 @@ function showBookingForm() {
           <input id="client-name" type="text" placeholder="Ana Petrović">
         </div>
         <div>
-          <label>Broj telefona</label>
-          <input id="client-phone" type="tel" placeholder="060/123-456">
+          <label>Država za WhatsApp broj</label>
+          <select id="client-phone-country" class="phone-country-select">
+            <option value="381" selected>🇷🇸 Srbija +381</option>
+            <option value="387">🇧🇦 Bosna i Hercegovina +387</option>
+            <option value="385">🇭🇷 Hrvatska +385</option>
+            <option value="382">🇲🇪 Crna Gora +382</option>
+            <option value="386">🇸🇮 Slovenija +386</option>
+            <option value="389">🇲🇰 Severna Makedonija +389</option>
+            <option value="49">🇩🇪 Nemačka +49</option>
+            <option value="43">🇦🇹 Austrija +43</option>
+          </select>
         </div>
       </div>
+
+      <label>Broj telefona / WhatsApp</label>
+      <input id="client-phone" type="tel" inputmode="tel" placeholder="064 123 4567">
+      <p class="field-help">Izaberite državu i unesite lokalni broj. Ako unesete broj sa +, aplikacija će ga koristiti direktno.</p>
 
       <label>Napomena</label>
       <textarea id="client-note" rows="3" placeholder="Opcionalno"></textarea>
@@ -400,17 +413,50 @@ function selectTime(time, btn) {
   if (timeView) timeView.value = time;
 }
 
+
+function normalizeClientPhoneForStorage(phone, countryCode = "381") {
+  const raw = String(phone || "").trim();
+  if (!raw) return "";
+
+  // Ako korisnik već unese međunarodni format, koristi ga direktno.
+  if (raw.startsWith("+")) {
+    const international = raw.replace(/\D/g, "");
+    return international.length >= 8 ? `+${international}` : "";
+  }
+
+  let digits = raw.replace(/\D/g, "");
+  if (!digits) return "";
+
+  if (digits.startsWith("00")) {
+    digits = digits.slice(2);
+    return digits.length >= 8 ? `+${digits}` : "";
+  }
+
+  const cc = String(countryCode || "381").replace(/\D/g, "") || "381";
+  if (digits.startsWith("0")) digits = digits.slice(1);
+
+  const full = `${cc}${digits}`;
+  return full.length >= 8 ? `+${full}` : "";
+}
+
 async function submitAppointment() {
   const name = document.getElementById("client-name")?.value.trim();
-  const phone = document.getElementById("client-phone")?.value.trim();
+  const phoneRaw = document.getElementById("client-phone")?.value.trim();
+  const phoneCountry = document.getElementById("client-phone-country")?.value || "381";
+  const phone = normalizeClientPhoneForStorage(phoneRaw, phoneCountry);
   const note = document.getElementById("client-note")?.value.trim();
 
   if (!currentSalon || !selectedService || !selectedDate || !selectedTime) {
     window.App.showMessage("Izaberite uslugu, datum i termin.", "error");
     return;
   }
-  if (!name || !phone) {
-    window.App.showMessage("Unesite ime i telefon.", "error");
+  if (!name) {
+    window.App.showMessage("Unesite ime i prezime.", "error");
+    return;
+  }
+
+  if (!phone) {
+    window.App.showMessage("Izaberite državu i unesite ispravan broj telefona.", "error");
     return;
   }
 
