@@ -108,6 +108,15 @@ function renderPlatformLanding() {
         <p class="muted small-note">
           Za pristup konkretnom biznisu koristite QR kod ili link koji ste dobili od tog biznisa.
         </p>
+
+        <div class="platform-contact-box">
+          <h2>Kontakt za informacije</h2>
+          <p>
+            Za dodatne informacije, saradnju ili aktivaciju biznis profila možete kontaktirati
+            menadžera platforme CityStyle.app.
+          </p>
+          <a href="mailto:duskomacak@gmail.com">duskomacak@gmail.com</a>
+        </div>
       </section>
     </section>
   `;
