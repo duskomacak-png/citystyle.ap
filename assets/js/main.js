@@ -337,60 +337,85 @@ async function clearAppBadgeCount() {
 }
 
 async function registerPushForSalon(salonId) {
-  if (!salonId) {
-    showMessage("Profil nije učitan.", "error");
+  try {
+    if (!salonId) {
+      showMessage("Profil nije učitan.", "error");
+      return false;
+    }
+
+    if (!window.db) {
+      showMessage("Baza nije učitana. Osvežite stranicu.", "error");
+      return false;
+    }
+
+    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+      showMessage("Ovaj browser ne podržava web push obaveštenja.", "error");
+      return false;
+    }
+
+    if (Notification.permission === "denied") {
+      showMessage("Obaveštenja su blokirana u podešavanjima browsera.", "error");
+      return false;
+    }
+
+    const vapidPublicKey = window.APP_CONFIG?.pushVapidPublicKey;
+    if (!vapidPublicKey) {
+      showMessage("Push ključ nije podešen u aplikaciji.", "error");
+      return false;
+    }
+
+    const permission = Notification.permission === "granted"
+      ? "granted"
+      : await Notification.requestPermission();
+
+    if (permission !== "granted") {
+      showMessage("Obaveštenja nisu dozvoljena.", "info");
+      return false;
+    }
+
+    const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+    await navigator.serviceWorker.ready;
+
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+      });
+    }
+
+    const json = subscription.toJSON();
+    if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
+      showMessage("Browser nije vratio kompletne push podatke.", "error");
+      return false;
+    }
+
+    const { error } = await window.db
+      .from("push_subscriptions")
+      .upsert({
+        salon_id: salonId,
+        endpoint: json.endpoint,
+        p256dh: json.keys.p256dh,
+        auth: json.keys.auth,
+        expiration_time: json.expirationTime || null,
+        user_agent: navigator.userAgent,
+        is_active: true,
+        updated_at: new Date().toISOString()
+      }, { onConflict: "endpoint" });
+
+    if (error) {
+      console.error("Push subscription save error:", error);
+      showMessage(`Obaveštenja nisu sačuvana u bazi: ${error.message || "greška"}`, "error");
+      return false;
+    }
+
+    showMessage("Obaveštenja su uključena za ovaj profil.", "success");
+    return true;
+  } catch (err) {
+    console.error("registerPushForSalon error:", err);
+    showMessage(`Greška pri uključivanju obaveštenja: ${err.message || "nepoznata greška"}`, "error");
     return false;
   }
-
-  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
-    showMessage("Ovaj browser ne podržava obaveštenja za web aplikacije.", "error");
-    return false;
-  }
-
-  if (Notification.permission === "denied") {
-    showMessage("Obaveštenja su blokirana u podešavanjima browsera.", "error");
-    return false;
-  }
-
-  const permission = await Notification.requestPermission();
-  if (permission !== "granted") {
-    showMessage("Obaveštenja nisu dozvoljena.", "info");
-    return false;
-  }
-
-  const vapidPublicKey = window.APP_CONFIG?.pushVapidPublicKey;
-  if (!vapidPublicKey) {
-    showMessage("Push ključ nije podešen u aplikaciji.", "error");
-    return false;
-  }
-
-  const registration = await navigator.serviceWorker.ready;
-  const subscription = await registration.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
-  });
-
-  const json = subscription.toJSON();
-  const { error } = await window.db
-    .from("push_subscriptions")
-    .upsert({
-      salon_id: salonId,
-      endpoint: json.endpoint,
-      p256dh: json.keys?.p256dh,
-      auth: json.keys?.auth,
-      user_agent: navigator.userAgent,
-      active: true,
-      updated_at: new Date().toISOString()
-    }, { onConflict: "endpoint" });
-
-  if (error) {
-    console.error(error);
-    showMessage("Obaveštenja nisu sačuvana u bazi.", "error");
-    return false;
-  }
-
-  showMessage("Obaveštenja su uključena za ovaj profil.", "success");
-  return true;
 }
 
 async function notifyOwnerAboutNewAppointment(appointmentId) {
