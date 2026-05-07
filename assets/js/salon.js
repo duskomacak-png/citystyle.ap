@@ -134,57 +134,114 @@ async function showSection(section) {
   if (section === "settings") return renderSalonSettings();
 }
 
-async function renderAppointments() {
+async function renderAppointments(filter = "active") {
   const content = document.getElementById("salon-content");
   content.innerHTML = `<div class="loading-box">Učitavanje termina...</div>`;
+
   const today = new Date().toISOString().split("T")[0];
-  const { data: appointments, error } = await window.db
+  let query = window.db
     .from("appointments")
     .select("*")
     .eq("salon_id", currentSalonId)
-    .gte("appointment_date", today)
     .order("appointment_date", { ascending: true })
     .order("appointment_time", { ascending: true });
+
+  // Aktivni termini su samo termini koji stvarno zauzimaju mesto u rasporedu.
+  if (filter === "active") {
+    query = query.gte("appointment_date", today).in("status", ["new", "confirmed"]);
+  } else if (filter === "done") {
+    query = query.eq("status", "done");
+  } else if (filter === "cancelled") {
+    query = query.in("status", ["cancelled", "no_show"]);
+  } else if (filter === "all") {
+    query = query.gte("appointment_date", today);
+  }
+
+  const { data: appointments, error } = await query;
 
   if (error) {
     console.error(error);
     content.innerHTML = `<div class="card"><p class="error-text">Greška pri učitavanju termina.</p></div>`;
     return;
   }
+
   const items = appointments || [];
-  if (!items.length) {
-    content.innerHTML = `<div class="card center"><h2>Termini</h2><p class="muted">Nema budućih termina.</p></div>`;
-    return;
-  }
   content.innerHTML = `
-    <div class="section-head"><div><h2>Termini</h2><p class="muted">Danas i budući termini.</p></div></div>
-    <div class="cards">${items.map(renderAppointmentCard).join("")}</div>
+    <div class="section-head appointments-head">
+      <div>
+        <h2>Termini</h2>
+        <p class="muted">Excel pregled termina: usluga, vreme, mušterija i telefon.</p>
+      </div>
+      <div class="filter-box">
+        <label>Prikaz</label>
+        <select id="appointments-filter" onchange="renderAppointments(this.value)">
+          <option value="active" ${filter === "active" ? "selected" : ""}>Aktivni termini</option>
+          <option value="done" ${filter === "done" ? "selected" : ""}>Završeni termini</option>
+          <option value="cancelled" ${filter === "cancelled" ? "selected" : ""}>Otkazani / nije došao</option>
+          <option value="all" ${filter === "all" ? "selected" : ""}>Svi budući termini</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="excel-card">
+      ${items.length ? renderAppointmentsTable(items, filter) : `
+        <div class="empty-table-box">
+          <h3>Nema termina za izabrani prikaz.</h3>
+          <p class="muted">Kada klijent zakaže termin, pojaviće se ovde.</p>
+        </div>
+      `}
+    </div>
   `;
 }
 
-function renderAppointmentCard(a) {
+function renderAppointmentsTable(items, filter) {
   return `
-    <div class="card appointment-card">
-      <div class="appointment-top">
-        <div><strong>${window.App.formatDate(a.appointment_date)} u ${salonEscapeHtml(String(a.appointment_time).slice(0,5))}</strong><p class="muted">${salonEscapeHtml(a.service_name_snapshot || "Usluga")}</p></div>
-        <span class="status-pill ${salonEscapeHtml(a.status)}">${getAppointmentStatusLabel(a.status)}</span>
-      </div>
-      <div class="info-grid">
-        <div><span>Klijent</span><strong>${salonEscapeHtml(a.client_name)}</strong></div>
-        <div><span>Telefon</span><strong>${salonEscapeHtml(a.client_phone)}</strong></div>
-        <div><span>Trajanje</span><strong>${Number(a.duration_snapshot || 0)} min</strong></div>
-        <div><span>Cena</span><strong>${Number(a.price_snapshot || 0).toLocaleString("sr-RS")} RSD</strong></div>
-      </div>
-      ${a.note ? `<p class="note-box">${salonEscapeHtml(a.note)}</p>` : ""}
-      <div class="card-actions">
-        ${a.status === "new" ? `<button class="btn btn-success" type="button" onclick="updateAppointmentStatus('${a.id}', 'confirmed')">Potvrdi</button>` : ""}
-        ${a.status === "confirmed" ? `<button class="btn btn-primary" type="button" onclick="updateAppointmentStatus('${a.id}', 'done')">Završeno</button>` : ""}
-        ${a.status !== "cancelled" && a.status !== "done" ? `
-          <button class="btn btn-warning" type="button" onclick="updateAppointmentStatus('${a.id}', 'no_show')">Nije došao/la</button>
-          <button class="btn btn-danger" type="button" onclick="updateAppointmentStatus('${a.id}', 'cancelled')">Otkaži</button>
-        ` : ""}
-      </div>
+    <div class="appointments-table-wrap">
+      <table class="appointments-table">
+        <thead>
+          <tr>
+            <th>Datum</th>
+            <th>Vreme</th>
+            <th>Usluga</th>
+            <th>Ime i prezime</th>
+            <th>Telefon</th>
+            <th>Status</th>
+            <th>Akcije</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map(a => renderAppointmentRow(a, filter)).join("")}
+        </tbody>
+      </table>
     </div>
+  `;
+}
+
+function renderAppointmentRow(a, filter) {
+  const time = salonEscapeHtml(String(a.appointment_time || "").slice(0, 5));
+  const status = salonEscapeHtml(a.status || "new");
+  const isFinished = ["done", "cancelled", "no_show"].includes(a.status);
+
+  return `
+    <tr>
+      <td data-label="Datum"><strong>${window.App.formatDate(a.appointment_date)}</strong></td>
+      <td data-label="Vreme"><strong>${time}</strong></td>
+      <td data-label="Usluga">${salonEscapeHtml(a.service_name_snapshot || "Usluga")}</td>
+      <td data-label="Ime i prezime"><strong>${salonEscapeHtml(a.client_name || "")}</strong></td>
+      <td data-label="Telefon"><a href="tel:${salonEscapeHtml(a.client_phone || "")}">${salonEscapeHtml(a.client_phone || "")}</a></td>
+      <td data-label="Status"><span class="status-pill ${status}">${getAppointmentStatusLabel(a.status)}</span></td>
+      <td data-label="Akcije">
+        <div class="table-actions">
+          ${a.status === "new" ? `<button class="btn btn-success btn-small" type="button" onclick="updateAppointmentStatus('${a.id}', 'confirmed')">Potvrdi</button>` : ""}
+          ${a.status === "confirmed" ? `<button class="btn btn-primary btn-small" type="button" onclick="updateAppointmentStatus('${a.id}', 'done')">Završeno</button>` : ""}
+          ${a.status !== "cancelled" && a.status !== "done" && a.status !== "no_show" ? `
+            <button class="btn btn-warning btn-small" type="button" onclick="updateAppointmentStatus('${a.id}', 'no_show')">Nije došao</button>
+            <button class="btn btn-danger btn-small" type="button" onclick="updateAppointmentStatus('${a.id}', 'cancelled')">Otkaži</button>
+          ` : ""}
+          ${isFinished ? `<button class="btn btn-danger btn-small" type="button" onclick="deleteAppointment('${a.id}')">Obriši</button>` : ""}
+        </div>
+      </td>
+    </tr>
   `;
 }
 
@@ -200,7 +257,29 @@ async function updateAppointmentStatus(id, status) {
     window.App.showMessage("Greška pri promeni statusa.", "error");
     return;
   }
-  await renderAppointments();
+  const filter = document.getElementById("appointments-filter")?.value || "active";
+  await renderAppointments(filter);
+}
+
+async function deleteAppointment(id) {
+  if (!confirm("Obrisati ovaj završeni/otkazani termin?")) return;
+
+  const { error } = await window.db
+    .from("appointments")
+    .delete()
+    .eq("id", id)
+    .eq("salon_id", currentSalonId)
+    .in("status", ["done", "cancelled", "no_show"]);
+
+  if (error) {
+    console.error(error);
+    window.App.showMessage("Greška pri brisanju termina.", "error");
+    return;
+  }
+
+  window.App.showMessage("Termin je obrisan.", "success");
+  const filter = document.getElementById("appointments-filter")?.value || "active";
+  await renderAppointments(filter);
 }
 
 function getAppointmentStatusLabel(status) {
