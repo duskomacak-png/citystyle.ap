@@ -311,6 +311,99 @@ window.addEventListener("appinstalled", () => {
     if (/^(381|387|385|382|389|386|49|43)\d{6,}$/.test(digits)) return `+${digits}`;
     return digits;
   }
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+async function setAppBadgeCount(count = 0) {
+  try {
+    if ("setAppBadge" in navigator) {
+      if (count > 0) await navigator.setAppBadge(count);
+      else await navigator.clearAppBadge();
+    }
+  } catch (err) {
+    console.warn("Badge nije podržan na ovom uređaju:", err);
+  }
+}
+
+async function clearAppBadgeCount() {
+  await setAppBadgeCount(0);
+}
+
+async function registerPushForSalon(salonId) {
+  if (!salonId) {
+    showMessage("Profil nije učitan.", "error");
+    return false;
+  }
+
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+    showMessage("Ovaj browser ne podržava obaveštenja za web aplikacije.", "error");
+    return false;
+  }
+
+  if (Notification.permission === "denied") {
+    showMessage("Obaveštenja su blokirana u podešavanjima browsera.", "error");
+    return false;
+  }
+
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") {
+    showMessage("Obaveštenja nisu dozvoljena.", "info");
+    return false;
+  }
+
+  const vapidPublicKey = window.APP_CONFIG?.pushVapidPublicKey;
+  if (!vapidPublicKey) {
+    showMessage("Push ključ nije podešen u aplikaciji.", "error");
+    return false;
+  }
+
+  const registration = await navigator.serviceWorker.ready;
+  const subscription = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+  });
+
+  const json = subscription.toJSON();
+  const { error } = await window.db
+    .from("push_subscriptions")
+    .upsert({
+      salon_id: salonId,
+      endpoint: json.endpoint,
+      p256dh: json.keys?.p256dh,
+      auth: json.keys?.auth,
+      user_agent: navigator.userAgent,
+      active: true,
+      updated_at: new Date().toISOString()
+    }, { onConflict: "endpoint" });
+
+  if (error) {
+    console.error(error);
+    showMessage("Obaveštenja nisu sačuvana u bazi.", "error");
+    return false;
+  }
+
+  showMessage("Obaveštenja su uključena za ovaj profil.", "success");
+  return true;
+}
+
+async function notifyOwnerAboutNewAppointment(appointmentId) {
+  if (!appointmentId || !window.db?.functions?.invoke) return;
+  try {
+    await window.db.functions.invoke("send-appointment-push", {
+      body: { appointment_id: appointmentId }
+    });
+  } catch (err) {
+    console.warn("Push notifikacija nije poslata:", err);
+  }
+}
+
 window.App = {
   getUrlParam,
   saveLocal,
@@ -319,6 +412,10 @@ window.App = {
   setSessionValue,
   getSessionValue,
   showMessage,
+  setAppBadgeCount,
+  clearAppBadgeCount,
+  registerPushForSalon,
+  notifyOwnerAboutNewAppointment,
   formatDate,
   escapeHtml,
   escapeJs,

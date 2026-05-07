@@ -528,7 +528,7 @@ async function submitAppointment() {
     return;
   }
 
-  const { error } = await window.db.from("appointments").insert({
+  const { data: insertedAppointment, error } = await window.db.from("appointments").insert({
     salon_id: currentSalon.id,
     service_id: selectedService.id,
     client_name: name,
@@ -542,12 +542,16 @@ async function submitAppointment() {
     price_to_snapshot: selectedService.price_to ? Number(selectedService.price_to) : null,
     currency_snapshot: window.App.normalizeCurrency(selectedService.currency || "RSD"),
     duration_snapshot: Number(selectedService.duration_minutes || 30)
-  });
+  }).select("*").single();
 
   if (error) {
     console.error(error);
     window.App.showMessage("Greška pri slanju termina.", "error");
     return;
+  }
+
+  if (insertedAppointment?.id) {
+    window.App.notifyOwnerAboutNewAppointment(insertedAppointment.id);
   }
 
   document.getElementById("booking-box").innerHTML = `

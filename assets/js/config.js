@@ -7,7 +7,8 @@ window.APP_CONFIG = {
   appName: "CityStyle",
   platformAdminEmail: "duskomacak@gmail.com",
   salonStorageKey: "citystyle_saved_salon",
-  salonSessionKey: "citystyle_salon_session"
+  salonSessionKey: "citystyle_salon_session",
+  pushVapidPublicKey: "BNFB3Zs8op_mn7nUQgxcOQWCNco_jb7M7gdvTE__orfWVg8p5dGg6KWvJ4fM2Psg1eauWH0ybr5QnOLgjeMeQHs"
 };
 
 // Supabase CDN must be loaded before this file. Do not break the landing page if CDN is slow/blocked.

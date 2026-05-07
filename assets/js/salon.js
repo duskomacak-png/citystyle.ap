@@ -151,6 +151,10 @@ async function showSection(section) {
   if (section === "settings") return renderSalonSettings();
 }
 
+async function enableOwnerNotifications() {
+  await window.App.registerPushForSalon(currentSalonId);
+}
+
 async function renderAppointments() {
   const content = document.getElementById("salon-content");
   const today = new Date().toISOString().split("T")[0];
@@ -188,13 +192,18 @@ async function renderAppointments() {
 
   const items = appointments || [];
   appointmentCache = items;
+  const newCount = items.filter(item => item.status === "new").length;
+  window.App.setAppBadgeCount?.(newCount);
   content.innerHTML = `
     <div class="section-head paper-section-head">
       <div>
         <h2>Zahtevi / termini</h2>
         <p class="muted">Pregled zahteva i zakazanih termina po datumu, vremenu, usluzi i korisniku.</p>
       </div>
-      <button class="btn btn-dark btn-small" type="button" onclick="renderAppointments()">Osveži</button>
+      <div class="toolbar-actions">
+        <button class="btn btn-primary btn-small" type="button" onclick="enableOwnerNotifications()">Uključi obaveštenja</button>
+        <button class="btn btn-dark btn-small" type="button" onclick="renderAppointments()">Osveži</button>
+      </div>
     </div>
 
     <div class="paper-toolbar card">
