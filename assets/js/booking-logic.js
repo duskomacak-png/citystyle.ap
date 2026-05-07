@@ -35,7 +35,18 @@ async function getAvailableSlots(salonId, serviceDuration, selectedDate) {
   }
 
   const allSlots = generateTimeSlots(openTime, closeTime, 30);
-  return allSlots.filter(slot => canFitSlot(slot, Number(serviceDuration), closeTime, existing || []));
+  const today = getLocalDateString();
+  const nowMinutes = getCurrentMinutes();
+
+  return allSlots.filter(slot => {
+    const slotStartMinutes = timeToMinutes(slot);
+
+    // Ako je izabran današnji datum, ne nudimo termine koji su već prošli
+    // niti termin koji počinje u trenutnom minutu.
+    if (selectedDate === today && slotStartMinutes <= nowMinutes) return false;
+
+    return canFitSlot(slot, Number(serviceDuration), closeTime, existing || []);
+  });
 }
 
 function canFitSlot(slotStart, serviceDuration, closeTime, existingAppointments) {
@@ -77,4 +88,23 @@ function minutesToTime(totalMinutes) {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
-window.BookingLogic = { getAvailableSlots, canFitSlot, generateTimeSlots, timeToMinutes, minutesToTime };
+function getCurrentMinutes() {
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes();
+}
+
+function getLocalDateString(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+window.BookingLogic = {
+  getAvailableSlots,
+  canFitSlot,
+  generateTimeSlots,
+  timeToMinutes,
+  minutesToTime,
+  getLocalDateString
+};

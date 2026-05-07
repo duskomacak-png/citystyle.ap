@@ -287,7 +287,7 @@ function showBookingForm() {
     return;
   }
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = window.BookingLogic?.getLocalDateString ? window.BookingLogic.getLocalDateString() : new Date().toISOString().split("T")[0];
   selectedDate = today;
   selectedTime = null;
 
@@ -379,7 +379,11 @@ async function loadAvailableTimes() {
   );
 
   if (!slots.length) {
-    slotsBox.innerHTML = `<p class="muted">Nema slobodnih termina za izabrani datum.</p>`;
+    const today = window.BookingLogic?.getLocalDateString ? window.BookingLogic.getLocalDateString() : new Date().toISOString().split("T")[0];
+    const msg = selectedDate === today
+      ? "Nema više slobodnih termina za danas. Izaberite naredni datum."
+      : "Nema slobodnih termina za izabrani datum.";
+    slotsBox.innerHTML = `<p class="muted">${msg}</p>`;
     return;
   }
 
