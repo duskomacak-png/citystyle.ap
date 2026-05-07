@@ -629,10 +629,11 @@ async function renderSalonSettings() {
     </div>
     <div class="card"><h3>Logo profila</h3><p class="muted">Ovde postavljate logo koji će se prikazati na javnoj stranici ispod QR linka/profila.</p><input type="file" id="logo-upload" accept="image/png,image/jpeg,image/webp"><button class="btn btn-primary" type="button" onclick="uploadLogo()">Postavi / promeni logo</button><div id="current-logo" class="image-preview-box"></div></div>
     <div class="card settings-text-card">
-      <h3>Tekst koji se prikazuje ispod loga</h3>
-      <p class="muted">Sva polja ispod se prikazuju na javnoj stranici profila, odmah ispod loga i naziva biznisa.</p>
-      <label>Naslov ispod loga</label>
-      <input id="welcome-title" type="text" placeholder="Dobrodošli u naš profil">
+      <h3>Javni tekst profila</h3>
+      <p class="muted">Ova polja se prikazuju na javnoj stranici profila, ispod loga. Promena javnog naziva ne menja link i QR kod profila.</p>
+      <label>Naziv profila koji korisnici vide</label>
+      <input id="welcome-title" type="text" placeholder="${salonEscapeHtml(currentSalon?.salon_name || 'Naziv biznisa')}">
+      <p class="field-help">Ovde možete ispraviti grešku u nazivu koji korisnici vide. Link i QR kod ostaju isti.</p>
       <label>Opis / poruka korisnicima</label>
       <textarea id="welcome-text" rows="4" placeholder="Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev."></textarea>
       <label>Telefon koji korisnici vide</label>
@@ -669,12 +670,12 @@ function bindSettingsPreview() {
 function updateSettingsPreview() {
   const box = document.getElementById("settings-public-preview");
   if (!box) return;
-  const title = document.getElementById("welcome-title")?.value.trim() || "Naslov ispod loga";
+  const title = document.getElementById("welcome-title")?.value.trim() || currentSalon?.salon_name || "Naziv profila";
   const text = document.getElementById("welcome-text")?.value.trim() || "Opis koji korisnik vidi na javnoj stranici profila.";
   const phone = document.getElementById("salon-phone")?.value.trim();
   const address = document.getElementById("salon-address")?.value.trim();
   box.innerHTML = `
-    <div class="preview-label">Pregled javnog prikaza ispod loga</div>
+    <div class="preview-label">Pregled javnog prikaza</div>
     <div class="public-preview-box">
       <strong>${salonEscapeHtml(title)}</strong>
       <p>${salonEscapeHtml(text)}</p>
@@ -695,7 +696,7 @@ async function saveSettings() {
   const { error } = await window.db.from("salon_settings").upsert(payload, { onConflict: "salon_id" });
   if (error) return window.App.showMessage("Greška pri čuvanju podešavanja.", "error");
   await loadCurrentSettings();
-  window.App.showMessage("Podešavanja su sačuvana. Tekst, telefon i adresa sada se prikazuju na javnoj stranici profila.", "success");
+  window.App.showMessage("Podešavanja su sačuvana. Javni naziv, tekst, telefon i adresa sada se prikazuju na javnoj stranici profila.", "success");
 }
 
 async function uploadLogo() {

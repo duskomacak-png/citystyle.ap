@@ -157,18 +157,19 @@ async function renderSalonHome() {
     .eq("salon_id", currentSalon.id)
     .order("day_of_week", { ascending: true });
 
+  const publicName = settings?.welcome_title || currentSalon.salon_name || "Profil";
+
   app.innerHTML = `
     <section class="client-page">
       <div class="hero-card salon-header">
         ${settings?.logo_url ? `
-          <img src="${escapeHtml(settings.logo_url)}" alt="${escapeHtml(currentSalon.salon_name)} logo" class="salon-logo">
+          <img src="${escapeHtml(settings.logo_url)}" alt="${escapeHtml(publicName)} logo" class="salon-logo">
         ` : `
-          <div class="logo-circle">${escapeHtml(currentSalon.salon_name?.charAt(0).toUpperCase() || "S")}</div>
+          <div class="logo-circle">${escapeHtml(publicName?.charAt(0).toUpperCase() || "S")}</div>
         `}
 
-        <h1>${escapeHtml(currentSalon.salon_name)}</h1>
+        <h1>${escapeHtml(publicName)}</h1>
         <div class="public-profile-text">
-          ${settings?.welcome_title ? `<h2 class="welcome-title">${escapeHtml(settings.welcome_title)}</h2>` : ""}
           <p class="intro-text">${escapeHtml(settings?.welcome_text || "Dobrodošli. Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev.")}</p>
           ${(settings?.phone || settings?.address) ? `
             <div class="public-profile-contact">
