@@ -594,3 +594,23 @@ body[class*="theme-"] textarea:focus {
     padding: 0 14px 14px;
   }
 }
+
+
+/* Per-profile language picker */
+.language-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  font-weight: 800;
+  white-space: nowrap;
+}
+.language-choice {
+  text-align: left;
+}
+.language-picker-grid .theme-choice.selected {
+  outline: 2px solid rgba(255,255,255,0.55);
+}

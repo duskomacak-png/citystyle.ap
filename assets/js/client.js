@@ -7,6 +7,7 @@ let selectedDate = null;
 let selectedTime = null;
 let ownerPreviewMode = false;
 let adminPreviewMode = false;
+const C = (key, fallback = "") => window.App?.t ? window.App.t(key, fallback) : (fallback || key);
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -26,7 +27,7 @@ async function loadClientApp() {
     // QR/link salon page: ?salon=slug
     // If admin/owner opens preview, do NOT save this as client shortcut.
     if (urlSlug) {
-      app.innerHTML = `<div class="loading-box">Učitavanje profila...</div>`;
+      app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
       await loadSalon(urlSlug, !(ownerPreviewMode || adminPreviewMode));
       return;
     }
@@ -43,7 +44,7 @@ async function loadClientApp() {
     // If the app was installed from a public profile page, open that saved profile directly.
     const savedSlug = window.App?.getSavedSalonSlug?.();
     if (savedSlug && isStandalone) {
-      app.innerHTML = `<div class="loading-box">Učitavanje profila...</div>`;
+      app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
       await loadSalon(savedSlug, false);
       return;
     }
@@ -57,22 +58,23 @@ async function loadClientApp() {
 
 async function loadSalon(slug, saveThisSalon = true) {
   const app = document.getElementById("app");
-  app.innerHTML = `<div class="loading-box">Učitavanje profila...</div>`;
+  app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
 
   const { data: salon, error } = await window.App.checkSalonAccess(slug);
 
   if (error || !salon) {
     app.innerHTML = `
       <div class="card center">
-        <h2>Online zakazivanje trenutno nije dostupno</h2>
-        <p class="muted">Online zahtev trenutno nije dostupan za ovaj profil.</p>
-        <button class="btn btn-dark" type="button" onclick="renderPlatformLanding()">Početna strana platforme</button>
+        <h2>${C("onlineUnavailableTitle", "Online zakazivanje trenutno nije dostupno")}</h2>
+        <p class="muted">${C("onlineUnavailableText", "Online zahtev trenutno nije dostupan za ovaj profil.")}</p>
+        <button class="btn btn-dark" type="button" onclick="renderPlatformLanding()">${C("platformHome", "Početna strana platforme")}</button>
       </div>
     `;
     return;
   }
 
   currentSalon = salon;
+  window.App?.setAppLanguage?.(salon.app_language || "sr");
   window.App?.applySalonTheme?.(salon.theme_color);
   if (saveThisSalon) window.App.saveCurrentSalon(salon.slug);
 
@@ -82,6 +84,7 @@ async function loadSalon(slug, saveThisSalon = true) {
 
 function renderPlatformLanding() {
   window.App?.clearSalonTheme?.();
+  window.App?.setAppLanguage?.("sr");
   currentSalon = null;
   services = [];
   selectedService = null;
@@ -158,7 +161,7 @@ async function loadServices() {
 
 async function renderSalonHome() {
   const app = document.getElementById("app");
-  app.innerHTML = `<div class="loading-box">Učitavanje profila...</div>`;
+  app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
 
   const { data: settings } = await window.db
     .from("salon_settings")
@@ -179,18 +182,18 @@ async function renderSalonHome() {
       ${adminPreviewMode ? `
         <div class="owner-preview-bar admin-preview-bar">
           <div>
-            <strong>Admin pregled: korisnička strana</strong>
-            <span>Ovako korisnik vidi ovaj profil. Ovo dugme vidi samo prijavljeni admin.</span>
+            <strong>${C("adminClientPreviewTitle", "Admin pregled: korisnička strana")}</strong>
+            <span>${C("adminClientPreviewText", "Ovako korisnik vidi ovaj profil. Ovo dugme vidi samo prijavljeni admin.")}</span>
           </div>
-          <a class="btn btn-primary" href="${window.App.getAppPath('admin/')}">Nazad u admin</a>
+          <a class="btn btn-primary" href="${window.App.getAppPath('admin/')}">${C("backToAdmin", "Nazad u admin")}</a>
         </div>
       ` : ownerPreviewMode ? `
         <div class="owner-preview-bar">
           <div>
-            <strong>Pregled javne stranice</strong>
-            <span>Ovako korisnik vidi vaš profil.</span>
+            <strong>${C("ownerPreviewTitle", "Pregled javne stranice")}</strong>
+            <span>${C("ownerPreviewText", "Ovako korisnik vidi vaš profil.")}</span>
           </div>
-          <a class="btn btn-primary" href="${window.App.getAppPath('salon/')}">Nazad u panel vlasnika</a>
+          <a class="btn btn-primary" href="${window.App.getAppPath('salon/')}">${C("backToOwnerPanel", "Nazad u panel vlasnika")}</a>
         </div>
       ` : ""}
       <div class="hero-card salon-header">
@@ -202,7 +205,7 @@ async function renderSalonHome() {
 
         <h1>${escapeHtml(publicName)}</h1>
         <div class="public-profile-text">
-          <p class="intro-text">${escapeHtml(settings?.welcome_text || "Dobrodošli. Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev.")}</p>
+          <p class="intro-text">${escapeHtml(settings?.welcome_text || C("welcomeDefault", "Dobrodošli. Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev."))}</p>
           ${(settings?.phone || settings?.address) ? `
             <div class="public-profile-contact">
               ${settings?.phone ? `<a href="tel:${escapeHtml(window.App.normalizePhoneForTel ? window.App.normalizePhoneForTel(settings.phone) : settings.phone)}">📞 ${escapeHtml(settings.phone)}</a>` : ""}
@@ -212,9 +215,9 @@ async function renderSalonHome() {
         </div>
 
         <div class="client-actions">
-          <button class="btn btn-primary" type="button" onclick="showBookingForm()">Pošalji zahtev</button>
-          <button class="btn btn-dark" type="button" onclick="showServices()">Usluge / ponuda</button>
-          ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="window.App.installSalonApp(currentSalon.slug)">Preuzmi app ovog profila</button>`}
+          <button class="btn btn-primary" type="button" onclick="showBookingForm()">${C("sendRequest", "Pošalji zahtev")}</button>
+          <button class="btn btn-dark" type="button" onclick="showServices()">${C("servicesOffer", "Usluge / ponuda")}</button>
+          ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="window.App.installSalonApp(currentSalon.slug)">${C("installThisProfile", "Preuzmi app ovog profila")}</button>`}
         </div>
       </div>
 
@@ -233,11 +236,11 @@ function renderClientServicesPreview() {
     return `
       <details class="card client-hours-panel client-services-panel">
         <summary>
-          <span>Usluge / ponuda</span>
-          <small>Nema dostupnih usluga</small>
+          <span>${C("servicesOffer", "Usluge / ponuda")}</span>
+          <small>${C("noServicesSmall", "Nema dostupnih usluga")}</small>
         </summary>
         <div class="client-services-panel-body">
-          <p class="muted">Trenutno nema dostupnih usluga za online zahtev.</p>
+          <p class="muted">${C("noServicesText", "Trenutno nema dostupnih usluga za online zahtev.")}</p>
         </div>
       </details>
     `;
@@ -246,11 +249,11 @@ function renderClientServicesPreview() {
   return `
     <details class="card client-hours-panel client-services-panel">
       <summary>
-        <span>Usluge / ponuda</span>
-        <small>Prikaži listu</small>
+        <span>${C("servicesOffer", "Usluge / ponuda")}</span>
+        <small>${C("showList", "Prikaži listu")}</small>
       </summary>
       <div class="client-services-panel-body">
-        <p class="muted">Izaberite uslugu za koju želite da pošaljete zahtev.</p>
+        <p class="muted">${C("chooseServiceText", "Izaberite uslugu za koju želite da pošaljete zahtev.")}</p>
         <div class="service-list">
           ${services.map(service => `
             <button class="service-select-card" type="button" onclick="selectServiceById('${service.id}')">
@@ -266,29 +269,29 @@ function renderClientServicesPreview() {
 
 function renderClientWorkingHours(hours) {
   const dayNames = {
-    1: "Ponedeljak",
-    2: "Utorak",
-    3: "Sreda",
-    4: "Četvrtak",
-    5: "Petak",
-    6: "Subota",
-    0: "Nedelja"
+    1: C("monday", "Ponedeljak"),
+    2: C("tuesday", "Utorak"),
+    3: C("wednesday", "Sreda"),
+    4: C("thursday", "Četvrtak"),
+    5: C("friday", "Petak"),
+    6: C("saturday", "Subota"),
+    0: C("sunday", "Nedelja")
   };
 
   const order = [1, 2, 3, 4, 5, 6, 0];
   const rows = order.map(day => {
     const h = (hours || []).find(row => Number(row.day_of_week) === day);
     if (!h || h.is_closed) {
-      return `<div class="service-row hours-list-row"><div><strong>${dayNames[day]}</strong><span>Zatvoreno</span></div><b>—</b></div>`;
+      return `<div class="service-row hours-list-row"><div><strong>${dayNames[day]}</strong><span>${C("closed", "Zatvoreno")}</span></div><b>—</b></div>`;
     }
-    return `<div class="service-row hours-list-row"><div><strong>${dayNames[day]}</strong><span>Radno vreme</span></div><b>${String(h.open_time).slice(0,5)}–${String(h.close_time).slice(0,5)}</b></div>`;
+    return `<div class="service-row hours-list-row"><div><strong>${dayNames[day]}</strong><span>${C("workingHours", "Radno vreme")}</span></div><b>${String(h.open_time).slice(0,5)}–${String(h.close_time).slice(0,5)}</b></div>`;
   }).join("");
 
   return `
     <details class="card client-hours-panel">
       <summary>
-        <span>Radno vreme</span>
-        <small>Prikaži raspored</small>
+        <span>${C("workingHours", "Radno vreme")}</span>
+        <small>${C("showSchedule", "Prikaži raspored")}</small>
       </summary>
       <div class="service-list hours-list">${rows}</div>
     </details>
@@ -300,15 +303,15 @@ function showServices() {
   if (!box) return;
 
   if (!services.length) {
-    box.innerHTML = `<div class="card"><h2>Usluge / ponuda</h2><p class="muted">Trenutno nema dostupnih usluga za online zahtev.</p></div>`;
+    box.innerHTML = `<div class="card"><h2>${C("servicesOffer", "Usluge / ponuda")}</h2><p class="muted">${C("noServicesText", "Trenutno nema dostupnih usluga za online zahtev.")}</p></div>`;
     return;
   }
 
   box.innerHTML = `
     <details class="card client-hours-panel client-services-panel" open>
       <summary>
-        <span>Usluge / ponuda</span>
-        <small>Sakrij listu</small>
+        <span>${C("servicesOffer", "Usluge / ponuda")}</span>
+        <small>${C("hideList", "Sakrij listu")}</small>
       </summary>
       <div class="client-services-panel-body">
         <div class="service-list">
@@ -328,7 +331,7 @@ function showServices() {
 async function selectServiceById(serviceId) {
   selectedService = services.find(s => String(s.id) === String(serviceId)) || null;
   if (!selectedService) {
-    window.App.showMessage("Usluga nije pronađena.", "error");
+    window.App.showMessage(C("serviceNotFound", "Usluga nije pronađena."), "error");
     return;
   }
   showBookingForm();
@@ -339,7 +342,7 @@ function showBookingForm() {
   if (!box) return;
 
   if (!services.length) {
-    box.innerHTML = `<div class="card"><h2>Zakazivanje nije dostupno</h2><p class="muted">Trenutno nema dostupnih usluga za online zahtev.</p></div>`;
+    box.innerHTML = `<div class="card"><h2>${C("bookingUnavailable", "Zakazivanje nije dostupno")}</h2><p class="muted">${C("noServicesText", "Trenutno nema dostupnih usluga za online zahtev.")}</p></div>`;
     return;
   }
 
@@ -349,41 +352,41 @@ function showBookingForm() {
 
   box.innerHTML = `
     <div class="card booking-card booking-paper-card">
-      <h2>Pošaljite zahtev</h2>
-      <p class="muted">Izaberite uslugu, datum i slobodan termin.</p>
+      <h2>${C("sendRequestTitle", "Pošaljite zahtev")}</h2>
+      <p class="muted">${C("chooseServiceDateTime", "Izaberite uslugu, datum i slobodan termin.")}</p>
 
-      <label>Usluga i cena</label>
+      <label>${C("serviceAndPrice", "Usluga i cena")}</label>
       <select id="booking-service" class="booking-service-dropdown">
-        <option value="">Izaberite uslugu</option>
+        <option value="">${C("chooseService", "Izaberite uslugu")}</option>
         ${services.map(service => `
           <option value="${service.id}" ${selectedService?.id === service.id ? "selected" : ""}>
             ${escapeHtml(service.name)} — ${window.App.formatServicePrice(service)} — ${Number(service.duration_minutes || 0)} min
           </option>
         `).join("")}
       </select>
-      <div id="selected-service-summary" class="selected-service-summary muted">Prvo izaberite uslugu.</div>
+      <div id="selected-service-summary" class="selected-service-summary muted">${C("chooseServiceFirst", "Prvo izaberite uslugu.")}</div>
 
       <div class="booking-two-cols">
         <div>
-          <label>Datum</label>
+          <label>${C("date", "Datum")}</label>
           <input id="booking-date" type="date" min="${today}" value="${today}">
         </div>
         <div>
-          <label>Izabrani termin</label>
-          <input id="selected-time-view" type="text" value="Još nije izabran" disabled>
+          <label>${C("selectedTime", "Izabrani termin")}</label>
+          <input id="selected-time-view" type="text" value="${C("noTimeSelected", "Još nije izabran")}" disabled>
         </div>
       </div>
 
-      <label>Slobodni termini</label>
-      <div id="time-slots" class="time-grid"><p class="muted">Izaberite uslugu i datum.</p></div>
+      <label>${C("availableTimes", "Slobodni termini")}</label>
+      <div id="time-slots" class="time-grid"><p class="muted">${C("chooseServiceAndDate", "Izaberite uslugu i datum.")}</p></div>
 
       <div class="booking-two-cols">
         <div>
-          <label>Ime i prezime</label>
+          <label>${C("fullName", "Ime i prezime")}</label>
           <input id="client-name" type="text" placeholder="Ana Petrović">
         </div>
         <div>
-          <label>Država za WhatsApp broj</label>
+          <label>${C("phoneCountry", "Država za WhatsApp broj")}</label>
           <select id="client-phone-country" class="phone-country-select">
             <option value="381" selected>🇷🇸 Srbija +381</option>
             <option value="387">🇧🇦 Bosna i Hercegovina +387</option>
@@ -397,14 +400,14 @@ function showBookingForm() {
         </div>
       </div>
 
-      <label>Broj telefona / WhatsApp</label>
+      <label>${C("phoneWhatsapp", "Broj telefona / WhatsApp")}</label>
       <input id="client-phone" type="tel" inputmode="tel" placeholder="64 123 4567">
-      <p class="field-help">Izaberite državu i unesite lokalni broj. Možete uneti broj sa nulom ili bez nule. Aplikacija će ga sačuvati u ispravnom WhatsApp formatu prema izabranoj državi. Ako unesete broj sa +, koristi se direktno.</p>
+      <p class="field-help">${C("phoneHelp", "Izaberite državu i unesite lokalni broj. Možete uneti broj sa nulom ili bez nule. Aplikacija će ga sačuvati u ispravnom WhatsApp formatu prema izabranoj državi. Ako unesete broj sa +, koristi se direktno.")}</p>
 
-      <label>Napomena</label>
-      <textarea id="client-note" rows="3" placeholder="Opcionalno"></textarea>
+      <label>${C("note", "Napomena")}</label>
+      <textarea id="client-note" rows="3" placeholder="${C("optional", "Opcionalno")}"></textarea>
 
-      <button class="btn btn-primary booking-submit-btn" type="button" onclick="submitAppointment()">Pošalji zahtev</button>
+      <button class="btn btn-primary booking-submit-btn" type="button" onclick="submitAppointment()">${C("sendRequest", "Pošalji zahtev")}</button>
     </div>
   `;
 
@@ -424,8 +427,8 @@ async function handleBookingChange() {
 
   const summary = document.getElementById("selected-service-summary");
   if (!selectedService || !selectedDate) {
-    document.getElementById("time-slots").innerHTML = `<p class="muted">Izaberite uslugu i datum.</p>`;
-    if (summary) summary.textContent = "Prvo izaberite uslugu.";
+    document.getElementById("time-slots").innerHTML = `<p class="muted">${C("chooseServiceAndDate", "Izaberite uslugu i datum.")}</p>`;
+    if (summary) summary.textContent = C("chooseServiceFirst", "Prvo izaberite uslugu.");
     return;
   }
 
@@ -433,14 +436,14 @@ async function handleBookingChange() {
     summary.innerHTML = `<strong>${escapeHtml(selectedService.name)}</strong> • ${window.App.formatServicePrice(selectedService)} • ${Number(selectedService.duration_minutes || 0)} min`;
   }
   const timeView = document.getElementById("selected-time-view");
-  if (timeView) timeView.value = "Još nije izabran";
+  if (timeView) timeView.value = C("noTimeSelected", "Još nije izabran");
 
   await loadAvailableTimes();
 }
 
 async function loadAvailableTimes() {
   const slotsBox = document.getElementById("time-slots");
-  slotsBox.innerHTML = `<p class="muted">Učitavanje termina...</p>`;
+  slotsBox.innerHTML = `<p class="muted">${C("loadingTimes", "Učitavanje termina...")}</p>`;
 
   const slots = await window.BookingLogic.getAvailableSlots(
     currentSalon.id,
@@ -451,8 +454,8 @@ async function loadAvailableTimes() {
   if (!slots.length) {
     const today = window.BookingLogic?.getLocalDateString ? window.BookingLogic.getLocalDateString() : new Date().toISOString().split("T")[0];
     const msg = selectedDate === today
-      ? "Nema više slobodnih termina za danas. Izaberite naredni datum."
-      : "Nema slobodnih termina za izabrani datum.";
+      ? C("noTimesToday", "Nema više slobodnih termina za danas. Izaberite naredni datum.")
+      : C("noTimesDate", "Nema slobodnih termina za izabrani datum.");
     slotsBox.innerHTML = `<p class="muted">${msg}</p>`;
     return;
   }
@@ -532,16 +535,16 @@ async function submitAppointment() {
   const note = document.getElementById("client-note")?.value.trim();
 
   if (!currentSalon || !selectedService || !selectedDate || !selectedTime) {
-    window.App.showMessage("Izaberite uslugu, datum i termin.", "error");
+    window.App.showMessage(C("chooseAllError", "Izaberite uslugu, datum i termin."), "error");
     return;
   }
   if (!name) {
-    window.App.showMessage("Unesite ime i prezime.", "error");
+    window.App.showMessage(C("enterNameError", "Unesite ime i prezime."), "error");
     return;
   }
 
   if (!phone) {
-    window.App.showMessage("Izaberite državu i unesite ispravan broj telefona.", "error");
+    window.App.showMessage(C("phoneError", "Izaberite državu i unesite ispravan broj telefona."), "error");
     return;
   }
 
@@ -551,7 +554,7 @@ async function submitAppointment() {
     selectedDate
   );
   if (!currentSlots.includes(selectedTime)) {
-    window.App.showMessage("Termin je u međuvremenu zauzet. Izaberite drugi.", "error");
+    window.App.showMessage(C("takenError", "Termin je u međuvremenu zauzet. Izaberite drugi."), "error");
     await loadAvailableTimes();
     return;
   }
@@ -574,7 +577,7 @@ async function submitAppointment() {
 
   if (error) {
     console.error(error);
-    window.App.showMessage("Greška pri slanju termina.", "error");
+    window.App.showMessage(C("sendError", "Greška pri slanju termina."), "error");
     return;
   }
 
@@ -584,11 +587,11 @@ async function submitAppointment() {
 
   document.getElementById("booking-box").innerHTML = `
     <div class="card center">
-      <h2>Zahtev je poslat ✅</h2>
-      <p class="muted">Vlasnik profila će vas kontaktirati radi potvrde.</p>
+      <h2>${C("requestSentTitle", "Zahtev je poslat ✅")}</h2>
+      <p class="muted">${C("requestSentText", "Vlasnik profila će vas kontaktirati radi potvrde.")}</p>
       <p><strong>${escapeHtml(selectedService.name)}</strong></p>
       <p>${window.App.formatDate(selectedDate)} u ${selectedTime}</p>
     </div>
   `;
-  window.App.showMessage("Zahtev je poslat.", "success");
+  window.App.showMessage(C("requestSentToast", "Zahtev je poslat."), "success");
 }

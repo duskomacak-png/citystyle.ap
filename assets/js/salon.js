@@ -7,6 +7,7 @@ let appointmentCache = [];
 let adminOwnerPreviewMode = false;
 const salonEscapeHtml = (value) => window.App.escapeHtml(value);
 const salonEscapeJs = (value) => window.App.escapeJs(value);
+const S = (key, fallback = "") => window.App?.t ? window.App.t(key, fallback) : (fallback || key);
 
 const salonDays = [
   { num: 1, name: "Ponedeljak" },
@@ -93,6 +94,7 @@ function bindSalonLogout() {
 
 function renderSalonLogin() {
   window.App?.clearSalonTheme?.();
+  window.App?.setAppLanguage?.("sr");
   document.getElementById("salon-name").textContent = "Panel vlasnika biznisa";
   document.getElementById("salon-status-text").textContent = "Unesite email adresu biznisa i kod firme koji vam je dodelio administrator.";
   document.getElementById("salon-tabs").classList.add("hidden");
@@ -119,6 +121,7 @@ async function handleSalonLogin() {
   if (!salon) return;
   currentSalon = salon;
   currentSalonId = salon.id;
+  window.App?.setAppLanguage?.(salon.app_language || "sr");
   window.App?.applySalonTheme?.(salon.theme_color);
   renderSalonDashboard();
   await showSection("appointments");
@@ -140,6 +143,7 @@ async function loadSalonForAdminPreview(salonId) {
 
   currentSalon = data;
   currentSalonId = data.id;
+  window.App?.setAppLanguage?.(data.app_language || "sr");
   window.App?.applySalonTheme?.(data.theme_color);
   renderSalonDashboard();
   await showSection("appointments");
@@ -166,12 +170,14 @@ async function loadSalonFromSession(salonId) {
 
   currentSalon = data;
   currentSalonId = data.id;
+  window.App?.setAppLanguage?.(data.app_language || "sr");
   window.App?.applySalonTheme?.(data.theme_color);
   renderSalonDashboard();
   await showSection("appointments");
 }
 
 function renderBlockedSalon(salon) {
+  window.App?.setAppLanguage?.(salon.app_language || "sr");
   window.App?.applySalonTheme?.(salon.theme_color);
   document.getElementById("salon-name").textContent = salon.salon_name || "Salon";
   document.getElementById("salon-status-text").textContent = "Profil je blokiran.";
@@ -184,6 +190,18 @@ function renderBlockedSalon(salon) {
 }
 
 function renderSalonDashboard() {
+  const labels = {
+    appointments: S("tabAppointments", "Zahtevi / termini"),
+    services: S("tabServices", "Usluge / ponuda"),
+    hours: S("tabHours", "Radno vreme"),
+    settings: S("tabSettings", "Podešavanje profila")
+  };
+  document.querySelectorAll("#salon-tabs button").forEach(btn => {
+    if (labels[btn.dataset.section]) btn.textContent = labels[btn.dataset.section];
+  });
+  document.getElementById("salon-install-btn").textContent = S("ownerInstallBtn", "Preuzmi panel vlasnika");
+  document.getElementById("salon-logout-btn").textContent = S("logout", "Odjavi se");
+
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
   const expired = isPaymentExpired(currentSalon.paid_until);
   document.getElementById("salon-status-text").innerHTML = adminOwnerPreviewMode
@@ -222,7 +240,7 @@ async function renderAppointments() {
   const statusFilter = window.App?.getSessionValue?.("salonAppointmentsFilter") || "active";
   const dateFilter = window.App?.getSessionValue?.("salonAppointmentsDate") || today;
 
-  content.innerHTML = `<div class="loading-box">Učitavanje termina...</div>`;
+  content.innerHTML = `<div class="loading-box">${S("loadingProfile", "Učitavanje termina...")}</div>`;
 
   let query = window.db
     .from("appointments")
@@ -247,7 +265,7 @@ async function renderAppointments() {
 
   if (error) {
     console.error(error);
-    content.innerHTML = `<div class="card"><p class="error-text">Greška pri učitavanju termina.</p></div>`;
+    content.innerHTML = `<div class="card"><p class="error-text">${S("sendError", "Greška pri učitavanju termina.")}</p></div>`;
     return;
   }
 
@@ -262,8 +280,8 @@ async function renderAppointments() {
         <p class="muted">Pregled zahteva i zakazanih termina po datumu, vremenu, usluzi i korisniku.</p>
       </div>
       <div class="toolbar-actions">
-        ${adminOwnerPreviewMode ? `<span class="status-pill">Samo pregled</span>` : `<button class="btn btn-primary btn-small" type="button" onclick="enableOwnerNotifications()">Uključi obaveštenja</button>`}
-        <button class="btn btn-dark btn-small" type="button" onclick="renderAppointments()">Osveži</button>
+        ${adminOwnerPreviewMode ? `<span class="status-pill">Samo pregled</span>` : `<button class="btn btn-primary btn-small" type="button" onclick="enableOwnerNotifications()">${S("enableNotifications", "Uključi obaveštenja")}</button>`}
+        <button class="btn btn-dark btn-small" type="button" onclick="renderAppointments()">${S("refresh", "Osveži")}</button>
       </div>
     </div>
 
@@ -272,9 +290,9 @@ async function renderAppointments() {
         Prikaz
         <select id="appointment-filter" onchange="changeAppointmentFilter()">
           <option value="active" ${statusFilter === "active" ? "selected" : ""}>Aktivni termini</option>
-          <option value="today" ${statusFilter === "today" ? "selected" : ""}>Današnji termini</option>
+          <option value="today" ${statusFilter === "today" ? "selected" : ""}>${S("todayAppointments", "Današnji termini")}</option>
           <option value="date" ${statusFilter === "date" ? "selected" : ""}>Zahtevi / termini po datumu</option>
-          <option value="done" ${statusFilter === "done" ? "selected" : ""}>Završeni termini</option>
+          <option value="done" ${statusFilter === "done" ? "selected" : ""}>${S("done", "Završeni termini")}</option>
           <option value="cancelled" ${statusFilter === "cancelled" ? "selected" : ""}>Otkazani termini</option>
         </select>
       </label>
@@ -287,7 +305,7 @@ async function renderAppointments() {
     ${items.length ? renderAppointmentPaperList(items) : `
       <div class="card center">
         <h3>Nema zahteva za izabrani prikaz</h3>
-        <p class="muted">Kada korisnik pošalje zahtev ili zakaže termin, podaci će se prikazati u ovoj listi.</p>
+        <p class="muted">${S("noRequestsText", "Kada korisnik pošalje zahtev ili zakaže termin, podaci će se prikazati u ovoj listi.")}</p>
       </div>
     `}
   `;
@@ -389,7 +407,7 @@ function renderAppointmentActionButtons(a) {
   return `
     <button class="btn btn-success btn-paper" type="button" onclick="openClientMessage('${id}', 'confirmed')">Poruka</button>
     <a class="btn btn-dark btn-paper" href="tel:${safePhone}">Pozovi</a>
-    <button class="btn btn-danger btn-paper" type="button" onclick="deleteAppointment('${id}')">Obriši</button>
+    <button class="btn btn-danger btn-paper" type="button" onclick="deleteAppointment('${id}')">${S("delete", "Obriši")}</button>
   `;
 }
 
@@ -549,7 +567,7 @@ async function deleteAppointment(id) {
 }
 
 function getAppointmentStatusLabel(status) {
-  return { new: "Novo", confirmed: "Potvrđeno", cancelled: "Otkazano", done: "Završeno", no_show: "Nije došao/la" }[status] || status;
+  return { new: S("newRequests", "Novo"), confirmed: S("confirmed", "Potvrđeno"), cancelled: "Otkazano", done: S("done", "Završeno"), no_show: "Nije došao/la" }[status] || status;
 }
 
 async function renderServices() {
@@ -557,7 +575,7 @@ async function renderServices() {
   content.innerHTML = `
     <div class="section-head"><div><h2>Usluge / ponuda</h2><p class="muted">Dodajte i uredite usluge koje korisnici mogu izabrati prilikom slanja zahteva ili zakazivanja.</p></div>${adminOwnerPreviewMode ? `<span class="status-pill">Samo pregled</span>` : `<button class="btn btn-primary" type="button" onclick="showAddServiceForm()">Dodaj uslugu</button>`}</div>
     <div id="service-form-box"></div>
-    <div id="services-list" class="cards"><div class="loading-box">Učitavanje usluga...</div></div>
+    <div id="services-list" class="cards"><div class="loading-box">${S("loadingProfile", "Učitavanje usluga...")}</div></div>
   `;
   await loadServices();
 }
@@ -570,7 +588,7 @@ async function loadServices() {
     return;
   }
   if (!services?.length) {
-    list.innerHTML = `<div class="card center"><p class="muted">Još nemate dodatih usluga. Dodajte prvu uslugu kako bi klijenti mogli da zakažu termin.</p></div>`;
+    list.innerHTML = `<div class="card center"><p class="muted">${S("noServicesText", "Još nemate dodatih usluga. Dodajte prvu uslugu kako bi klijenti mogli da zakažu termin.")}</p></div>`;
     return;
   }
   list.innerHTML = services.map(service => `
@@ -580,7 +598,7 @@ async function loadServices() {
       ${adminOwnerPreviewMode ? `<div class="card-actions"><span class="status-pill">Admin pregled</span></div>` : `<div class="card-actions">
         <button class="btn btn-dark" type="button" onclick="editService('${service.id}')">Uredi</button>
         <button class="btn btn-dark" type="button" onclick="toggleServiceActive('${service.id}', ${service.active ? "true" : "false"})">${service.active ? "Sakrij" : "Aktiviraj"}</button>
-        <button class="btn btn-danger" type="button" onclick="deleteService('${service.id}')">Obriši</button>
+        <button class="btn btn-danger" type="button" onclick="deleteService('${service.id}')">${S("delete", "Obriši")}</button>
       </div>`}
     </div>
   `).join("");
@@ -616,7 +634,7 @@ async function showAddServiceForm(serviceId = null) {
       </select>
       <p class="muted form-help">Ako usluga ima raspon cene, unesite npr. 500 u “Cena od” i 800 u “Cena do”. Ako je cena po dogovoru, unesite 0.</p>
       <label>Trajanje u minutima</label><input id="service-duration" type="number" min="5" step="5" value="${service ? Number(service.duration_minutes || 0) : ""}" placeholder="45">
-      <div class="card-actions"><button class="btn btn-primary" type="button" onclick="saveService()">Sačuvaj</button><button class="btn btn-dark" type="button" onclick="hideAddServiceForm()">Otkaži</button></div>
+      <div class="card-actions"><button class="btn btn-primary" type="button" onclick="saveService()">${S("save", "Sačuvaj")}</button><button class="btn btn-dark" type="button" onclick="hideAddServiceForm()">${S("cancel", "Otkaži")}</button></div>
     </div>`;
 }
 
@@ -664,7 +682,7 @@ async function deleteService(id) {
 async function renderWorkingHours() {
   document.getElementById("salon-content").innerHTML = `
     <div class="section-head"><div><h2>Radno vreme</h2><p class="muted">Podesite dane i vreme kada biznis prima online zahteve ili termine.</p></div></div>
-    <div class="card"><div id="hours-form"><div class="loading-box">Učitavanje radnog vremena...</div></div>${adminOwnerPreviewMode ? `<div class="warning-box">Admin pregled je samo za gledanje. Radno vreme se ne može menjati iz pregleda.</div>` : `<button class="btn btn-primary" type="button" onclick="saveWorkingHours()">Sačuvaj radno vreme</button>`}</div>
+    <div class="card"><div id="hours-form"><div class="loading-box">${S("loadingProfile", "Učitavanje radnog vremena...")}</div></div>${adminOwnerPreviewMode ? `<div class="warning-box">Admin pregled je samo za gledanje. Radno vreme se ne može menjati iz pregleda.</div>` : `<button class="btn btn-primary" type="button" onclick="saveWorkingHours()">${S("save", "Sačuvaj")} radno vreme</button>`}</div>
   `;
   await loadWorkingHours();
 }
@@ -716,7 +734,7 @@ async function renderSalonSettings() {
   document.getElementById("salon-content").innerHTML = `
     <div class="section-head">
       <div>
-        <h2>Podešavanje profila</h2>
+        <h2>${S("profileSettings", "Podešavanje profila")}</h2>
         <p class="muted">Uredite podatke koje korisnici vide na javnoj stranici profila.</p>
       </div>
       <a class="btn btn-primary" href="${adminOwnerPreviewMode ? `${window.App.getSalonPublicLink(currentSalon.slug)}&adminPreview=1&from=admin` : previewLink}">Pogledaj javnu stranicu</a>
@@ -748,8 +766,8 @@ async function renderSalonSettings() {
       <input id="salon-address" type="text" placeholder="Adresa ili mesto poslovanja">
       <div class="settings-preview" id="settings-public-preview"></div>
       <div class="card-actions settings-main-actions">
-        <button class="btn btn-primary" type="button" onclick="saveSettings()">Sačuvaj podešavanja</button>
-        <button class="btn btn-dark" type="button" onclick="saveSettingsAndPreview()">Sačuvaj i pogledaj javnu stranicu</button>
+        <button class="btn btn-primary" type="button" onclick="saveSettings()">${S("save", "Sačuvaj")} podešavanja</button>
+        <button class="btn btn-dark" type="button" onclick="saveSettingsAndPreview()">${S("save", "Sačuvaj")} i pogledaj javnu stranicu</button>
       </div>
     </div>
   `;

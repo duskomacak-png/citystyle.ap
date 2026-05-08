@@ -27,6 +27,23 @@ const ADMIN_THEME_OPTIONS = [
   { value: "orange-pro", label: "Orange Pro", icon: "🟠", hint: "radovi, servis, dostava" }
 ];
 
+
+const ADMIN_LANGUAGE_OPTIONS = [
+  { value: "sr", label: "Srpski", icon: "🇷🇸", hint: "srpski interfejs za vlasnika i klijente" },
+  { value: "en", label: "English", icon: "🇬🇧", hint: "English interface for owner and clients" },
+  { value: "de", label: "Deutsch", icon: "🇩🇪", hint: "deutsche Oberfläche für Inhaber und Kunden" }
+];
+
+function getAdminLanguageOption(value) {
+  const normalized = window.App?.normalizeAppLanguage ? window.App.normalizeAppLanguage(value) : String(value || "sr");
+  return ADMIN_LANGUAGE_OPTIONS.find(item => item.value === normalized) || ADMIN_LANGUAGE_OPTIONS[0];
+}
+
+function renderLanguageBadge(value) {
+  const lang = getAdminLanguageOption(value);
+  return `<span class="language-badge">${lang.icon} ${adminEscapeHtml(lang.label)}</span>`;
+}
+
 function getAdminThemeOption(value) {
   const normalized = window.App?.normalizeSalonTheme ? window.App.normalizeSalonTheme(value) : String(value || "classic-red");
   return ADMIN_THEME_OPTIONS.find(item => item.value === normalized) || ADMIN_THEME_OPTIONS[0];
@@ -174,6 +191,7 @@ function renderSalonCard(salon) {
         <div><span>Uplaćeno do</span><strong>${salon.paid_until ? window.App.formatDate(salon.paid_until) : "—"}</strong></div>
         <div><span>Cena</span><strong>${Number(salon.monthly_price || 9.99).toFixed(2)} ${adminEscapeHtml(salon.currency || "EUR")}</strong></div>
         <div><span>Boja profila</span><strong>${renderThemeBadge(salon.theme_color)}</strong></div>
+        <div><span>Jezik aplikacije</span><strong>${renderLanguageBadge(salon.app_language)}</strong></div>
       </div>
       ${expired ? `<div class="warning-box">Uplata je istekla. Profil ostaje aktivan dok ga administrator ručno ne blokira.</div>` : ""}
       <div class="link-box"><small>Link profila:</small><input readonly value="${salonLink}"></div>
@@ -183,6 +201,7 @@ function renderSalonCard(salon) {
         <a class="btn btn-dark" href="${getAdminOwnerPreviewLink(salon.id)}">Vidi kao vlasnik</a>
         <button class="btn btn-dark" type="button" onclick="showQrForSalon('${salon.slug}', '${adminEscapeJs(salon.salon_name)}')">QR kod</button>
         <button class="btn btn-dark" type="button" onclick="showThemePicker('${salon.id}', '${adminEscapeJs(salon.theme_color || "classic-red")}', '${adminEscapeJs(salon.salon_name)}')">🎨 Boja</button>
+        <button class="btn btn-dark" type="button" onclick="showLanguagePicker('${salon.id}', '${adminEscapeJs(salon.app_language || "sr")}', '${adminEscapeJs(salon.salon_name)}')">🌐 Jezik</button>
         <button class="btn btn-dark" type="button" onclick="editSalonProfile('${salon.id}')">Izmeni</button>
         <button class="btn btn-dark" type="button" onclick="extendPayment('${salon.id}', '${salon.paid_until || ""}')">Produži uplatu</button>
         <button class="btn ${salon.status === "active" ? "btn-warning" : "btn-success"}" type="button" onclick="toggleSalonStatus('${salon.id}', '${salon.status}')">${salon.status === "active" ? "Blokiraj" : "Aktiviraj"}</button>
@@ -201,6 +220,8 @@ async function showAddSalonForm() {
   if (!code) return;
   const city = prompt("Grad / mesto:", "") || null;
   const phone = prompt("Telefon biznisa:", "") || null;
+  const languageInput = prompt("Jezik aplikacije za ovaj profil: sr, en ili de", "sr") || "sr";
+  const appLanguage = getAdminLanguageOption(languageInput).value;
 
   const cleanName = name.trim();
   const cleanEmail = email.trim().toLowerCase();
@@ -225,6 +246,7 @@ async function showAddSalonForm() {
       monthly_price: 9.99,
       currency: "EUR",
       theme_color: "classic-red",
+      app_language: appLanguage,
       is_deleted: false
     })
     .select()
@@ -450,6 +472,47 @@ async function saveSalonTheme(salonId, themeValue) {
 
   document.querySelector(".modal-backdrop")?.remove();
   window.App.showMessage("Boja profila je sačuvana.", "success");
+  await loadSalonsList();
+}
+
+
+function showLanguagePicker(salonId, currentLanguage, salonName) {
+  const activeLanguage = getAdminLanguageOption(currentLanguage).value;
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop";
+  modal.innerHTML = `
+    <div class="modal-card theme-modal-card">
+      <h2>Jezik aplikacije</h2>
+      <p class="muted">${adminEscapeHtml(salonName || "Biznis profil")}</p>
+      <p class="theme-modal-note">Jezik menja samo administrator. Menja se samo ovaj profil, ostali profili ostaju isti. Usluge koje vlasnik sam unese se ne prevode automatski.</p>
+      <div class="theme-picker-grid language-picker-grid">
+        ${ADMIN_LANGUAGE_OPTIONS.map(lang => `
+          <button class="theme-choice language-choice ${lang.value === activeLanguage ? "selected" : ""}" type="button" onclick="saveSalonLanguage('${salonId}', '${lang.value}')">
+            <span class="theme-choice-top"><strong>${lang.icon} ${adminEscapeHtml(lang.label)}</strong></span>
+            <small>${adminEscapeHtml(lang.hint)}</small>
+          </button>
+        `).join("")}
+      </div>
+      <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function saveSalonLanguage(salonId, languageValue) {
+  const cleanLanguage = getAdminLanguageOption(languageValue).value;
+  const { error } = await window.db
+    .from("salons")
+    .update({ app_language: cleanLanguage })
+    .eq("id", salonId);
+
+  if (error) {
+    console.error(error);
+    window.App.showMessage("Greška pri čuvanju jezika: " + error.message, "error");
+    return;
+  }
+
+  document.querySelector(".modal-backdrop")?.remove();
+  window.App.showMessage("Jezik profila je sačuvan.", "success");
   await loadSalonsList();
 }
 
