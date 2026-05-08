@@ -614,3 +614,95 @@ body[class*="theme-"] textarea:focus {
 .language-picker-grid .theme-choice.selected {
   outline: 2px solid rgba(255,255,255,0.55);
 }
+
+/* Admin CRM additions: search, expiring subscriptions, owner contact */
+.admin-search-card label {
+  margin-top: 0;
+  font-weight: 900;
+  color: #f4f4f5;
+}
+.admin-search-card input[type="search"] {
+  margin-top: 8px;
+  font-weight: 800;
+}
+.admin-search-result {
+  margin: 0 0 10px 4px;
+}
+.expiring-card {
+  border-color: rgba(202,138,4,.34);
+  background: linear-gradient(180deg, rgba(202,138,4,.08), rgba(255,255,255,.02));
+}
+.expiring-card.ok {
+  border-color: rgba(22,163,74,.25);
+  background: linear-gradient(180deg, rgba(22,163,74,.06), rgba(255,255,255,.02));
+}
+.compact-section-head {
+  margin: 0 0 12px;
+}
+.expiring-list {
+  display: grid;
+  gap: 10px;
+}
+.expiring-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: rgba(0,0,0,.22);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+}
+.expiring-row strong,
+.expiring-row span,
+.expiring-row small {
+  display: block;
+}
+.expiring-row span {
+  color: #e4e4e7;
+  font-size: 13px;
+  margin-top: 2px;
+}
+.expiring-row small {
+  color: #fde68a;
+  margin-top: 4px;
+  font-weight: 800;
+}
+.expiring-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  justify-content: flex-end;
+}
+.owner-subscription-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 12px 0;
+  padding: 13px;
+  border-radius: 15px;
+  border: 1px solid rgba(202,138,4,.4);
+  background: rgba(202,138,4,.12);
+  color: #fde68a;
+}
+.owner-subscription-alert p {
+  margin: 4px 0 0;
+  color: #fef3c7;
+  font-size: 13px;
+}
+@media(max-width:820px){
+  .expiring-row,
+  .owner-subscription-alert {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .expiring-actions {
+    justify-content: stretch;
+  }
+  .expiring-actions .btn,
+  .owner-subscription-alert .btn {
+    width: 100%;
+    text-align: center;
+  }
+}

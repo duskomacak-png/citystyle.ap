@@ -35,6 +35,41 @@ function applyAdminOwnerPreviewHeader() {
   actions.insertAdjacentHTML("afterbegin", `<a class="btn btn-primary admin-back-btn" href="${window.App.getAppPath("admin/")}">Nazad u admin</a>`);
 }
 
+
+function daysUntilSubscriptionEnd(dateString) {
+  if (!dateString) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateString + (String(dateString).includes("T") ? "" : "T00:00:00"));
+  target.setHours(0, 0, 0, 0);
+  return Math.ceil((target.getTime() - today.getTime()) / 86400000);
+}
+
+function renderOwnerSubscriptionNotice() {
+  if (adminOwnerPreviewMode || !currentSalon?.paid_until) return "";
+  const days = daysUntilSubscriptionEnd(currentSalon.paid_until);
+  if (days === null || days > 10) return "";
+  const paidUntil = window.App.formatDate(currentSalon.paid_until);
+  const adminEmail = window.APP_CONFIG?.platformAdminEmail || "duskomacak@gmail.com";
+  const subject = `Produženje CityStyle.app usluge - ${currentSalon.salon_name || "profil"}`;
+  const body = `Poštovani,\n\nŽelim informacije za produženje CityStyle.app usluge za profil: ${currentSalon.salon_name || ""}.\n\nDatum isteka: ${paidUntil}\n\nSrdačan pozdrav.`;
+  const mailUrl = `mailto:${encodeURIComponent(adminEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const title = days < 0
+    ? `Vaša CityStyle.app usluga je istekla ${paidUntil}.`
+    : days === 0
+      ? `Vaša CityStyle.app usluga ističe danas.`
+      : `Vaša CityStyle.app usluga ističe za ${days} dana.`;
+  return `
+    <div class="owner-subscription-alert">
+      <div>
+        <strong>⚠️ ${salonEscapeHtml(title)}</strong>
+        <p>Molimo kontaktirajte administratora ukoliko želite produženje usluge za naredni period.</p>
+      </div>
+      <a class="btn btn-primary btn-small" href="${mailUrl}">Kontaktiraj admina</a>
+    </div>
+  `;
+}
+
 document.addEventListener("DOMContentLoaded", () => initSalonPanel());
 
 async function initSalonPanel() {
@@ -284,6 +319,8 @@ async function renderAppointments() {
         <button class="btn btn-dark btn-small" type="button" onclick="renderAppointments()">${S("refresh", "Osveži")}</button>
       </div>
     </div>
+
+    ${renderOwnerSubscriptionNotice()}
 
     <div class="paper-toolbar card">
       <label>

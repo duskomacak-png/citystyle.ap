@@ -64,6 +64,98 @@ function getAdminOwnerPreviewLink(salonId) {
 }
 
 
+let adminSalonsCache = [];
+let adminSearchQuery = "";
+
+function getAdminSearchText(salon) {
+  return [
+    salon.salon_name,
+    salon.owner_email,
+    salon.owner_phone,
+    salon.phone,
+    salon.company_code,
+    salon.slug,
+    salon.city
+  ].map(v => String(v || "").toLowerCase()).join(" ");
+}
+
+function filterAdminSalons(items) {
+  const q = String(adminSearchQuery || "").trim().toLowerCase();
+  if (!q) return items;
+  return items.filter(salon => getAdminSearchText(salon).includes(q));
+}
+
+function handleAdminSearch(value) {
+  adminSearchQuery = String(value || "");
+  renderAdminSalonsView();
+}
+
+function daysUntilDate(dateString) {
+  if (!dateString) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateString + (String(dateString).includes("T") ? "" : "T00:00:00"));
+  target.setHours(0, 0, 0, 0);
+  return Math.ceil((target.getTime() - today.getTime()) / 86400000);
+}
+
+function isPaymentExpiringSoon(paidUntil, days = 10) {
+  const diff = daysUntilDate(paidUntil);
+  return diff !== null && diff >= 0 && diff <= days;
+}
+
+function normalizeAdminPhoneForWhatsApp(phone) {
+  const raw = String(phone || "").trim();
+  if (!raw) return "";
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return "";
+  if (raw.startsWith("+")) return digits;
+  if (raw.startsWith("00")) return digits.slice(2);
+  if (digits.startsWith("0") && digits.length >= 8) return `381${digits.slice(1)}`;
+  if (/^(381|387|385|382|389|386|49|43)\d{6,}$/.test(digits)) return digits;
+  return digits.length >= 8 ? digits : "";
+}
+
+function buildRenewalSubject(salon) {
+  return `Obaveštenje o isteku CityStyle.app usluge`;
+}
+
+function buildRenewalMessage(salon) {
+  const name = salon?.salon_name || "vaš profil";
+  const paidUntil = salon?.paid_until ? window.App.formatDate(salon.paid_until) : "uskoro";
+  return `Poštovani,
+
+Obaveštavamo vas da se period aktivacije vašeg CityStyle.app profila približava isteku.
+
+Kako bi vaš QR profil, prijem zahteva, zakazivanja i obaveštenja nastavili da rade bez prekida, molimo vas da nam javite da li želite produženje usluge za naredni period.
+
+Naziv profila: ${name}
+Datum isteka: ${paidUntil}
+
+Ukoliko želite produženje, dovoljno je da odgovorite na ovu poruku i potvrdite nastavak korišćenja usluge.
+
+Srdačan pozdrav,
+CityStyle.app`;
+}
+
+function sendRenewalEmail(salonId) {
+  const salon = adminSalonsCache.find(item => String(item.id) === String(salonId));
+  if (!salon) return window.App.showMessage("Profil nije pronađen.", "error");
+  if (!salon.owner_email) return window.App.showMessage("Ovaj profil nema email vlasnika.", "error");
+  const url = `mailto:${encodeURIComponent(salon.owner_email)}?subject=${encodeURIComponent(buildRenewalSubject(salon))}&body=${encodeURIComponent(buildRenewalMessage(salon))}`;
+  window.location.href = url;
+}
+
+function sendRenewalWhatsApp(salonId) {
+  const salon = adminSalonsCache.find(item => String(item.id) === String(salonId));
+  if (!salon) return window.App.showMessage("Profil nije pronađen.", "error");
+  const phone = normalizeAdminPhoneForWhatsApp(salon.owner_phone || salon.phone || "");
+  if (!phone) return window.App.showMessage("Ovaj profil nema ispravan telefon vlasnika za WhatsApp.", "error");
+  const url = `https://wa.me/${phone}?text=${encodeURIComponent(buildRenewalMessage(salon))}`;
+  window.open(url, "_blank");
+}
+
+
 document.addEventListener("DOMContentLoaded", () => loadAdminPanel());
 
 async function loadAdminPanel() {
@@ -121,6 +213,12 @@ function renderAdminDashboard() {
       </div>
     </div>
     <div id="admin-stats" class="stats-grid"></div>
+    <div class="card admin-search-card">
+      <label for="admin-search-input">🔍 Pretraga profila</label>
+      <input id="admin-search-input" type="search" placeholder="Traži po emailu, nazivu, telefonu, kodu ili linku..." oninput="handleAdminSearch(this.value)">
+      <p class="muted">Korisno kada budeš imao 50, 100 ili više profila.</p>
+    </div>
+    <div id="admin-expiring-box"></div>
     <div id="salons-list"><div class="loading-box">Učitavanje profila...</div></div>
   `;
 }
@@ -141,10 +239,24 @@ async function loadSalonsList() {
     return;
   }
 
-  const items = salons || [];
+  adminSalonsCache = salons || [];
+  renderAdminSalonsView();
+}
+
+function renderAdminSalonsView() {
+  const list = document.getElementById("salons-list");
+  const stats = document.getElementById("admin-stats");
+  const expiringBox = document.getElementById("admin-expiring-box");
+  if (!list || !stats) return;
+
+  const items = adminSalonsCache || [];
+  const filteredItems = filterAdminSalons(items);
   const activeCount = items.filter(s => s.status === "active").length;
   const blockedCount = items.filter(s => s.status === "blocked").length;
   const expiredCount = items.filter(s => isPaymentExpired(s.paid_until)).length;
+  const expiringSoon = items
+    .filter(s => s.status !== "deleted" && !s.is_deleted && isPaymentExpiringSoon(s.paid_until, 10))
+    .sort((a, b) => (daysUntilDate(a.paid_until) ?? 99) - (daysUntilDate(b.paid_until) ?? 99));
 
   stats.innerHTML = `
     <div class="stat-card"><span>Ukupno profila</span><strong>${items.length}</strong></div>
@@ -153,13 +265,25 @@ async function loadSalonsList() {
     <div class="stat-card danger"><span>Uplata istekla</span><strong>${expiredCount}</strong></div>
   `;
 
+  if (expiringBox) {
+    expiringBox.innerHTML = renderExpiringSoonBox(expiringSoon);
+  }
+
   if (!items.length) {
     list.innerHTML = `<div class="card center"><h3>Nema dodatih profila</h3><p class="muted">Dodajte prvi biznis profil kako biste generisali njegov link i QR kod.</p></div>`;
     return;
   }
 
+  if (!filteredItems.length) {
+    list.innerHTML = `<div class="card center"><h3>Nema rezultata</h3><p class="muted">Nijedan profil ne odgovara unetoj pretrazi.</p></div>`;
+    return;
+  }
+
   try {
-    list.innerHTML = `<div class="cards">${items.map(renderSalonCard).join("")}</div>`;
+    const searchInfo = adminSearchQuery.trim()
+      ? `<p class="muted admin-search-result">Prikazano: ${filteredItems.length} od ${items.length} profila</p>`
+      : "";
+    list.innerHTML = `${searchInfo}<div class="cards">${filteredItems.map(renderSalonCard).join("")}</div>`;
   } catch (err) {
     console.error("Admin render salon cards error:", err);
     list.innerHTML = `
@@ -169,6 +293,55 @@ async function loadSalonsList() {
       </div>
     `;
   }
+}
+
+function renderExpiringSoonBox(items) {
+  if (!items.length) {
+    return `
+      <div class="card expiring-card ok">
+        <div class="section-head compact-section-head">
+          <div>
+            <h3>✅ Pretplate koje ističu u narednih 10 dana</h3>
+            <p class="muted">Trenutno nema profila kojima uskoro ističe aktivacija.</p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="card expiring-card">
+      <div class="section-head compact-section-head">
+        <div>
+          <h3>⚠️ Pretplate koje ističu u narednih 10 dana</h3>
+          <p class="muted">Ovo je tvoja lista za kontaktiranje vlasnika bez skrolovanja kroz sve profile.</p>
+        </div>
+        <span class="status-pill new">${items.length} za proveru</span>
+      </div>
+      <div class="expiring-list">
+        ${items.map(renderExpiringSoonRow).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderExpiringSoonRow(salon) {
+  const days = daysUntilDate(salon.paid_until);
+  const dayText = days === 0 ? "ističe danas" : `ističe za ${days} dana`;
+  return `
+    <div class="expiring-row">
+      <div>
+        <strong>${adminEscapeHtml(salon.salon_name)}</strong>
+        <span>${adminEscapeHtml(salon.owner_email || "Bez emaila")} ${salon.owner_phone ? "• " + adminEscapeHtml(salon.owner_phone) : ""}</span>
+        <small>Datum isteka: ${salon.paid_until ? window.App.formatDate(salon.paid_until) : "—"} • ${dayText}</small>
+      </div>
+      <div class="expiring-actions">
+        <button class="btn btn-dark btn-small" type="button" onclick="sendRenewalEmail('${salon.id}')">📧 Email</button>
+        <button class="btn btn-success btn-small" type="button" onclick="sendRenewalWhatsApp('${salon.id}')">💬 WhatsApp</button>
+        <button class="btn btn-primary btn-small" type="button" onclick="extendPayment('${salon.id}', '${salon.paid_until || ""}')">Produži</button>
+      </div>
+    </div>
+  `;
 }
 
 function renderSalonCard(salon) {
@@ -187,6 +360,7 @@ function renderSalonCard(salon) {
       </div>
       <div class="info-grid">
         <div><span>Slug</span><strong>${adminEscapeHtml(salon.slug)}</strong></div>
+        <div><span>Telefon vlasnika</span><strong>${adminEscapeHtml(salon.owner_phone || "—")}</strong></div>
         <div><span>Uplaćeno od</span><strong>${salon.paid_from ? window.App.formatDate(salon.paid_from) : "—"}</strong></div>
         <div><span>Uplaćeno do</span><strong>${salon.paid_until ? window.App.formatDate(salon.paid_until) : "—"}</strong></div>
         <div><span>Cena</span><strong>${Number(salon.monthly_price || 9.99).toFixed(2)} ${adminEscapeHtml(salon.currency || "EUR")}</strong></div>
@@ -202,6 +376,8 @@ function renderSalonCard(salon) {
         <button class="btn btn-dark" type="button" onclick="showQrForSalon('${salon.slug}', '${adminEscapeJs(salon.salon_name)}')">QR kod</button>
         <button class="btn btn-dark" type="button" onclick="showThemePicker('${salon.id}', '${adminEscapeJs(salon.theme_color || "classic-red")}', '${adminEscapeJs(salon.salon_name)}')">🎨 Boja</button>
         <button class="btn btn-dark" type="button" onclick="showLanguagePicker('${salon.id}', '${adminEscapeJs(salon.app_language || "sr")}', '${adminEscapeJs(salon.salon_name)}')">🌐 Jezik</button>
+        <button class="btn btn-dark" type="button" onclick="sendRenewalEmail('${salon.id}')">📧 Email obaveštenje</button>
+        <button class="btn btn-success" type="button" onclick="sendRenewalWhatsApp('${salon.id}')">💬 WhatsApp</button>
         <button class="btn btn-dark" type="button" onclick="editSalonProfile('${salon.id}')">Izmeni</button>
         <button class="btn btn-dark" type="button" onclick="extendPayment('${salon.id}', '${salon.paid_until || ""}')">Produži uplatu</button>
         <button class="btn ${salon.status === "active" ? "btn-warning" : "btn-success"}" type="button" onclick="toggleSalonStatus('${salon.id}', '${salon.status}')">${salon.status === "active" ? "Blokiraj" : "Aktiviraj"}</button>
@@ -219,7 +395,8 @@ async function showAddSalonForm() {
   const code = prompt("Kod firme / profila (npr. CS-1001):");
   if (!code) return;
   const city = prompt("Grad / mesto:", "") || null;
-  const phone = prompt("Telefon biznisa:", "") || null;
+  const phone = prompt("Javni telefon biznisa koji vide klijenti:", "") || null;
+  const ownerPhone = prompt("Telefon vlasnika za admin kontakt / WhatsApp:", phone || "") || null;
   const languageInput = prompt("Jezik aplikacije za ovaj profil: sr, en ili de", "sr") || "sr";
   const appLanguage = getAdminLanguageOption(languageInput).value;
 
@@ -239,6 +416,7 @@ async function showAddSalonForm() {
       owner_email: cleanEmail,
       company_code: cleanCode,
       phone,
+      owner_phone: ownerPhone ? ownerPhone.trim() : null,
       city,
       status: "active",
       paid_from: paidFrom,
@@ -313,8 +491,11 @@ async function editSalonProfile(id) {
   const city = prompt("Grad / mesto:", salon.city || "");
   if (city === null) return;
 
-  const phone = prompt("Telefon biznisa:", salon.phone || "");
+  const phone = prompt("Javni telefon biznisa koji vide klijenti:", salon.phone || "");
   if (phone === null) return;
+
+  const ownerPhone = prompt("Telefon vlasnika za admin kontakt / WhatsApp:", salon.owner_phone || salon.phone || "");
+  if (ownerPhone === null) return;
 
   const changeSlug = confirm(
     "Da li želite da izmenite i link/slug profila?\n\n" +
@@ -338,6 +519,7 @@ async function editSalonProfile(id) {
   const cleanCode = code.trim();
   const cleanCity = city.trim() || null;
   const cleanPhone = phone.trim() || null;
+  const cleanOwnerPhone = ownerPhone.trim() || null;
 
   if (!cleanName || !cleanEmail || !cleanCode) {
     window.App.showMessage("Naziv, email i kod firme su obavezni.", "error");
@@ -352,6 +534,7 @@ async function editSalonProfile(id) {
       company_code: cleanCode,
       city: cleanCity,
       phone: cleanPhone,
+      owner_phone: cleanOwnerPhone,
       slug
     })
     .eq("id", id);
