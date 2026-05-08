@@ -155,6 +155,60 @@ function sendRenewalWhatsApp(salonId) {
   window.open(url, "_blank");
 }
 
+function buildExtensionSubject(salon) {
+  return `Potvrda produženja CityStyle.app usluge`;
+}
+
+function buildExtensionMessage(salon, paidUntil) {
+  const name = salon?.salon_name || "vaš profil";
+  const formattedDate = paidUntil ? window.App.formatDate(paidUntil) : "novog datuma";
+  return `Poštovani,
+
+Obaveštavamo vas da je vaš CityStyle.app profil uspešno produžen.
+
+Naziv profila: ${name}
+Usluga je aktivna do: ${formattedDate}
+
+Vaš QR profil, prijem zahteva, zakazivanja i obaveštenja nastavljaju da rade bez prekida.
+
+Hvala vam na poverenju.
+
+Srdačan pozdrav,
+CityStyle.app`;
+}
+
+function openExtensionEmail(salon, paidUntil) {
+  if (!salon?.owner_email) return window.App.showMessage("Ovaj profil nema email vlasnika.", "error");
+  const url = `mailto:${encodeURIComponent(salon.owner_email)}?subject=${encodeURIComponent(buildExtensionSubject(salon))}&body=${encodeURIComponent(buildExtensionMessage(salon, paidUntil))}`;
+  window.location.href = url;
+}
+
+function openExtensionWhatsApp(salon, paidUntil) {
+  const phone = normalizeAdminPhoneForWhatsApp(salon?.owner_phone || salon?.phone || "");
+  if (!phone) return window.App.showMessage("Ovaj profil nema ispravan telefon vlasnika za WhatsApp.", "error");
+  const url = `https://wa.me/${phone}?text=${encodeURIComponent(buildExtensionMessage(salon, paidUntil))}`;
+  window.open(url, "_blank");
+}
+
+function showExtensionNotifyModal(salon, paidUntil) {
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop";
+  modal.innerHTML = `
+    <div class="modal-card extension-notify-card">
+      <h2>✅ Pristup je produžen</h2>
+      <p class="muted">${adminEscapeHtml(salon?.salon_name || "Biznis profil")} je produžen do <strong>${paidUntil ? window.App.formatDate(paidUntil) : "—"}</strong>.</p>
+      <div class="warning-box soft-warning">Sada možeš vlasniku poslati gotovu potvrdu bez upisivanja cene. Poruka se otvara u email aplikaciji ili WhatsApp-u, a ti samo proveriš tekst i klikneš Send.</div>
+      <div class="modal-actions stacked-mobile">
+        <button id="extensionEmailBtn" class="btn btn-dark" type="button">📧 Email potvrda</button>
+        <button id="extensionWhatsAppBtn" class="btn btn-success" type="button">💬 WhatsApp potvrda</button>
+        <button class="btn btn-primary" type="button" onclick="this.closest('.modal-backdrop').remove()">Završi</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.querySelector("#extensionEmailBtn")?.addEventListener("click", () => openExtensionEmail(salon, paidUntil));
+  modal.querySelector("#extensionWhatsAppBtn")?.addEventListener("click", () => openExtensionWhatsApp(salon, paidUntil));
+}
+
 
 document.addEventListener("DOMContentLoaded", () => loadAdminPanel());
 
@@ -558,18 +612,28 @@ async function editSalonProfile(id) {
 }
 
 async function extendPayment(id, currentPaidUntil) {
+  const salonBeforeUpdate = adminSalonsCache.find(item => String(item.id) === String(id));
   const baseDate = currentPaidUntil && new Date(currentPaidUntil) > new Date() ? new Date(currentPaidUntil) : new Date();
   const suggestedDate = toDateInput(addDays(baseDate, 30));
   const newDate = prompt("Novi paid_until datum (YYYY-MM-DD):", suggestedDate);
   if (!newDate) return;
 
-  const { error } = await window.db.from("salons").update({ paid_until: newDate }).eq("id", id);
+  const { data: updatedSalon, error } = await window.db
+    .from("salons")
+    .update({ paid_until: newDate })
+    .eq("id", id)
+    .select("*")
+    .single();
+
   if (error) {
     window.App.showMessage("Greška pri produženju uplate.", "error");
     return;
   }
+
+  const salonForMessage = updatedSalon || { ...(salonBeforeUpdate || {}), paid_until: newDate };
   window.App.showMessage("Uplata je produžena.", "success");
   await loadSalonsList();
+  showExtensionNotifyModal(salonForMessage, newDate);
 }
 
 async function toggleSalonStatus(id, currentStatus) {

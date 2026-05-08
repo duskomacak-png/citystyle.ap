@@ -706,3 +706,23 @@ body[class*="theme-"] textarea:focus {
     text-align: center;
   }
 }
+
+/* Admin renewal confirmation */
+.extension-notify-card .modal-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.soft-warning {
+  background: rgba(15, 118, 110, 0.08);
+  border-color: rgba(15, 118, 110, 0.18);
+}
+@media (max-width: 620px) {
+  .extension-notify-card .modal-actions.stacked-mobile {
+    flex-direction: column;
+  }
+  .extension-notify-card .modal-actions.stacked-mobile .btn {
+    width: 100%;
+  }
+}
