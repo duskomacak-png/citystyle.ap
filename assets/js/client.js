@@ -231,26 +231,36 @@ async function renderSalonHome() {
 function renderClientServicesPreview() {
   if (!services.length) {
     return `
-      <div class="card center">
-        <h2>Usluge / ponuda</h2>
-        <p class="muted">Trenutno nema dostupnih usluga za online zahtev.</p>
-      </div>
+      <details class="card client-hours-panel client-services-panel">
+        <summary>
+          <span>Usluge / ponuda</span>
+          <small>Nema dostupnih usluga</small>
+        </summary>
+        <div class="client-services-panel-body">
+          <p class="muted">Trenutno nema dostupnih usluga za online zahtev.</p>
+        </div>
+      </details>
     `;
   }
 
   return `
-    <div class="card">
-      <h2>Usluge / ponuda</h2>
-      <p class="muted">Izaberite uslugu za koju želite da pošaljete zahtev.</p>
-      <div class="service-list">
-        ${services.map(service => `
-          <button class="service-select-card" type="button" onclick="selectServiceById('${service.id}')">
-            <div><strong>${escapeHtml(service.name)}</strong><span>${Number(service.duration_minutes || 0)} min</span></div>
-            <b>${window.App.formatServicePrice(service)}</b>
-          </button>
-        `).join("")}
+    <details class="card client-hours-panel client-services-panel">
+      <summary>
+        <span>Usluge / ponuda</span>
+        <small>Prikaži listu</small>
+      </summary>
+      <div class="client-services-panel-body">
+        <p class="muted">Izaberite uslugu za koju želite da pošaljete zahtev.</p>
+        <div class="service-list">
+          ${services.map(service => `
+            <button class="service-select-card" type="button" onclick="selectServiceById('${service.id}')">
+              <div><strong>${escapeHtml(service.name)}</strong><span>${Number(service.duration_minutes || 0)} min</span></div>
+              <b>${window.App.formatServicePrice(service)}</b>
+            </button>
+          `).join("")}
+        </div>
       </div>
-    </div>
+    </details>
   `;
 }
 
@@ -295,17 +305,22 @@ function showServices() {
   }
 
   box.innerHTML = `
-    <div class="card">
-      <h2>Usluge / ponuda</h2>
-      <div class="service-list">
-        ${services.map(service => `
-          <button class="service-select-card" type="button" onclick="selectServiceById('${service.id}')">
-            <div><strong>${escapeHtml(service.name)}</strong><span>${Number(service.duration_minutes || 0)} min</span></div>
-            <b>${window.App.formatServicePrice(service)}</b>
-          </button>
-        `).join("")}
+    <details class="card client-hours-panel client-services-panel" open>
+      <summary>
+        <span>Usluge / ponuda</span>
+        <small>Sakrij listu</small>
+      </summary>
+      <div class="client-services-panel-body">
+        <div class="service-list">
+          ${services.map(service => `
+            <button class="service-select-card" type="button" onclick="selectServiceById('${service.id}')">
+              <div><strong>${escapeHtml(service.name)}</strong><span>${Number(service.duration_minutes || 0)} min</span></div>
+              <b>${window.App.formatServicePrice(service)}</b>
+            </button>
+          `).join("")}
+        </div>
       </div>
-    </div>
+    </details>
   `;
   box.scrollIntoView({ behavior: "smooth" });
 }

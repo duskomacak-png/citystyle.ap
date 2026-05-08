@@ -577,3 +577,20 @@ body[class*="theme-"] textarea:focus {
 /* Admin preview additions */
 .admin-preview-bar{border-color:rgba(59,130,246,.45);box-shadow:0 0 24px rgba(59,130,246,.16)}
 .admin-back-btn{white-space:nowrap}.status-select:disabled{opacity:.78;cursor:not-allowed}
+
+
+/* Client services collapsed panel */
+.client-services-panel .client-services-panel-body {
+  padding: 0 18px 18px;
+}
+.client-services-panel .service-list {
+  margin-top: 12px;
+}
+.client-services-panel .muted {
+  margin-top: 0;
+}
+@media (max-width: 600px) {
+  .client-services-panel .client-services-panel-body {
+    padding: 0 14px 14px;
+  }
+}
