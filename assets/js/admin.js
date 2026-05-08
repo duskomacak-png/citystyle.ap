@@ -37,6 +37,15 @@ function renderThemeBadge(value) {
   return `<span class="theme-badge theme-preview-${theme.value}"><i></i>${theme.icon} ${adminEscapeHtml(theme.label)}</span>`;
 }
 
+function getAdminClientPreviewLink(slug) {
+  const base = window.App.getSalonPublicLink(slug);
+  return `${base}${base.includes("?") ? "&" : "?"}adminPreview=1&from=admin`;
+}
+
+function getAdminOwnerPreviewLink(salonId) {
+  return `${window.App.getAppPath("salon/")}?adminPreview=1&salon_id=${encodeURIComponent(salonId)}&from=admin`;
+}
+
 
 document.addEventListener("DOMContentLoaded", () => loadAdminPanel());
 
@@ -170,6 +179,8 @@ function renderSalonCard(salon) {
       <div class="link-box"><small>Link profila:</small><input readonly value="${salonLink}"></div>
       <div class="card-actions">
         <button class="btn btn-dark" type="button" onclick="copySalonLink('${salon.slug}')">Kopiraj link</button>
+        <a class="btn btn-primary" href="${getAdminClientPreviewLink(salon.slug)}">Vidi kao korisnik</a>
+        <a class="btn btn-dark" href="${getAdminOwnerPreviewLink(salon.id)}">Vidi kao vlasnik</a>
         <button class="btn btn-dark" type="button" onclick="showQrForSalon('${salon.slug}', '${adminEscapeJs(salon.salon_name)}')">QR kod</button>
         <button class="btn btn-dark" type="button" onclick="showThemePicker('${salon.id}', '${adminEscapeJs(salon.theme_color || "classic-red")}', '${adminEscapeJs(salon.salon_name)}')">🎨 Boja</button>
         <button class="btn btn-dark" type="button" onclick="editSalonProfile('${salon.id}')">Izmeni</button>

@@ -6,6 +6,7 @@ let selectedService = null;
 let selectedDate = null;
 let selectedTime = null;
 let ownerPreviewMode = false;
+let adminPreviewMode = false;
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -18,13 +19,15 @@ async function loadClientApp() {
   try {
     const urlSlug = window.App?.getUrlParam("salon");
     const forcePlatform = window.App?.getUrlParam("platform") === "1" || window.App?.getUrlParam("home") === "1";
-    ownerPreviewMode = window.App?.getUrlParam("ownerPreview") === "1" || window.App?.getUrlParam("preview") === "owner";
+    const wantsAdminPreview = window.App?.getUrlParam("adminPreview") === "1" || window.App?.getUrlParam("preview") === "admin";
+    adminPreviewMode = wantsAdminPreview && await window.Auth?.isPlatformAdmin?.();
+    ownerPreviewMode = !adminPreviewMode && (window.App?.getUrlParam("ownerPreview") === "1" || window.App?.getUrlParam("preview") === "owner");
 
     // QR/link salon page: ?salon=slug
-    // If the owner opens public preview from /salon/, do NOT save this as client shortcut.
+    // If admin/owner opens preview, do NOT save this as client shortcut.
     if (urlSlug) {
       app.innerHTML = `<div class="loading-box">Učitavanje profila...</div>`;
-      await loadSalon(urlSlug, !ownerPreviewMode);
+      await loadSalon(urlSlug, !(ownerPreviewMode || adminPreviewMode));
       return;
     }
 
@@ -173,7 +176,15 @@ async function renderSalonHome() {
 
   app.innerHTML = `
     <section class="client-page salon-themed-page">
-      ${ownerPreviewMode ? `
+      ${adminPreviewMode ? `
+        <div class="owner-preview-bar admin-preview-bar">
+          <div>
+            <strong>Admin pregled: korisnička strana</strong>
+            <span>Ovako korisnik vidi ovaj profil. Ovo dugme vidi samo prijavljeni admin.</span>
+          </div>
+          <a class="btn btn-primary" href="${window.App.getAppPath('admin/')}">Nazad u admin</a>
+        </div>
+      ` : ownerPreviewMode ? `
         <div class="owner-preview-bar">
           <div>
             <strong>Pregled javne stranice</strong>

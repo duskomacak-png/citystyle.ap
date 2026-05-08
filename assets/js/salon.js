@@ -4,6 +4,7 @@ let currentSalon = null;
 let currentSalonId = null;
 let currentSection = "appointments";
 let appointmentCache = [];
+let adminOwnerPreviewMode = false;
 const salonEscapeHtml = (value) => window.App.escapeHtml(value);
 const salonEscapeJs = (value) => window.App.escapeJs(value);
 
@@ -17,6 +18,22 @@ const salonDays = [
   { num: 0, name: "Nedelja" }
 ];
 
+function stopAdminOwnerPreviewEdit() {
+  if (!adminOwnerPreviewMode) return false;
+  window.App.showMessage("Admin pregled vlasničkog panela je samo za gledanje. Za izmene koristite admin panel ili se ulogujte kao vlasnik.", "info");
+  return true;
+}
+
+function applyAdminOwnerPreviewHeader() {
+  const actions = document.querySelector(".panel-header-actions");
+  if (!actions) return;
+  actions.querySelector(".admin-back-btn")?.remove();
+  if (!adminOwnerPreviewMode) return;
+  document.getElementById("salon-install-btn")?.classList.add("hidden");
+  document.getElementById("salon-logout-btn")?.classList.add("hidden");
+  actions.insertAdjacentHTML("afterbegin", `<a class="btn btn-primary admin-back-btn" href="${window.App.getAppPath("admin/")}">Nazad u admin</a>`);
+}
+
 document.addEventListener("DOMContentLoaded", () => initSalonPanel());
 
 async function initSalonPanel() {
@@ -26,6 +43,20 @@ async function initSalonPanel() {
   bindSalonTabs();
   bindSalonLogout();
   bindSalonInstall();
+
+  const adminPreviewSalonId = window.App?.getUrlParam("salon_id");
+  const wantsAdminPreview = window.App?.getUrlParam("adminPreview") === "1" && !!adminPreviewSalonId;
+  if (wantsAdminPreview) {
+    const isAdmin = await window.Auth.isPlatformAdmin();
+    if (!isAdmin) {
+      renderSalonLogin();
+      window.App.showMessage("Admin pregled je dostupan samo prijavljenom administratoru.", "error");
+      return;
+    }
+    adminOwnerPreviewMode = true;
+    await loadSalonForAdminPreview(adminPreviewSalonId);
+    return;
+  }
 
   const session = window.Auth.getSalonSession();
   if (!session?.salon_id) {
@@ -93,6 +124,27 @@ async function handleSalonLogin() {
   await showSection("appointments");
 }
 
+async function loadSalonForAdminPreview(salonId) {
+  const { data, error } = await window.db
+    .from("salons")
+    .select("*")
+    .eq("id", salonId)
+    .eq("is_deleted", false)
+    .maybeSingle();
+
+  if (error || !data) {
+    renderSalonLogin();
+    window.App.showMessage("Profil nije pronađen za admin pregled.", "error");
+    return;
+  }
+
+  currentSalon = data;
+  currentSalonId = data.id;
+  window.App?.applySalonTheme?.(data.theme_color);
+  renderSalonDashboard();
+  await showSection("appointments");
+}
+
 async function loadSalonFromSession(salonId) {
   const { data, error } = await window.db
     .from("salons")
@@ -134,12 +186,15 @@ function renderBlockedSalon(salon) {
 function renderSalonDashboard() {
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
   const expired = isPaymentExpired(currentSalon.paid_until);
-  document.getElementById("salon-status-text").innerHTML = expired
-    ? `Aktivan profil • <span class="danger-text">Uplata istekla</span>`
-    : `Aktivan profil`;
+  document.getElementById("salon-status-text").innerHTML = adminOwnerPreviewMode
+    ? `Admin pregled vlasničkog panela • izmene su zaključane`
+    : expired
+      ? `Aktivan profil • <span class="danger-text">Uplata istekla</span>`
+      : `Aktivan profil`;
   document.getElementById("salon-tabs").classList.remove("hidden");
-  document.getElementById("salon-logout-btn").classList.remove("hidden");
-  document.getElementById("salon-install-btn")?.classList.remove("hidden");
+  document.getElementById("salon-logout-btn").classList.toggle("hidden", adminOwnerPreviewMode);
+  document.getElementById("salon-install-btn")?.classList.toggle("hidden", adminOwnerPreviewMode);
+  applyAdminOwnerPreviewHeader();
 }
 
 function setActiveTab(section) {
@@ -157,6 +212,7 @@ async function showSection(section) {
 }
 
 async function enableOwnerNotifications() {
+  if (stopAdminOwnerPreviewEdit()) return;
   await window.App.registerPushForSalon(currentSalonId);
 }
 
@@ -206,7 +262,7 @@ async function renderAppointments() {
         <p class="muted">Pregled zahteva i zakazanih termina po datumu, vremenu, usluzi i korisniku.</p>
       </div>
       <div class="toolbar-actions">
-        <button class="btn btn-primary btn-small" type="button" onclick="enableOwnerNotifications()">Uključi obaveštenja</button>
+        ${adminOwnerPreviewMode ? `<span class="status-pill">Samo pregled</span>` : `<button class="btn btn-primary btn-small" type="button" onclick="enableOwnerNotifications()">Uključi obaveštenja</button>`}
         <button class="btn btn-dark btn-small" type="button" onclick="renderAppointments()">Osveži</button>
       </div>
     </div>
@@ -315,7 +371,7 @@ function renderAppointmentStatusSelect(a) {
   const id = salonEscapeHtml(a.id);
   const status = salonEscapeHtml(a.status || "new");
   return `
-    <select class="status-select ${status}" onchange="handleAppointmentStatusChange('${id}', this.value)">
+    <select class="status-select ${status}" ${adminOwnerPreviewMode ? "disabled" : ""} onchange="handleAppointmentStatusChange('${id}', this.value)">
       <option value="new" ${a.status === "new" ? "selected" : ""}>Novo</option>
       <option value="confirmed" ${a.status === "confirmed" ? "selected" : ""}>Potvrđeno</option>
       <option value="done" ${a.status === "done" ? "selected" : ""}>Završeno</option>
@@ -327,6 +383,9 @@ function renderAppointmentStatusSelect(a) {
 function renderAppointmentActionButtons(a) {
   const id = salonEscapeHtml(a.id);
   const safePhone = normalizePhoneForTel(a.client_phone || "");
+  if (adminOwnerPreviewMode) {
+    return `<a class="btn btn-dark btn-paper" href="tel:${safePhone}">Pozovi</a><span class="status-pill">Admin pregled</span>`;
+  }
   return `
     <button class="btn btn-success btn-paper" type="button" onclick="openClientMessage('${id}', 'confirmed')">Poruka</button>
     <a class="btn btn-dark btn-paper" href="tel:${safePhone}">Pozovi</a>
@@ -335,6 +394,7 @@ function renderAppointmentActionButtons(a) {
 }
 
 async function handleAppointmentStatusChange(id, status) {
+  if (stopAdminOwnerPreviewEdit()) return;
   // Browseri ne dozvoljavaju da web app sama pošalje poruku.
   // Zato odmah na klik vlasnika otvaramo WhatsApp sa gotovom porukom;
   // vlasnik samo pritisne Send/Pošalji.
@@ -452,6 +512,7 @@ function changeAppointmentDateFilter() {
 }
 
 async function updateAppointmentStatus(id, status, notifyClient = false) {
+  if (stopAdminOwnerPreviewEdit()) return;
   const updateData = { status };
   if (status === "confirmed") updateData.confirmed_at = new Date().toISOString();
   if (status === "cancelled") updateData.cancelled_at = new Date().toISOString();
@@ -476,6 +537,7 @@ async function updateAppointmentStatus(id, status, notifyClient = false) {
 }
 
 async function deleteAppointment(id) {
+  if (stopAdminOwnerPreviewEdit()) return;
   if (!confirm("Da li sigurno želite da obrišete ovaj termin? Mesto se odmah oslobađa za novo zakazivanje.")) return;
   const { error } = await window.db.from("appointments").delete().eq("id", id).eq("salon_id", currentSalonId);
   if (error) {
@@ -493,7 +555,7 @@ function getAppointmentStatusLabel(status) {
 async function renderServices() {
   const content = document.getElementById("salon-content");
   content.innerHTML = `
-    <div class="section-head"><div><h2>Usluge / ponuda</h2><p class="muted">Dodajte i uredite usluge koje korisnici mogu izabrati prilikom slanja zahteva ili zakazivanja.</p></div><button class="btn btn-primary" type="button" onclick="showAddServiceForm()">Dodaj uslugu</button></div>
+    <div class="section-head"><div><h2>Usluge / ponuda</h2><p class="muted">Dodajte i uredite usluge koje korisnici mogu izabrati prilikom slanja zahteva ili zakazivanja.</p></div>${adminOwnerPreviewMode ? `<span class="status-pill">Samo pregled</span>` : `<button class="btn btn-primary" type="button" onclick="showAddServiceForm()">Dodaj uslugu</button>`}</div>
     <div id="service-form-box"></div>
     <div id="services-list" class="cards"><div class="loading-box">Učitavanje usluga...</div></div>
   `;
@@ -515,16 +577,17 @@ async function loadServices() {
     <div class="card service-card">
       <div class="service-row"><div><strong>${salonEscapeHtml(service.name)}</strong><span>${Number(service.duration_minutes || 0)} min</span></div><b>${window.App.formatServicePrice(service)}</b></div>
       <p class="muted">Status: ${service.active ? "Aktivna" : "Sakrivena"}</p>
-      <div class="card-actions">
+      ${adminOwnerPreviewMode ? `<div class="card-actions"><span class="status-pill">Admin pregled</span></div>` : `<div class="card-actions">
         <button class="btn btn-dark" type="button" onclick="editService('${service.id}')">Uredi</button>
         <button class="btn btn-dark" type="button" onclick="toggleServiceActive('${service.id}', ${service.active ? "true" : "false"})">${service.active ? "Sakrij" : "Aktiviraj"}</button>
         <button class="btn btn-danger" type="button" onclick="deleteService('${service.id}')">Obriši</button>
-      </div>
+      </div>`}
     </div>
   `).join("");
 }
 
 async function showAddServiceForm(serviceId = null) {
+  if (stopAdminOwnerPreviewEdit()) return;
   const box = document.getElementById("service-form-box");
   let service = null;
   if (serviceId) {
@@ -561,6 +624,7 @@ function hideAddServiceForm() { const box = document.getElementById("service-for
 async function editService(id) { await showAddServiceForm(id); }
 
 async function saveService() {
+  if (stopAdminOwnerPreviewEdit()) return;
   const id = document.getElementById("service-edit-id")?.value || "";
   const name = document.getElementById("service-name")?.value.trim();
   const price = Number(document.getElementById("service-price")?.value || 0);
@@ -584,11 +648,13 @@ async function saveService() {
 }
 
 async function toggleServiceActive(id, currentActive) {
+  if (stopAdminOwnerPreviewEdit()) return;
   await window.db.from("services").update({ active: !currentActive }).eq("id", id).eq("salon_id", currentSalonId);
   await loadServices();
 }
 
 async function deleteService(id) {
+  if (stopAdminOwnerPreviewEdit()) return;
   if (!confirm("Obrisati uslugu? Ako je korišćena u terminima, bolje je samo sakriti je.")) return;
   const { error } = await window.db.from("services").delete().eq("id", id).eq("salon_id", currentSalonId);
   if (error) return window.App.showMessage("Greška pri brisanju usluge. Ako je korišćena, sakrij je.", "error");
@@ -598,7 +664,7 @@ async function deleteService(id) {
 async function renderWorkingHours() {
   document.getElementById("salon-content").innerHTML = `
     <div class="section-head"><div><h2>Radno vreme</h2><p class="muted">Podesite dane i vreme kada biznis prima online zahteve ili termine.</p></div></div>
-    <div class="card"><div id="hours-form"><div class="loading-box">Učitavanje radnog vremena...</div></div><button class="btn btn-primary" type="button" onclick="saveWorkingHours()">Sačuvaj radno vreme</button></div>
+    <div class="card"><div id="hours-form"><div class="loading-box">Učitavanje radnog vremena...</div></div>${adminOwnerPreviewMode ? `<div class="warning-box">Admin pregled je samo za gledanje. Radno vreme se ne može menjati iz pregleda.</div>` : `<button class="btn btn-primary" type="button" onclick="saveWorkingHours()">Sačuvaj radno vreme</button>`}</div>
   `;
   await loadWorkingHours();
 }
@@ -628,6 +694,7 @@ async function loadWorkingHours() {
 }
 
 async function saveWorkingHours() {
+  if (stopAdminOwnerPreviewEdit()) return;
   const inserts = [];
   for (const day of salonDays) {
     const isClosed = document.getElementById(`closed_${day.num}`).checked;
@@ -652,8 +719,9 @@ async function renderSalonSettings() {
         <h2>Podešavanje profila</h2>
         <p class="muted">Uredite podatke koje korisnici vide na javnoj stranici profila.</p>
       </div>
-      <a class="btn btn-primary" href="${previewLink}">Pogledaj javnu stranicu</a>
+      <a class="btn btn-primary" href="${adminOwnerPreviewMode ? `${window.App.getSalonPublicLink(currentSalon.slug)}&adminPreview=1&from=admin` : previewLink}">Pogledaj javnu stranicu</a>
     </div>
+    ${adminOwnerPreviewMode ? `<div class="warning-box">Admin pregled vlasničkog panela je samo za proveru izgleda. Dugmad za izmene su zaključana.</div>` : ""}
     <div class="card center">
       <h3>QR kod profila</h3>
       <p class="muted">Ovaj QR kod vodi korisnike direktno na javnu stranicu vašeg profila. Svaki salon ima svoj jedinstveni link i QR kod.</p>
@@ -726,6 +794,7 @@ function updateSettingsPreview() {
 }
 
 async function saveSettings() {
+  if (stopAdminOwnerPreviewEdit()) return;
   const payload = {
     salon_id: currentSalonId,
     welcome_title: document.getElementById("welcome-title")?.value.trim() || "",
@@ -740,6 +809,7 @@ async function saveSettings() {
 }
 
 async function saveSettingsAndPreview() {
+  if (stopAdminOwnerPreviewEdit()) return;
   await saveSettings();
   if (!currentSalon?.slug) return;
   const salonLink = window.App.getSalonPublicLink(currentSalon.slug);
@@ -748,6 +818,7 @@ async function saveSettingsAndPreview() {
 }
 
 async function uploadLogo() {
+  if (stopAdminOwnerPreviewEdit()) return;
   const file = document.getElementById("logo-upload")?.files?.[0];
   if (!file) return window.App.showMessage("Izaberite logo sliku.", "error");
   const url = await window.StorageHelper.uploadImage(file, currentSalonId, "logo");

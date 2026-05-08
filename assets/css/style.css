@@ -572,3 +572,8 @@ body[class*="theme-"] textarea:focus {
 .theme-preview-graphite-dark i, .theme-preview-graphite-dark .theme-choice-top i { background:#6b7280; }
 .theme-preview-orange-pro i, .theme-preview-orange-pro .theme-choice-top i { background:#fb923c; }
 @media (max-width: 640px) { .theme-picker-grid { grid-template-columns:1fr; } .theme-modal-card { max-height:88vh; overflow:auto; } }
+
+
+/* Admin preview additions */
+.admin-preview-bar{border-color:rgba(59,130,246,.45);box-shadow:0 0 24px rgba(59,130,246,.16)}
+.admin-back-btn{white-space:nowrap}.status-select:disabled{opacity:.78;cursor:not-allowed}
