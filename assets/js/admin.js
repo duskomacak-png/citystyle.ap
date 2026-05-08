@@ -16,6 +16,27 @@ function adminEscapeJs(value) {
     .replaceAll("'", "\\'");
 }
 
+const ADMIN_THEME_OPTIONS = [
+  { value: "classic-red", label: "Classic Red", icon: "🔴", hint: "standardna CityStyle crvena" },
+  { value: "ocean-blue", label: "Ocean Blue", icon: "🔵", hint: "servisi, firme, tehnika" },
+  { value: "luxury-gold", label: "Luxury Gold", icon: "🟡", hint: "premium i luxury izgled" },
+  { value: "emerald-green", label: "Emerald Green", icon: "🟢", hint: "zdravlje, priroda, usluge" },
+  { value: "royal-purple", label: "Royal Purple", icon: "🟣", hint: "beauty, studio, nokti" },
+  { value: "soft-pink", label: "Soft Pink", icon: "🌸", hint: "saloni i kozmetika" },
+  { value: "graphite-dark", label: "Graphite Dark", icon: "⚫", hint: "majstori, auto-servisi" },
+  { value: "orange-pro", label: "Orange Pro", icon: "🟠", hint: "radovi, servis, dostava" }
+];
+
+function getAdminThemeOption(value) {
+  const normalized = window.App?.normalizeSalonTheme ? window.App.normalizeSalonTheme(value) : String(value || "classic-red");
+  return ADMIN_THEME_OPTIONS.find(item => item.value === normalized) || ADMIN_THEME_OPTIONS[0];
+}
+
+function renderThemeBadge(value) {
+  const theme = getAdminThemeOption(value);
+  return `<span class="theme-badge theme-preview-${theme.value}"><i></i>${theme.icon} ${adminEscapeHtml(theme.label)}</span>`;
+}
+
 
 document.addEventListener("DOMContentLoaded", () => loadAdminPanel());
 
@@ -143,12 +164,14 @@ function renderSalonCard(salon) {
         <div><span>Uplaćeno od</span><strong>${salon.paid_from ? window.App.formatDate(salon.paid_from) : "—"}</strong></div>
         <div><span>Uplaćeno do</span><strong>${salon.paid_until ? window.App.formatDate(salon.paid_until) : "—"}</strong></div>
         <div><span>Cena</span><strong>${Number(salon.monthly_price || 9.99).toFixed(2)} ${adminEscapeHtml(salon.currency || "EUR")}</strong></div>
+        <div><span>Boja profila</span><strong>${renderThemeBadge(salon.theme_color)}</strong></div>
       </div>
       ${expired ? `<div class="warning-box">Uplata je istekla. Profil ostaje aktivan dok ga administrator ručno ne blokira.</div>` : ""}
       <div class="link-box"><small>Link profila:</small><input readonly value="${salonLink}"></div>
       <div class="card-actions">
         <button class="btn btn-dark" type="button" onclick="copySalonLink('${salon.slug}')">Kopiraj link</button>
         <button class="btn btn-dark" type="button" onclick="showQrForSalon('${salon.slug}', '${adminEscapeJs(salon.salon_name)}')">QR kod</button>
+        <button class="btn btn-dark" type="button" onclick="showThemePicker('${salon.id}', '${adminEscapeJs(salon.theme_color || "classic-red")}', '${adminEscapeJs(salon.salon_name)}')">🎨 Boja</button>
         <button class="btn btn-dark" type="button" onclick="editSalonProfile('${salon.id}')">Izmeni</button>
         <button class="btn btn-dark" type="button" onclick="extendPayment('${salon.id}', '${salon.paid_until || ""}')">Produži uplatu</button>
         <button class="btn ${salon.status === "active" ? "btn-warning" : "btn-success"}" type="button" onclick="toggleSalonStatus('${salon.id}', '${salon.status}')">${salon.status === "active" ? "Blokiraj" : "Aktiviraj"}</button>
@@ -190,6 +213,7 @@ async function showAddSalonForm() {
       paid_until: paidUntil,
       monthly_price: 9.99,
       currency: "EUR",
+      theme_color: "classic-red",
       is_deleted: false
     })
     .select()
@@ -375,6 +399,47 @@ function showQrForSalon(slug, salonName) {
       <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
     </div>`;
   document.body.appendChild(modal);
+}
+
+
+function showThemePicker(salonId, currentTheme, salonName) {
+  const activeTheme = getAdminThemeOption(currentTheme).value;
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop";
+  modal.innerHTML = `
+    <div class="modal-card theme-modal-card">
+      <h2>Boja profila</h2>
+      <p class="muted">${adminEscapeHtml(salonName || "Biznis profil")}</p>
+      <p class="theme-modal-note">Boju menja samo administrator. Menja se samo ovaj profil, ostali profili ostaju isti.</p>
+      <div class="theme-picker-grid">
+        ${ADMIN_THEME_OPTIONS.map(theme => `
+          <button class="theme-choice ${theme.value === activeTheme ? "selected" : ""} theme-preview-${theme.value}" type="button" onclick="saveSalonTheme('${salonId}', '${theme.value}')">
+            <span class="theme-choice-top"><i></i><strong>${theme.icon} ${adminEscapeHtml(theme.label)}</strong></span>
+            <small>${adminEscapeHtml(theme.hint)}</small>
+          </button>
+        `).join("")}
+      </div>
+      <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function saveSalonTheme(salonId, themeValue) {
+  const cleanTheme = getAdminThemeOption(themeValue).value;
+  const { error } = await window.db
+    .from("salons")
+    .update({ theme_color: cleanTheme })
+    .eq("id", salonId);
+
+  if (error) {
+    console.error(error);
+    window.App.showMessage("Greška pri čuvanju boje: " + error.message, "error");
+    return;
+  }
+
+  document.querySelector(".modal-backdrop")?.remove();
+  window.App.showMessage("Boja profila je sačuvana.", "success");
+  await loadSalonsList();
 }
 
 function isPaymentExpired(paidUntil) {

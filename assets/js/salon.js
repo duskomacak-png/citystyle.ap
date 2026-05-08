@@ -52,6 +52,7 @@ function bindSalonInstall() {
 function bindSalonLogout() {
   document.getElementById("salon-logout-btn")?.addEventListener("click", () => {
     window.Auth.salonLogout();
+    window.App?.clearSalonTheme?.();
     currentSalon = null;
     currentSalonId = null;
     document.getElementById("salon-install-btn")?.classList.add("hidden");
@@ -60,6 +61,7 @@ function bindSalonLogout() {
 }
 
 function renderSalonLogin() {
+  window.App?.clearSalonTheme?.();
   document.getElementById("salon-name").textContent = "Panel vlasnika biznisa";
   document.getElementById("salon-status-text").textContent = "Unesite email adresu biznisa i kod firme koji vam je dodelio administrator.";
   document.getElementById("salon-tabs").classList.add("hidden");
@@ -86,6 +88,7 @@ async function handleSalonLogin() {
   if (!salon) return;
   currentSalon = salon;
   currentSalonId = salon.id;
+  window.App?.applySalonTheme?.(salon.theme_color);
   renderSalonDashboard();
   await showSection("appointments");
 }
@@ -111,11 +114,13 @@ async function loadSalonFromSession(salonId) {
 
   currentSalon = data;
   currentSalonId = data.id;
+  window.App?.applySalonTheme?.(data.theme_color);
   renderSalonDashboard();
   await showSection("appointments");
 }
 
 function renderBlockedSalon(salon) {
+  window.App?.applySalonTheme?.(salon.theme_color);
   document.getElementById("salon-name").textContent = salon.salon_name || "Salon";
   document.getElementById("salon-status-text").textContent = "Profil je blokiran.";
   document.getElementById("salon-tabs").classList.add("hidden");

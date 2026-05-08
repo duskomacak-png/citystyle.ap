@@ -172,6 +172,37 @@ function getQrImageUrl(link, size = 280) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(link)}`;
 }
 
+
+// Per-salon theme helpers. Only admin changes theme_color in database; public/owner views only read it.
+const SALON_THEME_CLASSES = [
+  "theme-classic-red",
+  "theme-ocean-blue",
+  "theme-luxury-gold",
+  "theme-emerald-green",
+  "theme-royal-purple",
+  "theme-soft-pink",
+  "theme-graphite-dark",
+  "theme-orange-pro"
+];
+
+function normalizeSalonTheme(value) {
+  const theme = String(value || "classic-red").trim().toLowerCase();
+  return SALON_THEME_CLASSES.includes(`theme-${theme}`) ? theme : "classic-red";
+}
+
+function clearSalonTheme() {
+  document.body?.classList.remove(...SALON_THEME_CLASSES);
+  document.documentElement?.removeAttribute("data-salon-theme");
+}
+
+function applySalonTheme(value) {
+  const theme = normalizeSalonTheme(value);
+  clearSalonTheme();
+  document.body?.classList.add(`theme-${theme}`);
+  document.documentElement?.setAttribute("data-salon-theme", theme);
+  return theme;
+}
+
 // PWA install prompt
 let deferredPrompt = null;
 
@@ -439,6 +470,9 @@ window.App = {
   showMessage,
   setAppBadgeCount,
   clearAppBadgeCount,
+  normalizeSalonTheme,
+  applySalonTheme,
+  clearSalonTheme,
   registerPushForSalon,
   notifyOwnerAboutNewAppointment,
   formatDate,

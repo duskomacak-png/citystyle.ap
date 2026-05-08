@@ -70,6 +70,7 @@ async function loadSalon(slug, saveThisSalon = true) {
   }
 
   currentSalon = salon;
+  window.App?.applySalonTheme?.(salon.theme_color);
   if (saveThisSalon) window.App.saveCurrentSalon(salon.slug);
 
   await loadServices();
@@ -77,6 +78,7 @@ async function loadSalon(slug, saveThisSalon = true) {
 }
 
 function renderPlatformLanding() {
+  window.App?.clearSalonTheme?.();
   currentSalon = null;
   services = [];
   selectedService = null;
@@ -170,7 +172,7 @@ async function renderSalonHome() {
   const publicName = settings?.welcome_title || currentSalon.salon_name || "Profil";
 
   app.innerHTML = `
-    <section class="client-page">
+    <section class="client-page salon-themed-page">
       ${ownerPreviewMode ? `
         <div class="owner-preview-bar">
           <div>
