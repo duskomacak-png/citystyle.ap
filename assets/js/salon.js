@@ -478,7 +478,7 @@ function getAppointmentById(id) {
 }
 
 function buildClientMessage(appointment, type = "confirmed") {
-  const salonName = currentSalon?.salon_name || "salon";
+  const businessName = currentSalon?.salon_name || "biznis profil";
   const clientName = appointment.client_name || "";
   const service = appointment.service_name_snapshot || "usluga";
   const date = window.App.formatDate(appointment.appointment_date);
@@ -487,24 +487,24 @@ function buildClientMessage(appointment, type = "confirmed") {
   if (type === "cancelled") {
     return `Poštovani/a ${clientName},
 
-vaš termin u salonu ${salonName} za ${date} u ${time} je otkazan.
+vaš zahtev/termin kod ${businessName} za ${date} u ${time} je otkazan.
 
 Usluga: ${service}
 
-Molimo zakažite novi termin ili kontaktirajte salon.
-${salonName}`;
+Molimo zakažite novi termin ili kontaktirajte biznis direktno.
+${businessName}`;
   }
 
   return `Poštovani/a ${clientName},
 
-vaš termin u salonu ${salonName} je potvrđen.
+vaš zahtev/termin kod ${businessName} je potvrđen.
 
 Usluga: ${service}
 Datum: ${date}
 Vreme: ${time}
 
 Vidimo se.
-${salonName}`;
+${businessName}`;
 }
 
 function openClientMessage(id, type = "confirmed") {
