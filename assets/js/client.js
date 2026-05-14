@@ -2,6 +2,7 @@
 
 let currentSalon = null;
 let services = [];
+let products = [];
 let selectedService = null;
 let selectedDate = null;
 let selectedTime = null;
@@ -79,6 +80,7 @@ async function loadSalon(slug, saveThisSalon = true) {
   if (saveThisSalon) window.App.saveCurrentSalon(salon.slug);
 
   await loadServices();
+  await loadProducts();
   await renderSalonHome();
 }
 
@@ -87,6 +89,7 @@ function renderPlatformLanding() {
   window.App?.setAppLanguage?.("sr");
   currentSalon = null;
   services = [];
+  products = [];
   selectedService = null;
   selectedDate = null;
   selectedTime = null;
@@ -159,6 +162,27 @@ async function loadServices() {
   services = data || [];
 }
 
+async function loadProducts() {
+  if (!currentSalon?.id) {
+    products = [];
+    return;
+  }
+  const { data, error } = await window.db
+    .from("products")
+    .select("*")
+    .eq("salon_id", currentSalon.id)
+    .eq("active", true)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.warn("Products table/list is not available yet:", error);
+    products = [];
+    return;
+  }
+  products = data || [];
+}
+
 async function renderSalonHome() {
   const app = document.getElementById("app");
   app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
@@ -176,6 +200,9 @@ async function renderSalonHome() {
     .order("day_of_week", { ascending: true });
 
   const publicName = settings?.welcome_title || currentSalon.salon_name || "Profil";
+  currentSalon._publicName = publicName;
+  currentSalon._publicLogo = settings?.logo_url || "";
+  window.App?.updateManifestForSalon?.(currentSalon.slug, { name: publicName, iconUrl: settings?.logo_url, themeColor: currentSalon.theme_color });
 
   app.innerHTML = `
     <section class="client-page salon-themed-page">
@@ -217,12 +244,14 @@ async function renderSalonHome() {
         <div class="client-actions">
           <button class="btn btn-primary" type="button" onclick="showBookingForm()">${C("sendRequest", "Pošalji zahtev")}</button>
           <button class="btn btn-dark" type="button" onclick="showServices()">${C("servicesOffer", "Usluge / ponuda")}</button>
-          ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="window.App.installSalonApp(currentSalon.slug)">${C("installThisProfile", "Preuzmi app ovog profila")}</button>`}
+          <button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>
+          ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app ovog profila")}</button>`}
         </div>
       </div>
 
       <div id="client-extra">
         ${renderClientServicesPreview()}
+        ${renderClientProductsPreview()}
         ${renderClientWorkingHours(workingHours || [])}
       </div>
       <div id="booking-box"></div>
@@ -230,6 +259,15 @@ async function renderSalonHome() {
   `;
 }
 
+
+function installCurrentSalonApp() {
+  if (!currentSalon?.slug) return;
+  window.App.installSalonApp(currentSalon.slug, {
+    name: currentSalon._publicName || currentSalon.salon_name || "CityStyle profil",
+    iconUrl: currentSalon._publicLogo || "",
+    themeColor: currentSalon.theme_color
+  });
+}
 
 function renderClientServicesPreview() {
   if (!services.length) {
@@ -265,6 +303,89 @@ function renderClientServicesPreview() {
       </div>
     </details>
   `;
+}
+
+function renderProductPrice(product = {}) {
+  const currency = window.App.normalizeCurrency(product.currency || "RSD");
+  const price = Number(product.price || 0);
+  if (!price || price <= 0) return C("priceByAgreement", "Cena po dogovoru");
+  return `${window.App.formatMoney ? window.App.formatMoney(price) : price.toLocaleString("sr-RS")} ${currency}`;
+}
+
+function getProductStatusLabel(status) {
+  return {
+    available: "Na stanju",
+    preorder: "Po porudžbini",
+    out: "Trenutno nema",
+    hidden: "Sakriveno"
+  }[status] || "Na upit";
+}
+
+function renderClientProductsPreview() {
+  if (!products.length) return "";
+  return `
+    <details class="card client-hours-panel client-products-panel">
+      <summary>
+        <span>${C("productsCatalog", "Proizvodi / cenovnik")}</span>
+        <small>${C("showList", "Prikaži listu")}</small>
+      </summary>
+      <div class="client-services-panel-body">
+        <p class="muted">Pregled proizvoda, artikala ili cenovnika koje ovaj biznis nudi.</p>
+        <div class="product-public-grid">
+          ${products.map(product => `
+            <div class="product-public-card">
+              <div>
+                <strong>${escapeHtml(product.name)}</strong>
+                ${product.category ? `<span>${escapeHtml(product.category)}</span>` : ""}
+                ${product.description ? `<p>${escapeHtml(product.description)}</p>` : ""}
+              </div>
+              <div class="product-public-meta">
+                <b>${renderProductPrice(product)}</b>
+                <small>${getProductStatusLabel(product.stock_status)}</small>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    </details>
+  `;
+}
+
+function showProducts() {
+  const box = document.getElementById("client-extra");
+  if (!box) return;
+
+  if (!products.length) {
+    box.innerHTML = `<div class="card"><h2>${C("productsCatalog", "Proizvodi / cenovnik")}</h2><p class="muted">Ovaj profil trenutno nema javno prikazane proizvode.</p></div>`;
+    return;
+  }
+
+  box.innerHTML = `
+    <details class="card client-hours-panel client-products-panel" open>
+      <summary>
+        <span>${C("productsCatalog", "Proizvodi / cenovnik")}</span>
+        <small>${C("hideList", "Sakrij listu")}</small>
+      </summary>
+      <div class="client-services-panel-body">
+        <div class="product-public-grid">
+          ${products.map(product => `
+            <div class="product-public-card">
+              <div>
+                <strong>${escapeHtml(product.name)}</strong>
+                ${product.category ? `<span>${escapeHtml(product.category)}</span>` : ""}
+                ${product.description ? `<p>${escapeHtml(product.description)}</p>` : ""}
+              </div>
+              <div class="product-public-meta">
+                <b>${renderProductPrice(product)}</b>
+                <small>${getProductStatusLabel(product.stock_status)}</small>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    </details>
+  `;
+  box.scrollIntoView({ behavior: "smooth" });
 }
 
 function renderClientWorkingHours(hours) {

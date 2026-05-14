@@ -228,6 +228,7 @@ function renderSalonDashboard() {
   const labels = {
     appointments: S("tabAppointments", "Zahtevi / termini"),
     services: S("tabServices", "Usluge / ponuda"),
+    products: S("tabProducts", "Proizvodi / katalog"),
     hours: S("tabHours", "Radno vreme"),
     settings: S("tabSettings", "Podešavanje profila")
   };
@@ -260,6 +261,7 @@ async function showSection(section) {
   setActiveTab(section);
   if (section === "appointments") return renderAppointments();
   if (section === "services") return renderServices();
+  if (section === "products") return renderProducts();
   if (section === "hours") return renderWorkingHours();
   if (section === "settings") return renderSalonSettings();
 }
@@ -306,6 +308,8 @@ async function renderAppointments() {
 
   const items = appointments || [];
   appointmentCache = items;
+  const todayCount = items.filter(item => item.appointment_date === today && ["new", "confirmed"].includes(item.status)).length;
+  const activeCount = items.filter(item => ["new", "confirmed"].includes(item.status)).length;
   const newCount = items.filter(item => item.status === "new").length;
   window.App.setAppBadgeCount?.(newCount);
   content.innerHTML = `
@@ -321,6 +325,12 @@ async function renderAppointments() {
     </div>
 
     ${renderOwnerSubscriptionNotice()}
+
+    <div class="owner-dashboard-grid">
+      <div class="owner-metric-card"><span>Danas</span><strong>${todayCount}</strong><small>aktivnih zahteva</small></div>
+      <div class="owner-metric-card"><span>Ukupno aktivno</span><strong>${activeCount}</strong><small>novi i potvrđeni</small></div>
+      <div class="owner-metric-card"><span>Notifikacije</span><strong>🔔</strong><small>uključite na telefonu vlasnika</small></div>
+    </div>
 
     <div class="paper-toolbar card">
       <label>
@@ -714,6 +724,180 @@ async function deleteService(id) {
   const { error } = await window.db.from("services").delete().eq("id", id).eq("salon_id", currentSalonId);
   if (error) return window.App.showMessage("Greška pri brisanju usluge. Ako je korišćena, sakrij je.", "error");
   await loadServices();
+}
+
+async function renderProducts() {
+  const content = document.getElementById("salon-content");
+  content.innerHTML = `
+    <div class="section-head">
+      <div>
+        <h2>Proizvodi / katalog</h2>
+        <p class="muted">Dodajte proizvode, artikle, cenovnik ili ponudu koju korisnici vide na javnom QR profilu.</p>
+      </div>
+      ${adminOwnerPreviewMode ? `<span class="status-pill">Samo pregled</span>` : `<button class="btn btn-primary" type="button" onclick="showAddProductForm()">Dodaj proizvod</button>`}
+    </div>
+    <div class="warning-box soft-warning">
+      Proizvodi su javni katalog/cenovnik. Za sada ne šalju notifikaciju. Notifikacija ostaje vezana za zakazivanje termina, da se vlasnik ne zatrpava nepotrebnim signalima.
+    </div>
+    <div id="product-form-box"></div>
+    <div id="products-list" class="cards"><div class="loading-box">Učitavanje proizvoda...</div></div>
+  `;
+  await loadProducts();
+}
+
+function productPriceLabel(product = {}) {
+  const price = Number(product.price || 0);
+  const currency = window.App.normalizeCurrency(product.currency || "RSD");
+  if (!price || price <= 0) return "Cena po dogovoru";
+  return `${window.App.formatMoney ? window.App.formatMoney(price) : price.toLocaleString("sr-RS")} ${currency}`;
+}
+
+function productStatusLabel(status) {
+  return {
+    available: "Na stanju",
+    preorder: "Po porudžbini",
+    out: "Trenutno nema"
+  }[status] || "Na upit";
+}
+
+async function loadProducts() {
+  const list = document.getElementById("products-list");
+  if (!list) return;
+  const { data: products, error } = await window.db
+    .from("products")
+    .select("*")
+    .eq("salon_id", currentSalonId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    list.innerHTML = `
+      <div class="card">
+        <h3>Proizvodi nisu spremni u bazi</h3>
+        <p class="muted">Treba prvo pokrenuti SQL za tabelu <strong>products</strong> u Supabase-u. Kod za SQL dobijaš uz ZIP.</p>
+      </div>
+    `;
+    return;
+  }
+
+  if (!products?.length) {
+    list.innerHTML = `<div class="card center"><p class="muted">Još nemate proizvode u katalogu. Dodajte prvi proizvod, artikal ili cenu iz ponude.</p></div>`;
+    return;
+  }
+
+  list.innerHTML = products.map(product => `
+    <div class="card product-card ${product.active ? "" : "muted-card"}">
+      <div class="product-card-main">
+        <div>
+          <strong>${salonEscapeHtml(product.name)}</strong>
+          ${product.category ? `<span>${salonEscapeHtml(product.category)}</span>` : ""}
+          ${product.description ? `<p class="muted">${salonEscapeHtml(product.description)}</p>` : ""}
+        </div>
+        <div class="product-price-box">
+          <b>${productPriceLabel(product)}</b>
+          <small>${productStatusLabel(product.stock_status)}</small>
+          <small>${product.active ? "Javno prikazan" : "Sakriven"}</small>
+        </div>
+      </div>
+      ${adminOwnerPreviewMode ? `<div class="card-actions"><span class="status-pill">Admin pregled</span></div>` : `<div class="card-actions">
+        <button class="btn btn-dark" type="button" onclick="editProduct('${product.id}')">Uredi</button>
+        <button class="btn btn-dark" type="button" onclick="toggleProductActive('${product.id}', ${product.active ? "true" : "false"})">${product.active ? "Sakrij" : "Aktiviraj"}</button>
+        <button class="btn btn-danger" type="button" onclick="deleteProduct('${product.id}')">Obriši</button>
+      </div>`}
+    </div>
+  `).join("");
+}
+
+async function showAddProductForm(productId = null) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  const box = document.getElementById("product-form-box");
+  let product = null;
+  if (productId) {
+    const { data } = await window.db.from("products").select("*").eq("id", productId).eq("salon_id", currentSalonId).maybeSingle();
+    product = data;
+  }
+  box.innerHTML = `
+    <div class="card product-edit-card">
+      <h3>${product ? "Uredi proizvod" : "Novi proizvod"}</h3>
+      <input id="product-edit-id" type="hidden" value="${product ? salonEscapeHtml(product.id) : ""}">
+      <label>Naziv proizvoda / artikla</label>
+      <input id="product-name" type="text" value="${product ? salonEscapeHtml(product.name) : ""}" placeholder="Michelin 205/55 R16">
+      <label>Kategorija</label>
+      <input id="product-category" type="text" value="${product ? salonEscapeHtml(product.category || "") : ""}" placeholder="Gume, kozmetika, auto delovi...">
+      <label>Opis</label>
+      <textarea id="product-description" rows="3" placeholder="Kratak opis, dimenzija, napomena ili šta korisnik treba da zna.">${product ? salonEscapeHtml(product.description || "") : ""}</textarea>
+      <div class="price-grid">
+        <div>
+          <label>Cena</label>
+          <input id="product-price" type="number" min="0" step="0.01" value="${product ? Number(product.price || 0) : ""}" placeholder="9500">
+        </div>
+        <div>
+          <label>Valuta</label>
+          <select id="product-currency">
+            <option value="RSD" ${!product || (product.currency || "RSD") === "RSD" ? "selected" : ""}>Dinari (RSD)</option>
+            <option value="EUR" ${product && product.currency === "EUR" ? "selected" : ""}>Evri (EUR)</option>
+          </select>
+        </div>
+      </div>
+      <label>Status</label>
+      <select id="product-stock-status">
+        <option value="available" ${!product || product.stock_status === "available" ? "selected" : ""}>Na stanju</option>
+        <option value="preorder" ${product && product.stock_status === "preorder" ? "selected" : ""}>Po porudžbini</option>
+        <option value="out" ${product && product.stock_status === "out" ? "selected" : ""}>Trenutno nema</option>
+      </select>
+      <label>Redosled prikaza</label>
+      <input id="product-sort-order" type="number" value="${product ? Number(product.sort_order || 100) : 100}">
+      <div class="card-actions">
+        <button class="btn btn-primary" type="button" onclick="saveProduct()">Sačuvaj proizvod</button>
+        <button class="btn btn-dark" type="button" onclick="hideProductForm()">Otkaži</button>
+      </div>
+    </div>`;
+}
+
+function hideProductForm() { const box = document.getElementById("product-form-box"); if (box) box.innerHTML = ""; }
+async function editProduct(id) { await showAddProductForm(id); }
+
+async function saveProduct() {
+  if (stopAdminOwnerPreviewEdit()) return;
+  const id = document.getElementById("product-edit-id")?.value || "";
+  const name = document.getElementById("product-name")?.value.trim();
+  const category = document.getElementById("product-category")?.value.trim() || null;
+  const description = document.getElementById("product-description")?.value.trim() || null;
+  const price = Number(document.getElementById("product-price")?.value || 0);
+  const currency = window.App.normalizeCurrency(document.getElementById("product-currency")?.value || "RSD");
+  const stock_status = document.getElementById("product-stock-status")?.value || "available";
+  const sort_order = Number(document.getElementById("product-sort-order")?.value || 100);
+
+  if (!name) return window.App.showMessage("Unesite naziv proizvoda.", "error");
+  if (price < 0) return window.App.showMessage("Cena ne može biti negativna.", "error");
+
+  const payload = { name, category, description, price, currency, stock_status, sort_order, updated_at: new Date().toISOString() };
+  if (id) {
+    const { error } = await window.db.from("products").update(payload).eq("id", id).eq("salon_id", currentSalonId);
+    if (error) return window.App.showMessage("Greška pri izmeni proizvoda.", "error");
+  } else {
+    const { error } = await window.db.from("products").insert({ ...payload, salon_id: currentSalonId, active: true });
+    if (error) return window.App.showMessage("Greška pri dodavanju proizvoda. Proverite da li je SQL za products tabelu pokrenut.", "error");
+  }
+  hideProductForm();
+  await loadProducts();
+  window.App.showMessage("Proizvod je sačuvan u katalogu.", "success");
+}
+
+async function toggleProductActive(id, currentActive) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  const { error } = await window.db.from("products").update({ active: !currentActive, updated_at: new Date().toISOString() }).eq("id", id).eq("salon_id", currentSalonId);
+  if (error) return window.App.showMessage("Greška pri promeni statusa proizvoda.", "error");
+  await loadProducts();
+}
+
+async function deleteProduct(id) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  if (!confirm("Obrisati proizvod iz kataloga? Ako ga samo trenutno nemate, bolje ga sakrijte.")) return;
+  const { error } = await window.db.from("products").delete().eq("id", id).eq("salon_id", currentSalonId);
+  if (error) return window.App.showMessage("Greška pri brisanju proizvoda.", "error");
+  await loadProducts();
 }
 
 async function renderWorkingHours() {

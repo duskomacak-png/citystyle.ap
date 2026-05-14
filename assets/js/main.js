@@ -509,9 +509,9 @@ function showInstallButton() {
   document.body.appendChild(btn);
 }
 
-async function installSalonApp(slug) {
+async function installSalonApp(slug, options = {}) {
   if (slug) saveCurrentSalon(slug);
-  updateManifestForSalon(slug || getSavedSalonSlug());
+  updateManifestForSalon(slug || getSavedSalonSlug(), options);
   await installApp("Na iPhone-u: Share → Add to Home Screen. Ova prečica pamti otvoreni profil.", "App profila je dodata na telefon.");
 }
 
@@ -552,21 +552,27 @@ function updateManifestForOwner() {
   }
 }
 
-function updateManifestForSalon(slug) {
+function updateManifestForSalon(slug, options = {}) {
   if (!slug) return;
+  const rawName = String(options.name || options.displayName || "").trim();
+  const appName = rawName || "CityStyle profil";
+  const shortName = appName.length > 12 ? appName.slice(0, 12).trim() : appName;
+  const iconUrl = options.iconUrl || `${getAppBaseUrl()}assets/icons/icon-192.png`;
+  const icon512 = options.icon512Url || iconUrl || `${getAppBaseUrl()}assets/icons/icon-512.png`;
+  const theme = normalizeSalonTheme(options.themeColor || "#b91c1c");
   const baseManifest = {
-    name: "CityStyle - Salon",
-    short_name: "CityStyle",
-    description: "Prečica za direktno zakazivanje termina u izabranom salonu.",
+    name: appName,
+    short_name: shortName || "Profil",
+    description: `Prečica za direktan ulaz u profil: ${appName}.`,
     start_url: `${getAppBaseUrl()}?salon=${encodeURIComponent(slug)}`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
-    theme_color: "#b91c1c",
+    theme_color: theme,
     orientation: "portrait",
     icons: [
-      { src: `${getAppBaseUrl()}assets/icons/icon-192.png`, sizes: "192x192", type: "image/png", purpose: "any maskable" },
-      { src: `${getAppBaseUrl()}assets/icons/icon-512.png`, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+      { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "any maskable" },
+      { src: icon512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
     ]
   };
   try {
@@ -579,6 +585,11 @@ function updateManifestForSalon(slug) {
       document.head.appendChild(link);
     }
     link.href = url;
+    const appleIcon = document.querySelector('link[rel="apple-touch-icon"]') || document.createElement("link");
+    appleIcon.rel = "apple-touch-icon";
+    appleIcon.href = iconUrl;
+    if (!appleIcon.parentNode) document.head.appendChild(appleIcon);
+    document.title = appName;
   } catch (err) {
     console.warn("Dynamic manifest nije postavljen:", err);
   }
@@ -758,6 +769,7 @@ window.App = {
   registerPushForSalon,
   notifyOwnerAboutNewAppointment,
   formatDate,
+  formatMoney,
   escapeHtml,
   escapeJs,
   formatServicePrice,
