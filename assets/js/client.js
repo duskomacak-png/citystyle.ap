@@ -96,54 +96,219 @@ function renderPlatformLanding() {
 
   const app = document.getElementById("app");
   app.innerHTML = `
-    <section class="landing-page platform-text-page">
-      <header class="landing-nav simple-nav">
-        <div class="brand-mark">
+    <section class="landing-page sales-homepage">
+      <header class="landing-nav sales-nav">
+        <a class="brand-mark" href="./?home=1" aria-label="CityStyle.app početna">
           <div class="brand-icon">CS</div>
           <strong>CITYSTYLE<span>.APP</span></strong>
-        </div>
-        <div class="landing-actions">
+        </a>
+        <div class="landing-actions nav-actions">
+          <a class="btn btn-dark" href="salon/">Ulaz za vlasnika</a>
           <a class="btn btn-primary subtle-admin-link" href="admin/">Admin panel</a>
         </div>
       </header>
 
-      <section class="platform-text-card">
-        <span class="eyebrow">Platforma za prijave termina, kvarova, upita i zahteva preko QR koda</span>
-        <h1>Šta je CityStyle.app?</h1>
-        <p>
-          CityStyle.app je online platforma koja pomaže salonima, majstorima, servisima i manjim firmama da lakše primaju prijave i zahteve svojih korisnika.
-        </p>
-        <p>
-          Svaki biznis dobija svoj digitalni profil, jedinstveni QR kod i link. Korisnik skenira QR kod i direktno otvara stranicu tog biznisa, gde može zakazati termin, poslati upit, prijaviti kvar, reklamaciju ili zatražiti uslugu.
-        </p>
-        <p>
-          Platforma je namenjena biznisima koji žele jednostavan način da prikupe zahteve korisnika bez izgubljenih poruka, nepotrebnog traženja kontakta i stalnog objašnjavanja preko telefona.
-        </p>
-        <p>
-          Vlasnik biznisa preko svog panela uređuje profil, ponudu, radno vreme, logo i prati sve prijave korisnika na jednom mestu.
-        </p>
-        <div class="hero-buttons simple-buttons">
-          <a class="btn btn-primary" href="salon/">Ulaz za vlasnika biznisa</a>
-          <button class="btn btn-dark" type="button" onclick="window.App.installApp()">Preuzmi CityStyle app</button>
-        </div>
-        <p class="muted small-note">
-          Za pristup konkretnom biznisu koristite QR kod ili link koji ste dobili od tog biznisa.
-        </p>
-
-        <div class="platform-contact-box">
-          <h2>Kontakt za informacije</h2>
-          <p>
-            Za dodatne informacije, saradnju ili aktivaciju biznis profila možete kontaktirati
-            menadžera platforme CityStyle.app.
+      <section class="sales-hero">
+        <div class="sales-hero-content">
+          <span class="eyebrow">QR mini aplikacija za salone, radnje, servise i male biznise</span>
+          <h1>Vaš biznis dobija svoj digitalni profil preko QR koda.</h1>
+          <p class="hero-lead">
+            CityStyle.app omogućava da klijent skenira QR kod, vidi vaše usluge, proizvode, cene,
+            radno vreme i pošalje zahtev ili zakaže termin. Vlasnik dobija obaveštenje na telefonu.
           </p>
-          <a href="mailto:duskomacak@gmail.com">duskomacak@gmail.com</a>
+          <div class="hero-buttons simple-buttons">
+            <a class="btn btn-primary" href="salon/">Ulaz za vlasnika biznisa</a>
+            <a class="btn btn-dark" href="mailto:duskomacak@gmail.com?subject=CityStyle.app%20saradnja">Kontakt za saradnju</a>
+            <button class="btn btn-dark" type="button" onclick="scrollToHowItWorks()">Kako radi?</button>
+          </div>
+          <p class="muted small-note">
+            Za pristup konkretnom biznisu koristite QR kod ili link koji ste dobili od tog biznisa.
+          </p>
+        </div>
+        <div class="sales-hero-phone" aria-label="Primer digitalnog profila">
+          <div class="phone-preview-card">
+            <div class="phone-logo">CS</div>
+            <h3>Demo biznis profil</h3>
+            <p>Usluge • Proizvodi • Termini • Kontakt</p>
+            <div class="phone-list-item"><span>Šišanje / usluga</span><b>od 800 RSD</b></div>
+            <div class="phone-list-item"><span>Proizvod u katalogu</span><b>1.200 RSD</b></div>
+            <button class="btn btn-primary" type="button">Pošalji zahtev</button>
+          </div>
         </div>
       </section>
+
+      <section class="sales-grid-three">
+        <article class="sales-feature-card">
+          <span>01</span>
+          <h2>Sopstveni QR profil</h2>
+          <p>Svaki biznis dobija svoj link i QR kod. Korisnik odmah otvara profil tog biznisa.</p>
+        </article>
+        <article class="sales-feature-card">
+          <span>02</span>
+          <h2>Usluge i proizvodi</h2>
+          <p>Vlasnik unosi usluge, cene, proizvode, opis, status i osnovne informacije.</p>
+        </article>
+        <article class="sales-feature-card">
+          <span>03</span>
+          <h2>Zahtevi i notifikacije</h2>
+          <p>Kada korisnik zakaže termin ili pošalje zahtev, vlasnik ga vidi u svom panelu.</p>
+        </article>
+      </section>
+
+      <section class="sales-section">
+        <span class="eyebrow">Za koga je platforma?</span>
+        <h2>Za salone, radnje, servise, majstore i lokalne biznise.</h2>
+        <div class="business-types-grid">
+          <div>Frizerski saloni</div>
+          <div>Kozmetički saloni</div>
+          <div>Vulkanizeri</div>
+          <div>Auto servisi</div>
+          <div>Majstori</div>
+          <div>Moleri</div>
+          <div>Male radnje</div>
+          <div>Servisi i radionice</div>
+        </div>
+      </section>
+
+      <section class="sales-section value-section">
+        <span class="eyebrow">Šta dobija vlasnik?</span>
+        <h2>Jednostavan alat koji izgleda kao mala aplikacija vašeg biznisa.</h2>
+        <div class="check-grid">
+          <div>✓ naziv i logo biznisa</div>
+          <div>✓ javni QR profil</div>
+          <div>✓ usluge sa cenama</div>
+          <div>✓ proizvodi / katalog</div>
+          <div>✓ radno vreme</div>
+          <div>✓ zakazivanje termina</div>
+          <div>✓ obaveštenja za nove zahteve</div>
+          <div>✓ panel za vlasnika</div>
+        </div>
+      </section>
+
+      <section id="how-it-works" class="sales-section how-section">
+        <span class="eyebrow">Kako radi?</span>
+        <h2>Tri jednostavna koraka.</h2>
+        <div class="steps-grid">
+          <div class="step-card"><strong>1</strong><h3>Otvorimo profil</h3><p>Dodaju se naziv, logo, kontakt, QR link i osnovna podešavanja biznisa.</p></div>
+          <div class="step-card"><strong>2</strong><h3>Vlasnik unosi ponudu</h3><p>U panelu se dodaju usluge, proizvodi, cene, radno vreme i opis profila.</p></div>
+          <div class="step-card"><strong>3</strong><h3>Klijent skenira QR</h3><p>Klijent vidi profil, šalje zahtev ili zakazuje termin. Vlasnik dobija obaveštenje.</p></div>
+        </div>
+      </section>
+
+      <section class="sales-section pricing-section">
+        <div>
+          <span class="eyebrow">Jednostavna cena</span>
+          <h2>9.99€ mesečno po biznis profilu</h2>
+          <p class="muted">
+            Bez komplikovanih paketa u prvoj verziji. Aktivacija, podešavanje i saradnja se dogovaraju direktno.
+          </p>
+        </div>
+        <a class="btn btn-primary" href="mailto:duskomacak@gmail.com?subject=CityStyle.app%20aktivacija%20profila">Zatraži aktivaciju</a>
+      </section>
+
+      <section class="legal-notice-box">
+        <h2>Važna napomena o odgovornosti</h2>
+        <p>
+          CityStyle.app je tehnička platforma koja omogućava biznisima da prikažu svoje usluge,
+          proizvode, cene, radno vreme i da primaju zahteve korisnika.
+        </p>
+        <p>
+          Svaki biznis samostalno odgovara za tačnost svojih podataka, kvalitet usluga, proizvode,
+          cene, termine, reklamacije, račune, poreze i svoje zakonsko poslovanje.
+          CityStyle.app ne prodaje usluge ili proizvode u ime biznisa i nije strana u dogovoru između korisnika i biznisa.
+        </p>
+      </section>
+
+      <section class="platform-contact-box sales-contact-box">
+        <h2>Kontakt za saradnju</h2>
+        <p>Za informacije, aktivaciju biznis profila ili prijavu problema pišite na:</p>
+        <a href="mailto:duskomacak@gmail.com">duskomacak@gmail.com</a>
+      </section>
+
+      <footer class="sales-footer">
+        <p>© 2026 CityStyle.app — tehnička platforma za QR biznis profile.</p>
+        <div>
+          <button type="button" class="footer-link-btn" onclick="openLegalModal('terms')">Uslovi korišćenja</button>
+          <button type="button" class="footer-link-btn" onclick="openLegalModal('privacy')">Politika privatnosti</button>
+          <a href="mailto:duskomacak@gmail.com">Kontakt</a>
+        </div>
+      </footer>
     </section>
   `;
 }
+
 function scrollToHowItWorks() {
   document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" });
+}
+
+function openLegalModal(type) {
+  const existing = document.querySelector(".legal-modal-backdrop");
+  if (existing) existing.remove();
+
+  const isPrivacy = type === "privacy";
+  const title = isPrivacy ? "Politika privatnosti" : "Uslovi korišćenja";
+  const body = isPrivacy ? `
+    <p>CityStyle.app poštuje privatnost korisnika i koristi podatke samo za rad aplikacije.</p>
+    <h3>1. Koje podatke prikupljamo</h3>
+    <p>Kada korisnik pošalje zahtev ili zakaže termin, mogu se čuvati ime, broj telefona ili WhatsApp kontakt, izabrana usluga, izabrani proizvod ili poruka, datum i vreme termina i napomena koju korisnik unese.</p>
+    <p>Kada biznis koristi platformu, mogu se čuvati naziv biznisa, email vlasnika, kontakt telefon, adresa, logo, usluge, proizvodi, cene i podešavanja profila.</p>
+    <h3>2. Zašto koristimo podatke</h3>
+    <p>Podaci se koriste da bi korisnik mogao poslati zahtev biznisu, biznis mogao obraditi termine i upite, aplikacija prikazala javni profil, a vlasnik upravljao ponudom.</p>
+    <h3>3. Ko vidi podatke</h3>
+    <p>Podatke o zahtevu vidi biznis kome je zahtev poslat. CityStyle.app ne prodaje lične podatke trećim licima.</p>
+    <h3>4. Brisanje podataka</h3>
+    <p>Korisnik ili biznis može zatražiti brisanje podataka kontaktom na <a href="mailto:duskomacak@gmail.com">duskomacak@gmail.com</a>.</p>
+    <h3>5. Bezbednost</h3>
+    <p>CityStyle.app koristi tehničke mere za zaštitu podataka, ali nijedan internet sistem ne može garantovati apsolutnu sigurnost.</p>
+    <h3>6. Kontakt</h3>
+    <p>Za pitanja o privatnosti pišite na <a href="mailto:duskomacak@gmail.com">duskomacak@gmail.com</a>.</p>
+  ` : `
+    <p>Korišćenjem CityStyle.app platforme prihvatate ove uslove korišćenja.</p>
+    <h3>1. Šta je CityStyle.app</h3>
+    <p>CityStyle.app je digitalna platforma koja omogućava salonima, radnjama, servisima, majstorima i drugim biznisima da naprave svoj javni profil, prikažu usluge, proizvode, cene, radno vreme i primaju zahteve ili rezervacije od korisnika.</p>
+    <p>CityStyle.app je tehnički alat. Platforma nije pružalac usluga koje objavljuju pojedinačni biznisi i ne prodaje proizvode ili usluge u njihovo ime.</p>
+    <h3>2. Odgovornost biznisa</h3>
+    <p>Svaki biznis samostalno odgovara za tačnost podataka, opis usluga i proizvoda, cene, popuste, kvalitet usluge, stanje proizvoda, zakazivanje, otkazivanje, izdavanje računa, poreze, reklamacije i zakonsko poslovanje.</p>
+    <p>CityStyle.app ne proverava i ne garantuje tačnost podataka koje unose biznisi.</p>
+    <h3>3. Odgovornost korisnika</h3>
+    <p>Korisnik je odgovoran da pre zakazivanja ili kupovine proveri sve važne informacije direktno sa biznisom, uključujući cenu, termin, lokaciju, dostupnost proizvoda i uslove usluge.</p>
+    <p>Dogovor između korisnika i biznisa je njihov samostalan odnos. CityStyle.app nije strana u tom dogovoru.</p>
+    <h3>4. Termini i zahtevi</h3>
+    <p>Slanje zahteva ili rezervacije preko CityStyle.app ne znači da je termin automatski potvrđen, osim ako biznis to jasno potvrdi. Biznis može prihvatiti, odbiti, izmeniti ili otkazati zahtev u skladu sa svojim pravilima.</p>
+    <h3>5. Proizvodi i cene</h3>
+    <p>Cene i dostupnost proizvoda unosi sam biznis. CityStyle.app ne garantuje da je proizvod dostupan, da je cena konačna ili da su informacije uvek ažurne.</p>
+    <h3>6. Zabranjen sadržaj</h3>
+    <p>Zabranjeno je unositi sadržaj koji je nezakonit, obmanjujući, uvredljiv, nasilan, diskriminatoran, pornografski, lažan ili štetan. CityStyle.app može ukloniti ili blokirati profil koji krši ova pravila.</p>
+    <h3>7. Dostupnost aplikacije</h3>
+    <p>CityStyle.app se trudi da aplikacija bude dostupna i stabilna, ali ne garantuje neprekidan rad bez grešaka, prekida, tehničkih problema ili gubitka internet konekcije.</p>
+    <h3>8. Plaćanje korišćenja platforme</h3>
+    <p>Korišćenje biznis profila može biti naplaćeno prema dogovorenoj mesečnoj ceni. Ako biznis ne plati dogovoreno korišćenje, CityStyle.app može privremeno ograničiti, pauzirati ili ukloniti profil.</p>
+    <h3>9. Privatnost podataka</h3>
+    <p>CityStyle.app može obrađivati podatke koje korisnik unese prilikom slanja zahteva, kao što su ime, telefon, poruka, izabrana usluga, proizvod ili termin. Detalji su opisani u Politici privatnosti.</p>
+    <h3>10. Izmene uslova</h3>
+    <p>CityStyle.app može povremeno izmeniti ove uslove. Nastavkom korišćenja platforme nakon izmene, korisnik prihvata ažurirane uslove.</p>
+    <h3>11. Kontakt</h3>
+    <p>Za pitanja, prijavu problema ili zahtev za uklanjanje podataka pišite na <a href="mailto:duskomacak@gmail.com">duskomacak@gmail.com</a>.</p>
+  `;
+
+  const modal = document.createElement("div");
+  modal.className = "legal-modal-backdrop";
+  modal.innerHTML = `
+    <div class="legal-modal-card" role="dialog" aria-modal="true" aria-label="${title}">
+      <div class="legal-modal-head">
+        <h2>${title}</h2>
+        <button type="button" class="btn btn-dark" onclick="this.closest('.legal-modal-backdrop').remove()">Zatvori</button>
+      </div>
+      <div class="legal-modal-body">
+        ${body}
+        <p class="muted legal-small-note">Napomena: ovaj tekst je praktičan MVP tekst za platformu i nije zamena za individualni pravni savet.</p>
+      </div>
+    </div>
+  `;
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) modal.remove();
+  });
+  document.body.appendChild(modal);
 }
 
 async function loadServices() {

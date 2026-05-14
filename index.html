@@ -3,65 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CityStyle.app - Prijave i zahtevi preko QR koda</title>
-  <meta name="description" content="CityStyle.app je platforma za prijave termina, kvarova, upita i zahteva korisnika preko QR koda.">
+  <title>CityStyle.app - QR mini aplikacija za vaš biznis</title>
+  <meta name="description" content="CityStyle.app je QR mini aplikacija za salone, radnje, servise i male biznise: usluge, proizvodi, termini, upiti i obaveštenja na jednom mestu.">
   <meta name="theme-color" content="#0b0b0f">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-  <link rel="stylesheet" href="assets/css/style.css?v=products1">
+  <link rel="stylesheet" href="assets/css/style.css?v=homepage2">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=products1"></script>
-  <script src="assets/js/main.js?v=products1"></script>
-  <script src="assets/js/auth.js?v=products1"></script>
-  <script src="assets/js/booking-logic.js?v=products1"></script>
-  <script src="assets/js/client.js?v=products1" defer></script>
+  <script src="assets/js/config.js?v=homepage2"></script>
+  <script src="assets/js/main.js?v=homepage2"></script>
+  <script src="assets/js/auth.js?v=homepage2"></script>
+  <script src="assets/js/booking-logic.js?v=homepage2"></script>
+  <script src="assets/js/client.js?v=homepage2" defer></script>
 </head>
 <body>
   <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>
   <main id="app" class="container">
     <section class="landing-page platform-text-page">
-      <header class="landing-nav simple-nav">
-        <div class="brand-mark">
-          <div class="brand-icon">CS</div>
-          <strong>CITYSTYLE<span>.APP</span></strong>
-        </div>
-        <div class="landing-actions">
-          <a class="btn btn-primary subtle-admin-link" href="admin/">Admin panel</a>
-        </div>
-      </header>
-
-      <section class="platform-text-card">
-        <span class="eyebrow">Platforma za prijave termina, kvarova, upita i zahteva preko QR koda</span>
-        <h1>Šta je CityStyle.app?</h1>
-        <p>
-          CityStyle.app je online platforma koja pomaže salonima, majstorima, servisima i manjim firmama da lakše primaju prijave i zahteve svojih korisnika.
-        </p>
-        <p>
-          Svaki biznis dobija svoj digitalni profil, jedinstveni QR kod i link. Korisnik skenira QR kod i direktno otvara stranicu tog biznisa, gde može zakazati termin, poslati upit, prijaviti kvar, reklamaciju ili zatražiti uslugu.
-        </p>
-        <p>
-          Platforma je namenjena biznisima koji žele jednostavan način da prikupe zahteve korisnika bez izgubljenih poruka, nepotrebnog traženja kontakta i stalnog objašnjavanja preko telefona.
-        </p>
-        <p>
-          Vlasnik biznisa preko svog panela uređuje profil, ponudu, radno vreme, logo i prati sve prijave korisnika na jednom mestu.
-        </p>
-        <div class="hero-buttons simple-buttons">
-          <a class="btn btn-primary" href="salon/">Ulaz za vlasnika biznisa</a>
-          <button class="btn btn-dark" type="button" onclick="window.App && window.App.installApp ? window.App.installApp() : null">Preuzmi CityStyle app</button>
-        </div>
-        <p class="muted small-note">
-          Za pristup konkretnom biznisu koristite QR kod ili link koji ste dobili od tog biznisa.
-        </p>
-
-        <div class="platform-contact-box">
-          <h2>Kontakt za informacije</h2>
-          <p>
-            Za dodatne informacije, saradnju ili aktivaciju biznis profila možete kontaktirati
-            menadžera platforme CityStyle.app.
-          </p>
-          <a href="mailto:duskomacak@gmail.com">duskomacak@gmail.com</a>
-        </div>
-      </section>
+      <div class="loading-box">Učitavanje CityStyle.app...</div>
     </section>
   </main>
 </body>
