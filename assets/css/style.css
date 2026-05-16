@@ -926,7 +926,7 @@ body[class*="theme-"] textarea:focus {
   .sales-footer { align-items:flex-start; }
 }
 
-/* Business profile V2: profile type, service descriptions and gallery */
+/* Business profile V5: profile type, service descriptions and gallery - full image gallery */
 .business-type-badge,
 .language-badge,
 .theme-badge {
@@ -959,7 +959,9 @@ body[class*="theme-"] textarea:focus {
   display: block;
   width: 100%;
   aspect-ratio: 1 / 1;
-  object-fit: cover;
+  object-fit: contain;
+  background: rgba(0,0,0,0.35);
+  padding: 6px;
 }
 
 .public-gallery-item span {
@@ -990,10 +992,11 @@ body[class*="theme-"] textarea:focus {
 .owner-gallery-card img {
   width: 100%;
   aspect-ratio: 4 / 3;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 16px;
   margin-bottom: 10px;
-  background: rgba(255,255,255,0.05);
+  background: rgba(0,0,0,0.35);
+  padding: 6px;
 }
 
 .gallery-upload-card input[type="file"] {
