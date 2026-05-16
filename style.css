@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CityStyle Admin panel</title>
+  <meta name="theme-color" content="#0b0b0f">
+  <link rel="stylesheet" href="../assets/css/style.css?v=business2">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/js/config.js?v=business2"></script>
+  <script src="../assets/js/main.js?v=business2"></script>
+  <script src="../assets/js/auth.js?v=business2"></script>
+  <script src="../assets/js/admin.js?v=business2" defer></script>
+</head>
+<body>
+  <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>
+  <main class="admin-panel">
+    <header class="panel-header">
+      <div><h1>CITYSTYLE ADMIN</h1><p>Upravljanje biznis profilima, QR kodovima, statusima i uplatama.</p></div>
+    </header>
+    <section id="admin-content"><div class="loading-box">Učitavanje admin panela...</div></section>
+  </main>
+</body>
+</html>
