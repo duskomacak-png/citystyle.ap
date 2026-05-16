@@ -56,6 +56,22 @@ function promptBusinessType(currentValue = "general") {
   return getAdminBusinessTypeOption(input).value;
 }
 
+function renderBusinessTypeOptions(selectedValue = "general") {
+  const selected = getAdminBusinessTypeOption(selectedValue).value;
+  return ADMIN_BUSINESS_TYPE_OPTIONS.map(item => `
+    <option value="${adminEscapeHtml(item.value)}" ${item.value === selected ? "selected" : ""}>${item.icon} ${adminEscapeHtml(item.label)} — ${adminEscapeHtml(item.hint)}</option>
+  `).join("");
+}
+
+function closeAdminBusinessModal() {
+  const modal = document.getElementById("admin-business-modal");
+  if (modal) modal.remove();
+}
+
+function getAdminFormValue(id) {
+  return String(document.getElementById(id)?.value || "").trim();
+}
+
 async function insertSalonWithBusinessType(payload) {
   const { data, error } = await window.db.from("salons").insert(payload).select().single();
   if (!error) return { data, error: null };
@@ -503,56 +519,144 @@ function renderSalonCard(salon) {
   `;
 }
 
-async function showAddSalonForm() {
-  const name = prompt("Naziv biznisa:");
-  if (!name) return;
-  const email = prompt("Email vlasnika biznisa:");
-  if (!email) return;
-  const code = prompt("Kod firme / profila (npr. CS-1001):");
-  if (!code) return;
-  const city = prompt("Grad / mesto:", "") || null;
-  const phone = prompt("Javni telefon biznisa koji vide klijenti:", "") || null;
-  const ownerPhone = prompt("Telefon vlasnika za admin kontakt / WhatsApp:", phone || "") || null;
-  const languageInput = prompt("Jezik aplikacije za ovaj profil: sr, en ili de", "sr") || "sr";
-  const appLanguage = getAdminLanguageOption(languageInput).value;
-  const businessType = promptBusinessType("general");
-  if (businessType === null) return;
+function showAddSalonForm() {
+  const modal = document.createElement("div");
+  modal.id = "admin-business-modal";
+  modal.className = "modal-backdrop";
+  modal.innerHTML = `
+    <div class="modal-card admin-business-modal-card">
+      <div class="section-head compact-section-head">
+        <div>
+          <h2>Dodaj biznis profil</h2>
+          <p class="muted">Izaberi vrstu profila iz liste. Ovo menja tekstove na javnom QR profilu.</p>
+        </div>
+        <button class="btn btn-dark btn-small" type="button" onclick="closeAdminBusinessModal()">Zatvori</button>
+      </div>
 
-  const cleanName = name.trim();
-  const cleanEmail = email.trim().toLowerCase();
-  const cleanCode = code.trim();
+      <form id="admin-business-form" onsubmit="handleAddBusinessProfile(event)">
+        <div class="admin-form-grid">
+          <div>
+            <label for="new-business-name">Naziv biznisa *</label>
+            <input id="new-business-name" required placeholder="npr. Auto Servis Žika">
+          </div>
+          <div>
+            <label for="new-business-type">Vrsta profila *</label>
+            <select id="new-business-type" required>
+              ${renderBusinessTypeOptions("general")}
+            </select>
+          </div>
+          <div>
+            <label for="new-business-email">Email vlasnika *</label>
+            <input id="new-business-email" type="email" required placeholder="vlasnik@gmail.com">
+          </div>
+          <div>
+            <label for="new-business-code">Kod firme / profila *</label>
+            <input id="new-business-code" required placeholder="npr. zika123">
+          </div>
+          <div>
+            <label for="new-business-city">Grad / mesto</label>
+            <input id="new-business-city" placeholder="npr. Novi Sad">
+          </div>
+          <div>
+            <label for="new-business-phone">Javni telefon biznisa</label>
+            <input id="new-business-phone" inputmode="tel" placeholder="+381...">
+          </div>
+          <div>
+            <label for="new-business-owner-phone">Telefon vlasnika za admin/WhatsApp</label>
+            <input id="new-business-owner-phone" inputmode="tel" placeholder="+381...">
+          </div>
+          <div>
+            <label for="new-business-language">Jezik aplikacije</label>
+            <select id="new-business-language">
+              ${ADMIN_LANGUAGE_OPTIONS.map(item => `<option value="${adminEscapeHtml(item.value)}" ${item.value === "sr" ? "selected" : ""}>${item.icon} ${adminEscapeHtml(item.label)}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+
+        <div class="business-type-helper" id="business-type-helper">
+          <strong>${renderBusinessTypeBadge("general")}</strong>
+          <span>Opšti biznis: zahtevi, termini i ponuda.</span>
+        </div>
+
+        <div class="card-actions admin-modal-actions">
+          <button class="btn btn-primary" type="submit">Sačuvaj biznis profil</button>
+          <button class="btn btn-dark" type="button" onclick="closeAdminBusinessModal()">Otkaži</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const typeSelect = document.getElementById("new-business-type");
+  const helper = document.getElementById("business-type-helper");
+  if (typeSelect && helper) {
+    typeSelect.addEventListener("change", () => {
+      const option = getAdminBusinessTypeOption(typeSelect.value);
+      helper.innerHTML = `<strong>${renderBusinessTypeBadge(option.value)}</strong><span>${adminEscapeHtml(option.label)}: ${adminEscapeHtml(option.hint)}.</span>`;
+    });
+  }
+}
+
+async function handleAddBusinessProfile(event) {
+  event.preventDefault();
+
+  const cleanName = getAdminFormValue("new-business-name");
+  const cleanEmail = getAdminFormValue("new-business-email").toLowerCase();
+  const cleanCode = getAdminFormValue("new-business-code");
+  const city = getAdminFormValue("new-business-city") || null;
+  const phone = getAdminFormValue("new-business-phone") || null;
+  const ownerPhoneRaw = getAdminFormValue("new-business-owner-phone") || phone || null;
+  const appLanguage = getAdminLanguageOption(getAdminFormValue("new-business-language") || "sr").value;
+  const businessType = getAdminBusinessTypeOption(getAdminFormValue("new-business-type") || "general").value;
+
+  if (!cleanName || !cleanEmail || !cleanCode) {
+    window.App.showMessage("Popuni naziv, email vlasnika i kod firme.", "error");
+    return;
+  }
+
+  const submitBtn = event.submitter;
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Čuvam...";
+  }
+
   const slug = createSlug(cleanName);
   const today = new Date();
   const paidFrom = toDateInput(today);
   const paidUntil = toDateInput(addDays(today, 30));
 
   const { data: salon, error } = await insertSalonWithBusinessType({
-      salon_name: cleanName,
-      slug,
-      owner_email: cleanEmail,
-      company_code: cleanCode,
-      phone,
-      owner_phone: ownerPhone ? ownerPhone.trim() : null,
-      city,
-      status: "active",
-      paid_from: paidFrom,
-      paid_until: paidUntil,
-      monthly_price: 9.99,
-      currency: "EUR",
-      theme_color: "classic-red",
-      app_language: appLanguage,
-      business_type: businessType,
-      is_deleted: false
-    });
+    salon_name: cleanName,
+    slug,
+    owner_email: cleanEmail,
+    company_code: cleanCode,
+    phone,
+    owner_phone: ownerPhoneRaw ? ownerPhoneRaw.trim() : null,
+    city,
+    status: "active",
+    paid_from: paidFrom,
+    paid_until: paidUntil,
+    monthly_price: 9.99,
+    currency: "EUR",
+    theme_color: "classic-red",
+    app_language: appLanguage,
+    business_type: businessType,
+    is_deleted: false
+  });
 
   if (error) {
     console.error(error);
     window.App.showMessage("Greška pri dodavanju profila: " + error.message, "error");
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Sačuvaj biznis profil";
+    }
     return;
   }
 
   await createDefaultWorkingHours(salon.id);
   await createDefaultSettings(salon.id, cleanName, phone, city);
+  closeAdminBusinessModal();
   window.App.showMessage("Biznis profil je uspešno dodat.", "success");
   await loadSalonsList();
 }

@@ -1004,3 +1004,13 @@ body[class*="theme-"] textarea:focus {
   background: rgba(255,255,255,0.04);
   color: inherit;
 }
+
+
+/* Business V4 admin add profile modal */
+.admin-business-modal-card{max-width:760px;text-align:left;max-height:90vh;overflow:auto}
+.admin-business-modal-card h2{margin-bottom:4px}
+.admin-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.business-type-helper{margin-top:14px;border:1px solid rgba(255,255,255,.1);background:#0b0b10;border-radius:14px;padding:12px;display:grid;gap:4px;color:var(--muted)}
+.business-type-helper strong{color:var(--text)}
+.admin-modal-actions{justify-content:flex-end}
+@media(max-width:720px){.admin-form-grid{grid-template-columns:1fr}.admin-modal-actions{justify-content:stretch}.admin-modal-actions .btn{width:100%}}
