@@ -204,6 +204,37 @@ function applySalonTheme(value) {
 }
 
 
+
+const BUSINESS_PROFILE_LABELS = {
+  general: {
+    name: "Opšti biznis", action: "Pošalji zahtev", services: "Usluge / ponuda", formTitle: "Pošaljite zahtev", formIntro: "Izaberite uslugu, datum i slobodan termin. U napomeni možete opisati šta vam treba.", noteLabel: "Napomena / opis zahteva", notePlaceholder: "Napišite dodatne informacije za vlasnika profila.", requestKindLabel: "Vrsta zahteva", requestKindPlaceholder: "npr. upit, usluga, ponuda"
+  },
+  salon: {
+    name: "Salon / termini", action: "Zakaži termin", services: "Usluge i cenovnik", formTitle: "Zakažite termin", formIntro: "Izaberite uslugu, datum i slobodan termin.", noteLabel: "Napomena", notePlaceholder: "Opcionalno", requestKindLabel: "Željena usluga", requestKindPlaceholder: "npr. šišanje, farbanje, tretman"
+  },
+  repair: {
+    name: "Majstor / kvarovi", action: "Prijavi kvar", services: "Usluge, kvarovi i intervencije", formTitle: "Prijavite kvar ili problem", formIntro: "Izaberite uslugu/intervenciju, željeni termin i opišite kvar. Vlasnik će vas kontaktirati radi potvrde.", noteLabel: "Opis kvara / problema", notePlaceholder: "npr. klima ne hladi, curi voda, grejanje ne radi...", requestKindLabel: "Vrsta kvara", requestKindPlaceholder: "npr. klima, grejanje, voda, struja"
+  },
+  craft: {
+    name: "Zanatlija / radovi", action: "Pošalji upit za radove", services: "Radovi i ponuda", formTitle: "Pošaljite upit za radove", formIntro: "Izaberite tip rada i željeni termin za kontakt/procenu. U opisu navedite lokaciju i obim posla.", noteLabel: "Opis posla", notePlaceholder: "npr. kupatilo 20m², krečenje stana, keramika, gips...", requestKindLabel: "Vrsta rada", requestKindPlaceholder: "npr. keramika, moleraj, stolarija"
+  },
+  auto: {
+    name: "Auto servis", action: "Pošalji zahtev za servis", services: "Servisne usluge", formTitle: "Pošaljite zahtev za servis", formIntro: "Izaberite servisnu uslugu, željeni termin i ukratko opišite vozilo/problem.", noteLabel: "Opis problema / vozilo", notePlaceholder: "npr. Golf 6, neće da upali, mali servis, gume...", requestKindLabel: "Vrsta servisa", requestKindPlaceholder: "npr. mali servis, kvar, vulkanizer"
+  },
+  catalog: {
+    name: "Katalog / proizvodi", action: "Pitaj za proizvod", services: "Ponuda i usluge", formTitle: "Pošaljite upit", formIntro: "Izaberite ponudu ili proizvod i pošaljite upit vlasniku profila.", noteLabel: "Poruka / upit", notePlaceholder: "Napišite šta vas zanima, količinu, dimenziju ili dodatno pitanje.", requestKindLabel: "Predmet upita", requestKindPlaceholder: "npr. proizvod, cena, dostupnost"
+  }
+};
+
+function normalizeBusinessType(value) {
+  const type = String(value || "general").trim().toLowerCase();
+  return BUSINESS_PROFILE_LABELS[type] ? type : "general";
+}
+
+function getBusinessProfileLabels(value) {
+  return BUSINESS_PROFILE_LABELS[normalizeBusinessType(value)];
+}
+
 // Per-salon language helpers. Only admin changes app_language in database; public/owner views only read it.
 const APP_LANGUAGE_OPTIONS = ["sr", "en", "de"];
 let currentAppLanguage = "sr";
@@ -552,14 +583,48 @@ function updateManifestForOwner() {
   }
 }
 
+
+function getInitialsFromName(name = "") {
+  const words = String(name || "").trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return "CS";
+  const initials = words.slice(0, 2).map(w => w.charAt(0).toUpperCase()).join("");
+  return initials || "CS";
+}
+
+function makeInitialsIconDataUrl(name = "CityStyle", bg = "#b91c1c") {
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext("2d");
+    const initials = getInitialsFromName(name);
+    ctx.fillStyle = bg && String(bg).startsWith("#") ? bg : "#b91c1c";
+    ctx.fillRect(0, 0, 512, 512);
+    const gradient = ctx.createRadialGradient(180, 120, 40, 256, 256, 420);
+    gradient.addColorStop(0, "rgba(255,255,255,0.28)");
+    gradient.addColorStop(1, "rgba(0,0,0,0.22)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 512, 512);
+    ctx.fillStyle = "rgba(255,255,255,0.96)";
+    ctx.font = "bold 190px Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(initials, 256, 268);
+    return canvas.toDataURL("image/png");
+  } catch (err) {
+    console.warn("Initials icon nije napravljen:", err);
+    return `${getAppBaseUrl()}assets/icons/icon-192.png`;
+  }
+}
+
 function updateManifestForSalon(slug, options = {}) {
   if (!slug) return;
   const rawName = String(options.name || options.displayName || "").trim();
   const appName = rawName || "CityStyle profil";
   const shortName = appName.length > 12 ? appName.slice(0, 12).trim() : appName;
-  const iconUrl = options.iconUrl || `${getAppBaseUrl()}assets/icons/icon-192.png`;
-  const icon512 = options.icon512Url || iconUrl || `${getAppBaseUrl()}assets/icons/icon-512.png`;
-  const theme = normalizeSalonTheme(options.themeColor || "#b91c1c");
+  const theme = normalizeSalonTheme(options.themeColor || "classic-red");
+  const iconUrl = options.iconUrl || makeInitialsIconDataUrl(appName, "#b91c1c");
+  const icon512 = options.icon512Url || iconUrl || makeInitialsIconDataUrl(appName, "#b91c1c");
   const baseManifest = {
     name: appName,
     short_name: shortName || "Profil",
@@ -693,7 +758,7 @@ async function registerPushForSalon(salonId) {
       return false;
     }
 
-    const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+    const registration = await navigator.serviceWorker.register("/sw.js?v=business3force", { scope: "/" });
     await navigator.serviceWorker.ready;
 
     let subscription = await registration.pushManager.getSubscription();
@@ -773,6 +838,8 @@ window.App = {
   escapeHtml,
   escapeJs,
   formatServicePrice,
+  normalizeBusinessType,
+  getBusinessProfileLabels,
     normalizePhoneForTel,
   normalizeCurrency,
   checkSalonAccess,
@@ -788,5 +855,6 @@ window.App = {
   installOwnerApp,
   updateManifestForOwner,
   updateManifestForSalon,
+  getInitialsFromName,
   isStandaloneMode
 };

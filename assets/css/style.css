@@ -925,3 +925,82 @@ body[class*="theme-"] textarea:focus {
   .business-types-grid, .check-grid { grid-template-columns:1fr; }
   .sales-footer { align-items:flex-start; }
 }
+
+/* Business profile V2: profile type, service descriptions and gallery */
+.business-type-badge,
+.language-badge,
+.theme-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.client-gallery-panel .public-gallery-grid,
+.public-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.public-gallery-item {
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  border-radius: 18px;
+  overflow: hidden;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+}
+
+.public-gallery-item img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+.public-gallery-item span {
+  display: block;
+  padding: 8px 10px;
+  font-size: 0.86rem;
+  color: var(--muted, #a8a8b3);
+}
+
+.gallery-lightbox-card {
+  max-width: min(92vw, 780px);
+}
+
+.gallery-lightbox-card img {
+  width: 100%;
+  max-height: 75vh;
+  object-fit: contain;
+  border-radius: 18px;
+  background: #111;
+}
+
+.owner-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.owner-gallery-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 16px;
+  margin-bottom: 10px;
+  background: rgba(255,255,255,0.05);
+}
+
+.gallery-upload-card input[type="file"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px dashed rgba(255,255,255,0.25);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.04);
+  color: inherit;
+}

@@ -28,6 +28,66 @@ const ADMIN_THEME_OPTIONS = [
 ];
 
 
+
+const ADMIN_BUSINESS_TYPE_OPTIONS = [
+  { value: "general", label: "Opšti biznis", icon: "🏢", hint: "zahtevi, termini i ponuda" },
+  { value: "salon", label: "Salon / termini", icon: "💇", hint: "frizer, beauty, nokti, masaža" },
+  { value: "repair", label: "Majstor / kvarovi", icon: "🛠️", hint: "grejanje, hlađenje, voda, struja" },
+  { value: "craft", label: "Zanatlija / radovi", icon: "🧱", hint: "keramičar, moler, stolar, gipsar" },
+  { value: "auto", label: "Auto servis", icon: "🚗", hint: "mehaničar, vulkanizer, auto-klima" },
+  { value: "catalog", label: "Katalog / proizvodi", icon: "🛒", hint: "prodaja, proizvodi, oprema" }
+];
+
+function getAdminBusinessTypeOption(value) {
+  const normalized = String(value || "general").trim().toLowerCase();
+  return ADMIN_BUSINESS_TYPE_OPTIONS.find(item => item.value === normalized) || ADMIN_BUSINESS_TYPE_OPTIONS[0];
+}
+
+function renderBusinessTypeBadge(value) {
+  const type = getAdminBusinessTypeOption(value);
+  return `<span class="business-type-badge">${type.icon} ${adminEscapeHtml(type.label)}</span>`;
+}
+
+function promptBusinessType(currentValue = "general") {
+  const current = getAdminBusinessTypeOption(currentValue).value;
+  const optionsText = ADMIN_BUSINESS_TYPE_OPTIONS.map(item => `${item.value} = ${item.label}`).join("\n");
+  const input = prompt(`Vrsta profila:\n${optionsText}`, current);
+  if (input === null) return null;
+  return getAdminBusinessTypeOption(input).value;
+}
+
+async function insertSalonWithBusinessType(payload) {
+  const { data, error } = await window.db.from("salons").insert(payload).select().single();
+  if (!error) return { data, error: null };
+  const msg = String(error.message || "").toLowerCase();
+  if (msg.includes("business_type") || msg.includes("schema cache")) {
+    const fallback = { ...payload };
+    delete fallback.business_type;
+    const retry = await window.db.from("salons").insert(fallback).select().single();
+    if (!retry.error) {
+      window.App.showMessage("Profil je dodat. Pokrenite SQL za business_type da bi se vrsta profila trajno čuvala.", "info");
+    }
+    return retry;
+  }
+  return { data: null, error };
+}
+
+async function updateSalonWithBusinessType(id, payload) {
+  const { data, error } = await window.db.from("salons").update(payload).eq("id", id).select("*").single();
+  if (!error) return { data, error: null };
+  const msg = String(error.message || "").toLowerCase();
+  if (msg.includes("business_type") || msg.includes("schema cache")) {
+    const fallback = { ...payload };
+    delete fallback.business_type;
+    const retry = await window.db.from("salons").update(fallback).eq("id", id).select("*").single();
+    if (!retry.error) {
+      window.App.showMessage("Profil je izmenjen. Pokrenite SQL za business_type da bi se vrsta profila trajno čuvala.", "info");
+    }
+    return retry;
+  }
+  return { data: null, error };
+}
+
 const ADMIN_LANGUAGE_OPTIONS = [
   { value: "sr", label: "Srpski", icon: "🇷🇸", hint: "srpski interfejs za vlasnika i klijente" },
   { value: "en", label: "English", icon: "🇬🇧", hint: "English interface for owner and clients" },
@@ -75,7 +135,8 @@ function getAdminSearchText(salon) {
     salon.phone,
     salon.company_code,
     salon.slug,
-    salon.city
+    salon.city,
+    salon.business_type
   ].map(v => String(v || "").toLowerCase()).join(" ");
 }
 
@@ -420,6 +481,7 @@ function renderSalonCard(salon) {
         <div><span>Cena</span><strong>${Number(salon.monthly_price || 9.99).toFixed(2)} ${adminEscapeHtml(salon.currency || "EUR")}</strong></div>
         <div><span>Boja profila</span><strong>${renderThemeBadge(salon.theme_color)}</strong></div>
         <div><span>Jezik aplikacije</span><strong>${renderLanguageBadge(salon.app_language)}</strong></div>
+        <div><span>Vrsta profila</span><strong>${renderBusinessTypeBadge(salon.business_type)}</strong></div>
       </div>
       ${expired ? `<div class="warning-box">Uplata je istekla. Profil ostaje aktivan dok ga administrator ručno ne blokira.</div>` : ""}
       <div class="link-box"><small>Link profila:</small><input readonly value="${salonLink}"></div>
@@ -453,6 +515,8 @@ async function showAddSalonForm() {
   const ownerPhone = prompt("Telefon vlasnika za admin kontakt / WhatsApp:", phone || "") || null;
   const languageInput = prompt("Jezik aplikacije za ovaj profil: sr, en ili de", "sr") || "sr";
   const appLanguage = getAdminLanguageOption(languageInput).value;
+  const businessType = promptBusinessType("general");
+  if (businessType === null) return;
 
   const cleanName = name.trim();
   const cleanEmail = email.trim().toLowerCase();
@@ -462,9 +526,7 @@ async function showAddSalonForm() {
   const paidFrom = toDateInput(today);
   const paidUntil = toDateInput(addDays(today, 30));
 
-  const { data: salon, error } = await window.db
-    .from("salons")
-    .insert({
+  const { data: salon, error } = await insertSalonWithBusinessType({
       salon_name: cleanName,
       slug,
       owner_email: cleanEmail,
@@ -479,10 +541,9 @@ async function showAddSalonForm() {
       currency: "EUR",
       theme_color: "classic-red",
       app_language: appLanguage,
+      business_type: businessType,
       is_deleted: false
-    })
-    .select()
-    .single();
+    });
 
   if (error) {
     console.error(error);
@@ -551,6 +612,9 @@ async function editSalonProfile(id) {
   const ownerPhone = prompt("Telefon vlasnika za admin kontakt / WhatsApp:", salon.owner_phone || salon.phone || "");
   if (ownerPhone === null) return;
 
+  const businessType = promptBusinessType(salon.business_type || "general");
+  if (businessType === null) return;
+
   const changeSlug = confirm(
     "Da li želite da izmenite i link/slug profila?\n\n" +
     "Ako promenite slug, stari QR kod i stari link više neće voditi na ovaj profil.\n" +
@@ -580,18 +644,16 @@ async function editSalonProfile(id) {
     return;
   }
 
-  const { error: updateError } = await window.db
-    .from("salons")
-    .update({
+  const { error: updateError } = await updateSalonWithBusinessType(id, {
       salon_name: cleanName,
       owner_email: cleanEmail,
       company_code: cleanCode,
       city: cleanCity,
       phone: cleanPhone,
       owner_phone: cleanOwnerPhone,
+      business_type: businessType,
       slug
-    })
-    .eq("id", id);
+    });
 
   if (updateError) {
     console.error(updateError);

@@ -229,6 +229,7 @@ function renderSalonDashboard() {
     appointments: S("tabAppointments", "Zahtevi / termini"),
     services: S("tabServices", "Usluge / ponuda"),
     products: S("tabProducts", "Proizvodi / katalog"),
+    gallery: "Galerija radova",
     hours: S("tabHours", "Radno vreme"),
     settings: S("tabSettings", "Podešavanje profila")
   };
@@ -262,6 +263,7 @@ async function showSection(section) {
   if (section === "appointments") return renderAppointments();
   if (section === "services") return renderServices();
   if (section === "products") return renderProducts();
+  if (section === "gallery") return renderGallery();
   if (section === "hours") return renderWorkingHours();
   if (section === "settings") return renderSalonSettings();
 }
@@ -640,7 +642,8 @@ async function loadServices() {
   }
   list.innerHTML = services.map(service => `
     <div class="card service-card">
-      <div class="service-row"><div><strong>${salonEscapeHtml(service.name)}</strong><span>${Number(service.duration_minutes || 0)} min</span></div><b>${window.App.formatServicePrice(service)}</b></div>
+      <div class="service-row"><div><strong>${salonEscapeHtml(service.name)}</strong><span>${service.category ? salonEscapeHtml(service.category) + " • " : ""}${Number(service.duration_minutes || 0)} min</span></div><b>${window.App.formatServicePrice(service)}</b></div>
+      ${service.description ? `<p class="muted">${salonEscapeHtml(service.description)}</p>` : ""}
       <p class="muted">Status: ${service.active ? "Aktivna" : "Sakrivena"}</p>
       ${adminOwnerPreviewMode ? `<div class="card-actions"><span class="status-pill">Admin pregled</span></div>` : `<div class="card-actions">
         <button class="btn btn-dark" type="button" onclick="editService('${service.id}')">Uredi</button>
@@ -663,7 +666,9 @@ async function showAddServiceForm(serviceId = null) {
     <div class="card">
       <h3>${service ? "Uredi uslugu" : "Nova usluga"}</h3>
       <input id="service-edit-id" type="hidden" value="${service ? salonEscapeHtml(service.id) : ""}">
-      <label>Naziv usluge</label><input id="service-name" type="text" value="${service ? salonEscapeHtml(service.name) : ""}" placeholder="Feniranje">
+      <label>Naziv usluge</label><input id="service-name" type="text" value="${service ? salonEscapeHtml(service.name) : ""}" placeholder="Servis klime, šišanje, keramika...">
+      <label>Kategorija</label><input id="service-category" type="text" value="${service ? salonEscapeHtml(service.category || "") : ""}" placeholder="Frizer, klima, keramika, auto servis...">
+      <label>Opis usluge</label><textarea id="service-description" rows="3" placeholder="Kratak opis koji korisnik vidi na javnom profilu.">${service ? salonEscapeHtml(service.description || "") : ""}</textarea>
       <div class="price-grid">
         <div>
           <label>Cena od</label>
@@ -692,6 +697,8 @@ async function saveService() {
   if (stopAdminOwnerPreviewEdit()) return;
   const id = document.getElementById("service-edit-id")?.value || "";
   const name = document.getElementById("service-name")?.value.trim();
+  const category = document.getElementById("service-category")?.value.trim() || null;
+  const description = document.getElementById("service-description")?.value.trim() || null;
   const price = Number(document.getElementById("service-price")?.value || 0);
   const priceToRaw = document.getElementById("service-price-to")?.value;
   const priceTo = priceToRaw === "" || priceToRaw === undefined ? null : Number(priceToRaw);
@@ -700,16 +707,45 @@ async function saveService() {
   if (!name || price < 0 || (priceTo !== null && priceTo < 0) || duration <= 0) return window.App.showMessage("Unesite naziv usluge, cenu, valutu i trajanje.", "error");
   if (priceTo !== null && priceTo > 0 && priceTo < price) return window.App.showMessage("Cena do ne može biti manja od cene od.", "error");
   if (id) {
-    const { error } = await window.db.from("services").update({ name, price, price_to: priceTo, currency, duration_minutes: duration }).eq("id", id).eq("salon_id", currentSalonId);
-    if (error) return window.App.showMessage("Greška pri izmeni usluge.", "error");
+    const { error } = await saveServicePayload("update", { id, name, category, description, price, price_to: priceTo, currency, duration_minutes: duration });
+    if (error) return window.App.showMessage("Greška pri izmeni usluge: " + error.message, "error");
   } else {
     const { data: maxOrder } = await window.db.from("services").select("sort_order").eq("salon_id", currentSalonId).order("sort_order", { ascending: false }).limit(1);
     const newOrder = maxOrder?.length ? Number(maxOrder[0].sort_order || 0) + 1 : 1;
-    const { error } = await window.db.from("services").insert({ salon_id: currentSalonId, name, price, price_to: priceTo, currency, duration_minutes: duration, active: true, sort_order: newOrder });
-    if (error) return window.App.showMessage("Greška pri dodavanju usluge.", "error");
+    const { error } = await saveServicePayload("insert", { salon_id: currentSalonId, name, category, description, price, price_to: priceTo, currency, duration_minutes: duration, active: true, sort_order: newOrder });
+    if (error) return window.App.showMessage("Greška pri dodavanju usluge: " + error.message, "error");
   }
   hideAddServiceForm();
   await loadServices();
+}
+
+
+async function saveServicePayload(mode, payload) {
+  const sendPayload = { ...payload };
+  const id = sendPayload.id;
+  delete sendPayload.id;
+  let result;
+  if (mode === "update") {
+    result = await window.db.from("services").update(sendPayload).eq("id", id).eq("salon_id", currentSalonId);
+  } else {
+    result = await window.db.from("services").insert(sendPayload);
+  }
+  if (!result.error) return result;
+
+  const msg = String(result.error.message || "").toLowerCase();
+  if (msg.includes("category") || msg.includes("description") || msg.includes("schema cache")) {
+    const fallback = { ...sendPayload };
+    delete fallback.category;
+    delete fallback.description;
+    const retry = mode === "update"
+      ? await window.db.from("services").update(fallback).eq("id", id).eq("salon_id", currentSalonId)
+      : await window.db.from("services").insert(fallback);
+    if (!retry.error) {
+      window.App.showMessage("Usluga je sačuvana. Pokrenite SQL za category/description da bi se opis i kategorija trajno čuvali.", "info");
+    }
+    return retry;
+  }
+  return result;
 }
 
 async function toggleServiceActive(id, currentActive) {
@@ -898,6 +934,115 @@ async function deleteProduct(id) {
   const { error } = await window.db.from("products").delete().eq("id", id).eq("salon_id", currentSalonId);
   if (error) return window.App.showMessage("Greška pri brisanju proizvoda.", "error");
   await loadProducts();
+}
+
+
+async function renderGallery() {
+  const content = document.getElementById("salon-content");
+  content.innerHTML = `
+    <div class="section-head">
+      <div>
+        <h2>Galerija radova</h2>
+        <p class="muted">Dodajte do 10 slika radova. Slike se prikazuju na javnom QR profilu.</p>
+      </div>
+      ${adminOwnerPreviewMode ? "" : `<button class="btn btn-primary" type="button" onclick="showGalleryUploadForm()">Dodaj sliku</button>`}
+    </div>
+    <div id="gallery-form-box"></div>
+    <div id="gallery-list" class="cards"><div class="loading-box">Učitavanje galerije...</div></div>
+  `;
+  await loadGallery();
+}
+
+async function loadGallery() {
+  const list = document.getElementById("gallery-list");
+  const { data: images, error } = await window.db
+    .from("home_images")
+    .select("*")
+    .eq("salon_id", currentSalonId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    list.innerHTML = `<div class="card"><p class="error-text">Galerija nije dostupna. Proverite da li postoji tabela home_images i Storage bucket salon-assets.</p></div>`;
+    return;
+  }
+
+  const items = images || [];
+  if (!items.length) {
+    list.innerHTML = `<div class="card center"><p class="muted">Još nema slika u galeriji. Dodajte slike završenih radova, pre/posle fotografije ili primer usluge.</p></div>`;
+    return;
+  }
+
+  list.innerHTML = `<div class="owner-gallery-grid">${items.map(image => `
+    <div class="card owner-gallery-card ${image.active ? "" : "muted-card"}">
+      <img src="${salonEscapeHtml(image.image_url)}" alt="Galerija radova">
+      ${image.caption ? `<p>${salonEscapeHtml(image.caption)}</p>` : `<p class="muted">Bez opisa</p>`}
+      <small>Redosled: ${Number(image.sort_order || 100)} • ${image.active ? "Javno" : "Sakriveno"}</small>
+      ${adminOwnerPreviewMode ? `<div class="card-actions"><span class="status-pill">Admin pregled</span></div>` : `<div class="card-actions">
+        <button class="btn btn-dark" type="button" onclick="toggleGalleryImage('${image.id}', ${image.active ? "true" : "false"})">${image.active ? "Sakrij" : "Prikaži"}</button>
+        <button class="btn btn-danger" type="button" onclick="deleteGalleryImage('${image.id}', '${salonEscapeJs(image.image_url)}')">Obriši trajno</button>
+      </div>`}
+    </div>
+  `).join("")}</div>`;
+}
+
+async function showGalleryUploadForm() {
+  if (stopAdminOwnerPreviewEdit()) return;
+  const { count, error } = await window.db.from("home_images").select("id", { count: "exact", head: true }).eq("salon_id", currentSalonId);
+  if (!error && Number(count || 0) >= 10) {
+    return window.App.showMessage("Maksimalno je 10 slika u galeriji. Prvo obrišite neku staru sliku.", "error");
+  }
+  const box = document.getElementById("gallery-form-box");
+  box.innerHTML = `
+    <div class="card gallery-upload-card">
+      <h3>Dodaj sliku u galeriju</h3>
+      <p class="muted">Dozvoljeno: JPG, PNG, WEBP, maksimalno 5 MB.</p>
+      <input id="gallery-file" type="file" accept="image/png,image/jpeg,image/webp">
+      <label>Opis slike</label>
+      <input id="gallery-caption" type="text" placeholder="npr. kupatilo posle renoviranja, servis klime...">
+      <label>Redosled</label>
+      <input id="gallery-sort-order" type="number" value="100">
+      <div class="card-actions">
+        <button class="btn btn-primary" type="button" onclick="uploadGalleryImage()">Sačuvaj sliku</button>
+        <button class="btn btn-dark" type="button" onclick="document.getElementById('gallery-form-box').innerHTML=''">Otkaži</button>
+      </div>
+    </div>`;
+}
+
+async function uploadGalleryImage() {
+  if (stopAdminOwnerPreviewEdit()) return;
+  const file = document.getElementById("gallery-file")?.files?.[0];
+  if (!file) return window.App.showMessage("Izaberite sliku.", "error");
+  const { count } = await window.db.from("home_images").select("id", { count: "exact", head: true }).eq("salon_id", currentSalonId);
+  if (Number(count || 0) >= 10) return window.App.showMessage("Maksimalno je 10 slika u galeriji.", "error");
+  const url = await window.StorageHelper.uploadImage(file, currentSalonId, "gallery");
+  if (!url) return;
+  const caption = document.getElementById("gallery-caption")?.value.trim() || null;
+  const sort_order = Number(document.getElementById("gallery-sort-order")?.value || 100);
+  const { error } = await window.db.from("home_images").insert({ salon_id: currentSalonId, image_url: url, caption, sort_order, active: true });
+  if (error) {
+    await window.StorageHelper.deleteImage(url);
+    return window.App.showMessage("Slika nije sačuvana u bazu. Proverite SQL za home_images.", "error");
+  }
+  document.getElementById("gallery-form-box").innerHTML = "";
+  window.App.showMessage("Slika je dodata u galeriju.", "success");
+  await loadGallery();
+}
+
+async function toggleGalleryImage(id, currentActive) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  await window.db.from("home_images").update({ active: !currentActive }).eq("id", id).eq("salon_id", currentSalonId);
+  await loadGallery();
+}
+
+async function deleteGalleryImage(id, imageUrl) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  if (!confirm("Obrisati sliku trajno iz galerije i Storage-a?")) return;
+  await window.StorageHelper.deleteImage(imageUrl);
+  const { error } = await window.db.from("home_images").delete().eq("id", id).eq("salon_id", currentSalonId);
+  if (error) return window.App.showMessage("Greška pri brisanju slike iz baze.", "error");
+  window.App.showMessage("Slika je trajno obrisana.", "success");
+  await loadGallery();
 }
 
 async function renderWorkingHours() {

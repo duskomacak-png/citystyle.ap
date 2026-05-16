@@ -3,6 +3,7 @@
 let currentSalon = null;
 let services = [];
 let products = [];
+let galleryImages = [];
 let selectedService = null;
 let selectedDate = null;
 let selectedTime = null;
@@ -81,6 +82,7 @@ async function loadSalon(slug, saveThisSalon = true) {
 
   await loadServices();
   await loadProducts();
+  await loadGalleryImages();
   await renderSalonHome();
 }
 
@@ -90,6 +92,7 @@ function renderPlatformLanding() {
   currentSalon = null;
   services = [];
   products = [];
+  galleryImages = [];
   selectedService = null;
   selectedDate = null;
   selectedTime = null;
@@ -348,6 +351,29 @@ async function loadProducts() {
   products = data || [];
 }
 
+
+async function loadGalleryImages() {
+  if (!currentSalon?.id) {
+    galleryImages = [];
+    return;
+  }
+  const { data, error } = await window.db
+    .from("home_images")
+    .select("*")
+    .eq("salon_id", currentSalon.id)
+    .eq("active", true)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  if (error) {
+    console.warn("Gallery images are not available yet:", error);
+    galleryImages = [];
+    return;
+  }
+  galleryImages = data || [];
+}
+
 async function renderSalonHome() {
   const app = document.getElementById("app");
   app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
@@ -365,6 +391,7 @@ async function renderSalonHome() {
     .order("day_of_week", { ascending: true });
 
   const publicName = settings?.welcome_title || currentSalon.salon_name || "Profil";
+  const profileLabels = window.App.getBusinessProfileLabels(currentSalon.business_type);
   currentSalon._publicName = publicName;
   currentSalon._publicLogo = settings?.logo_url || "";
   window.App?.updateManifestForSalon?.(currentSalon.slug, { name: publicName, iconUrl: settings?.logo_url, themeColor: currentSalon.theme_color });
@@ -407,8 +434,8 @@ async function renderSalonHome() {
         </div>
 
         <div class="client-actions">
-          <button class="btn btn-primary" type="button" onclick="showBookingForm()">${C("sendRequest", "Pošalji zahtev")}</button>
-          <button class="btn btn-dark" type="button" onclick="showServices()">${C("servicesOffer", "Usluge / ponuda")}</button>
+          <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(profileLabels.action)}</button>
+          <button class="btn btn-dark" type="button" onclick="showServices()">${escapeHtml(profileLabels.services)}</button>
           <button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>
           ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app ovog profila")}</button>`}
         </div>
@@ -417,6 +444,7 @@ async function renderSalonHome() {
       <div id="client-extra">
         ${renderClientServicesPreview()}
         ${renderClientProductsPreview()}
+        ${renderClientGalleryPreview()}
         ${renderClientWorkingHours(workingHours || [])}
       </div>
       <div id="booking-box"></div>
@@ -424,6 +452,39 @@ async function renderSalonHome() {
   `;
 }
 
+
+
+function renderClientGalleryPreview() {
+  if (!galleryImages.length) return "";
+  return `
+    <details class="card client-hours-panel client-gallery-panel" open>
+      <summary>
+        <span>Galerija radova</span>
+        <small>${galleryImages.length}/10</small>
+      </summary>
+      <div class="public-gallery-grid">
+        ${galleryImages.map(image => `
+          <button type="button" class="public-gallery-item" onclick="openPublicGalleryImage('${escapeJs(image.image_url)}', '${escapeJs(image.caption || '')}')">
+            <img src="${escapeHtml(image.image_url)}" alt="${escapeHtml(image.caption || 'Galerija radova')}">
+            ${image.caption ? `<span>${escapeHtml(image.caption)}</span>` : ""}
+          </button>
+        `).join("")}
+      </div>
+    </details>
+  `;
+}
+
+function openPublicGalleryImage(url, caption = "") {
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop gallery-lightbox";
+  modal.innerHTML = `
+    <div class="modal-card gallery-lightbox-card">
+      <img src="${escapeHtml(url)}" alt="${escapeHtml(caption || 'Galerija radova')}">
+      ${caption ? `<p>${escapeHtml(caption)}</p>` : ""}
+      <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
 
 function installCurrentSalonApp() {
   if (!currentSalon?.slug) return;
@@ -435,11 +496,12 @@ function installCurrentSalonApp() {
 }
 
 function renderClientServicesPreview() {
+  const profileLabels = window.App.getBusinessProfileLabels(currentSalon?.business_type);
   if (!services.length) {
     return `
       <details class="card client-hours-panel client-services-panel">
         <summary>
-          <span>${C("servicesOffer", "Usluge / ponuda")}</span>
+          <span>${escapeHtml(profileLabels.services)}</span>
           <small>${C("noServicesSmall", "Nema dostupnih usluga")}</small>
         </summary>
         <div class="client-services-panel-body">
@@ -452,7 +514,7 @@ function renderClientServicesPreview() {
   return `
     <details class="card client-hours-panel client-services-panel">
       <summary>
-        <span>${C("servicesOffer", "Usluge / ponuda")}</span>
+        <span>${escapeHtml(profileLabels.services)}</span>
         <small>${C("showList", "Prikaži listu")}</small>
       </summary>
       <div class="client-services-panel-body">
@@ -460,7 +522,7 @@ function renderClientServicesPreview() {
         <div class="service-list">
           ${services.map(service => `
             <button class="service-select-card" type="button" onclick="selectServiceById('${service.id}')">
-              <div><strong>${escapeHtml(service.name)}</strong><span>${Number(service.duration_minutes || 0)} min</span></div>
+              <div><strong>${escapeHtml(service.name)}</strong><span>${service.category ? escapeHtml(service.category) + " • " : ""}${Number(service.duration_minutes || 0)} min</span>${service.description ? `<p class="muted service-public-description">${escapeHtml(service.description)}</p>` : ""}</div>
               <b>${window.App.formatServicePrice(service)}</b>
             </button>
           `).join("")}
@@ -585,25 +647,26 @@ function renderClientWorkingHours(hours) {
 }
 
 function showServices() {
+  const profileLabels = window.App.getBusinessProfileLabels(currentSalon?.business_type);
   const box = document.getElementById("client-extra");
   if (!box) return;
 
   if (!services.length) {
-    box.innerHTML = `<div class="card"><h2>${C("servicesOffer", "Usluge / ponuda")}</h2><p class="muted">${C("noServicesText", "Trenutno nema dostupnih usluga za online zahtev.")}</p></div>`;
+    box.innerHTML = `<div class="card"><h2>${escapeHtml(profileLabels.services)}</h2><p class="muted">${C("noServicesText", "Trenutno nema dostupnih usluga za online zahtev.")}</p></div>`;
     return;
   }
 
   box.innerHTML = `
     <details class="card client-hours-panel client-services-panel" open>
       <summary>
-        <span>${C("servicesOffer", "Usluge / ponuda")}</span>
+        <span>${escapeHtml(profileLabels.services)}</span>
         <small>${C("hideList", "Sakrij listu")}</small>
       </summary>
       <div class="client-services-panel-body">
         <div class="service-list">
           ${services.map(service => `
             <button class="service-select-card" type="button" onclick="selectServiceById('${service.id}')">
-              <div><strong>${escapeHtml(service.name)}</strong><span>${Number(service.duration_minutes || 0)} min</span></div>
+              <div><strong>${escapeHtml(service.name)}</strong><span>${service.category ? escapeHtml(service.category) + " • " : ""}${Number(service.duration_minutes || 0)} min</span>${service.description ? `<p class="muted service-public-description">${escapeHtml(service.description)}</p>` : ""}</div>
               <b>${window.App.formatServicePrice(service)}</b>
             </button>
           `).join("")}
@@ -633,13 +696,14 @@ function showBookingForm() {
   }
 
   const today = window.BookingLogic?.getLocalDateString ? window.BookingLogic.getLocalDateString() : new Date().toISOString().split("T")[0];
+  const profileLabels = window.App.getBusinessProfileLabels(currentSalon?.business_type);
   selectedDate = today;
   selectedTime = null;
 
   box.innerHTML = `
     <div class="card booking-card booking-paper-card">
-      <h2>${C("sendRequestTitle", "Pošaljite zahtev")}</h2>
-      <p class="muted">${C("chooseServiceDateTime", "Izaberite uslugu, datum i slobodan termin.")}</p>
+      <h2>${escapeHtml(profileLabels.formTitle)}</h2>
+      <p class="muted">${escapeHtml(profileLabels.formIntro)}</p>
 
       <label>${C("serviceAndPrice", "Usluga i cena")}</label>
       <select id="booking-service" class="booking-service-dropdown">
@@ -690,10 +754,24 @@ function showBookingForm() {
       <input id="client-phone" type="tel" inputmode="tel" placeholder="64 123 4567">
       <p class="field-help">${C("phoneHelp", "Izaberite državu i unesite lokalni broj. Možete uneti broj sa nulom ili bez nule. Aplikacija će ga sačuvati u ispravnom WhatsApp formatu prema izabranoj državi. Ako unesete broj sa +, koristi se direktno.")}</p>
 
-      <label>${C("note", "Napomena")}</label>
-      <textarea id="client-note" rows="3" placeholder="${C("optional", "Opcionalno")}"></textarea>
+      <label>${escapeHtml(profileLabels.requestKindLabel)}</label>
+      <input id="client-request-kind" type="text" placeholder="${escapeHtml(profileLabels.requestKindPlaceholder)}">
 
-      <button class="btn btn-primary booking-submit-btn" type="button" onclick="submitAppointment()">${C("sendRequest", "Pošalji zahtev")}</button>
+      ${(window.App.normalizeBusinessType(currentSalon?.business_type) === "repair" || window.App.normalizeBusinessType(currentSalon?.business_type) === "craft") ? `
+        <label>Adresa / lokacija</label>
+        <input id="client-address" type="text" placeholder="Mesto, ulica ili lokacija problema">
+        <label>Hitnost</label>
+        <select id="client-urgency">
+          <option value="Normalno">Normalno</option>
+          <option value="Hitno">Hitno</option>
+          <option value="Nije hitno">Nije hitno</option>
+        </select>
+      ` : ""}
+
+      <label>${escapeHtml(profileLabels.noteLabel)}</label>
+      <textarea id="client-note" rows="4" placeholder="${escapeHtml(profileLabels.notePlaceholder)}"></textarea>
+
+      <button class="btn btn-primary booking-submit-btn" type="button" onclick="submitAppointment()">${escapeHtml(profileLabels.action)}</button>
     </div>
   `;
 
@@ -819,6 +897,15 @@ async function submitAppointment() {
   const phoneCountry = document.getElementById("client-phone-country")?.value || "381";
   const phone = normalizeClientPhoneForStorage(phoneRaw, phoneCountry);
   const note = document.getElementById("client-note")?.value.trim();
+  const requestKind = document.getElementById("client-request-kind")?.value.trim();
+  const clientAddress = document.getElementById("client-address")?.value.trim();
+  const urgency = document.getElementById("client-urgency")?.value || "";
+  const extraNoteParts = [];
+  if (requestKind) extraNoteParts.push(`Vrsta: ${requestKind}`);
+  if (clientAddress) extraNoteParts.push(`Lokacija: ${clientAddress}`);
+  if (urgency) extraNoteParts.push(`Hitnost: ${urgency}`);
+  if (note) extraNoteParts.push(note);
+  const finalNote = extraNoteParts.join("\n");
 
   if (!currentSalon || !selectedService || !selectedDate || !selectedTime) {
     window.App.showMessage(C("chooseAllError", "Izaberite uslugu, datum i termin."), "error");
@@ -850,7 +937,7 @@ async function submitAppointment() {
     service_id: selectedService.id,
     client_name: name,
     client_phone: phone,
-    note: note || null,
+    note: finalNote || null,
     appointment_date: selectedDate,
     appointment_time: selectedTime,
     status: "new",
