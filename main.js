@@ -1,20 +1,110 @@
-// assets/js/config.js
+// assets/js/booking-logic.js
 
-const SUPABASE_URL = "https://uxoovyytydnuibiwnpgx.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_FFMUyqNXSuVP0mMsUa5PbQ_ur3iwb0L";
+async function getAvailableSlots(salonId, serviceDuration, selectedDate) {
+  if (!salonId || !serviceDuration || !selectedDate) return [];
 
-window.APP_CONFIG = {
-  appName: "CityStyle",
-  platformAdminEmail: "duskomacak@gmail.com",
-  salonStorageKey: "citystyle_saved_salon",
-  salonSessionKey: "citystyle_salon_session",
-  pushVapidPublicKey: "BNFB3Zs8op_mn7nUQgxcOQWCNco_jb7M7gdvTE__orfWVg8p5dGg6KWvJ4fM2Psg1eauWH0ybr5QnOLgjeMeQHs"
-};
+  const dayOfWeek = new Date(selectedDate + "T00:00:00").getDay();
 
-// Supabase CDN must be loaded before this file. Do not break the landing page if CDN is slow/blocked.
-if (window.supabase && typeof window.supabase.createClient === "function") {
-  window.db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-} else {
-  console.error("Supabase CDN nije učitan. Proveri internet/CDN ili adblock.");
-  window.db = null;
+  const { data: hours, error: hoursError } = await window.db
+    .from("working_hours")
+    .select("*")
+    .eq("salon_id", salonId)
+    .eq("day_of_week", dayOfWeek)
+    .maybeSingle();
+
+  if (hoursError) {
+    console.error("Greška radno vreme:", hoursError);
+    return [];
+  }
+
+  if (!hours || hours.is_closed) return [];
+
+  const openTime = String(hours.open_time || "09:00").slice(0, 5);
+  const closeTime = String(hours.close_time || "17:00").slice(0, 5);
+
+  const { data: existing, error: existingError } = await window.db
+    .from("appointments")
+    .select("appointment_time, duration_snapshot")
+    .eq("salon_id", salonId)
+    .eq("appointment_date", selectedDate)
+    .in("status", ["new", "confirmed"]);
+
+  if (existingError) {
+    console.error("Greška termini:", existingError);
+    return [];
+  }
+
+  const allSlots = generateTimeSlots(openTime, closeTime, 30);
+  const today = getLocalDateString();
+  const nowMinutes = getCurrentMinutes();
+
+  return allSlots.filter(slot => {
+    const slotStartMinutes = timeToMinutes(slot);
+
+    // Ako je izabran današnji datum, ne nudimo termine koji su već prošli
+    // niti termin koji počinje u trenutnom minutu.
+    if (selectedDate === today && slotStartMinutes <= nowMinutes) return false;
+
+    return canFitSlot(slot, Number(serviceDuration), closeTime, existing || []);
+  });
 }
+
+function canFitSlot(slotStart, serviceDuration, closeTime, existingAppointments) {
+  const start = timeToMinutes(slotStart);
+  const end = start + Number(serviceDuration);
+  const close = timeToMinutes(closeTime);
+
+  if (end > close) return false;
+
+  for (const appointment of existingAppointments) {
+    const bookedStart = timeToMinutes(String(appointment.appointment_time || "00:00").slice(0, 5));
+    const bookedDuration = Number(appointment.duration_snapshot || 30);
+    const bookedEnd = bookedStart + bookedDuration;
+    if (start < bookedEnd && end > bookedStart) return false;
+  }
+
+  return true;
+}
+
+function generateTimeSlots(openTime, closeTime, stepMinutes = 30) {
+  const slots = [];
+  let current = timeToMinutes(openTime);
+  const close = timeToMinutes(closeTime);
+  while (current < close) {
+    slots.push(minutesToTime(current));
+    current += stepMinutes;
+  }
+  return slots;
+}
+
+function timeToMinutes(time) {
+  const [hours, minutes] = String(time || "00:00").split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+function minutesToTime(totalMinutes) {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
+function getCurrentMinutes() {
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes();
+}
+
+function getLocalDateString(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+window.BookingLogic = {
+  getAvailableSlots,
+  canFitSlot,
+  generateTimeSlots,
+  timeToMinutes,
+  minutesToTime,
+  getLocalDateString
+};

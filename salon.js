@@ -1,98 +1,8 @@
-// assets/js/main.js
-
-function getUrlParam(param) {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get(param);
-}
-
-function saveLocal(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
-}
-
-function getLocal(key) {
-  try {
-    const value = localStorage.getItem(key);
-    return value ? JSON.parse(value) : null;
-  } catch (err) {
-    console.error("localStorage read error:", err);
-    return null;
-  }
-}
-
-function removeLocal(key) {
-  localStorage.removeItem(key);
-}
-
-function setSessionValue(key, value) {
-  try { sessionStorage.setItem(key, JSON.stringify(value)); } catch (err) { console.warn("sessionStorage write error", err); }
-}
-
-function getSessionValue(key) {
-  try {
-    const value = sessionStorage.getItem(key);
-    return value ? JSON.parse(value) : null;
-  } catch (err) {
-    console.warn("sessionStorage read error", err);
-    return null;
-  }
-}
-
-function showMessage(message, type = "info") {
-  const oldToast = document.querySelector(".app-toast");
-  if (oldToast) oldToast.remove();
-
-  const toast = document.createElement("div");
-  toast.className = `app-toast ${type}`;
-  toast.textContent = message;
-  document.body.appendChild(toast);
-
-  setTimeout(() => toast.remove(), 3500);
-}
-
-function formatDate(dateString) {
-  if (!dateString) return "";
-  const date = new Date(dateString + (String(dateString).includes("T") ? "" : "T00:00:00"));
-  return date.toLocaleDateString("sr-RS", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric"
-  });
-}
+// assets/js/admin.js
 
 
-function formatMoney(value) {
-  const n = Number(value || 0);
-  if (!Number.isFinite(n)) return "0";
-  return n.toLocaleString("sr-RS");
-}
-
-function normalizeCurrency(value) {
-  const c = String(value || "RSD").trim().toUpperCase();
-  if (c === "EUR" || c === "€" || c === "EVRO" || c === "EVRI") return "EUR";
-  return "RSD";
-}
-
-function formatServicePrice(item = {}) {
-  const currency = normalizeCurrency(item.currency || item.currency_snapshot || "RSD");
-  const from = Number(item.price ?? item.price_snapshot ?? 0);
-  const toRaw = item.price_to ?? item.price_to_snapshot;
-  const to = toRaw === null || toRaw === undefined || toRaw === "" ? null : Number(toRaw);
-
-  if ((!from || from <= 0) && (!to || to <= 0)) {
-    return t("priceByAgreement", "Cena po dogovoru");
-  }
-
-  const suffix = currency === "EUR" ? "EUR" : "RSD";
-
-  if (to && to > from) {
-    return `${formatMoney(from)}–${formatMoney(to)} ${suffix}`;
-  }
-
-  return `${formatMoney(from)} ${suffix}`;
-}
-
-function escapeHtml(value) {
-  return String(value || "")
+function adminEscapeHtml(value) {
+  return window.App?.escapeHtml ? window.App.escapeHtml(value) : String(value || "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -100,761 +10,843 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function escapeJs(value) {
-  return String(value || "")
+function adminEscapeJs(value) {
+  return window.App?.escapeJs ? window.App.escapeJs(value) : String(value || "")
     .replaceAll("\\", "\\\\")
     .replaceAll("'", "\\'");
 }
 
-async function checkSalonAccess(slug) {
-  if (!slug) return { data: null, error: "Nedostaje salon slug." };
-  if (!window.db) return { data: null, error: "Supabase nije učitan." };
-
-  const { data, error } = await window.db
-    .from("salons")
-    .select("*")
-    .eq("slug", slug)
-    .eq("status", "active")
-    .eq("is_deleted", false)
-    .maybeSingle();
-
-  return { data, error };
-}
-
-function saveCurrentSalon(slug) {
-  if (!slug) return;
-  saveLocal(window.APP_CONFIG.salonStorageKey, {
-    slug,
-    savedAt: new Date().toISOString()
-  });
-}
-
-function getSavedSalonSlug() {
-  const saved = getLocal(window.APP_CONFIG.salonStorageKey);
-  return saved?.slug || null;
-}
-
-function clearSavedSalon() {
-  removeLocal(window.APP_CONFIG.salonStorageKey);
-}
-
-function isStandaloneMode() {
-  return window.matchMedia?.("(display-mode: standalone)")?.matches === true ||
-    window.navigator.standalone === true;
-}
-
-function getAppBaseUrl() {
-  const origin = window.location.origin;
-  const path = window.location.pathname || "/";
-
-  // GitHub Pages project site: https://user.github.io/citystyle.app/
-  if (window.location.hostname.endsWith("github.io")) {
-    const parts = path.split("/").filter(Boolean);
-    if (parts.length > 0) {
-      return `${origin}/${parts[0]}/`;
-    }
-  }
-
-  // Custom domain: https://citystyle.app/
-  return `${origin}/`;
-}
-
-function getAppPath(path = "") {
-  const cleanPath = String(path || "").replace(/^\/+/, "");
-  return `${getAppBaseUrl()}${cleanPath}`;
-}
-
-function getSalonPublicLink(slug) {
-  return `${getAppBaseUrl()}?salon=${encodeURIComponent(slug)}`;
-}
-
-function getQrImageUrl(link, size = 280) {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(link)}`;
-}
-
-
-// Per-salon theme helpers. Only admin changes theme_color in database; public/owner views only read it.
-const SALON_THEME_CLASSES = [
-  "theme-classic-red",
-  "theme-ocean-blue",
-  "theme-luxury-gold",
-  "theme-emerald-green",
-  "theme-royal-purple",
-  "theme-soft-pink",
-  "theme-graphite-dark",
-  "theme-orange-pro"
+const ADMIN_THEME_OPTIONS = [
+  { value: "classic-red", label: "Classic Red", icon: "🔴", hint: "standardna CityStyle crvena" },
+  { value: "ocean-blue", label: "Ocean Blue", icon: "🔵", hint: "servisi, firme, tehnika" },
+  { value: "luxury-gold", label: "Luxury Gold", icon: "🟡", hint: "premium i luxury izgled" },
+  { value: "emerald-green", label: "Emerald Green", icon: "🟢", hint: "zdravlje, priroda, usluge" },
+  { value: "royal-purple", label: "Royal Purple", icon: "🟣", hint: "beauty, studio, nokti" },
+  { value: "soft-pink", label: "Soft Pink", icon: "🌸", hint: "saloni i kozmetika" },
+  { value: "graphite-dark", label: "Graphite Dark", icon: "⚫", hint: "majstori, auto-servisi" },
+  { value: "orange-pro", label: "Orange Pro", icon: "🟠", hint: "radovi, servis, dostava" }
 ];
 
-function normalizeSalonTheme(value) {
-  const theme = String(value || "classic-red").trim().toLowerCase();
-  return SALON_THEME_CLASSES.includes(`theme-${theme}`) ? theme : "classic-red";
+
+
+const ADMIN_BUSINESS_TYPE_OPTIONS = [
+  { value: "general", label: "Opšti biznis", icon: "🏢", hint: "zahtevi, termini i ponuda" },
+  { value: "salon", label: "Salon / termini", icon: "💇", hint: "frizer, beauty, nokti, masaža" },
+  { value: "repair", label: "Majstor / kvarovi", icon: "🛠️", hint: "grejanje, hlađenje, voda, struja" },
+  { value: "craft", label: "Zanatlija / radovi", icon: "🧱", hint: "keramičar, moler, stolar, gipsar" },
+  { value: "auto", label: "Auto servis", icon: "🚗", hint: "mehaničar, vulkanizer, auto-klima" },
+  { value: "catalog", label: "Katalog / proizvodi", icon: "🛒", hint: "prodaja, proizvodi, oprema" }
+];
+
+function getAdminBusinessTypeOption(value) {
+  const normalized = String(value || "general").trim().toLowerCase();
+  return ADMIN_BUSINESS_TYPE_OPTIONS.find(item => item.value === normalized) || ADMIN_BUSINESS_TYPE_OPTIONS[0];
 }
 
-function clearSalonTheme() {
-  document.body?.classList.remove(...SALON_THEME_CLASSES);
-  document.documentElement?.removeAttribute("data-salon-theme");
+function renderBusinessTypeBadge(value) {
+  const type = getAdminBusinessTypeOption(value);
+  return `<span class="business-type-badge">${type.icon} ${adminEscapeHtml(type.label)}</span>`;
 }
 
-function applySalonTheme(value) {
-  const theme = normalizeSalonTheme(value);
-  clearSalonTheme();
-  document.body?.classList.add(`theme-${theme}`);
-  document.documentElement?.setAttribute("data-salon-theme", theme);
-  return theme;
+function promptBusinessType(currentValue = "general") {
+  const current = getAdminBusinessTypeOption(currentValue).value;
+  const optionsText = ADMIN_BUSINESS_TYPE_OPTIONS.map(item => `${item.value} = ${item.label}`).join("\n");
+  const input = prompt(`Vrsta profila:\n${optionsText}`, current);
+  if (input === null) return null;
+  return getAdminBusinessTypeOption(input).value;
 }
 
-
-
-const BUSINESS_PROFILE_LABELS = {
-  general: {
-    name: "Opšti biznis", action: "Pošalji zahtev", services: "Usluge / ponuda", formTitle: "Pošaljite zahtev", formIntro: "Izaberite uslugu, datum i slobodan termin. U napomeni možete opisati šta vam treba.", noteLabel: "Napomena / opis zahteva", notePlaceholder: "Napišite dodatne informacije za vlasnika profila.", requestKindLabel: "Vrsta zahteva", requestKindPlaceholder: "npr. upit, usluga, ponuda"
-  },
-  salon: {
-    name: "Salon / termini", action: "Zakaži termin", services: "Usluge i cenovnik", formTitle: "Zakažite termin", formIntro: "Izaberite uslugu, datum i slobodan termin.", noteLabel: "Napomena", notePlaceholder: "Opcionalno", requestKindLabel: "Željena usluga", requestKindPlaceholder: "npr. šišanje, farbanje, tretman"
-  },
-  repair: {
-    name: "Majstor / kvarovi", action: "Prijavi kvar", services: "Usluge, kvarovi i intervencije", formTitle: "Prijavite kvar ili problem", formIntro: "Izaberite uslugu/intervenciju, željeni termin i opišite kvar. Vlasnik će vas kontaktirati radi potvrde.", noteLabel: "Opis kvara / problema", notePlaceholder: "npr. klima ne hladi, curi voda, grejanje ne radi...", requestKindLabel: "Vrsta kvara", requestKindPlaceholder: "npr. klima, grejanje, voda, struja"
-  },
-  craft: {
-    name: "Zanatlija / radovi", action: "Pošalji upit za radove", services: "Radovi i ponuda", formTitle: "Pošaljite upit za radove", formIntro: "Izaberite tip rada i željeni termin za kontakt/procenu. U opisu navedite lokaciju i obim posla.", noteLabel: "Opis posla", notePlaceholder: "npr. kupatilo 20m², krečenje stana, keramika, gips...", requestKindLabel: "Vrsta rada", requestKindPlaceholder: "npr. keramika, moleraj, stolarija"
-  },
-  auto: {
-    name: "Auto servis", action: "Pošalji zahtev za servis", services: "Servisne usluge", formTitle: "Pošaljite zahtev za servis", formIntro: "Izaberite servisnu uslugu, željeni termin i ukratko opišite vozilo/problem.", noteLabel: "Opis problema / vozilo", notePlaceholder: "npr. Golf 6, neće da upali, mali servis, gume...", requestKindLabel: "Vrsta servisa", requestKindPlaceholder: "npr. mali servis, kvar, vulkanizer"
-  },
-  catalog: {
-    name: "Katalog / proizvodi", action: "Pitaj za proizvod", services: "Ponuda i usluge", formTitle: "Pošaljite upit", formIntro: "Izaberite ponudu ili proizvod i pošaljite upit vlasniku profila.", noteLabel: "Poruka / upit", notePlaceholder: "Napišite šta vas zanima, količinu, dimenziju ili dodatno pitanje.", requestKindLabel: "Predmet upita", requestKindPlaceholder: "npr. proizvod, cena, dostupnost"
-  }
-};
-
-function normalizeBusinessType(value) {
-  const type = String(value || "general").trim().toLowerCase();
-  return BUSINESS_PROFILE_LABELS[type] ? type : "general";
-}
-
-function getBusinessProfileLabels(value) {
-  return BUSINESS_PROFILE_LABELS[normalizeBusinessType(value)];
-}
-
-// Per-salon language helpers. Only admin changes app_language in database; public/owner views only read it.
-const APP_LANGUAGE_OPTIONS = ["sr", "en", "de"];
-let currentAppLanguage = "sr";
-
-const APP_TRANSLATIONS = {
-  sr: {
-    loadingProfile: "Učitavanje profila...",
-    onlineUnavailableTitle: "Online zakazivanje trenutno nije dostupno",
-    onlineUnavailableText: "Online zahtev trenutno nije dostupan za ovaj profil.",
-    platformHome: "Početna strana platforme",
-    adminClientPreviewTitle: "Admin pregled: korisnička strana",
-    adminClientPreviewText: "Ovako korisnik vidi ovaj profil. Ovo dugme vidi samo prijavljeni admin.",
-    backToAdmin: "Nazad u admin",
-    ownerPreviewTitle: "Pregled javne stranice",
-    ownerPreviewText: "Ovako korisnik vidi vaš profil.",
-    backToOwnerPanel: "Nazad u panel vlasnika",
-    welcomeDefault: "Dobrodošli. Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev.",
-    sendRequest: "Pošalji zahtev",
-    servicesOffer: "Usluge / ponuda",
-    installThisProfile: "Preuzmi app ovog profila",
-    noServicesSmall: "Nema dostupnih usluga",
-    noServicesText: "Trenutno nema dostupnih usluga za online zahtev.",
-    showList: "Prikaži listu",
-    hideList: "Sakrij listu",
-    chooseServiceText: "Izaberite uslugu za koju želite da pošaljete zahtev.",
-    workingHours: "Radno vreme",
-    showSchedule: "Prikaži raspored",
-    closed: "Zatvoreno",
-    monday: "Ponedeljak",
-    tuesday: "Utorak",
-    wednesday: "Sreda",
-    thursday: "Četvrtak",
-    friday: "Petak",
-    saturday: "Subota",
-    sunday: "Nedelja",
-    bookingUnavailable: "Zakazivanje nije dostupno",
-    sendRequestTitle: "Pošaljite zahtev",
-    chooseServiceDateTime: "Izaberite uslugu, datum i slobodan termin.",
-    serviceAndPrice: "Usluga i cena",
-    chooseService: "Izaberite uslugu",
-    chooseServiceFirst: "Prvo izaberite uslugu.",
-    date: "Datum",
-    selectedTime: "Izabrani termin",
-    noTimeSelected: "Još nije izabran",
-    availableTimes: "Slobodni termini",
-    chooseServiceAndDate: "Izaberite uslugu i datum.",
-    fullName: "Ime i prezime",
-    phoneCountry: "Država za WhatsApp broj",
-    phoneWhatsapp: "Broj telefona / WhatsApp",
-    phoneHelp: "Izaberite državu i unesite lokalni broj. Možete uneti broj sa nulom ili bez nule. Aplikacija će ga sačuvati u ispravnom WhatsApp formatu prema izabranoj državi. Ako unesete broj sa +, koristi se direktno.",
-    note: "Napomena",
-    optional: "Opcionalno",
-    loadingTimes: "Učitavanje termina...",
-    noTimesToday: "Nema više slobodnih termina za danas. Izaberite naredni datum.",
-    noTimesDate: "Nema slobodnih termina za izabrani datum.",
-    chooseAllError: "Izaberite uslugu, datum i termin.",
-    enterNameError: "Unesite ime i prezime.",
-    phoneError: "Izaberite državu i unesite ispravan broj telefona.",
-    takenError: "Termin je u međuvremenu zauzet. Izaberite drugi.",
-    sendError: "Greška pri slanju termina.",
-    requestSentTitle: "Zahtev je poslat ✅",
-    requestSentText: "Vlasnik profila će vas kontaktirati radi potvrde.",
-    requestSentToast: "Zahtev je poslat.",
-    priceByAgreement: "Cena po dogovoru",
-    ownerPanelTitle: "Biznis panel",
-    ownerPanelLoading: "Učitavanje profila...",
-    ownerInstallBtn: "Preuzmi panel vlasnika",
-    logout: "Odjavi se",
-    tabAppointments: "Zahtevi / termini",
-    tabServices: "Usluge / ponuda",
-    tabHours: "Radno vreme",
-    tabSettings: "Podešavanje profila",
-    enableNotifications: "Uključi obaveštenja",
-    refresh: "Osveži",
-    allRequests: "Svi zahtevi",
-    todayAppointments: "Današnji termini",
-    newRequests: "Novi zahtevi",
-    confirmed: "Potvrđeno",
-    done: "Završeno",
-    noRequestsTitle: "Nema zahteva u ovoj listi",
-    noRequestsText: "Kada korisnik pošalje zahtev ili zakaže termin, podaci će se prikazati u ovoj listi.",
-    addService: "Dodaj uslugu",
-    save: "Sačuvaj",
-    cancel: "Otkaži",
-    delete: "Obriši",
-    saveWorkingHours: "Sačuvaj radno vreme",
-    profileSettings: "Podešavanje profila"
-  },
-  en: {
-    loadingProfile: "Loading profile...",
-    onlineUnavailableTitle: "Online booking is currently unavailable",
-    onlineUnavailableText: "Online requests are currently unavailable for this profile.",
-    platformHome: "Platform home",
-    adminClientPreviewTitle: "Admin preview: client side",
-    adminClientPreviewText: "This is how clients see this profile. This button is visible only to the logged-in admin.",
-    backToAdmin: "Back to admin",
-    ownerPreviewTitle: "Public page preview",
-    ownerPreviewText: "This is how clients see your profile.",
-    backToOwnerPanel: "Back to owner panel",
-    welcomeDefault: "Welcome. Choose a service, date and available time, or send a request.",
-    sendRequest: "Send request",
-    servicesOffer: "Services / offer",
-    installThisProfile: "Install this profile app",
-    noServicesSmall: "No available services",
-    noServicesText: "There are currently no available services for online requests.",
-    showList: "Show list",
-    hideList: "Hide list",
-    chooseServiceText: "Choose the service you want to send a request for.",
-    workingHours: "Working hours",
-    showSchedule: "Show schedule",
-    closed: "Closed",
-    monday: "Monday",
-    tuesday: "Tuesday",
-    wednesday: "Wednesday",
-    thursday: "Thursday",
-    friday: "Friday",
-    saturday: "Saturday",
-    sunday: "Sunday",
-    bookingUnavailable: "Booking unavailable",
-    sendRequestTitle: "Send request",
-    chooseServiceDateTime: "Choose a service, date and available time.",
-    serviceAndPrice: "Service and price",
-    chooseService: "Choose service",
-    chooseServiceFirst: "Choose a service first.",
-    date: "Date",
-    selectedTime: "Selected time",
-    noTimeSelected: "Not selected yet",
-    availableTimes: "Available times",
-    chooseServiceAndDate: "Choose a service and date.",
-    fullName: "Full name",
-    phoneCountry: "Country for WhatsApp number",
-    phoneWhatsapp: "Phone / WhatsApp number",
-    phoneHelp: "Choose a country and enter the local number. You can enter it with or without the leading zero. The app will save it in the correct WhatsApp format. If you enter a number with +, it will be used directly.",
-    note: "Note",
-    optional: "Optional",
-    loadingTimes: "Loading available times...",
-    noTimesToday: "No more available times today. Choose another date.",
-    noTimesDate: "No available times for the selected date.",
-    chooseAllError: "Choose service, date and time.",
-    enterNameError: "Enter full name.",
-    phoneError: "Choose a country and enter a valid phone number.",
-    takenError: "This time has just been taken. Choose another one.",
-    sendError: "Error while sending request.",
-    requestSentTitle: "Request sent ✅",
-    requestSentText: "The profile owner will contact you to confirm.",
-    requestSentToast: "Request sent.",
-    priceByAgreement: "Price by agreement",
-    ownerPanelTitle: "Business panel",
-    ownerPanelLoading: "Loading profile...",
-    ownerInstallBtn: "Install owner panel",
-    logout: "Log out",
-    tabAppointments: "Requests / appointments",
-    tabServices: "Services / offer",
-    tabHours: "Working hours",
-    tabSettings: "Profile settings",
-    enableNotifications: "Enable notifications",
-    refresh: "Refresh",
-    allRequests: "All requests",
-    todayAppointments: "Today’s appointments",
-    newRequests: "New requests",
-    confirmed: "Confirmed",
-    done: "Done",
-    noRequestsTitle: "No requests in this list",
-    noRequestsText: "When a client sends a request or books an appointment, it will appear in this list.",
-    addService: "Add service",
-    save: "Save",
-    cancel: "Cancel",
-    delete: "Delete",
-    saveWorkingHours: "Save working hours",
-    profileSettings: "Profile settings"
-  },
-  de: {
-    loadingProfile: "Profil wird geladen...",
-    onlineUnavailableTitle: "Online-Buchung ist derzeit nicht verfügbar",
-    onlineUnavailableText: "Online-Anfragen sind für dieses Profil derzeit nicht verfügbar.",
-    platformHome: "Plattform-Startseite",
-    adminClientPreviewTitle: "Admin-Vorschau: Kundenseite",
-    adminClientPreviewText: "So sehen Kunden dieses Profil. Diese Schaltfläche sieht nur der angemeldete Admin.",
-    backToAdmin: "Zurück zum Admin",
-    ownerPreviewTitle: "Vorschau der öffentlichen Seite",
-    ownerPreviewText: "So sehen Kunden Ihr Profil.",
-    backToOwnerPanel: "Zurück zum Inhaber-Panel",
-    welcomeDefault: "Willkommen. Wählen Sie eine Dienstleistung, ein Datum und eine freie Zeit oder senden Sie eine Anfrage.",
-    sendRequest: "Anfrage senden",
-    servicesOffer: "Leistungen / Angebot",
-    installThisProfile: "Profil-App installieren",
-    noServicesSmall: "Keine Leistungen verfügbar",
-    noServicesText: "Derzeit sind keine Leistungen für Online-Anfragen verfügbar.",
-    showList: "Liste anzeigen",
-    hideList: "Liste ausblenden",
-    chooseServiceText: "Wählen Sie die Leistung, für die Sie eine Anfrage senden möchten.",
-    workingHours: "Öffnungszeiten",
-    showSchedule: "Plan anzeigen",
-    closed: "Geschlossen",
-    monday: "Montag",
-    tuesday: "Dienstag",
-    wednesday: "Mittwoch",
-    thursday: "Donnerstag",
-    friday: "Freitag",
-    saturday: "Samstag",
-    sunday: "Sonntag",
-    bookingUnavailable: "Buchung nicht verfügbar",
-    sendRequestTitle: "Anfrage senden",
-    chooseServiceDateTime: "Wählen Sie Leistung, Datum und freie Zeit.",
-    serviceAndPrice: "Leistung und Preis",
-    chooseService: "Leistung wählen",
-    chooseServiceFirst: "Wählen Sie zuerst eine Leistung.",
-    date: "Datum",
-    selectedTime: "Gewählte Zeit",
-    noTimeSelected: "Noch nicht gewählt",
-    availableTimes: "Freie Zeiten",
-    chooseServiceAndDate: "Wählen Sie Leistung und Datum.",
-    fullName: "Vor- und Nachname",
-    phoneCountry: "Land für WhatsApp-Nummer",
-    phoneWhatsapp: "Telefon / WhatsApp",
-    phoneHelp: "Wählen Sie ein Land und geben Sie die lokale Nummer ein. Sie können die Nummer mit oder ohne führende Null eingeben. Die App speichert sie im richtigen WhatsApp-Format. Wenn Sie eine Nummer mit + eingeben, wird sie direkt verwendet.",
-    note: "Notiz",
-    optional: "Optional",
-    loadingTimes: "Freie Zeiten werden geladen...",
-    noTimesToday: "Heute gibt es keine freien Zeiten mehr. Wählen Sie ein anderes Datum.",
-    noTimesDate: "Für das gewählte Datum gibt es keine freien Zeiten.",
-    chooseAllError: "Wählen Sie Leistung, Datum und Zeit.",
-    enterNameError: "Geben Sie Vor- und Nachname ein.",
-    phoneError: "Wählen Sie ein Land und geben Sie eine gültige Telefonnummer ein.",
-    takenError: "Diese Zeit wurde gerade belegt. Wählen Sie eine andere.",
-    sendError: "Fehler beim Senden der Anfrage.",
-    requestSentTitle: "Anfrage gesendet ✅",
-    requestSentText: "Der Profilinhaber wird Sie zur Bestätigung kontaktieren.",
-    requestSentToast: "Anfrage gesendet.",
-    priceByAgreement: "Preis nach Vereinbarung",
-    ownerPanelTitle: "Business-Panel",
-    ownerPanelLoading: "Profil wird geladen...",
-    ownerInstallBtn: "Inhaber-Panel installieren",
-    logout: "Abmelden",
-    tabAppointments: "Anfragen / Termine",
-    tabServices: "Leistungen / Angebot",
-    tabHours: "Öffnungszeiten",
-    tabSettings: "Profileinstellungen",
-    enableNotifications: "Benachrichtigungen aktivieren",
-    refresh: "Aktualisieren",
-    allRequests: "Alle Anfragen",
-    todayAppointments: "Heutige Termine",
-    newRequests: "Neue Anfragen",
-    confirmed: "Bestätigt",
-    done: "Erledigt",
-    noRequestsTitle: "Keine Anfragen in dieser Liste",
-    noRequestsText: "Wenn ein Kunde eine Anfrage sendet oder einen Termin bucht, erscheint sie hier.",
-    addService: "Leistung hinzufügen",
-    save: "Speichern",
-    cancel: "Abbrechen",
-    delete: "Löschen",
-    saveWorkingHours: "Öffnungszeiten speichern",
-    profileSettings: "Profileinstellungen"
-  }
-};
-
-function normalizeAppLanguage(value) {
-  const lang = String(value || "sr").trim().toLowerCase();
-  return APP_LANGUAGE_OPTIONS.includes(lang) ? lang : "sr";
-}
-
-function setAppLanguage(value) {
-  currentAppLanguage = normalizeAppLanguage(value);
-  document.documentElement.lang = currentAppLanguage;
-  document.documentElement.setAttribute("data-app-language", currentAppLanguage);
-  return currentAppLanguage;
-}
-
-function getAppLanguage() {
-  return currentAppLanguage || "sr";
-}
-
-function t(key, fallback = "") {
-  const lang = getAppLanguage();
-  return APP_TRANSLATIONS[lang]?.[key] || APP_TRANSLATIONS.sr?.[key] || fallback || key;
-}
-
-// PWA install prompt
-let deferredPrompt = null;
-
-window.addEventListener("beforeinstallprompt", (event) => {
-  event.preventDefault();
-  deferredPrompt = event;
-  showInstallButton();
-});
-
-function showInstallButton() {
-  if (document.getElementById("install-app-btn")) return;
-
-  const path = window.location.pathname || "/";
-  const hasSalonParam = !!getUrlParam("salon");
-
-  // Do not show install button to salon clients or inside admin/salon panels.
-  // Platform install belongs only on the main platform page.
-  if (hasSalonParam || path.includes("/admin") || path.includes("/salon")) return;
-
-  const btn = document.createElement("button");
-  btn.id = "install-app-btn";
-  btn.className = "install-floating-btn";
-  btn.type = "button";
-  btn.textContent = "📱 Preuzmi CityStyle app";
-  btn.addEventListener("click", () => installApp("Na iPhone-u: Share → Add to Home Screen.", "CityStyle je dodat na telefon."));
-  document.body.appendChild(btn);
-}
-
-async function installSalonApp(slug, options = {}) {
-  if (slug) saveCurrentSalon(slug);
-  updateManifestForSalon(slug || getSavedSalonSlug(), options);
-  await installApp("Na iPhone-u: Share → Add to Home Screen. Ova prečica pamti otvoreni profil.", "App profila je dodata na telefon.");
-}
-
-async function installOwnerApp() {
-  clearSavedSalon();
-  updateManifestForOwner();
-  await installApp("Na iPhone-u: otvorite ovaj panel u Safari browseru, pritisnite Share i izaberite Add to Home Screen. Panel vlasnika ostaje zapamćen.", "Panel vlasnika je dodat na telefon.");
-}
-
-function updateManifestForOwner() {
-  const baseManifest = {
-    name: "CityStyle - Panel vlasnika",
-    short_name: "CityStyle",
-    description: "Prečica za direktan ulaz u panel vlasnika biznisa.",
-    start_url: getAppPath("salon/"),
-    scope: getAppBaseUrl(),
-    display: "standalone",
-    background_color: "#0b0b0f",
-    theme_color: "#b91c1c",
-    orientation: "portrait",
-    icons: [
-      { src: `${getAppBaseUrl()}assets/icons/icon-192.png`, sizes: "192x192", type: "image/png", purpose: "any maskable" },
-      { src: `${getAppBaseUrl()}assets/icons/icon-512.png`, sizes: "512x512", type: "image/png", purpose: "any maskable" }
-    ]
-  };
-  try {
-    const blob = new Blob([JSON.stringify(baseManifest)], { type: "application/manifest+json" });
-    const url = URL.createObjectURL(blob);
-    let link = document.querySelector('link[rel="manifest"]');
-    if (!link) {
-      link = document.createElement("link");
-      link.rel = "manifest";
-      document.head.appendChild(link);
+async function insertSalonWithBusinessType(payload) {
+  const { data, error } = await window.db.from("salons").insert(payload).select().single();
+  if (!error) return { data, error: null };
+  const msg = String(error.message || "").toLowerCase();
+  if (msg.includes("business_type") || msg.includes("schema cache")) {
+    const fallback = { ...payload };
+    delete fallback.business_type;
+    const retry = await window.db.from("salons").insert(fallback).select().single();
+    if (!retry.error) {
+      window.App.showMessage("Profil je dodat. Pokrenite SQL za business_type da bi se vrsta profila trajno čuvala.", "info");
     }
-    link.href = url;
-  } catch (err) {
-    console.warn("Owner manifest nije postavljen:", err);
+    return retry;
   }
+  return { data: null, error };
 }
 
-
-function getInitialsFromName(name = "") {
-  const words = String(name || "").trim().split(/\s+/).filter(Boolean);
-  if (!words.length) return "CS";
-  const initials = words.slice(0, 2).map(w => w.charAt(0).toUpperCase()).join("");
-  return initials || "CS";
-}
-
-function makeInitialsIconDataUrl(name = "CityStyle", bg = "#b91c1c") {
-  try {
-    const canvas = document.createElement("canvas");
-    canvas.width = 512;
-    canvas.height = 512;
-    const ctx = canvas.getContext("2d");
-    const initials = getInitialsFromName(name);
-    ctx.fillStyle = bg && String(bg).startsWith("#") ? bg : "#b91c1c";
-    ctx.fillRect(0, 0, 512, 512);
-    const gradient = ctx.createRadialGradient(180, 120, 40, 256, 256, 420);
-    gradient.addColorStop(0, "rgba(255,255,255,0.28)");
-    gradient.addColorStop(1, "rgba(0,0,0,0.22)");
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 512, 512);
-    ctx.fillStyle = "rgba(255,255,255,0.96)";
-    ctx.font = "bold 190px Arial, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(initials, 256, 268);
-    return canvas.toDataURL("image/png");
-  } catch (err) {
-    console.warn("Initials icon nije napravljen:", err);
-    return `${getAppBaseUrl()}assets/icons/icon-192.png`;
-  }
-}
-
-function updateManifestForSalon(slug, options = {}) {
-  if (!slug) return;
-  const rawName = String(options.name || options.displayName || "").trim();
-  const appName = rawName || "CityStyle profil";
-  const shortName = appName.length > 12 ? appName.slice(0, 12).trim() : appName;
-  const theme = normalizeSalonTheme(options.themeColor || "classic-red");
-  const iconUrl = options.iconUrl || makeInitialsIconDataUrl(appName, "#b91c1c");
-  const icon512 = options.icon512Url || iconUrl || makeInitialsIconDataUrl(appName, "#b91c1c");
-  const baseManifest = {
-    name: appName,
-    short_name: shortName || "Profil",
-    description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?salon=${encodeURIComponent(slug)}`,
-    scope: getAppBaseUrl(),
-    display: "standalone",
-    background_color: "#0b0b0f",
-    theme_color: theme,
-    orientation: "portrait",
-    icons: [
-      { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "any maskable" },
-      { src: icon512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
-    ]
-  };
-  try {
-    const blob = new Blob([JSON.stringify(baseManifest)], { type: "application/manifest+json" });
-    const url = URL.createObjectURL(blob);
-    let link = document.querySelector('link[rel="manifest"]');
-    if (!link) {
-      link = document.createElement("link");
-      link.rel = "manifest";
-      document.head.appendChild(link);
+async function updateSalonWithBusinessType(id, payload) {
+  const { data, error } = await window.db.from("salons").update(payload).eq("id", id).select("*").single();
+  if (!error) return { data, error: null };
+  const msg = String(error.message || "").toLowerCase();
+  if (msg.includes("business_type") || msg.includes("schema cache")) {
+    const fallback = { ...payload };
+    delete fallback.business_type;
+    const retry = await window.db.from("salons").update(fallback).eq("id", id).select("*").single();
+    if (!retry.error) {
+      window.App.showMessage("Profil je izmenjen. Pokrenite SQL za business_type da bi se vrsta profila trajno čuvala.", "info");
     }
-    link.href = url;
-    const appleIcon = document.querySelector('link[rel="apple-touch-icon"]') || document.createElement("link");
-    appleIcon.rel = "apple-touch-icon";
-    appleIcon.href = iconUrl;
-    if (!appleIcon.parentNode) document.head.appendChild(appleIcon);
-    document.title = appName;
-  } catch (err) {
-    console.warn("Dynamic manifest nije postavljen:", err);
+    return retry;
   }
+  return { data: null, error };
 }
 
-async function installApp(noPromptMessage = "Na iPhone-u: Share → Add to Home Screen.", successMessage = "CityStyle je dodat na telefon.") {
-  if (!deferredPrompt) {
-    showMessage(noPromptMessage, "info");
+const ADMIN_LANGUAGE_OPTIONS = [
+  { value: "sr", label: "Srpski", icon: "🇷🇸", hint: "srpski interfejs za vlasnika i klijente" },
+  { value: "en", label: "English", icon: "🇬🇧", hint: "English interface for owner and clients" },
+  { value: "de", label: "Deutsch", icon: "🇩🇪", hint: "deutsche Oberfläche für Inhaber und Kunden" }
+];
+
+function getAdminLanguageOption(value) {
+  const normalized = window.App?.normalizeAppLanguage ? window.App.normalizeAppLanguage(value) : String(value || "sr");
+  return ADMIN_LANGUAGE_OPTIONS.find(item => item.value === normalized) || ADMIN_LANGUAGE_OPTIONS[0];
+}
+
+function renderLanguageBadge(value) {
+  const lang = getAdminLanguageOption(value);
+  return `<span class="language-badge">${lang.icon} ${adminEscapeHtml(lang.label)}</span>`;
+}
+
+function getAdminThemeOption(value) {
+  const normalized = window.App?.normalizeSalonTheme ? window.App.normalizeSalonTheme(value) : String(value || "classic-red");
+  return ADMIN_THEME_OPTIONS.find(item => item.value === normalized) || ADMIN_THEME_OPTIONS[0];
+}
+
+function renderThemeBadge(value) {
+  const theme = getAdminThemeOption(value);
+  return `<span class="theme-badge theme-preview-${theme.value}"><i></i>${theme.icon} ${adminEscapeHtml(theme.label)}</span>`;
+}
+
+function getAdminClientPreviewLink(slug) {
+  const base = window.App.getSalonPublicLink(slug);
+  return `${base}${base.includes("?") ? "&" : "?"}adminPreview=1&from=admin`;
+}
+
+function getAdminOwnerPreviewLink(salonId) {
+  return `${window.App.getAppPath("salon/")}?adminPreview=1&salon_id=${encodeURIComponent(salonId)}&from=admin`;
+}
+
+
+let adminSalonsCache = [];
+let adminSearchQuery = "";
+
+function getAdminSearchText(salon) {
+  return [
+    salon.salon_name,
+    salon.owner_email,
+    salon.owner_phone,
+    salon.phone,
+    salon.company_code,
+    salon.slug,
+    salon.city,
+    salon.business_type
+  ].map(v => String(v || "").toLowerCase()).join(" ");
+}
+
+function filterAdminSalons(items) {
+  const q = String(adminSearchQuery || "").trim().toLowerCase();
+  if (!q) return items;
+  return items.filter(salon => getAdminSearchText(salon).includes(q));
+}
+
+function handleAdminSearch(value) {
+  adminSearchQuery = String(value || "");
+  renderAdminSalonsView();
+}
+
+function daysUntilDate(dateString) {
+  if (!dateString) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateString + (String(dateString).includes("T") ? "" : "T00:00:00"));
+  target.setHours(0, 0, 0, 0);
+  return Math.ceil((target.getTime() - today.getTime()) / 86400000);
+}
+
+function isPaymentExpiringSoon(paidUntil, days = 10) {
+  const diff = daysUntilDate(paidUntil);
+  return diff !== null && diff >= 0 && diff <= days;
+}
+
+function normalizeAdminPhoneForWhatsApp(phone) {
+  const raw = String(phone || "").trim();
+  if (!raw) return "";
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return "";
+  if (raw.startsWith("+")) return digits;
+  if (raw.startsWith("00")) return digits.slice(2);
+  if (digits.startsWith("0") && digits.length >= 8) return `381${digits.slice(1)}`;
+  if (/^(381|387|385|382|389|386|49|43)\d{6,}$/.test(digits)) return digits;
+  return digits.length >= 8 ? digits : "";
+}
+
+function buildRenewalSubject(salon) {
+  return `Obaveštenje o isteku CityStyle.app usluge`;
+}
+
+function buildRenewalMessage(salon) {
+  const name = salon?.salon_name || "vaš profil";
+  const paidUntil = salon?.paid_until ? window.App.formatDate(salon.paid_until) : "uskoro";
+  return `Poštovani,
+
+Obaveštavamo vas da se period aktivacije vašeg CityStyle.app profila približava isteku.
+
+Kako bi vaš QR profil, prijem zahteva, zakazivanja i obaveštenja nastavili da rade bez prekida, molimo vas da nam javite da li želite produženje usluge za naredni period.
+
+Naziv profila: ${name}
+Datum isteka: ${paidUntil}
+
+Ukoliko želite produženje, dovoljno je da odgovorite na ovu poruku i potvrdite nastavak korišćenja usluge.
+
+Srdačan pozdrav,
+CityStyle.app`;
+}
+
+function sendRenewalEmail(salonId) {
+  const salon = adminSalonsCache.find(item => String(item.id) === String(salonId));
+  if (!salon) return window.App.showMessage("Profil nije pronađen.", "error");
+  if (!salon.owner_email) return window.App.showMessage("Ovaj profil nema email vlasnika.", "error");
+  const url = `mailto:${encodeURIComponent(salon.owner_email)}?subject=${encodeURIComponent(buildRenewalSubject(salon))}&body=${encodeURIComponent(buildRenewalMessage(salon))}`;
+  window.location.href = url;
+}
+
+function sendRenewalWhatsApp(salonId) {
+  const salon = adminSalonsCache.find(item => String(item.id) === String(salonId));
+  if (!salon) return window.App.showMessage("Profil nije pronađen.", "error");
+  const phone = normalizeAdminPhoneForWhatsApp(salon.owner_phone || salon.phone || "");
+  if (!phone) return window.App.showMessage("Ovaj profil nema ispravan telefon vlasnika za WhatsApp.", "error");
+  const url = `https://wa.me/${phone}?text=${encodeURIComponent(buildRenewalMessage(salon))}`;
+  window.open(url, "_blank");
+}
+
+function buildExtensionSubject(salon) {
+  return `Potvrda produženja CityStyle.app usluge`;
+}
+
+function buildExtensionMessage(salon, paidUntil) {
+  const name = salon?.salon_name || "vaš profil";
+  const formattedDate = paidUntil ? window.App.formatDate(paidUntil) : "novog datuma";
+  return `Poštovani,
+
+Obaveštavamo vas da je vaš CityStyle.app profil uspešno produžen.
+
+Naziv profila: ${name}
+Usluga je aktivna do: ${formattedDate}
+
+Vaš QR profil, prijem zahteva, zakazivanja i obaveštenja nastavljaju da rade bez prekida.
+
+Hvala vam na poverenju.
+
+Srdačan pozdrav,
+CityStyle.app`;
+}
+
+function openExtensionEmail(salon, paidUntil) {
+  if (!salon?.owner_email) return window.App.showMessage("Ovaj profil nema email vlasnika.", "error");
+  const url = `mailto:${encodeURIComponent(salon.owner_email)}?subject=${encodeURIComponent(buildExtensionSubject(salon))}&body=${encodeURIComponent(buildExtensionMessage(salon, paidUntil))}`;
+  window.location.href = url;
+}
+
+function openExtensionWhatsApp(salon, paidUntil) {
+  const phone = normalizeAdminPhoneForWhatsApp(salon?.owner_phone || salon?.phone || "");
+  if (!phone) return window.App.showMessage("Ovaj profil nema ispravan telefon vlasnika za WhatsApp.", "error");
+  const url = `https://wa.me/${phone}?text=${encodeURIComponent(buildExtensionMessage(salon, paidUntil))}`;
+  window.open(url, "_blank");
+}
+
+function showExtensionNotifyModal(salon, paidUntil) {
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop";
+  modal.innerHTML = `
+    <div class="modal-card extension-notify-card">
+      <h2>✅ Pristup je produžen</h2>
+      <p class="muted">${adminEscapeHtml(salon?.salon_name || "Biznis profil")} je produžen do <strong>${paidUntil ? window.App.formatDate(paidUntil) : "—"}</strong>.</p>
+      <div class="warning-box soft-warning">Sada možeš vlasniku poslati gotovu potvrdu bez upisivanja cene. Poruka se otvara u email aplikaciji ili WhatsApp-u, a ti samo proveriš tekst i klikneš Send.</div>
+      <div class="modal-actions stacked-mobile">
+        <button id="extensionEmailBtn" class="btn btn-dark" type="button">📧 Email potvrda</button>
+        <button id="extensionWhatsAppBtn" class="btn btn-success" type="button">💬 WhatsApp potvrda</button>
+        <button class="btn btn-primary" type="button" onclick="this.closest('.modal-backdrop').remove()">Završi</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.querySelector("#extensionEmailBtn")?.addEventListener("click", () => openExtensionEmail(salon, paidUntil));
+  modal.querySelector("#extensionWhatsAppBtn")?.addEventListener("click", () => openExtensionWhatsApp(salon, paidUntil));
+}
+
+
+document.addEventListener("DOMContentLoaded", () => loadAdminPanel());
+
+async function loadAdminPanel() {
+  const content = document.getElementById("admin-content");
+  content.innerHTML = `<div class="loading-box">Provera admin pristupa...</div>`;
+
+  const isAdmin = await window.Auth.isPlatformAdmin();
+  if (!isAdmin) {
+    renderAdminLogin();
     return;
   }
 
-  deferredPrompt.prompt();
-  const choice = await deferredPrompt.userChoice;
-
-  if (choice.outcome === "accepted") {
-    showMessage(successMessage, "success");
-    document.getElementById("install-app-btn")?.remove();
-  } else {
-    showMessage("Instalacija je otkazana.", "info");
-  }
-
-  deferredPrompt = null;
+  renderAdminDashboard();
+  await loadSalonsList();
 }
 
-window.addEventListener("appinstalled", () => {
-  document.getElementById("install-app-btn")?.remove();
-  showMessage("CityStyle je dodat na početni ekran.", "success");
-});
-
-
-  function normalizePhoneForTel(phone) {
-    const raw = String(phone || "").trim();
-    if (!raw) return "";
-    const digits = raw.replace(/\D/g, "");
-    if (!digits) return "";
-    if (raw.startsWith("+")) return `+${digits}`;
-    if (raw.startsWith("00")) return `+${digits.slice(2)}`;
-    if (digits.startsWith("0") && digits.length >= 8) return `+381${digits.slice(1)}`;
-    if (/^(381|387|385|382|389|386|49|43)\d{6,}$/.test(digits)) return `+${digits}`;
-    return digits;
-  }
-
-function urlBase64ToUint8Array(base64String) {
-  const padding = "=".repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
-  return outputArray;
+function renderAdminLogin() {
+  document.getElementById("admin-content").innerHTML = `
+    <div class="card login-card">
+      <h2>Prijava administratora</h2>
+      <p class="muted">Pristup administratorskom panelu ima samo ovlašćeni nalog.</p>
+      <label>Email</label>
+      <input id="admin-email" type="email" placeholder="duskomacak@gmail.com">
+      <label>Lozinka</label>
+      <input id="admin-password" type="password" placeholder="Lozinka">
+      <button class="btn btn-primary" type="button" onclick="handleAdminLogin()">Prijavi se</button>
+    </div>
+  `;
 }
 
-async function setAppBadgeCount(count = 0) {
+async function handleAdminLogin() {
+  const email = document.getElementById("admin-email").value.trim().toLowerCase();
+  const password = document.getElementById("admin-password").value.trim();
+  const user = await window.Auth.adminLogin(email, password);
+  if (!user) return;
+  renderAdminDashboard();
+  await loadSalonsList();
+}
+
+async function handleAdminLogout() {
+  await window.Auth.adminLogout();
+  renderAdminLogin();
+}
+
+function renderAdminDashboard() {
+  document.getElementById("admin-content").innerHTML = `
+    <div class="admin-toolbar">
+      <div>
+        <h2>Biznis profili</h2>
+        <p class="muted">Upravljanje biznis profilima, statusima, uplatama i QR linkovima.</p>
+      </div>
+      <div class="toolbar-actions">
+        <button class="btn btn-primary" type="button" onclick="showAddSalonForm()">Dodaj biznis profil</button>
+        <button class="btn btn-dark" type="button" onclick="handleAdminLogout()">Odjavi se</button>
+      </div>
+    </div>
+    <div id="admin-stats" class="stats-grid"></div>
+    <div class="card admin-search-card">
+      <label for="admin-search-input">🔍 Pretraga profila</label>
+      <input id="admin-search-input" type="search" placeholder="Traži po emailu, nazivu, telefonu, kodu ili linku..." oninput="handleAdminSearch(this.value)">
+      <p class="muted">Korisno kada budeš imao 50, 100 ili više profila.</p>
+    </div>
+    <div id="admin-expiring-box"></div>
+    <div id="salons-list"><div class="loading-box">Učitavanje profila...</div></div>
+  `;
+}
+
+async function loadSalonsList() {
+  const list = document.getElementById("salons-list");
+  const stats = document.getElementById("admin-stats");
+
+  const { data: salons, error } = await window.db
+    .from("salons")
+    .select("*")
+    .eq("is_deleted", false)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    list.innerHTML = `<div class="card"><p class="error-text">Greška pri učitavanju salona.</p></div>`;
+    return;
+  }
+
+  adminSalonsCache = salons || [];
+  renderAdminSalonsView();
+}
+
+function renderAdminSalonsView() {
+  const list = document.getElementById("salons-list");
+  const stats = document.getElementById("admin-stats");
+  const expiringBox = document.getElementById("admin-expiring-box");
+  if (!list || !stats) return;
+
+  const items = adminSalonsCache || [];
+  const filteredItems = filterAdminSalons(items);
+  const activeCount = items.filter(s => s.status === "active").length;
+  const blockedCount = items.filter(s => s.status === "blocked").length;
+  const expiredCount = items.filter(s => isPaymentExpired(s.paid_until)).length;
+  const expiringSoon = items
+    .filter(s => s.status !== "deleted" && !s.is_deleted && isPaymentExpiringSoon(s.paid_until, 10))
+    .sort((a, b) => (daysUntilDate(a.paid_until) ?? 99) - (daysUntilDate(b.paid_until) ?? 99));
+
+  stats.innerHTML = `
+    <div class="stat-card"><span>Ukupno profila</span><strong>${items.length}</strong></div>
+    <div class="stat-card"><span>Aktivni</span><strong>${activeCount}</strong></div>
+    <div class="stat-card"><span>Blokirani</span><strong>${blockedCount}</strong></div>
+    <div class="stat-card danger"><span>Uplata istekla</span><strong>${expiredCount}</strong></div>
+  `;
+
+  if (expiringBox) {
+    expiringBox.innerHTML = renderExpiringSoonBox(expiringSoon);
+  }
+
+  if (!items.length) {
+    list.innerHTML = `<div class="card center"><h3>Nema dodatih profila</h3><p class="muted">Dodajte prvi biznis profil kako biste generisali njegov link i QR kod.</p></div>`;
+    return;
+  }
+
+  if (!filteredItems.length) {
+    list.innerHTML = `<div class="card center"><h3>Nema rezultata</h3><p class="muted">Nijedan profil ne odgovara unetoj pretrazi.</p></div>`;
+    return;
+  }
+
   try {
-    if ("setAppBadge" in navigator) {
-      if (count > 0) await navigator.setAppBadge(count);
-      else await navigator.clearAppBadge();
-    }
+    const searchInfo = adminSearchQuery.trim()
+      ? `<p class="muted admin-search-result">Prikazano: ${filteredItems.length} od ${items.length} profila</p>`
+      : "";
+    list.innerHTML = `${searchInfo}<div class="cards">${filteredItems.map(renderSalonCard).join("")}</div>`;
   } catch (err) {
-    console.warn("Badge nije podržan na ovom uređaju:", err);
+    console.error("Admin render salon cards error:", err);
+    list.innerHTML = `
+      <div class="card">
+        <h3>Greška pri prikazu salona</h3>
+        <p class="error-text">Salon postoji u bazi, ali prikaz kartice je pukao. Uploaduj najnoviju verziju aplikacije.</p>
+      </div>
+    `;
   }
 }
 
-async function clearAppBadgeCount() {
-  await setAppBadgeCount(0);
-}
-
-async function registerPushForSalon(salonId) {
-  try {
-    if (!salonId) {
-      showMessage("Profil nije učitan.", "error");
-      return false;
-    }
-
-    if (!window.db) {
-      showMessage("Baza nije učitana. Osvežite stranicu.", "error");
-      return false;
-    }
-
-    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
-      showMessage("Ovaj browser ne podržava web push obaveštenja.", "error");
-      return false;
-    }
-
-    if (Notification.permission === "denied") {
-      showMessage("Obaveštenja su blokirana u podešavanjima browsera.", "error");
-      return false;
-    }
-
-    const vapidPublicKey = window.APP_CONFIG?.pushVapidPublicKey;
-    if (!vapidPublicKey) {
-      showMessage("Push ključ nije podešen u aplikaciji.", "error");
-      return false;
-    }
-
-    const permission = Notification.permission === "granted"
-      ? "granted"
-      : await Notification.requestPermission();
-
-    if (permission !== "granted") {
-      showMessage("Obaveštenja nisu dozvoljena.", "info");
-      return false;
-    }
-
-    const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-    await navigator.serviceWorker.ready;
-
-    let subscription = await registration.pushManager.getSubscription();
-    if (!subscription) {
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
-      });
-    }
-
-    const json = subscription.toJSON();
-    if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
-      showMessage("Browser nije vratio kompletne push podatke.", "error");
-      return false;
-    }
-
-    const { error } = await window.db
-      .from("push_subscriptions")
-      .upsert({
-        salon_id: salonId,
-        endpoint: json.endpoint,
-        p256dh: json.keys.p256dh,
-        auth: json.keys.auth,
-        expiration_time: json.expirationTime || null,
-        user_agent: navigator.userAgent,
-        is_active: true,
-        updated_at: new Date().toISOString()
-      }, { onConflict: "endpoint" });
-
-    if (error) {
-      console.error("Push subscription save error:", error);
-      showMessage(`Obaveštenja nisu sačuvana u bazi: ${error.message || "greška"}`, "error");
-      return false;
-    }
-
-    showMessage("Obaveštenja su uključena za ovaj profil.", "success");
-    return true;
-  } catch (err) {
-    console.error("registerPushForSalon error:", err);
-    showMessage(`Greška pri uključivanju obaveštenja: ${err.message || "nepoznata greška"}`, "error");
-    return false;
+function renderExpiringSoonBox(items) {
+  if (!items.length) {
+    return `
+      <div class="card expiring-card ok">
+        <div class="section-head compact-section-head">
+          <div>
+            <h3>✅ Pretplate koje ističu u narednih 10 dana</h3>
+            <p class="muted">Trenutno nema profila kojima uskoro ističe aktivacija.</p>
+          </div>
+        </div>
+      </div>
+    `;
   }
+
+  return `
+    <div class="card expiring-card">
+      <div class="section-head compact-section-head">
+        <div>
+          <h3>⚠️ Pretplate koje ističu u narednih 10 dana</h3>
+          <p class="muted">Ovo je tvoja lista za kontaktiranje vlasnika bez skrolovanja kroz sve profile.</p>
+        </div>
+        <span class="status-pill new">${items.length} za proveru</span>
+      </div>
+      <div class="expiring-list">
+        ${items.map(renderExpiringSoonRow).join("")}
+      </div>
+    </div>
+  `;
 }
 
-async function notifyOwnerAboutNewAppointment(appointmentId) {
-  if (!appointmentId || !window.db?.functions?.invoke) return;
-  try {
-    await window.db.functions.invoke("send-appointment-push", {
-      body: { appointment_id: appointmentId }
+function renderExpiringSoonRow(salon) {
+  const days = daysUntilDate(salon.paid_until);
+  const dayText = days === 0 ? "ističe danas" : `ističe za ${days} dana`;
+  return `
+    <div class="expiring-row">
+      <div>
+        <strong>${adminEscapeHtml(salon.salon_name)}</strong>
+        <span>${adminEscapeHtml(salon.owner_email || "Bez emaila")} ${salon.owner_phone ? "• " + adminEscapeHtml(salon.owner_phone) : ""}</span>
+        <small>Datum isteka: ${salon.paid_until ? window.App.formatDate(salon.paid_until) : "—"} • ${dayText}</small>
+      </div>
+      <div class="expiring-actions">
+        <button class="btn btn-dark btn-small" type="button" onclick="sendRenewalEmail('${salon.id}')">📧 Email</button>
+        <button class="btn btn-success btn-small" type="button" onclick="sendRenewalWhatsApp('${salon.id}')">💬 WhatsApp</button>
+        <button class="btn btn-primary btn-small" type="button" onclick="extendPayment('${salon.id}', '${salon.paid_until || ""}')">Produži</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderSalonCard(salon) {
+  const expired = isPaymentExpired(salon.paid_until);
+  const salonLink = window.App.getSalonPublicLink(salon.slug);
+  const statusClass = salon.status === "active" ? "active" : "blocked";
+
+  return `
+    <div class="card salon-card">
+      <div class="salon-card-head">
+        <div>
+          <h3>${adminEscapeHtml(salon.salon_name)}</h3>
+          <p class="muted">${adminEscapeHtml(salon.owner_email)} | ${adminEscapeHtml(salon.company_code)}</p>
+        </div>
+        <span class="status-pill ${statusClass}">${salon.status === "active" ? "Aktivan" : "Blokiran"}</span>
+      </div>
+      <div class="info-grid">
+        <div><span>Slug</span><strong>${adminEscapeHtml(salon.slug)}</strong></div>
+        <div><span>Telefon vlasnika</span><strong>${adminEscapeHtml(salon.owner_phone || "—")}</strong></div>
+        <div><span>Uplaćeno od</span><strong>${salon.paid_from ? window.App.formatDate(salon.paid_from) : "—"}</strong></div>
+        <div><span>Uplaćeno do</span><strong>${salon.paid_until ? window.App.formatDate(salon.paid_until) : "—"}</strong></div>
+        <div><span>Cena</span><strong>${Number(salon.monthly_price || 9.99).toFixed(2)} ${adminEscapeHtml(salon.currency || "EUR")}</strong></div>
+        <div><span>Boja profila</span><strong>${renderThemeBadge(salon.theme_color)}</strong></div>
+        <div><span>Jezik aplikacije</span><strong>${renderLanguageBadge(salon.app_language)}</strong></div>
+        <div><span>Vrsta profila</span><strong>${renderBusinessTypeBadge(salon.business_type)}</strong></div>
+      </div>
+      ${expired ? `<div class="warning-box">Uplata je istekla. Profil ostaje aktivan dok ga administrator ručno ne blokira.</div>` : ""}
+      <div class="link-box"><small>Link profila:</small><input readonly value="${salonLink}"></div>
+      <div class="card-actions">
+        <button class="btn btn-dark" type="button" onclick="copySalonLink('${salon.slug}')">Kopiraj link</button>
+        <a class="btn btn-primary" href="${getAdminClientPreviewLink(salon.slug)}">Vidi kao korisnik</a>
+        <a class="btn btn-dark" href="${getAdminOwnerPreviewLink(salon.id)}">Vidi kao vlasnik</a>
+        <button class="btn btn-dark" type="button" onclick="showQrForSalon('${salon.slug}', '${adminEscapeJs(salon.salon_name)}')">QR kod</button>
+        <button class="btn btn-dark" type="button" onclick="showThemePicker('${salon.id}', '${adminEscapeJs(salon.theme_color || "classic-red")}', '${adminEscapeJs(salon.salon_name)}')">🎨 Boja</button>
+        <button class="btn btn-dark" type="button" onclick="showLanguagePicker('${salon.id}', '${adminEscapeJs(salon.app_language || "sr")}', '${adminEscapeJs(salon.salon_name)}')">🌐 Jezik</button>
+        <button class="btn btn-dark" type="button" onclick="sendRenewalEmail('${salon.id}')">📧 Email obaveštenje</button>
+        <button class="btn btn-success" type="button" onclick="sendRenewalWhatsApp('${salon.id}')">💬 WhatsApp</button>
+        <button class="btn btn-dark" type="button" onclick="editSalonProfile('${salon.id}')">Izmeni</button>
+        <button class="btn btn-dark" type="button" onclick="extendPayment('${salon.id}', '${salon.paid_until || ""}')">Produži uplatu</button>
+        <button class="btn ${salon.status === "active" ? "btn-warning" : "btn-success"}" type="button" onclick="toggleSalonStatus('${salon.id}', '${salon.status}')">${salon.status === "active" ? "Blokiraj" : "Aktiviraj"}</button>
+        <button class="btn btn-danger" type="button" onclick="deleteSalon('${salon.id}')">Obriši</button>
+      </div>
+    </div>
+  `;
+}
+
+async function showAddSalonForm() {
+  const name = prompt("Naziv biznisa:");
+  if (!name) return;
+  const email = prompt("Email vlasnika biznisa:");
+  if (!email) return;
+  const code = prompt("Kod firme / profila (npr. CS-1001):");
+  if (!code) return;
+  const city = prompt("Grad / mesto:", "") || null;
+  const phone = prompt("Javni telefon biznisa koji vide klijenti:", "") || null;
+  const ownerPhone = prompt("Telefon vlasnika za admin kontakt / WhatsApp:", phone || "") || null;
+  const languageInput = prompt("Jezik aplikacije za ovaj profil: sr, en ili de", "sr") || "sr";
+  const appLanguage = getAdminLanguageOption(languageInput).value;
+  const businessType = promptBusinessType("general");
+  if (businessType === null) return;
+
+  const cleanName = name.trim();
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanCode = code.trim();
+  const slug = createSlug(cleanName);
+  const today = new Date();
+  const paidFrom = toDateInput(today);
+  const paidUntil = toDateInput(addDays(today, 30));
+
+  const { data: salon, error } = await insertSalonWithBusinessType({
+      salon_name: cleanName,
+      slug,
+      owner_email: cleanEmail,
+      company_code: cleanCode,
+      phone,
+      owner_phone: ownerPhone ? ownerPhone.trim() : null,
+      city,
+      status: "active",
+      paid_from: paidFrom,
+      paid_until: paidUntil,
+      monthly_price: 9.99,
+      currency: "EUR",
+      theme_color: "classic-red",
+      app_language: appLanguage,
+      business_type: businessType,
+      is_deleted: false
     });
-  } catch (err) {
-    console.warn("Push notifikacija nije poslata:", err);
+
+  if (error) {
+    console.error(error);
+    window.App.showMessage("Greška pri dodavanju profila: " + error.message, "error");
+    return;
   }
+
+  await createDefaultWorkingHours(salon.id);
+  await createDefaultSettings(salon.id, cleanName, phone, city);
+  window.App.showMessage("Biznis profil je uspešno dodat.", "success");
+  await loadSalonsList();
 }
 
-window.App = {
-  getUrlParam,
-  saveLocal,
-  getLocal,
-  removeLocal,
-  setSessionValue,
-  getSessionValue,
-  showMessage,
-  setAppBadgeCount,
-  clearAppBadgeCount,
-  normalizeSalonTheme,
-  normalizeAppLanguage,
-  setAppLanguage,
-  getAppLanguage,
-  t,
-  applySalonTheme,
-  clearSalonTheme,
-  registerPushForSalon,
-  notifyOwnerAboutNewAppointment,
-  formatDate,
-  formatMoney,
-  escapeHtml,
-  escapeJs,
-  formatServicePrice,
-  normalizeBusinessType,
-  getBusinessProfileLabels,
-    normalizePhoneForTel,
-  normalizeCurrency,
-  checkSalonAccess,
-  saveCurrentSalon,
-  getSavedSalonSlug,
-  clearSavedSalon,
-  getAppBaseUrl,
-  getAppPath,
-  getSalonPublicLink,
-  getQrImageUrl,
-  installApp,
-  installSalonApp,
-  installOwnerApp,
-  updateManifestForOwner,
-  updateManifestForSalon,
-  getInitialsFromName,
-  isStandaloneMode
-};
+async function createDefaultWorkingHours(salonId) {
+  const rows = [
+    { day_of_week: 1, open_time: "09:00", close_time: "17:00", is_closed: false },
+    { day_of_week: 2, open_time: "09:00", close_time: "17:00", is_closed: false },
+    { day_of_week: 3, open_time: "09:00", close_time: "17:00", is_closed: false },
+    { day_of_week: 4, open_time: "09:00", close_time: "17:00", is_closed: false },
+    { day_of_week: 5, open_time: "09:00", close_time: "17:00", is_closed: false },
+    { day_of_week: 6, open_time: "09:00", close_time: "14:00", is_closed: false },
+    { day_of_week: 0, open_time: "09:00", close_time: "17:00", is_closed: true }
+  ].map(row => ({ ...row, salon_id: salonId }));
+
+  await window.db.from("working_hours").upsert(rows, { onConflict: "salon_id,day_of_week" });
+}
+
+async function createDefaultSettings(salonId, salonName, phone, city) {
+  await window.db.from("salon_settings").upsert({
+    salon_id: salonId,
+    welcome_title: `Dobrodošli u ${salonName}`,
+    welcome_text: "Pošaljite zahtev ili zakažite termin brzo i jednostavno.",
+    phone,
+    address: city || null
+  }, { onConflict: "salon_id" });
+}
+
+async function editSalonProfile(id) {
+  const { data: salon, error } = await window.db
+    .from("salons")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !salon) {
+    console.error(error);
+    window.App.showMessage("Profil nije pronađen.", "error");
+    return;
+  }
+
+  const name = prompt("Naziv biznisa:", salon.salon_name || "");
+  if (name === null) return;
+
+  const email = prompt("Email vlasnika biznisa:", salon.owner_email || "");
+  if (email === null) return;
+
+  const code = prompt("Kod firme / profila:", salon.company_code || "");
+  if (code === null) return;
+
+  const city = prompt("Grad / mesto:", salon.city || "");
+  if (city === null) return;
+
+  const phone = prompt("Javni telefon biznisa koji vide klijenti:", salon.phone || "");
+  if (phone === null) return;
+
+  const ownerPhone = prompt("Telefon vlasnika za admin kontakt / WhatsApp:", salon.owner_phone || salon.phone || "");
+  if (ownerPhone === null) return;
+
+  const businessType = promptBusinessType(salon.business_type || "general");
+  if (businessType === null) return;
+
+  const changeSlug = confirm(
+    "Da li želite da izmenite i link/slug profila?\n\n" +
+    "Ako promenite slug, stari QR kod i stari link više neće voditi na ovaj profil.\n" +
+    "Za ispravku samo imena firme kliknite Cancel / Otkaži."
+  );
+
+  let slug = salon.slug;
+  if (changeSlug) {
+    const enteredSlug = prompt("Slug profila / link:", salon.slug || createSlug(name));
+    if (enteredSlug === null) return;
+    slug = createSlug(enteredSlug);
+    if (!slug) {
+      window.App.showMessage("Slug ne može biti prazan.", "error");
+      return;
+    }
+  }
+
+  const cleanName = name.trim();
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanCode = code.trim();
+  const cleanCity = city.trim() || null;
+  const cleanPhone = phone.trim() || null;
+  const cleanOwnerPhone = ownerPhone.trim() || null;
+
+  if (!cleanName || !cleanEmail || !cleanCode) {
+    window.App.showMessage("Naziv, email i kod firme su obavezni.", "error");
+    return;
+  }
+
+  const { error: updateError } = await updateSalonWithBusinessType(id, {
+      salon_name: cleanName,
+      owner_email: cleanEmail,
+      company_code: cleanCode,
+      city: cleanCity,
+      phone: cleanPhone,
+      owner_phone: cleanOwnerPhone,
+      business_type: businessType,
+      slug
+    });
+
+  if (updateError) {
+    console.error(updateError);
+    window.App.showMessage("Greška pri izmeni profila: " + updateError.message, "error");
+    return;
+  }
+
+  await window.db
+    .from("salon_settings")
+    .upsert({
+      salon_id: id,
+      phone: cleanPhone,
+      address: cleanCity
+    }, { onConflict: "salon_id" });
+
+  window.App.showMessage("Profil je izmenjen.", "success");
+  await loadSalonsList();
+}
+
+async function extendPayment(id, currentPaidUntil) {
+  const salonBeforeUpdate = adminSalonsCache.find(item => String(item.id) === String(id));
+  const baseDate = currentPaidUntil && new Date(currentPaidUntil) > new Date() ? new Date(currentPaidUntil) : new Date();
+  const suggestedDate = toDateInput(addDays(baseDate, 30));
+  const newDate = prompt("Novi paid_until datum (YYYY-MM-DD):", suggestedDate);
+  if (!newDate) return;
+
+  const { data: updatedSalon, error } = await window.db
+    .from("salons")
+    .update({ paid_until: newDate })
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) {
+    window.App.showMessage("Greška pri produženju uplate.", "error");
+    return;
+  }
+
+  const salonForMessage = updatedSalon || { ...(salonBeforeUpdate || {}), paid_until: newDate };
+  window.App.showMessage("Uplata je produžena.", "success");
+  await loadSalonsList();
+  showExtensionNotifyModal(salonForMessage, newDate);
+}
+
+async function toggleSalonStatus(id, currentStatus) {
+  const newStatus = currentStatus === "active" ? "blocked" : "active";
+  if (!confirm(newStatus === "blocked" ? "Da li želite da blokirate ovaj profil?" : "Da li želite da aktivirate ovaj profil?")) return;
+  const { error } = await window.db.from("salons").update({ status: newStatus }).eq("id", id);
+  if (error) {
+    window.App.showMessage("Greška pri promeni statusa profila.", "error");
+    return;
+  }
+  await loadSalonsList();
+}
+
+async function deleteSalon(id) {
+  if (!confirm("Da li želite da sklonite ovaj profil iz aktivne liste?")) return;
+  const { error } = await window.db.from("salons").update({ is_deleted: true, status: "deleted" }).eq("id", id);
+  if (error) {
+    window.App.showMessage("Greška pri brisanju profila.", "error");
+    return;
+  }
+  await loadSalonsList();
+}
+
+function copySalonLink(slug) {
+  const link = window.App.getSalonPublicLink(slug);
+  navigator.clipboard.writeText(link).then(() => {
+    window.App.showMessage("Link profila je kopiran.", "success");
+  }).catch(() => prompt("Kopiraj link:", link));
+}
+
+function showQrForSalon(slug, salonName) {
+  const link = window.App.getSalonPublicLink(slug);
+  const qrUrl = window.App.getQrImageUrl(link, 280);
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop";
+  modal.innerHTML = `
+    <div class="modal-card">
+      <h2>QR kod profila</h2>
+      <p class="muted">${adminEscapeHtml(salonName)}</p>
+      <img class="qr-img" src="${qrUrl}" alt="QR kod za profil">
+      <div class="link-box"><input readonly value="${link}"></div>
+      <button class="btn btn-primary" type="button" onclick="copySalonLink('${slug}')">Kopiraj link</button>
+      <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+
+function showThemePicker(salonId, currentTheme, salonName) {
+  const activeTheme = getAdminThemeOption(currentTheme).value;
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop";
+  modal.innerHTML = `
+    <div class="modal-card theme-modal-card">
+      <h2>Boja profila</h2>
+      <p class="muted">${adminEscapeHtml(salonName || "Biznis profil")}</p>
+      <p class="theme-modal-note">Boju menja samo administrator. Menja se samo ovaj profil, ostali profili ostaju isti.</p>
+      <div class="theme-picker-grid">
+        ${ADMIN_THEME_OPTIONS.map(theme => `
+          <button class="theme-choice ${theme.value === activeTheme ? "selected" : ""} theme-preview-${theme.value}" type="button" onclick="saveSalonTheme('${salonId}', '${theme.value}')">
+            <span class="theme-choice-top"><i></i><strong>${theme.icon} ${adminEscapeHtml(theme.label)}</strong></span>
+            <small>${adminEscapeHtml(theme.hint)}</small>
+          </button>
+        `).join("")}
+      </div>
+      <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function saveSalonTheme(salonId, themeValue) {
+  const cleanTheme = getAdminThemeOption(themeValue).value;
+  const { error } = await window.db
+    .from("salons")
+    .update({ theme_color: cleanTheme })
+    .eq("id", salonId);
+
+  if (error) {
+    console.error(error);
+    window.App.showMessage("Greška pri čuvanju boje: " + error.message, "error");
+    return;
+  }
+
+  document.querySelector(".modal-backdrop")?.remove();
+  window.App.showMessage("Boja profila je sačuvana.", "success");
+  await loadSalonsList();
+}
+
+
+function showLanguagePicker(salonId, currentLanguage, salonName) {
+  const activeLanguage = getAdminLanguageOption(currentLanguage).value;
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop";
+  modal.innerHTML = `
+    <div class="modal-card theme-modal-card">
+      <h2>Jezik aplikacije</h2>
+      <p class="muted">${adminEscapeHtml(salonName || "Biznis profil")}</p>
+      <p class="theme-modal-note">Jezik menja samo administrator. Menja se samo ovaj profil, ostali profili ostaju isti. Usluge koje vlasnik sam unese se ne prevode automatski.</p>
+      <div class="theme-picker-grid language-picker-grid">
+        ${ADMIN_LANGUAGE_OPTIONS.map(lang => `
+          <button class="theme-choice language-choice ${lang.value === activeLanguage ? "selected" : ""}" type="button" onclick="saveSalonLanguage('${salonId}', '${lang.value}')">
+            <span class="theme-choice-top"><strong>${lang.icon} ${adminEscapeHtml(lang.label)}</strong></span>
+            <small>${adminEscapeHtml(lang.hint)}</small>
+          </button>
+        `).join("")}
+      </div>
+      <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function saveSalonLanguage(salonId, languageValue) {
+  const cleanLanguage = getAdminLanguageOption(languageValue).value;
+  const { error } = await window.db
+    .from("salons")
+    .update({ app_language: cleanLanguage })
+    .eq("id", salonId);
+
+  if (error) {
+    console.error(error);
+    window.App.showMessage("Greška pri čuvanju jezika: " + error.message, "error");
+    return;
+  }
+
+  document.querySelector(".modal-backdrop")?.remove();
+  window.App.showMessage("Jezik profila je sačuvan.", "success");
+  await loadSalonsList();
+}
+
+function isPaymentExpired(paidUntil) {
+  if (!paidUntil) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const paidDate = new Date(paidUntil);
+  paidDate.setHours(0, 0, 0, 0);
+  return paidDate < today;
+}
+
+function createSlug(value) {
+  return String(value || "")
+    .trim().toLowerCase()
+    .replaceAll("š", "s").replaceAll("đ", "dj").replaceAll("č", "c").replaceAll("ć", "c").replaceAll("ž", "z")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+function addDays(date, days) {
+  const copy = new Date(date);
+  copy.setDate(copy.getDate() + days);
+  return copy;
+}
+
+function toDateInput(date) {
+  return date.toISOString().split("T")[0];
+}
