@@ -4,12 +4,19 @@ let currentSalon = null;
 let services = [];
 let products = [];
 let galleryImages = [];
+let garageListings = [];
 let selectedService = null;
 let selectedDate = null;
 let selectedTime = null;
 let ownerPreviewMode = false;
 let adminPreviewMode = false;
 const C = (key, fallback = "") => window.App?.t ? window.App.t(key, fallback) : (fallback || key);
+
+
+function clientHasGaragePackage() {
+  const pkg = String(currentSalon?.package_type || "business").trim().toLowerCase();
+  return pkg.startsWith("garage_") || pkg === "custom";
+}
 
 
 const VISIT_SOURCE_LABELS = {
@@ -144,6 +151,7 @@ async function loadSalon(slug, saveThisSalon = true) {
   await loadServices();
   await loadProducts();
   await loadGalleryImages();
+  await loadGarageListings();
   await renderSalonHome();
 }
 
@@ -154,6 +162,7 @@ function renderPlatformLanding() {
   services = [];
   products = [];
   galleryImages = [];
+  garageListings = [];
   selectedService = null;
   selectedDate = null;
   selectedTime = null;
@@ -435,6 +444,30 @@ async function loadGalleryImages() {
   galleryImages = data || [];
 }
 
+async function loadGarageListings() {
+  if (!currentSalon?.id || !clientHasGaragePackage()) {
+    garageListings = [];
+    return;
+  }
+  const { data, error } = await window.db
+    .from("garage_listings")
+    .select("*, garage_listing_images(*)")
+    .eq("salon_id", currentSalon.id)
+    .in("status", ["available", "reserved", "sold"])
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.warn("Garage listings are not available yet:", error);
+    garageListings = [];
+    return;
+  }
+  garageListings = (data || []).map(item => ({
+    ...item,
+    garage_listing_images: (item.garage_listing_images || []).sort((a,b) => Number(a.sort_order||100) - Number(b.sort_order||100))
+  }));
+}
+
 async function renderSalonHome() {
   const app = document.getElementById("app");
   app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
@@ -455,6 +488,7 @@ async function renderSalonHome() {
   const profileLabels = window.App.getBusinessProfileLabels(currentSalon.business_type);
   currentSalon._publicName = publicName;
   currentSalon._publicLogo = settings?.logo_url || "";
+  currentSalon._publicPhone = settings?.phone || currentSalon.phone || "";
   window.App?.updateManifestForSalon?.(currentSalon.slug, { name: publicName, iconUrl: settings?.logo_url, themeColor: currentSalon.theme_color });
 
   app.innerHTML = `
@@ -498,6 +532,7 @@ async function renderSalonHome() {
           <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(profileLabels.action)}</button>
           <button class="btn btn-dark" type="button" onclick="showServices()">${escapeHtml(profileLabels.services)}</button>
           <button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>
+          ${garageListings.length ? `<button class="btn btn-dark" type="button" onclick="showGarage()">Garaža / oglasi</button>` : ""}
           ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app ovog profila")}</button>`}
         </div>
       </div>
@@ -505,6 +540,7 @@ async function renderSalonHome() {
       <div id="client-extra">
         ${renderClientServicesPreview()}
         ${renderClientProductsPreview()}
+        ${renderClientGaragePreview()}
         ${renderClientGalleryPreview()}
         ${renderClientWorkingHours(workingHours || [])}
       </div>
@@ -514,6 +550,104 @@ async function renderSalonHome() {
 }
 
 
+
+function renderGaragePrice(item = {}) {
+  const price = Number(item.price || 0);
+  const currency = window.App.normalizeCurrency(item.currency || "EUR");
+  if (!price || price <= 0) return "Cena na upit";
+  return `${window.App.formatMoney ? window.App.formatMoney(price) : price.toLocaleString("sr-RS")} ${currency}`;
+}
+
+function renderGarageStatus(status) {
+  return { available: "Dostupno", reserved: "Rezervisano", sold: "Prodato" }[status] || "Dostupno";
+}
+
+function renderGarageMeta(item = {}) {
+  return [item.brand, item.model, item.year ? String(item.year) : "", item.hours_km].filter(Boolean).join(" • ");
+}
+
+function renderClientGaragePreview() {
+  if (!garageListings.length) return "";
+  return `
+    <details class="card client-hours-panel client-garage-panel" open>
+      <summary>
+        <span>Garaža / oglasi</span>
+        <small>${garageListings.length} ponuda</small>
+      </summary>
+      <div class="garage-public-grid">
+        ${garageListings.slice(0, 6).map(item => renderGaragePublicCard(item)).join("")}
+      </div>
+    </details>
+  `;
+}
+
+function renderGaragePublicCard(item = {}) {
+  const images = item.garage_listing_images || [];
+  const cover = images[0]?.image_url || "";
+  return `
+    <article class="garage-public-card">
+      <button type="button" class="garage-public-cover" onclick="openGarageListing('${escapeJs(item.id)}')">
+        ${cover ? `<img src="${escapeHtml(cover)}" alt="${escapeHtml(item.title)}">` : `<span>Bez slike</span>`}
+        <small>${images.length}/10 slika</small>
+      </button>
+      <div class="garage-public-info">
+        <strong>${escapeHtml(item.title)}</strong>
+        <span>${escapeHtml(renderGarageMeta(item))}</span>
+        <b>${renderGaragePrice(item)}</b>
+        <small>${renderGarageStatus(item.status)}</small>
+        <button class="btn btn-primary btn-small" type="button" onclick="openGarageListing('${escapeJs(item.id)}')">Detalji / pitaj</button>
+      </div>
+    </article>`;
+}
+
+function showGarage() {
+  const box = document.getElementById("client-extra");
+  if (!box) return;
+  if (!garageListings.length) {
+    box.innerHTML = `<div class="card"><h2>Garaža / oglasi</h2><p class="muted">Ovaj profil trenutno nema javno prikazane oglase.</p></div>`;
+    return;
+  }
+  box.innerHTML = `
+    <details class="card client-hours-panel client-garage-panel" open>
+      <summary><span>Garaža / oglasi</span><small>Sakrij listu</small></summary>
+      <div class="garage-public-grid">${garageListings.map(item => renderGaragePublicCard(item)).join("")}</div>
+    </details>`;
+  box.scrollIntoView({ behavior: "smooth" });
+}
+
+function openGarageListing(listingId) {
+  const item = garageListings.find(row => String(row.id) === String(listingId));
+  if (!item) return;
+  const images = item.garage_listing_images || [];
+  const phone = currentSalon?._publicPhone || currentSalon?.phone || "";
+  const message = encodeURIComponent(`Poštovani, interesuje me ponuda: ${item.title}. Da li je još dostupna?`);
+  const whatsapp = phone ? `https://wa.me/${String(phone).replace(/\D/g, "")}?text=${message}` : "";
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop garage-detail-modal";
+  modal.innerHTML = `
+    <div class="modal-card garage-detail-card">
+      <div class="garage-detail-head">
+        <div>
+          <h2>${escapeHtml(item.title)}</h2>
+          <p class="muted">${escapeHtml(renderGarageMeta(item))}</p>
+        </div>
+        <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
+      </div>
+      <div class="garage-detail-gallery">
+        ${images.length ? images.map(img => `<img src="${escapeHtml(img.image_url)}" alt="${escapeHtml(item.title)}">`).join("") : `<div class="garage-cover-placeholder">Bez slika</div>`}
+      </div>
+      <div class="garage-detail-info">
+        <strong>${renderGaragePrice(item)}</strong>
+        <span>${renderGarageStatus(item.status)}</span>
+        ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ""}
+      </div>
+      <div class="modal-actions">
+        ${whatsapp ? `<a class="btn btn-primary" href="${whatsapp}" target="_blank" rel="noopener">Pitaj preko WhatsApp-a</a>` : ""}
+        <button class="btn btn-dark" type="button" onclick="showBookingForm(); this.closest('.modal-backdrop').remove();">Pošalji zahtev</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
 
 function renderClientGalleryPreview() {
   if (!galleryImages.length) return "";

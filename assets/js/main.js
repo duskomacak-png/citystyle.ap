@@ -765,7 +765,7 @@ async function registerPushForSalon(salonId) {
       return false;
     }
 
-    const registration = await navigator.serviceWorker.register("/sw.js?v=business6sourceqr", { scope: "/" });
+    const registration = await navigator.serviceWorker.register("/sw.js?v=business8garazapack", { scope: "/" });
     await navigator.serviceWorker.ready;
 
     let subscription = await registration.pushManager.getSubscription();

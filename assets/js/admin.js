@@ -63,6 +63,71 @@ function renderBusinessTypeOptions(selectedValue = "general") {
   `).join("");
 }
 
+
+const ADMIN_PACKAGE_OPTIONS = [
+  { value: "business", label: "Biznis", icon: "🏢", hint: "osnovni QR profil, usluge, galerija, zahtevi i statistika", max_listings: 0, max_images: 0, price: 9.99 },
+  { value: "catalog", label: "Katalog", icon: "🛒", hint: "biznis profil + proizvodi/katalog", max_listings: 0, max_images: 0, price: 14.99 },
+  { value: "garage_start", label: "Garaža Start", icon: "🚗", hint: "do 30 oglasa, do 10 slika po oglasu", max_listings: 30, max_images: 10, price: 29.99 },
+  { value: "garage_plus", label: "Garaža Plus", icon: "🚙", hint: "do 75 oglasa, do 10 slika po oglasu", max_listings: 75, max_images: 10, price: 49.99 },
+  { value: "garage_pro", label: "Garaža PRO", icon: "🏗️", hint: "do 150 oglasa, do 10 slika po oglasu", max_listings: 150, max_images: 10, price: 79.99 },
+  { value: "garage_max", label: "Garaža MAX", icon: "🚛", hint: "do 300 oglasa, do 10 slika po oglasu", max_listings: 300, max_images: 10, price: 129.99 },
+  { value: "custom", label: "Custom", icon: "⭐", hint: "ručni dogovor i ručno podešeni limiti", max_listings: 0, max_images: 10, price: 0 }
+];
+
+function getAdminPackageOption(value) {
+  const normalized = String(value || "business").trim().toLowerCase();
+  return ADMIN_PACKAGE_OPTIONS.find(item => item.value === normalized) || ADMIN_PACKAGE_OPTIONS[0];
+}
+
+function isGaragePackage(value) {
+  const key = getAdminPackageOption(value).value;
+  return key.startsWith("garage_") || key === "custom";
+}
+
+function renderPackageBadge(value, maxListings = null, maxImages = null) {
+  const pkg = getAdminPackageOption(value);
+  const listings = Number(maxListings ?? pkg.max_listings ?? 0);
+  const images = Number(maxImages ?? pkg.max_images ?? 0);
+  const suffix = isGaragePackage(pkg.value) ? ` • ${listings || "∞"} oglasa • ${images || 10} slika/oglas` : "";
+  return `<span class="business-type-badge package-badge">${pkg.icon} ${adminEscapeHtml(pkg.label)}${adminEscapeHtml(suffix)}</span>`;
+}
+
+function renderPackageOptions(selectedValue = "business") {
+  const selected = getAdminPackageOption(selectedValue).value;
+  return ADMIN_PACKAGE_OPTIONS.map(item => `
+    <option value="${adminEscapeHtml(item.value)}" ${item.value === selected ? "selected" : ""}>${item.icon} ${adminEscapeHtml(item.label)} — ${adminEscapeHtml(item.hint)}</option>
+  `).join("");
+}
+
+function getPackageLimits(packageType, manualListings = null, manualImages = null) {
+  const pkg = getAdminPackageOption(packageType);
+  return {
+    package_type: pkg.value,
+    max_garage_listings: Number(manualListings || pkg.max_listings || 0),
+    max_images_per_listing: Number(manualImages || pkg.max_images || 10)
+  };
+}
+
+function promptPackage(currentValue = "business") {
+  const current = getAdminPackageOption(currentValue).value;
+  const optionsText = ADMIN_PACKAGE_OPTIONS.map(item => `${item.value} = ${item.label}`).join("\n");
+  const input = prompt(`Paket profila:\n${optionsText}`, current);
+  if (input === null) return null;
+  const pkg = getAdminPackageOption(input);
+  const limits = getPackageLimits(pkg.value);
+  let maxListings = limits.max_garage_listings;
+  let maxImages = limits.max_images_per_listing;
+  if (isGaragePackage(pkg.value)) {
+    const enteredListings = prompt("Maksimalan broj Garaža oglasa:", String(maxListings || 30));
+    if (enteredListings === null) return null;
+    maxListings = Math.max(1, Number(enteredListings || maxListings || 30));
+    const enteredImages = prompt("Maksimalan broj slika po oglasu:", String(maxImages || 10));
+    if (enteredImages === null) return null;
+    maxImages = Math.max(1, Number(enteredImages || maxImages || 10));
+  }
+  return { package_type: pkg.value, max_garage_listings: maxListings, max_images_per_listing: maxImages };
+}
+
 function closeAdminBusinessModal() {
   const modal = document.getElementById("admin-business-modal");
   if (modal) modal.remove();
@@ -76,9 +141,12 @@ async function insertSalonWithBusinessType(payload) {
   const { data, error } = await window.db.from("salons").insert(payload).select().single();
   if (!error) return { data, error: null };
   const msg = String(error.message || "").toLowerCase();
-  if (msg.includes("business_type") || msg.includes("schema cache")) {
+  if (msg.includes("business_type") || msg.includes("package_type") || msg.includes("max_garage") || msg.includes("schema cache")) {
     const fallback = { ...payload };
     delete fallback.business_type;
+    delete fallback.package_type;
+    delete fallback.max_garage_listings;
+    delete fallback.max_images_per_listing;
     const retry = await window.db.from("salons").insert(fallback).select().single();
     if (!retry.error) {
       window.App.showMessage("Profil je dodat. Pokrenite SQL za business_type da bi se vrsta profila trajno čuvala.", "info");
@@ -92,9 +160,12 @@ async function updateSalonWithBusinessType(id, payload) {
   const { data, error } = await window.db.from("salons").update(payload).eq("id", id).select("*").single();
   if (!error) return { data, error: null };
   const msg = String(error.message || "").toLowerCase();
-  if (msg.includes("business_type") || msg.includes("schema cache")) {
+  if (msg.includes("business_type") || msg.includes("package_type") || msg.includes("max_garage") || msg.includes("schema cache")) {
     const fallback = { ...payload };
     delete fallback.business_type;
+    delete fallback.package_type;
+    delete fallback.max_garage_listings;
+    delete fallback.max_images_per_listing;
     const retry = await window.db.from("salons").update(fallback).eq("id", id).select("*").single();
     if (!retry.error) {
       window.App.showMessage("Profil je izmenjen. Pokrenite SQL za business_type da bi se vrsta profila trajno čuvala.", "info");
@@ -152,7 +223,8 @@ function getAdminSearchText(salon) {
     salon.company_code,
     salon.slug,
     salon.city,
-    salon.business_type
+    salon.business_type,
+    salon.package_type
   ].map(v => String(v || "").toLowerCase()).join(" ");
 }
 
@@ -498,6 +570,7 @@ function renderSalonCard(salon) {
         <div><span>Boja profila</span><strong>${renderThemeBadge(salon.theme_color)}</strong></div>
         <div><span>Jezik aplikacije</span><strong>${renderLanguageBadge(salon.app_language)}</strong></div>
         <div><span>Vrsta profila</span><strong>${renderBusinessTypeBadge(salon.business_type)}</strong></div>
+        <div><span>Paket profila</span><strong>${renderPackageBadge(salon.package_type, salon.max_garage_listings, salon.max_images_per_listing)}</strong></div>
       </div>
       ${expired ? `<div class="warning-box">Uplata je istekla. Profil ostaje aktivan dok ga administrator ručno ne blokira.</div>` : ""}
       <div class="link-box"><small>Link profila:</small><input readonly value="${salonLink}"></div>
@@ -546,6 +619,12 @@ function showAddSalonForm() {
             </select>
           </div>
           <div>
+            <label for="new-package-type">Paket profila *</label>
+            <select id="new-package-type" required>
+              ${renderPackageOptions("business")}
+            </select>
+          </div>
+          <div>
             <label for="new-business-email">Email vlasnika *</label>
             <input id="new-business-email" type="email" required placeholder="vlasnik@gmail.com">
           </div>
@@ -575,7 +654,7 @@ function showAddSalonForm() {
 
         <div class="business-type-helper" id="business-type-helper">
           <strong>${renderBusinessTypeBadge("general")}</strong>
-          <span>Opšti biznis: zahtevi, termini i ponuda.</span>
+          <span>Opšti biznis: zahtevi, termini i ponuda. Paket Biznis nema Garaža tab.</span>
         </div>
 
         <div class="card-actions admin-modal-actions">
@@ -589,12 +668,15 @@ function showAddSalonForm() {
 
   const typeSelect = document.getElementById("new-business-type");
   const helper = document.getElementById("business-type-helper");
-  if (typeSelect && helper) {
-    typeSelect.addEventListener("change", () => {
-      const option = getAdminBusinessTypeOption(typeSelect.value);
-      helper.innerHTML = `<strong>${renderBusinessTypeBadge(option.value)}</strong><span>${adminEscapeHtml(option.label)}: ${adminEscapeHtml(option.hint)}.</span>`;
-    });
+  const packageSelect = document.getElementById("new-package-type");
+  function updateBusinessHelper() {
+    const option = getAdminBusinessTypeOption(typeSelect?.value || "general");
+    const pkg = getAdminPackageOption(packageSelect?.value || "business");
+    if (helper) helper.innerHTML = `<strong>${renderBusinessTypeBadge(option.value)} ${renderPackageBadge(pkg.value)}</strong><span>${adminEscapeHtml(option.label)}: ${adminEscapeHtml(option.hint)}. Paket: ${adminEscapeHtml(pkg.hint)}.</span>`;
   }
+  if (typeSelect && helper) typeSelect.addEventListener("change", updateBusinessHelper);
+  if (packageSelect && helper) packageSelect.addEventListener("change", updateBusinessHelper);
+  updateBusinessHelper();
 }
 
 async function handleAddBusinessProfile(event) {
@@ -608,6 +690,8 @@ async function handleAddBusinessProfile(event) {
   const ownerPhoneRaw = getAdminFormValue("new-business-owner-phone") || phone || null;
   const appLanguage = getAdminLanguageOption(getAdminFormValue("new-business-language") || "sr").value;
   const businessType = getAdminBusinessTypeOption(getAdminFormValue("new-business-type") || "general").value;
+  const packageType = getAdminPackageOption(getAdminFormValue("new-package-type") || "business").value;
+  const packageLimits = getPackageLimits(packageType);
 
   if (!cleanName || !cleanEmail || !cleanCode) {
     window.App.showMessage("Popuni naziv, email vlasnika i kod firme.", "error");
@@ -636,11 +720,14 @@ async function handleAddBusinessProfile(event) {
     status: "active",
     paid_from: paidFrom,
     paid_until: paidUntil,
-    monthly_price: 9.99,
+    monthly_price: getAdminPackageOption(packageType).price || 9.99,
     currency: "EUR",
     theme_color: "classic-red",
     app_language: appLanguage,
     business_type: businessType,
+    package_type: packageLimits.package_type,
+    max_garage_listings: packageLimits.max_garage_listings,
+    max_images_per_listing: packageLimits.max_images_per_listing,
     is_deleted: false
   });
 
@@ -719,6 +806,9 @@ async function editSalonProfile(id) {
   const businessType = promptBusinessType(salon.business_type || "general");
   if (businessType === null) return;
 
+  const packageChoice = promptPackage(salon.package_type || "business");
+  if (packageChoice === null) return;
+
   const changeSlug = confirm(
     "Da li želite da izmenite i link/slug profila?\n\n" +
     "Ako promenite slug, stari QR kod i stari link više neće voditi na ovaj profil.\n" +
@@ -756,6 +846,9 @@ async function editSalonProfile(id) {
       phone: cleanPhone,
       owner_phone: cleanOwnerPhone,
       business_type: businessType,
+      package_type: packageChoice.package_type,
+      max_garage_listings: packageChoice.max_garage_listings,
+      max_images_per_listing: packageChoice.max_images_per_listing,
       slug
     });
 

@@ -245,18 +245,51 @@ function renderBlockedSalon(salon) {
   `;
 }
 
+
+function getCurrentPackageType() {
+  return String(currentSalon?.package_type || "business").trim().toLowerCase();
+}
+
+function ownerHasGaragePackage() {
+  const pkg = getCurrentPackageType();
+  return pkg.startsWith("garage_") || pkg === "custom";
+}
+
+function getGarageListingLimit() {
+  const pkg = getCurrentPackageType();
+  const preset = { garage_start: 30, garage_plus: 75, garage_pro: 150, garage_max: 300, custom: 999999 };
+  return Number(currentSalon?.max_garage_listings || preset[pkg] || 0);
+}
+
+function getGarageImageLimit() {
+  return Number(currentSalon?.max_images_per_listing || 10);
+}
+
+function garagePackageLabel() {
+  const pkg = getCurrentPackageType();
+  return {
+    garage_start: "Garaža Start",
+    garage_plus: "Garaža Plus",
+    garage_pro: "Garaža PRO",
+    garage_max: "Garaža MAX",
+    custom: "Custom"
+  }[pkg] || "Biznis";
+}
+
 function renderSalonDashboard() {
   const labels = {
     appointments: S("tabAppointments", "Zahtevi / termini"),
     services: S("tabServices", "Usluge / ponuda"),
     products: S("tabProducts", "Proizvodi / katalog"),
     analytics: "Statistika / QR",
+    garage: "Garaža",
     gallery: "Galerija radova",
     hours: S("tabHours", "Radno vreme"),
     settings: S("tabSettings", "Podešavanje profila")
   };
   document.querySelectorAll("#salon-tabs button").forEach(btn => {
     if (labels[btn.dataset.section]) btn.textContent = labels[btn.dataset.section];
+    if (btn.dataset.section === "garage") btn.classList.toggle("hidden", !ownerHasGaragePackage());
   });
   document.getElementById("salon-install-btn").textContent = S("ownerInstallBtn", "Preuzmi panel vlasnika");
   document.getElementById("salon-logout-btn").textContent = S("logout", "Odjavi se");
@@ -286,6 +319,13 @@ async function showSection(section) {
   if (section === "services") return renderServices();
   if (section === "products") return renderProducts();
   if (section === "analytics") return renderAnalytics();
+  if (section === "garage") {
+    if (!ownerHasGaragePackage()) {
+      window.App.showMessage("Garaža je dostupna samo za Garaža pakete koje uključuje admin.", "error");
+      return renderAppointments();
+    }
+    return renderGarage();
+  }
   if (section === "gallery") return renderGallery();
   if (section === "hours") return renderWorkingHours();
   if (section === "settings") return renderSalonSettings();
@@ -1116,6 +1156,291 @@ async function deleteProduct(id) {
   await loadProducts();
 }
 
+
+function garageStatusLabel(status) {
+  return {
+    available: "Dostupno",
+    reserved: "Rezervisano",
+    sold: "Prodato",
+    hidden: "Sakriveno"
+  }[status] || "Dostupno";
+}
+
+function garageTypeLabel(type) {
+  return {
+    car: "Automobil",
+    van: "Kombi",
+    truck: "Kamion",
+    excavator: "Bager",
+    machine: "Mašina",
+    tractor: "Traktor",
+    equipment: "Oprema",
+    other: "Ostalo"
+  }[type] || "Oglas";
+}
+
+function garagePriceLabel(item = {}) {
+  const price = Number(item.price || 0);
+  const currency = window.App.normalizeCurrency(item.currency || "EUR");
+  if (!price || price <= 0) return "Cena na upit";
+  return `${window.App.formatMoney ? window.App.formatMoney(price) : price.toLocaleString("sr-RS")} ${currency}`;
+}
+
+async function renderGarage() {
+  const content = document.getElementById("salon-content");
+  if (!ownerHasGaragePackage()) {
+    content.innerHTML = `<div class="card warning-box"><h2>Garaža nije uključena</h2><p class="muted">Ovaj profil nema aktivan Garaža paket. Admin može uključiti Garaža Start, Plus, PRO, MAX ili Custom.</p></div>`;
+    return;
+  }
+  const maxListings = getGarageListingLimit();
+  const maxImages = getGarageImageLimit();
+  content.innerHTML = `
+    <div class="section-head">
+      <div>
+        <h2>Garaža / oglasi</h2>
+        <p class="muted">${garagePackageLabel()} • limit: ${maxListings === 999999 ? "po dogovoru" : maxListings} oglasa • do ${maxImages} slika po oglasu.</p>
+      </div>
+      ${adminOwnerPreviewMode ? "" : `<button class="btn btn-primary" type="button" onclick="showGarageForm()">Dodaj oglas</button>`}
+    </div>
+    <div class="card analytics-help-card">
+      <h3>Pravila Garaže</h3>
+      <p class="muted">Oglasi se mogu izmeniti, sakriti, označiti kao prodati/rezervisani ili trajno obrisati. Trajno brisanje oglasa briše i sve njegove slike iz Storage-a.</p>
+    </div>
+    <div id="garage-form-box"></div>
+    <div id="garage-list" class="cards"><div class="loading-box">Učitavanje oglasa...</div></div>
+  `;
+  await loadGarageListings();
+}
+
+async function loadGarageListings() {
+  const list = document.getElementById("garage-list");
+  if (!list) return;
+  const { data: listings, error } = await window.db
+    .from("garage_listings")
+    .select("*, garage_listing_images(*)")
+    .eq("salon_id", currentSalonId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    list.innerHTML = `
+      <div class="card warning-box">
+        <h3>Garaža nije spremna u bazi</h3>
+        <p class="muted">Treba prvo pokrenuti SQL za tabele <strong>garage_listings</strong> i <strong>garage_listing_images</strong>.</p>
+      </div>`;
+    return;
+  }
+
+  if (!listings?.length) {
+    list.innerHTML = `<div class="card center"><p class="muted">Još nema oglasa u Garaži. Dodajte prvi automobil, bager, mašinu ili opremu.</p></div>`;
+    return;
+  }
+
+  list.innerHTML = listings.map(item => {
+    const images = (item.garage_listing_images || []).sort((a,b) => Number(a.sort_order||100) - Number(b.sort_order||100));
+    const cover = images[0]?.image_url || "";
+    return `
+      <div class="card garage-owner-card ${item.status === 'sold' ? 'is-muted' : ''}">
+        <div class="garage-owner-layout">
+          <div class="garage-cover-box">
+            ${cover ? `<img src="${salonEscapeHtml(cover)}" alt="${salonEscapeHtml(item.title)}">` : `<div class="garage-cover-placeholder">Bez slike</div>`}
+          </div>
+          <div>
+            <h3>${salonEscapeHtml(item.title)}</h3>
+            <p class="muted">${garageTypeLabel(item.listing_type)} • ${garageStatusLabel(item.status)} • ${images.length}/10 slika</p>
+            <p><strong>${garagePriceLabel(item)}</strong></p>
+            <p class="muted">${[item.brand, item.model, item.year ? String(item.year) : "", item.hours_km ? String(item.hours_km) : ""].filter(Boolean).map(salonEscapeHtml).join(" • ")}</p>
+            ${item.description ? `<p>${salonEscapeHtml(item.description)}</p>` : ""}
+            <div class="card-actions wrap-actions">
+              ${adminOwnerPreviewMode ? "" : `
+                <button class="btn btn-dark btn-small" type="button" onclick="showGarageForm('${salonEscapeJs(item.id)}')">Izmeni</button>
+                <button class="btn btn-dark btn-small" type="button" onclick="showGarageImages('${salonEscapeJs(item.id)}')">Slike</button>
+                <button class="btn btn-dark btn-small" type="button" onclick="setGarageStatus('${salonEscapeJs(item.id)}','${item.status === 'hidden' ? 'available' : 'hidden'}')">${item.status === 'hidden' ? 'Prikaži' : 'Sakrij'}</button>
+                <button class="btn btn-dark btn-small" type="button" onclick="setGarageStatus('${salonEscapeJs(item.id)}','reserved')">Rezervisano</button>
+                <button class="btn btn-dark btn-small" type="button" onclick="setGarageStatus('${salonEscapeJs(item.id)}','sold')">Prodato</button>
+                <button class="btn btn-danger btn-small" type="button" onclick="deleteGarageListing('${salonEscapeJs(item.id)}')">Obriši trajno</button>
+              `}
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+async function showGarageForm(listingId = "") {
+  if (stopAdminOwnerPreviewEdit()) return;
+  if (!ownerHasGaragePackage()) return window.App.showMessage("Garaža nije uključena za ovaj profil.", "error");
+  if (!listingId) {
+    const limit = getGarageListingLimit();
+    if (limit && limit !== 999999) {
+      const { count } = await window.db.from("garage_listings").select("id", { count: "exact", head: true }).eq("salon_id", currentSalonId);
+      if (Number(count || 0) >= limit) return window.App.showMessage(`Dostigli ste limit paketa ${garagePackageLabel()}: ${limit} oglasa. Obrišite stari oglas ili pređite na veći paket.`, "error");
+    }
+  }
+  const box = document.getElementById("garage-form-box");
+  if (!box) return;
+  let item = null;
+  if (listingId) {
+    const { data, error } = await window.db.from("garage_listings").select("*").eq("id", listingId).eq("salon_id", currentSalonId).maybeSingle();
+    if (error || !data) return window.App.showMessage("Oglas nije pronađen.", "error");
+    item = data;
+  }
+  box.innerHTML = `
+    <div class="card">
+      <h3>${item ? "Izmeni oglas" : "Dodaj oglas u Garažu"}</h3>
+      <div class="form-grid two-cols">
+        <label>Naslov oglasa *<input id="garage-title" type="text" value="${salonEscapeHtml(item?.title || '')}" placeholder="Audi A4 2016 / CAT 330"></label>
+        <label>Tip ponude
+          <select id="garage-type">
+            ${[
+              ['car','Automobil'],['van','Kombi'],['truck','Kamion'],['excavator','Bager'],['machine','Mašina'],['tractor','Traktor'],['equipment','Oprema'],['other','Ostalo']
+            ].map(([v,l]) => `<option value="${v}" ${item?.listing_type===v?'selected':''}>${l}</option>`).join("")}
+          </select>
+        </label>
+        <label>Marka<input id="garage-brand" type="text" value="${salonEscapeHtml(item?.brand || '')}" placeholder="Audi / CAT / Mercedes"></label>
+        <label>Model<input id="garage-model" type="text" value="${salonEscapeHtml(item?.model || '')}" placeholder="A4 / 330 / Actros"></label>
+        <label>Godina<input id="garage-year" type="number" value="${salonEscapeHtml(item?.year || '')}" placeholder="2016"></label>
+        <label>Kilometraža / motočasovi<input id="garage-hours-km" type="text" value="${salonEscapeHtml(item?.hours_km || '')}" placeholder="210.000 km / 9.800 mč"></label>
+        <label>Cena<input id="garage-price" type="number" step="0.01" value="${salonEscapeHtml(item?.price || '')}" placeholder="8900"></label>
+        <label>Valuta
+          <select id="garage-currency">
+            <option value="EUR" ${window.App.normalizeCurrency(item?.currency || 'EUR')==='EUR'?'selected':''}>EUR</option>
+            <option value="RSD" ${window.App.normalizeCurrency(item?.currency || 'EUR')==='RSD'?'selected':''}>RSD</option>
+          </select>
+        </label>
+        <label>Status
+          <select id="garage-status">
+            ${[
+              ['available','Dostupno'],['reserved','Rezervisano'],['sold','Prodato'],['hidden','Sakriveno']
+            ].map(([v,l]) => `<option value="${v}" ${item?.status===v?'selected':''}>${l}</option>`).join("")}
+          </select>
+        </label>
+        <label>Redosled<input id="garage-sort" type="number" value="${salonEscapeHtml(item?.sort_order ?? 100)}"></label>
+      </div>
+      <label>Opis oglasa<textarea id="garage-description" rows="4" placeholder="Opis stanja, opreme, napomena...">${salonEscapeHtml(item?.description || '')}</textarea></label>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="button" onclick="saveGarageListing('${salonEscapeJs(listingId)}')">Sačuvaj oglas</button>
+        <button class="btn btn-dark" type="button" onclick="document.getElementById('garage-form-box').innerHTML=''">Otkaži</button>
+      </div>
+    </div>`;
+  box.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function saveGarageListing(id = "") {
+  if (stopAdminOwnerPreviewEdit()) return;
+  const title = document.getElementById("garage-title")?.value.trim();
+  if (!title) return window.App.showMessage("Unesite naslov oglasa.", "error");
+  const yearRaw = document.getElementById("garage-year")?.value;
+  const priceRaw = document.getElementById("garage-price")?.value;
+  const payload = {
+    title,
+    listing_type: document.getElementById("garage-type")?.value || "other",
+    brand: document.getElementById("garage-brand")?.value.trim() || null,
+    model: document.getElementById("garage-model")?.value.trim() || null,
+    year: yearRaw ? Number(yearRaw) : null,
+    hours_km: document.getElementById("garage-hours-km")?.value.trim() || null,
+    price: priceRaw ? Number(priceRaw) : null,
+    currency: document.getElementById("garage-currency")?.value || "EUR",
+    status: document.getElementById("garage-status")?.value || "available",
+    description: document.getElementById("garage-description")?.value.trim() || null,
+    sort_order: Number(document.getElementById("garage-sort")?.value || 100),
+    updated_at: new Date().toISOString()
+  };
+  let result;
+  if (id) {
+    result = await window.db.from("garage_listings").update(payload).eq("id", id).eq("salon_id", currentSalonId);
+  } else {
+    result = await window.db.from("garage_listings").insert({ ...payload, salon_id: currentSalonId });
+  }
+  if (result.error) return window.App.showMessage("Greška pri čuvanju oglasa. Proverite SQL za Garažu.", "error");
+  document.getElementById("garage-form-box").innerHTML = "";
+  window.App.showMessage("Oglas je sačuvan.", "success");
+  await loadGarageListings();
+}
+
+async function showGarageImages(listingId) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  const box = document.getElementById("garage-form-box");
+  const { data: listing } = await window.db.from("garage_listings").select("*").eq("id", listingId).eq("salon_id", currentSalonId).maybeSingle();
+  const { data: images, error } = await window.db.from("garage_listing_images").select("*").eq("listing_id", listingId).order("sort_order", { ascending: true }).order("created_at", { ascending: true });
+  if (error) return window.App.showMessage("Slike Garaže nisu dostupne. Proverite SQL.", "error");
+  const imgRows = images || [];
+  box.innerHTML = `
+    <div class="card">
+      <h3>Slike oglasa: ${salonEscapeHtml(listing?.title || '')}</h3>
+      <p class="muted">${imgRows.length}/${getGarageImageLimit()} slika. Svaka slika se može trajno obrisati iz baze i Storage-a.</p>
+      ${imgRows.length < getGarageImageLimit() ? `
+        <div class="form-grid two-cols">
+          <label>Dodaj sliku<input id="garage-image-file" type="file" accept="image/png,image/jpeg,image/webp"></label>
+          <label>Redosled<input id="garage-image-sort" type="number" value="${(imgRows.length + 1) * 10}"></label>
+        </div>
+        <button class="btn btn-primary" type="button" onclick="uploadGarageImage('${salonEscapeJs(listingId)}')">Upload slike</button>
+      ` : `<p class="warning-text">Dostignut je limit od ${getGarageImageLimit()} slika za ovaj oglas.</p>`}
+      <div class="garage-image-grid owner-gallery-grid">
+        ${imgRows.map(img => `
+          <div class="owner-gallery-card">
+            <img src="${salonEscapeHtml(img.image_url)}" alt="Slika oglasa">
+            <p class="muted">Redosled: ${Number(img.sort_order || 100)}</p>
+            <button class="btn btn-danger btn-small" type="button" onclick="deleteGarageImage('${salonEscapeJs(img.id)}','${salonEscapeJs(listingId)}','${salonEscapeJs(img.image_url)}')">Obriši sliku trajno</button>
+          </div>`).join("")}
+      </div>
+      <div class="form-actions"><button class="btn btn-dark" type="button" onclick="document.getElementById('garage-form-box').innerHTML=''">Zatvori</button></div>
+    </div>`;
+  box.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function uploadGarageImage(listingId) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  const { count } = await window.db.from("garage_listing_images").select("id", { count: "exact", head: true }).eq("listing_id", listingId);
+  const imageLimit = getGarageImageLimit();
+  if (Number(count || 0) >= imageLimit) return window.App.showMessage(`Jedan oglas može imati najviše ${imageLimit} slika.`, "error");
+  const file = document.getElementById("garage-image-file")?.files?.[0];
+  if (!file) return window.App.showMessage("Izaberite sliku.", "error");
+  const url = await window.StorageHelper.uploadImage(file, currentSalonId, "garage");
+  if (!url) return;
+  const sortOrder = Number(document.getElementById("garage-image-sort")?.value || 100);
+  const { error } = await window.db.from("garage_listing_images").insert({ listing_id: listingId, image_url: url, sort_order: sortOrder });
+  if (error) {
+    await window.StorageHelper.deleteImage(url);
+    return window.App.showMessage("Slika nije sačuvana u bazu. Proverite SQL za Garažu.", "error");
+  }
+  window.App.showMessage("Slika je dodata.", "success");
+  await showGarageImages(listingId);
+  await loadGarageListings();
+}
+
+async function deleteGarageImage(imageId, listingId, imageUrl) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  if (!confirm("Trajno obrisati ovu sliku? Biće obrisana iz baze i Storage-a.")) return;
+  await window.StorageHelper.deleteImage(imageUrl);
+  const { error } = await window.db.from("garage_listing_images").delete().eq("id", imageId);
+  if (error) return window.App.showMessage("Greška pri brisanju slike iz baze.", "error");
+  window.App.showMessage("Slika je trajno obrisana.", "success");
+  await showGarageImages(listingId);
+  await loadGarageListings();
+}
+
+async function setGarageStatus(id, status) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  const { error } = await window.db.from("garage_listings").update({ status, updated_at: new Date().toISOString() }).eq("id", id).eq("salon_id", currentSalonId);
+  if (error) return window.App.showMessage("Greška pri promeni statusa oglasa.", "error");
+  await loadGarageListings();
+}
+
+async function deleteGarageListing(id) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  if (!confirm("Trajno obrisati oglas i sve njegove slike? Ova radnja ne može da se vrati.")) return;
+  const { data: images } = await window.db.from("garage_listing_images").select("image_url").eq("listing_id", id);
+  for (const img of (images || [])) {
+    await window.StorageHelper.deleteImage(img.image_url);
+  }
+  await window.db.from("garage_listing_images").delete().eq("listing_id", id);
+  const { error } = await window.db.from("garage_listings").delete().eq("id", id).eq("salon_id", currentSalonId);
+  if (error) return window.App.showMessage("Greška pri brisanju oglasa.", "error");
+  window.App.showMessage("Oglas i slike su trajno obrisani.", "success");
+  await loadGarageListings();
+}
 
 async function renderGallery() {
   const content = document.getElementById("salon-content");
