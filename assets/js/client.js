@@ -5,6 +5,7 @@ let services = [];
 let products = [];
 let galleryImages = [];
 let garageListings = [];
+let platformHomeImages = [];
 let selectedService = null;
 let selectedDate = null;
 let selectedTime = null;
@@ -205,16 +206,10 @@ function renderPlatformLanding() {
         </div>
 
         <div class="cs-phone-stage" aria-label="Primer digitalnog QR profila">
-          <div class="cs-phone-shell">
+          <div class="cs-phone-shell cs-home-phone-shell">
             <div class="cs-phone-top"></div>
-            <div class="cs-phone-card mini-profile">
-              <div class="mini-logo">QR</div>
-              <small>digitalni profil</small>
-              <h3>Vaš biznis</h3>
-              <p>Usluge • katalog • zakazivanje</p>
-              <div class="mini-action red">Zakaži termin</div>
-              <div class="mini-action">Pošalji upit</div>
-              <div class="mini-action">Sačuvaj prečicu</div>
+            <div id="platform-phone-showcase" class="cs-phone-screen-showcase">
+              ${renderPlatformPhoneShowcase([])}
             </div>
             <div class="cs-phone-notice">🔔 Novi zahtev je stigao</div>
           </div>
@@ -356,6 +351,71 @@ function renderPlatformLanding() {
       </footer>
     </section>
   `;
+  loadPlatformLandingShowcase();
+}
+
+function renderPlatformPhoneShowcase(images = []) {
+  const safeImages = Array.isArray(images) ? images.filter(item => item && item.image_url) : [];
+  if (!safeImages.length) {
+    return `
+      <div class="cs-phone-card mini-profile cs-phone-fallback-profile">
+        <div class="mini-logo">QR</div>
+        <small>digitalni profil</small>
+        <h3>Vaš biznis</h3>
+        <p>Usluge • katalog • zakazivanje</p>
+        <div class="mini-action red">Zakaži termin</div>
+        <div class="mini-action">Pošalji upit</div>
+        <div class="mini-action">Sačuvaj prečicu</div>
+      </div>
+    `;
+  }
+
+  const first = safeImages[0];
+  const caption = first.caption ? escapeHtml(first.caption) : "Galerija biznisa";
+  const dots = safeImages.slice(0, 30).map((_, index) => `<span class="${index === 0 ? "active" : ""}"></span>`).join("");
+
+  return `
+    <div class="cs-phone-gallery-card">
+      <div class="cs-phone-gallery-top">
+        <span>‹</span>
+        <strong>Vaš profil</strong>
+        <span>•••</span>
+      </div>
+      <img src="${escapeHtml(first.image_url)}" alt="Primer slike na početnoj stranici" loading="lazy">
+      <div class="cs-phone-gallery-bottom">
+        <div>
+          <strong>${caption}</strong>
+          <small>Slike koje admin ubaci za naslovnu</small>
+        </div>
+        <b>1 / ${Math.min(safeImages.length, 30)}</b>
+      </div>
+      <div class="cs-phone-gallery-dots">${dots}</div>
+    </div>
+  `;
+}
+
+async function loadPlatformLandingShowcase() {
+  const target = document.getElementById("platform-phone-showcase");
+  if (!target || !window.db) return;
+  try {
+    const { data, error } = await window.db
+      .from("platform_home_images")
+      .select("id,image_url,caption,sort_order,active")
+      .eq("active", true)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false })
+      .limit(30);
+
+    if (error) {
+      console.warn("Platform home images nisu učitane:", error.message || error);
+      return;
+    }
+
+    platformHomeImages = data || [];
+    target.innerHTML = renderPlatformPhoneShowcase(platformHomeImages);
+  } catch (err) {
+    console.warn("Platform home showcase fallback:", err);
+  }
 }
 
 function scrollToHowItWorks() {
