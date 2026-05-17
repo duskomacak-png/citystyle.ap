@@ -551,7 +551,7 @@ async function installSalonApp(slug, options = {}) {
   if (slug) saveCurrentSalon(slug);
   updateManifestForSalon(slug || getSavedSalonSlug(), options);
   await installApp(
-    "Ako se dugme za instalaciju ne pojavi: u Chrome/Safari otvorite meni i izaberite Add to Home screen. Ova prečica otvara baš ovaj profil.",
+    "Telefon možda već ima CityStyle app. Za dodatnu prečicu otvorite meni browsera i izaberite Dodaj na početni ekran.",
     "App ovog profila je dodata na telefon."
   );
 }
@@ -568,7 +568,7 @@ function updateManifestForOwner() {
     name: "CityStyle - Panel vlasnika",
     short_name: "CityStyle",
     description: "Prečica za direktan ulaz u panel vlasnika biznisa.",
-    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=business9multipwa`,
+    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=business10pwa`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -643,7 +643,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=business9multipwa`,
+    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=business10pwa`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -682,9 +682,28 @@ function updateManifestForSalon(slug, options = {}) {
   }
 }
 
+function showInstallHelp(noPromptMessage = "Na iPhone-u: Share → Add to Home Screen.") {
+  document.querySelector(".install-help-modal")?.remove();
+  const currentUrl = window.location.href;
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop install-help-modal";
+  modal.innerHTML = `
+    <div class="modal-card install-help-card">
+      <h3>Dodavanje prečice profila</h3>
+      <p>${escapeHtml(noPromptMessage)}</p>
+      <p class="muted">Ako browser ne ponudi instalaciju, to je ograničenje telefona/browsera kada je CityStyle već instaliran. Link ovog profila možete kopirati i ručno dodati kao prečicu.</p>
+      <div class="card-actions center">
+        <button class="btn btn-primary" type="button" onclick="copyText('${escapeJs(currentUrl)}')">Kopiraj link profila</button>
+        <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
 async function installApp(noPromptMessage = "Na iPhone-u: Share → Add to Home Screen.", successMessage = "CityStyle je dodat na telefon.") {
   if (!deferredPrompt) {
-    showMessage(noPromptMessage, "info");
+    showInstallHelp(noPromptMessage);
     return;
   }
 
@@ -780,7 +799,7 @@ async function registerPushForSalon(salonId) {
       return false;
     }
 
-    const registration = await navigator.serviceWorker.register("/sw.js?v=business9multipwa", { scope: "/" });
+    const registration = await navigator.serviceWorker.register("/sw.js?v=business10pwa", { scope: "/" });
     await navigator.serviceWorker.ready;
 
     let subscription = await registration.pushManager.getSubscription();

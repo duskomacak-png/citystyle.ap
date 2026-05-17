@@ -6,15 +6,60 @@
   <title>CityStyle.app - QR mini aplikacija za vaš biznis</title>
   <meta name="description" content="CityStyle.app je QR mini aplikacija za salone, radnje, servise i male biznise: usluge, proizvodi, termini, upiti i obaveštenja na jednom mestu.">
   <meta name="theme-color" content="#0b0b0f">
-  <link rel="manifest" href="manifest.json?v=business9multipwa">
+  <script>
+    (function prepareCityStyleManifestEarly(){
+      function safeSlugName(slug){
+        return String(slug || "CityStyle profil")
+          .replace(/[-_]+/g, " ")
+          .replace(/\b\w/g, function(c){ return c.toUpperCase(); })
+          .trim() || "CityStyle profil";
+      }
+      function addManifest(href){
+        var link = document.createElement("link");
+        link.rel = "manifest";
+        link.href = href;
+        document.head.appendChild(link);
+      }
+      try {
+        var params = new URLSearchParams(window.location.search || "");
+        var slug = params.get("salon");
+        if (!slug) {
+          addManifest("manifest.json?v=business10pwa");
+          return;
+        }
+        var encodedSlug = encodeURIComponent(slug);
+        var profileName = safeSlugName(slug);
+        var manifest = {
+          id: "/?salon=" + encodedSlug,
+          name: profileName,
+          short_name: profileName.length > 12 ? profileName.slice(0, 12).trim() : profileName,
+          description: "Prečica za direktan ulaz u ovaj CityStyle profil.",
+          start_url: "/?salon=" + encodedSlug + "&pwa_profile=" + encodedSlug + "&v=business10pwa",
+          scope: "/",
+          display: "standalone",
+          background_color: "#0b0b0f",
+          theme_color: "#b91c1c",
+          orientation: "portrait",
+          icons: [
+            { src: "/assets/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
+            { src: "/assets/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" }
+          ]
+        };
+        var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+        addManifest(URL.createObjectURL(blob));
+      } catch (err) {
+        addManifest("manifest.json?v=business10pwa");
+      }
+    })();
+  </script>
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-  <link rel="stylesheet" href="assets/css/style.css?v=business9multipwa">
+  <link rel="stylesheet" href="assets/css/style.css?v=business10pwa">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=business9multipwa"></script>
-  <script src="assets/js/main.js?v=business9multipwa"></script>
-  <script src="assets/js/auth.js?v=business9multipwa"></script>
-  <script src="assets/js/booking-logic.js?v=business9multipwa"></script>
-  <script src="assets/js/client.js?v=business9multipwa" defer></script>
+  <script src="assets/js/config.js?v=business10pwa"></script>
+  <script src="assets/js/main.js?v=business10pwa"></script>
+  <script src="assets/js/auth.js?v=business10pwa"></script>
+  <script src="assets/js/booking-logic.js?v=business10pwa"></script>
+  <script src="assets/js/client.js?v=business10pwa" defer></script>
 </head>
 <body>
   <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>
