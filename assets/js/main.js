@@ -49,56 +49,6 @@ function showMessage(message, type = "info") {
   setTimeout(() => toast.remove(), 3500);
 }
 
-
-async function copyText(text, buttonEl = null) {
-  const value = String(text || window.location.href || "");
-  const originalText = buttonEl ? buttonEl.textContent : "";
-
-  function markDone() {
-    if (buttonEl) {
-      buttonEl.textContent = "Link je kopiran";
-      setTimeout(() => { buttonEl.textContent = originalText || "Kopiraj link profila"; }, 2200);
-    }
-    showMessage("Link profila je kopiran.", "success");
-  }
-
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(value);
-      markDone();
-      return true;
-    }
-  } catch (err) {
-    console.warn("Clipboard API nije uspeo, koristi se fallback:", err);
-  }
-
-  try {
-    const area = document.createElement("textarea");
-    area.value = value;
-    area.setAttribute("readonly", "readonly");
-    area.style.position = "fixed";
-    area.style.left = "-9999px";
-    area.style.top = "0";
-    document.body.appendChild(area);
-    area.focus();
-    area.select();
-    const ok = document.execCommand("copy");
-    area.remove();
-    if (ok) {
-      markDone();
-      return true;
-    }
-  } catch (err) {
-    console.warn("Fallback copy nije uspeo:", err);
-  }
-
-  showMessage("Telefon nije dozvolio automatsko kopiranje. Označite i kopirajte link ručno.", "error");
-  window.prompt("Kopirajte link profila:", value);
-  return false;
-}
-
-window.copyText = copyText;
-
 function formatDate(dateString) {
   if (!dateString) return "";
   const date = new Date(dateString + (String(dateString).includes("T") ? "" : "T00:00:00"));
@@ -600,10 +550,7 @@ function showInstallButton() {
 async function installSalonApp(slug, options = {}) {
   if (slug) saveCurrentSalon(slug);
   updateManifestForSalon(slug || getSavedSalonSlug(), options);
-  await installApp(
-    "Telefon možda već ima CityStyle app. Za dodatnu prečicu otvorite meni browsera i izaberite Dodaj na početni ekran.",
-    "App ovog profila je dodata na telefon."
-  );
+  await installApp("Na iPhone-u: Share → Add to Home Screen. Ova prečica pamti otvoreni profil.", "App profila je dodata na telefon.");
 }
 
 async function installOwnerApp() {
@@ -614,11 +561,10 @@ async function installOwnerApp() {
 
 function updateManifestForOwner() {
   const baseManifest = {
-    id: `${getAppBaseUrl()}salon/`,
     name: "CityStyle - Panel vlasnika",
     short_name: "CityStyle",
     description: "Prečica za direktan ulaz u panel vlasnika biznisa.",
-    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=business11copyfix`,
+    start_url: getAppPath("salon/"),
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -686,14 +632,11 @@ function updateManifestForSalon(slug, options = {}) {
   const theme = normalizeSalonTheme(options.themeColor || "classic-red");
   const iconUrl = options.iconUrl || makeInitialsIconDataUrl(appName, "#b91c1c");
   const icon512 = options.icon512Url || iconUrl || makeInitialsIconDataUrl(appName, "#b91c1c");
-  const encodedSlug = encodeURIComponent(slug);
-  const manifestId = `${getAppBaseUrl()}?salon=${encodedSlug}`;
   const baseManifest = {
-    id: manifestId,
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=business11copyfix`,
+    start_url: `${getAppBaseUrl()}?salon=${encodeURIComponent(slug)}`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -719,41 +662,14 @@ function updateManifestForSalon(slug, options = {}) {
     appleIcon.href = iconUrl;
     if (!appleIcon.parentNode) document.head.appendChild(appleIcon);
     document.title = appName;
-    const themeMeta = document.querySelector('meta[name="theme-color"]') || document.createElement("meta");
-    themeMeta.name = "theme-color";
-    themeMeta.content = theme;
-    if (!themeMeta.parentNode) document.head.appendChild(themeMeta);
-    const appTitle = document.querySelector('meta[name="application-name"]') || document.createElement("meta");
-    appTitle.name = "application-name";
-    appTitle.content = appName;
-    if (!appTitle.parentNode) document.head.appendChild(appTitle);
   } catch (err) {
     console.warn("Dynamic manifest nije postavljen:", err);
   }
 }
 
-function showInstallHelp(noPromptMessage = "Na iPhone-u: Share → Add to Home Screen.") {
-  document.querySelector(".install-help-modal")?.remove();
-  const currentUrl = window.location.href;
-  const modal = document.createElement("div");
-  modal.className = "modal-backdrop install-help-modal";
-  modal.innerHTML = `
-    <div class="modal-card install-help-card">
-      <h3>Dodavanje prečice profila</h3>
-      <p>${escapeHtml(noPromptMessage)}</p>
-      <p class="muted">Ako browser ne ponudi instalaciju, to je ograničenje telefona/browsera kada je CityStyle već instaliran. Link ovog profila možete kopirati i ručno dodati kao prečicu.</p>
-      <div class="card-actions center">
-        <button class="btn btn-primary" type="button" onclick="copyText('${escapeJs(currentUrl)}', this)">Kopiraj link profila</button>
-        <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-}
-
 async function installApp(noPromptMessage = "Na iPhone-u: Share → Add to Home Screen.", successMessage = "CityStyle je dodat na telefon.") {
   if (!deferredPrompt) {
-    showInstallHelp(noPromptMessage);
+    showMessage(noPromptMessage, "info");
     return;
   }
 
@@ -849,7 +765,7 @@ async function registerPushForSalon(salonId) {
       return false;
     }
 
-    const registration = await navigator.serviceWorker.register("/sw.js?v=business11copyfix", { scope: "/" });
+    const registration = await navigator.serviceWorker.register("/sw.js?v=business8garagehelp", { scope: "/" });
     await navigator.serviceWorker.ready;
 
     let subscription = await registration.pushManager.getSubscription();
