@@ -1147,98 +1147,120 @@ body[class*="theme-"] textarea:focus {
 .cs-phone-gallery-dots{min-height:14px}
 @media(max-width:620px){.cs-phone-screen-showcase{min-height:420px}.cs-phone-gallery-card{min-height:420px}.cs-phone-gallery-slides{height:300px!important;min-height:300px!important}}
 
-/* CITYSTYLE LAPTOP HERO PHONE VISIBILITY FIX
-   Desktop/laptop: make the phone preview larger so admin gallery slides are readable.
-   Mobile rules stay almost the same because mobile preview already works well. */
-@media (min-width: 981px){
+
+/* Plain phone showcase fix for desktop/laptop */
+.cs-phone-stage{align-items:center}
+.cs-phone-shell{
+  width:min(100%,392px)!important;
+  min-height:578px!important;
+  padding:10px!important;
+  border-radius:36px!important;
+  background:linear-gradient(180deg,#06070a,#10121a)!important;
+  border:1px solid rgba(255,255,255,.09)!important;
+  box-shadow:0 24px 68px rgba(0,0,0,.48),0 0 0 2px rgba(255,255,255,.035)!important;
+}
+.cs-phone-top{
+  width:86px!important;
+  height:6px!important;
+  margin:4px auto 10px!important;
+  background:rgba(255,255,255,.26)!important;
+}
+.cs-phone-screen-showcase{
+  min-height:526px!important;
+  border-radius:28px!important;
+  background:#0b0d12!important;
+  border:1px solid rgba(255,255,255,.08)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06)!important;
+}
+.cs-phone-gallery-card{
+  min-height:526px!important;
+  padding:10px 10px 8px!important;
+  gap:8px!important;
+}
+.cs-phone-ui-top{
+  padding:0 0 2px!important;
+  font-size:15px!important;
+}
+.cs-phone-ui-top span{
+  width:28px!important;
+  height:28px!important;
+  background:rgba(255,255,255,.06)!important;
+}
+.cs-phone-gallery-slides{
+  height:404px!important;
+  min-height:404px!important;
+  border-radius:20px!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+.cs-phone-gallery-meta{
+  padding:0 2px!important;
+  margin-top:0!important;
+}
+.cs-phone-gallery-meta strong{
+  font-size:15px!important;
+}
+.cs-phone-gallery-meta span{
+  font-size:13px!important;
+}
+.cs-phone-gallery-caption{
+  max-width:64%!important;
+}
+.cs-phone-gallery-dots{
+  gap:7px!important;
+}
+.cs-phone-notice{
+  right:-10px!important;
+  bottom:58px!important;
+  max-width:205px!important;
+  padding:11px 13px!important;
+  border-radius:18px!important;
+  font-size:14px!important;
+}
+@media (min-width:1100px){
   .cs-hero-pro{
-    grid-template-columns:minmax(0,.88fr) minmax(430px,.82fr) !important;
-    gap:24px !important;
-    align-items:center !important;
+    grid-template-columns:minmax(0,0.95fr) minmax(392px,0.8fr)!important;
+    gap:24px!important;
   }
   .cs-hero-copy h1{
-    font-size:clamp(48px,5.8vw,74px) !important;
-    letter-spacing:-2.4px !important;
-  }
-  .cs-hero-copy .hero-lead{
-    font-size:clamp(17px,1.7vw,20px) !important;
-    max-width:720px !important;
-  }
-  .cs-phone-stage{
-    justify-content:center !important;
-    transform:translateX(-4px) !important;
-  }
-  .cs-phone-shell{
-    width:min(100%,440px) !important;
-    min-height:664px !important;
-    padding:20px !important;
-    border-radius:48px !important;
-  }
-  .cs-phone-top{
-    margin-bottom:18px !important;
-  }
-  .cs-phone-screen-showcase{
-    min-height:570px !important;
-    border-radius:34px !important;
-  }
-  .cs-phone-gallery-card{
-    min-height:570px !important;
-    padding:16px !important;
-    gap:12px !important;
-  }
-  .cs-phone-gallery-slides{
-    height:458px !important;
-    min-height:458px !important;
-    border-radius:26px !important;
-  }
-  .cs-phone-gallery-card .cs-phone-gallery-slides img.cs-phone-slide{
-    object-fit:cover !important;
-    object-position:center center !important;
-    padding:0 !important;
-  }
-  .cs-phone-gallery-meta strong{
-    font-size:19px !important;
-  }
-  .cs-phone-gallery-counter{
-    font-size:17px !important;
-  }
-  .cs-phone-notice{
-    right:-56px !important;
-    bottom:92px !important;
-    max-width:210px !important;
-    padding:11px 13px !important;
-    font-size:14px !important;
-    z-index:4 !important;
+    font-size:clamp(38px,5.4vw,72px)!important;
+    max-width:620px!important;
   }
 }
-
-/* Medium laptop screens: keep phone readable without pushing layout off screen. */
-@media (min-width:981px) and (max-width:1180px){
-  .cs-hero-pro{
-    grid-template-columns:minmax(0,.82fr) minmax(395px,.8fr) !important;
-    gap:18px !important;
-  }
-  .cs-hero-copy h1{
-    font-size:clamp(42px,5.2vw,62px) !important;
-  }
+@media (max-width:980px){
   .cs-phone-shell{
-    width:min(100%,405px) !important;
-    min-height:620px !important;
+    width:min(100%,338px)!important;
+    min-height:540px!important;
   }
-  .cs-phone-screen-showcase{
-    min-height:528px !important;
-  }
+  .cs-phone-screen-showcase,
   .cs-phone-gallery-card{
-    min-height:528px !important;
+    min-height:472px!important;
   }
   .cs-phone-gallery-slides{
-    height:418px !important;
-    min-height:418px !important;
+    height:360px!important;
+    min-height:360px!important;
+  }
+}
+@media (max-width:620px){
+  .cs-phone-shell{
+    width:min(100%,330px)!important;
+    min-height:500px!important;
+    padding:10px!important;
+  }
+  .cs-phone-screen-showcase,
+  .cs-phone-gallery-card{
+    min-height:430px!important;
+  }
+  .cs-phone-gallery-slides{
+    height:300px!important;
+    min-height:300px!important;
   }
   .cs-phone-notice{
-    right:-34px !important;
-    bottom:82px !important;
-    max-width:195px !important;
-    font-size:13px !important;
+    position:relative!important;
+    right:auto!important;
+    bottom:auto!important;
+    margin:12px 0 0!important;
+    max-width:100%!important;
+    font-size:14px!important;
   }
 }
