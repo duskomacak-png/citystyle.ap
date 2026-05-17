@@ -550,7 +550,10 @@ function showInstallButton() {
 async function installSalonApp(slug, options = {}) {
   if (slug) saveCurrentSalon(slug);
   updateManifestForSalon(slug || getSavedSalonSlug(), options);
-  await installApp("Na iPhone-u: Share → Add to Home Screen. Ova prečica pamti otvoreni profil.", "App profila je dodata na telefon.");
+  await installApp(
+    "Ako se dugme za instalaciju ne pojavi: u Chrome/Safari otvorite meni i izaberite Add to Home screen. Ova prečica otvara baš ovaj profil.",
+    "App ovog profila je dodata na telefon."
+  );
 }
 
 async function installOwnerApp() {
@@ -561,10 +564,11 @@ async function installOwnerApp() {
 
 function updateManifestForOwner() {
   const baseManifest = {
+    id: `${getAppBaseUrl()}salon/`,
     name: "CityStyle - Panel vlasnika",
     short_name: "CityStyle",
     description: "Prečica za direktan ulaz u panel vlasnika biznisa.",
-    start_url: getAppPath("salon/"),
+    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=business9multipwa`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -632,11 +636,14 @@ function updateManifestForSalon(slug, options = {}) {
   const theme = normalizeSalonTheme(options.themeColor || "classic-red");
   const iconUrl = options.iconUrl || makeInitialsIconDataUrl(appName, "#b91c1c");
   const icon512 = options.icon512Url || iconUrl || makeInitialsIconDataUrl(appName, "#b91c1c");
+  const encodedSlug = encodeURIComponent(slug);
+  const manifestId = `${getAppBaseUrl()}?salon=${encodedSlug}`;
   const baseManifest = {
+    id: manifestId,
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?salon=${encodeURIComponent(slug)}`,
+    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=business9multipwa`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -662,6 +669,14 @@ function updateManifestForSalon(slug, options = {}) {
     appleIcon.href = iconUrl;
     if (!appleIcon.parentNode) document.head.appendChild(appleIcon);
     document.title = appName;
+    const themeMeta = document.querySelector('meta[name="theme-color"]') || document.createElement("meta");
+    themeMeta.name = "theme-color";
+    themeMeta.content = theme;
+    if (!themeMeta.parentNode) document.head.appendChild(themeMeta);
+    const appTitle = document.querySelector('meta[name="application-name"]') || document.createElement("meta");
+    appTitle.name = "application-name";
+    appTitle.content = appName;
+    if (!appTitle.parentNode) document.head.appendChild(appTitle);
   } catch (err) {
     console.warn("Dynamic manifest nije postavljen:", err);
   }
@@ -765,7 +780,7 @@ async function registerPushForSalon(salonId) {
       return false;
     }
 
-    const registration = await navigator.serviceWorker.register("/sw.js?v=business8garagehelp", { scope: "/" });
+    const registration = await navigator.serviceWorker.register("/sw.js?v=business9multipwa", { scope: "/" });
     await navigator.serviceWorker.ready;
 
     let subscription = await registration.pushManager.getSubscription();
