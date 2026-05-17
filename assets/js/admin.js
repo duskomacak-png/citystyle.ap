@@ -793,6 +793,7 @@ function renderSalonCard(salon) {
         <button class="btn btn-dark" type="button" onclick="sendRenewalEmail('${salon.id}')">📧 Email obaveštenje</button>
         <button class="btn btn-success" type="button" onclick="sendRenewalWhatsApp('${salon.id}')">💬 WhatsApp</button>
         <button class="btn btn-dark" type="button" onclick="editSalonProfile('${salon.id}')">Izmeni</button>
+        <button class="btn btn-warning" type="button" onclick="changeOwnerAccessCode('${salon.id}')">🔐 Promeni kod</button>
         <button class="btn btn-dark" type="button" onclick="extendPayment('${salon.id}', '${salon.paid_until || ""}')">Produži uplatu</button>
         <button class="btn ${salon.status === "active" ? "btn-warning" : "btn-success"}" type="button" onclick="toggleSalonStatus('${salon.id}', '${salon.status}')">${salon.status === "active" ? "Blokiraj" : "Aktiviraj"}</button>
         <button class="btn btn-danger" type="button" onclick="deleteSalon('${salon.id}')">Obriši</button>
@@ -1113,6 +1114,101 @@ async function toggleSalonStatus(id, currentStatus) {
     return;
   }
   await loadSalonsList();
+}
+
+function generateOwnerAccessCode(prefix = "CS") {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = new Uint32Array(8);
+  if (window.crypto && window.crypto.getRandomValues) {
+    window.crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * alphabet.length);
+  }
+  const pick = (i) => alphabet[bytes[i] % alphabet.length];
+  return `${prefix}-${pick(0)}${pick(1)}${pick(2)}${pick(3)}-${pick(4)}${pick(5)}${pick(6)}${pick(7)}`;
+}
+
+function normalizeOwnerCode(code) {
+  return String(code || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^A-Z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+async function changeOwnerAccessCode(id) {
+  const salon = adminSalonsCache.find(item => String(item.id) === String(id));
+  if (!salon) {
+    window.App.showMessage("Profil nije pronađen. Osveži admin panel pa probaj ponovo.", "error");
+    return;
+  }
+
+  const suggested = generateOwnerAccessCode("CS");
+  const message =
+    `Promena koda za vlasnika profila:
+
+${salon.salon_name || "Biznis profil"}
+${salon.owner_email || ""}
+
+` +
+    "Novi kod moraš poslati vlasniku. Stari kod više neće raditi.\n" +
+    "Predlog jakog koda je već upisan ispod.";
+  const entered = prompt(message, suggested);
+  if (entered === null) return;
+
+  const cleanCode = normalizeOwnerCode(entered);
+  if (cleanCode.length < 8) {
+    window.App.showMessage("Kod je prekratak. Koristi jači kod, npr. CS-7FQ9-K2M.", "error");
+    return;
+  }
+
+  const duplicate = adminSalonsCache.find(item =>
+    String(item.id) !== String(id) &&
+    normalizeOwnerCode(item.company_code) === cleanCode &&
+    item.status !== "deleted" &&
+    !item.is_deleted
+  );
+  if (duplicate) {
+    window.App.showMessage("Ovaj kod već koristi drugi profil. Generiši drugi kod.", "error");
+    return;
+  }
+
+  const confirmed = confirm(
+    `Potvrdi promenu koda za vlasnika.
+
+Profil: ${salon.salon_name || "Biznis profil"}
+Email: ${salon.owner_email || "—"}
+Novi kod: ${cleanCode}
+
+` +
+    "VAŽNO: stari kod više neće važiti."
+  );
+  if (!confirmed) return;
+
+  const { error } = await window.db
+    .from("salons")
+    .update({ company_code: cleanCode })
+    .eq("id", id);
+
+  if (error) {
+    console.error(error);
+    window.App.showMessage("Greška pri promeni koda vlasnika: " + error.message, "error");
+    return;
+  }
+
+  await loadSalonsList();
+  window.App.showMessage("Kod vlasnika je promenjen. Pošalji novi kod vlasniku profila.", "success");
+
+  const copyText = `CityStyle.app pristup
+Email: ${salon.owner_email || ""}
+Kod: ${cleanCode}
+Ulaz: ${location.origin}/salon/`;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(copyText).catch(() => {});
+  }
+  alert("Novi kod je promenjen i kopiran za slanje vlasniku:\n\n" + copyText);
 }
 
 async function deleteSalon(id) {
