@@ -12,6 +12,66 @@ let adminPreviewMode = false;
 const C = (key, fallback = "") => window.App?.t ? window.App.t(key, fallback) : (fallback || key);
 
 
+const VISIT_SOURCE_LABELS = {
+  facebook: "Facebook",
+  instagram: "Instagram",
+  tiktok: "TikTok",
+  kupujemprodajem: "KupujemProdajem",
+  polovniautomobili: "PolovniAutomobili",
+  qr: "QR kod / štampa",
+  google: "Google",
+  direct: "Direktan link",
+  other: "Ostalo"
+};
+
+function normalizeVisitSource(raw = "") {
+  const value = String(raw || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (["fb", "facebook", "meta"].includes(value)) return "facebook";
+  if (["ig", "instagram"].includes(value)) return "instagram";
+  if (["tt", "tiktok"].includes(value)) return "tiktok";
+  if (["kp", "kupujemprodajem"].includes(value)) return "kupujemprodajem";
+  if (["pa", "polovniautomobili", "polovniautomobili"].includes(value)) return "polovniautomobili";
+  if (["qr", "stamp", "stampa", "print"].includes(value)) return "qr";
+  if (["google"].includes(value)) return "google";
+  if (["direct", "direktno"].includes(value)) return "direct";
+  return "";
+}
+
+function detectVisitSource() {
+  const fromParam = normalizeVisitSource(window.App?.getUrlParam("src") || "");
+  if (fromParam) return fromParam;
+  const ref = String(document.referrer || "").toLowerCase();
+  if (!ref) return "direct";
+  if (ref.includes("facebook") || ref.includes("fb.")) return "facebook";
+  if (ref.includes("instagram")) return "instagram";
+  if (ref.includes("tiktok")) return "tiktok";
+  if (ref.includes("kupujemprodajem")) return "kupujemprodajem";
+  if (ref.includes("polovniautomobili")) return "polovniautomobili";
+  if (ref.includes("google")) return "google";
+  return "other";
+}
+
+async function recordProfileVisitIfNeeded(salon) {
+  try {
+    if (!salon?.id || !window.db) return;
+    if (ownerPreviewMode || adminPreviewMode) return;
+    const source = detectVisitSource();
+    const key = `citystyle_visit_${salon.id}_${source}`;
+    const now = Date.now();
+    const last = Number(localStorage.getItem(key) || 0);
+    // Ne brojimo svako osvežavanje stranice kao novu posetu.
+    if (last && now - last < 30 * 60 * 1000) return;
+    localStorage.setItem(key, String(now));
+    await window.db.from("profile_visits").insert({
+      salon_id: salon.id,
+      source
+    });
+  } catch (err) {
+    console.warn("Statistika posete nije upisana:", err);
+  }
+}
+
+
 document.addEventListener("DOMContentLoaded", () => {
   loadClientApp();
 });
@@ -79,37 +139,12 @@ async function loadSalon(slug, saveThisSalon = true) {
   window.App?.setAppLanguage?.(salon.app_language || "sr");
   window.App?.applySalonTheme?.(salon.theme_color);
   if (saveThisSalon) window.App.saveCurrentSalon(salon.slug);
+  recordProfileVisitIfNeeded(salon);
 
   await loadServices();
   await loadProducts();
   await loadGalleryImages();
-  await recordProfileVisit();
   await renderSalonHome();
-}
-
-async function recordProfileVisit() {
-  if (!currentSalon?.id || ownerPreviewMode || adminPreviewMode) return;
-  if (!window.db) return;
-
-  const source = window.App?.getVisitSource?.() || "direct";
-  const referrerDomain = window.App?.getReferrerDomain?.() || null;
-  const sessionKey = `citystyle_visit_${currentSalon.id}_${source}`;
-
-  try {
-    if (sessionStorage.getItem(sessionKey)) return;
-    sessionStorage.setItem(sessionKey, "1");
-  } catch (err) {}
-
-  try {
-    const { error } = await window.db.from("profile_visits").insert({
-      salon_id: currentSalon.id,
-      source,
-      referrer_domain: referrerDomain || null
-    });
-    if (error) console.warn("Profile visit analytics not saved:", error.message || error);
-  } catch (err) {
-    console.warn("Profile visit analytics error:", err);
-  }
 }
 
 function renderPlatformLanding() {

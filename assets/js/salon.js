@@ -19,6 +19,27 @@ const salonDays = [
   { num: 0, name: "Nedelja" }
 ];
 
+const VISIT_SOURCE_OPTIONS = [
+  { key: "facebook", label: "Facebook", hint: "Za FB objavu, grupu ili reklamu" },
+  { key: "instagram", label: "Instagram", hint: "Za Instagram bio, story ili objavu" },
+  { key: "tiktok", label: "TikTok", hint: "Za TikTok profil ili video opis" },
+  { key: "kupujemprodajem", label: "KupujemProdajem", hint: "Za KP oglas ili opis oglasa" },
+  { key: "polovniautomobili", label: "PolovniAutomobili", hint: "Za oglas na Polovnim Automobilima" },
+  { key: "qr", label: "QR kod / štampa", hint: "Za nalepnicu, flajer, vizit kartu ili izlog" }
+];
+
+const VISIT_SOURCE_LABELS = {
+  facebook: "Facebook",
+  instagram: "Instagram",
+  tiktok: "TikTok",
+  kupujemprodajem: "KupujemProdajem",
+  polovniautomobili: "PolovniAutomobili",
+  qr: "QR kod / štampa",
+  google: "Google",
+  direct: "Direktan link",
+  other: "Ostalo"
+};
+
 function stopAdminOwnerPreviewEdit() {
   if (!adminOwnerPreviewMode) return false;
   window.App.showMessage("Admin pregled vlasničkog panela je samo za gledanje. Za izmene koristite admin panel ili se ulogujte kao vlasnik.", "info");
@@ -227,9 +248,9 @@ function renderBlockedSalon(salon) {
 function renderSalonDashboard() {
   const labels = {
     appointments: S("tabAppointments", "Zahtevi / termini"),
-    stats: "Statistika poseta",
     services: S("tabServices", "Usluge / ponuda"),
     products: S("tabProducts", "Proizvodi / katalog"),
+    analytics: "Statistika / QR",
     gallery: "Galerija radova",
     hours: S("tabHours", "Radno vreme"),
     settings: S("tabSettings", "Podešavanje profila")
@@ -262,9 +283,9 @@ async function showSection(section) {
   if (!currentSalonId) return renderSalonLogin();
   setActiveTab(section);
   if (section === "appointments") return renderAppointments();
-  if (section === "stats") return renderVisitStats();
   if (section === "services") return renderServices();
   if (section === "products") return renderProducts();
+  if (section === "analytics") return renderAnalytics();
   if (section === "gallery") return renderGallery();
   if (section === "hours") return renderWorkingHours();
   if (section === "settings") return renderSalonSettings();
@@ -273,6 +294,163 @@ async function showSection(section) {
 async function enableOwnerNotifications() {
   if (stopAdminOwnerPreviewEdit()) return;
   await window.App.registerPushForSalon(currentSalonId);
+}
+
+function getOwnerSourceLink(source = "") {
+  if (!currentSalon?.slug) return "";
+  if (window.App?.getSalonSourceLink) return window.App.getSalonSourceLink(currentSalon.slug, source);
+  const base = window.App.getSalonPublicLink(currentSalon.slug);
+  return source ? `${base}&src=${encodeURIComponent(source)}` : base;
+}
+
+function getSourceLabel(source = "") {
+  const key = String(source || "direct").trim().toLowerCase();
+  return VISIT_SOURCE_LABELS[key] || key || "Ostalo";
+}
+
+function copyTextToClipboard(text, successText = "Kopirano.") {
+  if (!text) return;
+  navigator.clipboard?.writeText(text).then(() => {
+    window.App.showMessage(successText, "success");
+  }).catch(() => prompt("Kopiraj:", text));
+}
+
+function copyOwnerSourceLink(source = "") {
+  copyTextToClipboard(getOwnerSourceLink(source), "Reklamni link je kopiran.");
+}
+
+function openOwnerSourceQr(source = "", label = "QR kod") {
+  const link = getOwnerSourceLink(source);
+  const qrUrl = window.App.getQrImageUrl(link, 480);
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop";
+  modal.innerHTML = `
+    <div class="modal-card source-qr-modal">
+      <h2>${salonEscapeHtml(label)}</h2>
+      <p class="muted">Ovaj QR vodi na isti javni profil, ali se u statistici broji kao: <strong>${salonEscapeHtml(label)}</strong>.</p>
+      <img class="qr-img source-big-qr" src="${qrUrl}" alt="${salonEscapeHtml(label)} QR kod">
+      <div class="link-box"><input readonly value="${salonEscapeHtml(link)}"></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" type="button" onclick="copyOwnerSourceLink('${salonEscapeJs(source)}')">Kopiraj link</button>
+        <a class="btn btn-dark" href="${qrUrl}" target="_blank" rel="noopener" download="citystyle-${salonEscapeHtml(currentSalon?.slug || 'profil')}-${salonEscapeHtml(source || 'glavni')}-qr.png">Otvori / preuzmi QR</a>
+        <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function startOfDay(date = new Date()) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+async function renderAnalytics() {
+  const content = document.getElementById("salon-content");
+  content.innerHTML = `<div class="loading-box">Učitavanje statistike...</div>`;
+
+  const now = new Date();
+  const start30 = new Date(now.getTime() - 30 * 86400000);
+  const start7 = new Date(now.getTime() - 7 * 86400000);
+  const todayStart = startOfDay(now);
+
+  let visits = [];
+  let error = null;
+  try {
+    const res = await window.db
+      .from("profile_visits")
+      .select("source, created_at")
+      .eq("salon_id", currentSalonId)
+      .gte("created_at", start30.toISOString())
+      .order("created_at", { ascending: false });
+    visits = res.data || [];
+    error = res.error;
+  } catch (err) {
+    error = err;
+  }
+
+  const sourceRows = VISIT_SOURCE_OPTIONS.map(option => {
+    const link = getOwnerSourceLink(option.key);
+    const qrUrl = window.App.getQrImageUrl(link, 180);
+    const count = visits.filter(v => String(v.source || "direct") === option.key).length;
+    return { ...option, link, qrUrl, count };
+  });
+
+  const grouped = visits.reduce((acc, visit) => {
+    const key = String(visit.source || "direct").toLowerCase();
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+  const sourceStats = Object.entries(grouped).sort((a, b) => b[1] - a[1]);
+  const total30 = visits.length;
+  const total7 = visits.filter(v => new Date(v.created_at) >= start7).length;
+  const totalToday = visits.filter(v => new Date(v.created_at) >= todayStart).length;
+
+  content.innerHTML = `
+    <div class="section-head paper-section-head">
+      <div>
+        <h2>Statistika poseta i reklamni QR kodovi</h2>
+        <p class="muted">Bez ličnih podataka posetilaca. Broji se samo otvaranje profila i izvor linka.</p>
+      </div>
+      <button class="btn btn-dark btn-small" type="button" onclick="renderAnalytics()">Osveži</button>
+    </div>
+
+    ${error ? `<div class="card warning-box"><strong>Statistika još nije spremna.</strong><p class="muted">Ako vidiš ovu poruku, proveri da li je SQL za tabelu <code>profile_visits</code> pokrenut u Supabase-u.</p></div>` : ""}
+
+    <div class="owner-dashboard-grid">
+      <div class="owner-metric-card"><span>Danas</span><strong>${totalToday}</strong><small>poseta profilu</small></div>
+      <div class="owner-metric-card"><span>7 dana</span><strong>${total7}</strong><small>poseta profilu</small></div>
+      <div class="owner-metric-card"><span>30 dana</span><strong>${total30}</strong><small>poseta profilu</small></div>
+    </div>
+
+    <div class="card analytics-help-card">
+      <h3>Kako se koristi?</h3>
+      <p class="muted">Svi linkovi i QR kodovi vode na isti javni profil. Razlika je samo u oznaci izvora, da vlasnik vidi odakle dolaze posete.</p>
+      <p class="muted">Za Facebook koristi Facebook link/QR, za KupujemProdajem koristi KP link/QR, a za nalepnice i štampu koristi QR kod / štampa.</p>
+    </div>
+
+    <div class="card">
+      <h3>Posete po izvoru - poslednjih 30 dana</h3>
+      ${sourceStats.length ? `
+        <div class="source-stats-list">
+          ${sourceStats.map(([source, count]) => `
+            <div class="source-stat-row"><span>${salonEscapeHtml(getSourceLabel(source))}</span><strong>${count}</strong></div>
+          `).join("")}
+        </div>` : `<p class="muted">Još nema zabeleženih poseta. Otvori neki reklamni link ili skeniraj QR kod za test.</p>`}
+    </div>
+
+    <div class="card">
+      <h3>Glavni link profila</h3>
+      <p class="muted">Koristi se kada nije važno odakle dolazi poseta.</p>
+      <div class="source-link-line">
+        <input readonly value="${salonEscapeHtml(getOwnerSourceLink(''))}">
+        <button class="btn btn-dark btn-small" type="button" onclick="copyOwnerSourceLink('')">Kopiraj</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Reklamni linkovi i QR kodovi po izvoru</h3>
+      <div class="source-qr-grid">
+        ${sourceRows.map(row => `
+          <article class="source-qr-card">
+            <div>
+              <h4>${salonEscapeHtml(row.label)}</h4>
+              <p>${salonEscapeHtml(row.hint)}</p>
+              <small>Posete 30 dana: <strong>${row.count}</strong></small>
+            </div>
+            <img src="${row.qrUrl}" alt="${salonEscapeHtml(row.label)} QR kod">
+            <div class="source-link-line compact">
+              <input readonly value="${salonEscapeHtml(row.link)}">
+            </div>
+            <div class="source-actions">
+              <button class="btn btn-dark btn-small" type="button" onclick="copyOwnerSourceLink('${salonEscapeJs(row.key)}')">Kopiraj link</button>
+              <button class="btn btn-primary btn-small" type="button" onclick="openOwnerSourceQr('${salonEscapeJs(row.key)}', '${salonEscapeJs(row.label)}')">Prikaži QR</button>
+            </div>
+          </article>
+        `).join("")}
+      </div>
+    </div>
+  `;
 }
 
 async function renderAppointments() {
@@ -619,158 +797,6 @@ async function deleteAppointment(id) {
 
 function getAppointmentStatusLabel(status) {
   return { new: S("newRequests", "Novo"), confirmed: S("confirmed", "Potvrđeno"), cancelled: "Otkazano", done: S("done", "Završeno"), no_show: "Nije došao/la" }[status] || status;
-}
-
-
-const VISIT_STATS_SOURCES = [
-  "facebook",
-  "instagram",
-  "tiktok",
-  "kupujemprodajem",
-  "polovniautomobili",
-  "qr",
-  "direct"
-];
-
-function getVisitSourceCountMap(items = []) {
-  return items.reduce((acc, item) => {
-    const source = window.App.normalizeVisitSource(item.source || "direct");
-    acc[source] = (acc[source] || 0) + 1;
-    return acc;
-  }, {});
-}
-
-function getStartOfDayIso(daysBack = 0) {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - Number(daysBack || 0));
-  return d.toISOString();
-}
-
-async function getVisitCountSince(isoDate = null) {
-  let query = window.db
-    .from("profile_visits")
-    .select("id", { count: "exact", head: true })
-    .eq("salon_id", currentSalonId);
-  if (isoDate) query = query.gte("created_at", isoDate);
-  const { count, error } = await query;
-  if (error) throw error;
-  return Number(count || 0);
-}
-
-async function renderVisitStats() {
-  const content = document.getElementById("salon-content");
-  const salonLink = window.App.getSalonPublicLink(currentSalon.slug);
-  const qrStatsLink = window.App.getSalonPublicSourceLink(currentSalon.slug, "qr");
-  const qrUrl = window.App.getQrImageUrl(qrStatsLink, 220);
-
-  content.innerHTML = `
-    <div class="section-head">
-      <div>
-        <h2>Statistika poseta</h2>
-        <p class="muted">Anonimni brojač poseta profilu i izvora odakle posetioci dolaze. Ne čuvaju se ime, telefon, adresa ni GPS lokacija posetioca.</p>
-      </div>
-      <button class="btn btn-dark" type="button" onclick="renderVisitStats()">Osveži</button>
-    </div>
-    <div id="visit-stats-box"><div class="loading-box">Učitavanje statistike...</div></div>
-  `;
-
-  const box = document.getElementById("visit-stats-box");
-  try {
-    const [total, today, week, month, monthRowsResult] = await Promise.all([
-      getVisitCountSince(null),
-      getVisitCountSince(getStartOfDayIso(0)),
-      getVisitCountSince(getStartOfDayIso(6)),
-      getVisitCountSince(getStartOfDayIso(29)),
-      window.db
-        .from("profile_visits")
-        .select("source, created_at")
-        .eq("salon_id", currentSalonId)
-        .gte("created_at", getStartOfDayIso(29))
-        .order("created_at", { ascending: false })
-        .limit(5000)
-    ]);
-
-    if (monthRowsResult.error) throw monthRowsResult.error;
-    const sourceCounts = getVisitSourceCountMap(monthRowsResult.data || []);
-    const sourceRows = Object.entries(sourceCounts)
-      .sort((a, b) => b[1] - a[1])
-      .map(([source, count]) => `
-        <tr>
-          <td>${salonEscapeHtml(window.App.getVisitSourceLabel(source))}</td>
-          <td><strong>${count}</strong></td>
-        </tr>
-      `).join("") || `<tr><td colspan="2" class="muted">Još nema poseta u poslednjih 30 dana.</td></tr>`;
-
-    box.innerHTML = `
-      <div class="owner-dashboard-grid visit-stats-grid">
-        <div class="owner-metric-card"><span>Ukupno</span><strong>${total}</strong><small>sve posete</small></div>
-        <div class="owner-metric-card"><span>Danas</span><strong>${today}</strong><small>od ponoći</small></div>
-        <div class="owner-metric-card"><span>7 dana</span><strong>${week}</strong><small>poslednja nedelja</small></div>
-        <div class="owner-metric-card"><span>30 dana</span><strong>${month}</strong><small>poslednji mesec</small></div>
-      </div>
-
-      <div class="card stats-card">
-        <h3>Izvori poseta u poslednjih 30 dana</h3>
-        <p class="muted">Ako vlasnik koristi posebne reklamne linkove, ovde vidi odakle posete dolaze.</p>
-        <div class="paper-table-wrap">
-          <table class="paper-appointments-table visit-source-table">
-            <thead><tr><th>Izvor</th><th>Posete</th></tr></thead>
-            <tbody>${sourceRows}</tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="card stats-card">
-        <h3>Reklamni linkovi</h3>
-        <p class="muted">Glavni link vodi na isti profil. Posebni linkovi služe samo da statistika zna odakle je poseta došla.</p>
-        <div class="tracking-links-list">
-          <div class="tracking-link-row">
-            <div><strong>Glavni link</strong><small>${salonEscapeHtml(salonLink)}</small></div>
-            <button class="btn btn-dark btn-small" type="button" onclick="copyTrackingLink('direct')">Kopiraj</button>
-          </div>
-          ${VISIT_STATS_SOURCES.filter(src => src !== "direct").map(src => {
-            const link = window.App.getSalonPublicSourceLink(currentSalon.slug, src);
-            return `
-              <div class="tracking-link-row">
-                <div><strong>${salonEscapeHtml(window.App.getVisitSourceLabel(src))}</strong><small>${salonEscapeHtml(link)}</small></div>
-                <button class="btn btn-dark btn-small" type="button" onclick="copyTrackingLink('${src}')">Kopiraj</button>
-              </div>
-            `;
-          }).join("")}
-        </div>
-      </div>
-
-      <div class="card center stats-card">
-        <h3>QR kod za štampu / nalepnicu</h3>
-        <p class="muted">Ovaj QR vodi na isti profil, ali se u statistici broji kao “QR kod / štampa”.</p>
-        <img class="qr-img" src="${qrUrl}" alt="QR kod za statistiku">
-        <div class="card-actions" style="justify-content:center">
-          <button class="btn btn-primary" type="button" onclick="copyTrackingLink('qr')">Kopiraj QR link</button>
-        </div>
-      </div>
-    `;
-  } catch (error) {
-    console.error("Visit stats error:", error);
-    box.innerHTML = `
-      <div class="card">
-        <h3>Statistika još nije spremna u bazi</h3>
-        <p class="muted">Treba pokrenuti SQL za tabelu <strong>profile_visits</strong>. Posle toga će se ovde prikazivati posete i izvori.</p>
-        <p class="error-text">${salonEscapeHtml(error.message || "Greška pri učitavanju statistike.")}</p>
-      </div>
-    `;
-  }
-}
-
-function copyTrackingLink(source = "direct") {
-  if (!currentSalon?.slug) return;
-  const normalized = window.App.normalizeVisitSource(source);
-  const link = normalized === "direct"
-    ? window.App.getSalonPublicLink(currentSalon.slug)
-    : window.App.getSalonPublicSourceLink(currentSalon.slug, normalized);
-  navigator.clipboard.writeText(link).then(() => {
-    window.App.showMessage("Reklamni link je kopiran.", "success");
-  }).catch(() => prompt("Kopiraj reklamni link:", link));
 }
 
 async function renderServices() {

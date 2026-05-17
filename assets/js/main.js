@@ -168,72 +168,15 @@ function getSalonPublicLink(slug) {
   return `${getAppBaseUrl()}?salon=${encodeURIComponent(slug)}`;
 }
 
+function getSalonSourceLink(slug, source = "") {
+  const base = getSalonPublicLink(slug);
+  const cleanSource = String(source || "").trim().toLowerCase();
+  if (!cleanSource) return base;
+  return `${base}&src=${encodeURIComponent(cleanSource)}`;
+}
+
 function getQrImageUrl(link, size = 280) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(link)}`;
-}
-
-
-const VISIT_SOURCE_LABELS = {
-  direct: "Direktno / ostalo",
-  qr: "QR kod / štampa",
-  facebook: "Facebook",
-  instagram: "Instagram",
-  tiktok: "TikTok",
-  kupujemprodajem: "KupujemProdajem",
-  polovniautomobili: "PolovniAutomobili",
-  google: "Google",
-  other: "Ostalo"
-};
-
-function normalizeVisitSource(value) {
-  const raw = String(value || "").trim().toLowerCase()
-    .replace(/\s+/g, "")
-    .replaceAll("_", "")
-    .replaceAll("-", "");
-  if (["fb", "facebook", "meta"].includes(raw)) return "facebook";
-  if (["ig", "instagram"].includes(raw)) return "instagram";
-  if (["tt", "tiktok"].includes(raw)) return "tiktok";
-  if (["kp", "kupujemprodajem", "kupujemprodajemcom"].includes(raw)) return "kupujemprodajem";
-  if (["pa", "polovniautomobili", "polovniautomobilicom"].includes(raw)) return "polovniautomobili";
-  if (["qr", "qrcode", "stampa", "stampaqr", "print"].includes(raw)) return "qr";
-  if (["google", "g"].includes(raw)) return "google";
-  if (["direct", "direktno"].includes(raw)) return "direct";
-  return raw ? "other" : "direct";
-}
-
-function getReferrerDomain() {
-  try {
-    if (!document.referrer) return "";
-    return new URL(document.referrer).hostname.replace(/^www\./, "");
-  } catch (err) {
-    return "";
-  }
-}
-
-function getVisitSource() {
-  const explicit = getUrlParam("src") || getUrlParam("source") || getUrlParam("utm_source");
-  if (explicit) return normalizeVisitSource(explicit);
-
-  const ref = getReferrerDomain();
-  if (!ref) return "direct";
-  if (ref.includes("facebook") || ref.includes("fb.")) return "facebook";
-  if (ref.includes("instagram")) return "instagram";
-  if (ref.includes("tiktok")) return "tiktok";
-  if (ref.includes("kupujemprodajem")) return "kupujemprodajem";
-  if (ref.includes("polovniautomobili")) return "polovniautomobili";
-  if (ref.includes("google")) return "google";
-  return "other";
-}
-
-function getVisitSourceLabel(source) {
-  return VISIT_SOURCE_LABELS[normalizeVisitSource(source)] || VISIT_SOURCE_LABELS.other;
-}
-
-function getSalonPublicSourceLink(slug, source) {
-  const base = getSalonPublicLink(slug);
-  const normalized = normalizeVisitSource(source);
-  if (!normalized || normalized === "direct") return base;
-  return `${base}&src=${encodeURIComponent(normalized)}`;
 }
 
 
@@ -822,7 +765,7 @@ async function registerPushForSalon(salonId) {
       return false;
     }
 
-    const registration = await navigator.serviceWorker.register("/sw.js?v=business6stats", { scope: "/" });
+    const registration = await navigator.serviceWorker.register("/sw.js?v=business6sourceqr", { scope: "/" });
     await navigator.serviceWorker.ready;
 
     let subscription = await registration.pushManager.getSubscription();
@@ -913,12 +856,8 @@ window.App = {
   getAppBaseUrl,
   getAppPath,
   getSalonPublicLink,
+  getSalonSourceLink,
   getQrImageUrl,
-  normalizeVisitSource,
-  getVisitSource,
-  getReferrerDomain,
-  getVisitSourceLabel,
-  getSalonPublicSourceLink,
   installApp,
   installSalonApp,
   installOwnerApp,
