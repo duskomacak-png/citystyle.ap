@@ -1264,3 +1264,152 @@ body[class*="theme-"] textarea:focus {
     font-size:14px!important;
   }
 }
+
+
+/* Modern simple phone without inner text */
+.cs-phone-shell{
+  width:min(100%,398px)!important;
+  min-height:594px!important;
+  padding:12px!important;
+  border-radius:42px!important;
+  background:linear-gradient(180deg,#05070a,#0f1217 55%,#14161d)!important;
+  border:1px solid rgba(255,255,255,.08)!important;
+  box-shadow:0 26px 80px rgba(0,0,0,.52),0 0 0 1px rgba(255,255,255,.03) inset!important;
+}
+.cs-phone-top{
+  width:88px!important;
+  height:6px!important;
+  margin:4px auto 12px!important;
+  border-radius:999px!important;
+  background:rgba(255,255,255,.26)!important;
+}
+.cs-phone-screen-showcase{
+  min-height:540px!important;
+  border-radius:30px!important;
+  overflow:hidden!important;
+  background:#0a0c10!important;
+  border:1px solid rgba(255,255,255,.06)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04)!important;
+}
+.cs-phone-gallery-card--minimal{
+  position:relative!important;
+  min-height:540px!important;
+  height:100%!important;
+  padding:0!important;
+  gap:0!important;
+}
+.cs-phone-gallery-card--minimal .cs-phone-gallery-slides{
+  position:absolute!important;
+  inset:0!important;
+  height:auto!important;
+  min-height:auto!important;
+  border-radius:30px!important;
+  border:0!important;
+  box-shadow:none!important;
+  background:#09090b!important;
+}
+.cs-phone-gallery-card--minimal .cs-phone-gallery-slides::after{
+  content:"";
+  position:absolute;
+  left:0;right:0;bottom:0;
+  height:80px;
+  background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.52));
+  pointer-events:none;
+  z-index:1;
+}
+.cs-phone-gallery-card--minimal .cs-phone-gallery-dots{
+  position:absolute!important;
+  left:50%!important;
+  bottom:14px!important;
+  transform:translateX(-50%)!important;
+  z-index:2!important;
+  gap:7px!important;
+  min-height:auto!important;
+  padding:8px 12px!important;
+  border-radius:999px!important;
+  background:rgba(0,0,0,.24)!important;
+  backdrop-filter:blur(6px)!important;
+}
+.cs-phone-gallery-card--minimal .cs-phone-gallery-dots button{
+  width:8px!important;
+  height:8px!important;
+}
+.cs-phone-gallery-card--minimal .cs-phone-gallery-dots button.active{
+  width:18px!important;
+}
+.cs-phone-gallery-card--minimal .cs-phone-slide{
+  object-fit:cover!important;
+  object-position:center center!important;
+}
+.cs-phone-ui-top,
+.cs-phone-gallery-meta,
+.cs-phone-gallery-caption,
+.cs-phone-gallery-counter{
+  display:none!important;
+}
+.cs-phone-fallback-minimal{
+  min-height:540px!important;
+  position:relative!important;
+  overflow:hidden!important;
+  padding:0!important;
+  border-radius:30px!important;
+  background:radial-gradient(circle at 50% 35%,rgba(239,68,68,.22),transparent 18rem),linear-gradient(180deg,#0a0c10,#10131a)!important;
+}
+.cs-phone-fallback-glow{
+  position:absolute;
+  inset:18% 22%;
+  border-radius:28px;
+  background:linear-gradient(135deg,rgba(239,68,68,.95),rgba(127,29,29,.82));
+  box-shadow:0 0 0 10px rgba(239,68,68,.08),0 20px 80px rgba(239,68,68,.18);
+}
+.cs-phone-fallback-badge{
+  position:absolute;
+  left:50%;top:50%;
+  width:96px;height:96px;
+  transform:translate(-50%,-50%);
+  border-radius:28px;
+  border:2px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.06);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);
+}
+.cs-phone-notice{
+  right:-6px!important;
+  bottom:58px!important;
+  max-width:205px!important;
+  font-size:14px!important;
+}
+@media (min-width:1100px){
+  .cs-hero-pro{
+    grid-template-columns:minmax(0,.98fr) minmax(400px,.78fr)!important;
+  }
+}
+@media (max-width:980px){
+  .cs-phone-shell{
+    width:min(100%,344px)!important;
+    min-height:548px!important;
+  }
+  .cs-phone-screen-showcase,
+  .cs-phone-gallery-card--minimal,
+  .cs-phone-fallback-minimal{
+    min-height:494px!important;
+  }
+}
+@media (max-width:620px){
+  .cs-phone-shell{
+    width:min(100%,332px)!important;
+    min-height:506px!important;
+    padding:10px!important;
+  }
+  .cs-phone-screen-showcase,
+  .cs-phone-gallery-card--minimal,
+  .cs-phone-fallback-minimal{
+    min-height:452px!important;
+  }
+  .cs-phone-notice{
+    position:relative!important;
+    right:auto!important;
+    bottom:auto!important;
+    margin:12px 0 0!important;
+    max-width:100%!important;
+  }
+}

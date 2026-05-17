@@ -197,30 +197,20 @@ async function renderPlatformLanding() {
   })).filter(item => item.url);
 
   const phoneDisplay = safeImages.length ? `
-    <div class="cs-phone-gallery-card" data-gallery-count="${Math.min(safeImages.length, 30)}">
-      <div class="cs-phone-ui-top"><span>‹</span><b>Vaš profil</b><span>•••</span></div>
-      <div class="cs-phone-gallery-slides">
+    <div class="cs-phone-gallery-card cs-phone-gallery-card--minimal" data-gallery-count="${Math.min(safeImages.length, 30)}">
+      <div class="cs-phone-gallery-slides" aria-label="Galerija slika iz admin panela">
         ${safeImages.slice(0, 30).map((item, i) => `
           <img class="cs-phone-slide ${i === 0 ? "active" : ""}" data-index="${i}" src="${item.url}" alt="Slika ${i + 1} iz admin galerije za početnu">
         `).join("")}
-      </div>
-      <div class="cs-phone-gallery-meta">
-        <strong class="cs-phone-gallery-caption">${safeImages[0].caption}</strong>
-        <span class="cs-phone-gallery-counter">1 / ${Math.min(safeImages.length, 30)}</span>
       </div>
       <div class="cs-phone-gallery-dots" aria-label="Automatska galerija slika na početnoj">
         ${safeImages.slice(0, 10).map((_, i) => `<button type="button" class="${i === 0 ? "active" : ""}" data-index="${i}" aria-label="Prikaži sliku ${i + 1}"></button>`).join("")}
       </div>
     </div>
   ` : `
-    <div class="cs-phone-fallback-profile">
-      <div class="mini-logo">QR</div>
-      <small>DIGITALNI PROFIL</small>
-      <h3>Vaš biznis</h3>
-      <p>Usluge • katalog • zakazivanje</p>
-      <div class="mini-action red">Zakaži termin</div>
-      <div class="mini-action">Pošalji upit</div>
-      <div class="mini-action">Sačuvaj prečicu</div>
+    <div class="cs-phone-fallback-profile cs-phone-fallback-minimal" aria-label="Primer prikaza telefona">
+      <div class="cs-phone-fallback-glow"></div>
+      <div class="cs-phone-fallback-badge"></div>
     </div>
   `;
 
