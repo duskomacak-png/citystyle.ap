@@ -1135,3 +1135,13 @@ body[class*="theme-"] textarea:focus {
 .cs-phone-gallery-dots button.active{width:18px;background:#ef4444}
 .cs-phone-gallery-dots button:hover{opacity:.85}
 @media(max-width:620px){.cs-phone-gallery-slides{height:240px}}
+
+/* Home phone gallery image fit improvement */
+.cs-phone-screen-showcase{display:flex}
+.cs-phone-gallery-card{display:grid;grid-template-rows:auto 1fr auto auto;align-items:stretch}
+.cs-phone-gallery-slides{height:auto;min-height:340px;display:block}
+.cs-phone-gallery-card .cs-phone-gallery-slides img.cs-phone-slide{object-position:center center;background:linear-gradient(180deg,rgba(5,5,10,.96),rgba(24,24,33,.96))}
+.cs-phone-gallery-card .cs-phone-gallery-slides img.cs-phone-slide.fit-cover{object-fit:cover}
+.cs-phone-gallery-card .cs-phone-gallery-slides img.cs-phone-slide.fit-contain{object-fit:contain;padding:10px}
+.cs-phone-gallery-card .cs-phone-gallery-slides img.cs-phone-slide.fit-tall{object-fit:contain;background:linear-gradient(180deg,rgba(5,5,10,.98),rgba(16,16,24,.98))}
+@media(max-width:620px){.cs-phone-gallery-slides{min-height:250px}}

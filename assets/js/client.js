@@ -345,7 +345,7 @@ function initPlatformHomePhoneGallery(images) {
   }
 
   const card = document.querySelector(".cs-phone-gallery-card");
-  if (!card || !Array.isArray(images) || images.length <= 1) return;
+  if (!card || !Array.isArray(images) || !images.length) return;
 
   const slides = Array.from(card.querySelectorAll(".cs-phone-slide"));
   const dots = Array.from(card.querySelectorAll(".cs-phone-gallery-dots button"));
@@ -353,6 +353,32 @@ function initPlatformHomePhoneGallery(images) {
   const counterEl = card.querySelector(".cs-phone-gallery-counter");
   const total = Math.min(slides.length, 30);
   let current = 0;
+
+  function applyImageFit(slide) {
+    if (!slide) return;
+    const finalizeFit = () => {
+      const naturalWidth = Number(slide.naturalWidth || 0);
+      const naturalHeight = Number(slide.naturalHeight || 0);
+      if (!naturalWidth || !naturalHeight) return;
+      const ratio = naturalWidth / naturalHeight;
+      slide.classList.remove("fit-cover", "fit-contain", "fit-tall");
+      if (ratio >= 0.88 && ratio <= 1.12) {
+        slide.classList.add("fit-contain");
+      } else if (ratio < 0.72) {
+        slide.classList.add("fit-tall");
+      } else {
+        slide.classList.add("fit-cover");
+      }
+    };
+
+    if (slide.complete) {
+      finalizeFit();
+    } else {
+      slide.addEventListener("load", finalizeFit, { once: true });
+    }
+  }
+
+  slides.forEach((slide) => applyImageFit(slide));
 
   function showSlide(nextIndex) {
     current = ((nextIndex % total) + total) % total;
@@ -369,11 +395,16 @@ function initPlatformHomePhoneGallery(images) {
       if (window._platformHomeGalleryTimer) {
         clearInterval(window._platformHomeGalleryTimer);
       }
-      window._platformHomeGalleryTimer = setInterval(() => showSlide(current + 1), 10000);
+      if (total > 1) {
+        window._platformHomeGalleryTimer = setInterval(() => showSlide(current + 1), 10000);
+      }
     });
   });
 
-  window._platformHomeGalleryTimer = setInterval(() => showSlide(current + 1), 10000);
+  showSlide(0);
+  if (total > 1) {
+    window._platformHomeGalleryTimer = setInterval(() => showSlide(current + 1), 10000);
+  }
 }
 
 function scrollToHowItWorks() {
