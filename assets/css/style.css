@@ -1014,3 +1014,50 @@ body[class*="theme-"] textarea:focus {
 .business-type-helper strong{color:var(--text)}
 .admin-modal-actions{justify-content:flex-end}
 @media(max-width:720px){.admin-form-grid{grid-template-columns:1fr}.admin-modal-actions{justify-content:stretch}.admin-modal-actions .btn{width:100%}}
+
+/* Visit statistics - Business V6 */
+.visit-stats-grid {
+  margin-bottom: 16px;
+}
+.stats-card {
+  margin-bottom: 16px;
+}
+.tracking-links-list {
+  display: grid;
+  gap: 10px;
+}
+.tracking-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.035);
+}
+.tracking-link-row div {
+  min-width: 0;
+}
+.tracking-link-row strong,
+.tracking-link-row small {
+  display: block;
+}
+.tracking-link-row small {
+  margin-top: 4px;
+  word-break: break-all;
+  color: var(--muted);
+}
+.visit-source-table td:last-child,
+.visit-source-table th:last-child {
+  text-align: right;
+}
+@media (max-width: 720px) {
+  .tracking-link-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .tracking-link-row .btn {
+    width: 100%;
+  }
+}
