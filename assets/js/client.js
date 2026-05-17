@@ -183,11 +183,12 @@ function renderPlatformLanding() {
 
       <section class="sales-hero">
         <div class="sales-hero-content">
-          <span class="eyebrow">QR mini aplikacija za salone, radnje, servise i male biznise</span>
-          <h1>Vaš biznis dobija svoj digitalni profil preko QR koda.</h1>
+          <span class="eyebrow">QR profil, katalog i prijem zahteva za lokalne biznise</span>
+          <h1>Jedan QR kod koji vodi klijenta pravo do vašeg biznisa.</h1>
           <p class="hero-lead">
-            CityStyle.app omogućava da klijent skenira QR kod, vidi vaše usluge, proizvode, cene,
-            radno vreme i pošalje zahtev ili zakaže termin. Vlasnik dobija obaveštenje na telefonu.
+            CityStyle.app omogućava da klijent skenira QR kod i odmah vidi usluge, cenovnik,
+            galeriju radova, proizvode, radno vreme i kontakt. Može da pošalje zahtev, prijavi problem,
+            zakaže termin ili pita za proizvod, a vlasnik dobija zvučno i vizuelno obaveštenje.
           </p>
           <div class="hero-buttons simple-buttons">
             <a class="btn btn-primary" href="salon/">Ulaz za vlasnika biznisa</a>
@@ -198,14 +199,15 @@ function renderPlatformLanding() {
             Za pristup konkretnom biznisu koristite QR kod ili link koji ste dobili od tog biznisa.
           </p>
         </div>
-        <div class="sales-hero-phone" aria-label="Primer digitalnog profila">
-          <div class="phone-preview-card">
-            <div class="phone-logo">CS</div>
-            <h3>Demo biznis profil</h3>
-            <p>Usluge • Proizvodi • Termini • Kontakt</p>
-            <div class="phone-list-item"><span>Šišanje / usluga</span><b>od 800 RSD</b></div>
-            <div class="phone-list-item"><span>Proizvod u katalogu</span><b>1.200 RSD</b></div>
-            <button class="btn btn-primary" type="button">Pošalji zahtev</button>
+        <div class="sales-hero-phone" aria-label="Šta omogućava CityStyle.app">
+          <div class="phone-preview-card platform-benefit-card">
+            <div class="phone-logo">QR</div>
+            <h3>Profil koji radi za više tipova biznisa</h3>
+            <p>Salon • Majstor • Katalog • Garaža</p>
+            <div class="phone-list-item"><span>Usluge i cenovnik</span><b>✓</b></div>
+            <div class="phone-list-item"><span>Galerija radova</span><b>✓</b></div>
+            <div class="phone-list-item"><span>Proizvodi / oglasi</span><b>✓</b></div>
+            <div class="phone-list-item"><span>Statistika QR poseta</span><b>✓</b></div>
           </div>
         </div>
       </section>
@@ -214,17 +216,17 @@ function renderPlatformLanding() {
         <article class="sales-feature-card">
           <span>01</span>
           <h2>Sopstveni QR profil</h2>
-          <p>Svaki biznis dobija svoj link i QR kod. Korisnik odmah otvara profil tog biznisa.</p>
+          <p>Svaki biznis dobija svoj link i QR kod. Klijent odmah otvara pravi profil, bez traženja po internetu.</p>
         </article>
         <article class="sales-feature-card">
           <span>02</span>
-          <h2>Usluge i proizvodi</h2>
-          <p>Vlasnik unosi usluge, cene, proizvode, opis, status i osnovne informacije.</p>
+          <h2>Ponuda na jednom mestu</h2>
+          <p>Usluge, cenovnik, proizvodi, galerija radova, radno vreme i kontakt stoje uredno u jednom profilu.</p>
         </article>
         <article class="sales-feature-card">
           <span>03</span>
-          <h2>Zahtevi i notifikacije</h2>
-          <p>Kada korisnik zakaže termin ili pošalje zahtev, vlasnik ga vidi u svom panelu.</p>
+          <h2>Obaveštenja i statistika</h2>
+          <p>Vlasnik dobija obaveštenje za nove zahteve i vidi iz kojih QR/link izvora dolaze posete.</p>
         </article>
       </section>
 
@@ -232,13 +234,13 @@ function renderPlatformLanding() {
         <span class="eyebrow">Za koga je platforma?</span>
         <h2>Za salone, radnje, servise, majstore i lokalne biznise.</h2>
         <div class="business-types-grid">
-          <div>Frizerski saloni</div>
-          <div>Kozmetički saloni</div>
-          <div>Vulkanizeri</div>
-          <div>Auto servisi</div>
-          <div>Majstori</div>
-          <div>Moleri</div>
-          <div>Male radnje</div>
+          <div>Frizerski i kozmetički saloni</div>
+          <div>Majstori za grejanje i hlađenje</div>
+          <div>Keramičari, moleri i zanatlije</div>
+          <div>Vulkanizeri i auto servisi</div>
+          <div>Male radnje i katalozi</div>
+          <div>Prodaja opreme i proizvoda</div>
+          <div>Auto-placevi i Garaža oglasi</div>
           <div>Servisi i radionice</div>
         </div>
       </section>
@@ -247,13 +249,17 @@ function renderPlatformLanding() {
         <span class="eyebrow">Šta dobija vlasnik?</span>
         <h2>Jednostavan alat koji izgleda kao mala aplikacija vašeg biznisa.</h2>
         <div class="check-grid">
-          <div>✓ naziv i logo biznisa</div>
+          <div>✓ naziv, logo i opis biznisa</div>
           <div>✓ javni QR profil</div>
-          <div>✓ usluge sa cenama</div>
+          <div>✓ usluge i cenovnik</div>
           <div>✓ proizvodi / katalog</div>
-          <div>✓ radno vreme</div>
-          <div>✓ zakazivanje termina</div>
-          <div>✓ obaveštenja za nove zahteve</div>
+          <div>✓ galerija radova</div>
+          <div>✓ Garaža oglasi za vozila i mašine</div>
+          <div>✓ zakazivanje, upiti i prijave problema</div>
+          <div>✓ zvučne i vizuelne notifikacije</div>
+          <div>✓ QR kodovi po izvoru reklame</div>
+          <div>✓ statistika poseta po izvorima</div>
+          <div>✓ radno vreme i kontakt</div>
           <div>✓ panel za vlasnika</div>
         </div>
       </section>
@@ -270,13 +276,14 @@ function renderPlatformLanding() {
 
       <section class="sales-section pricing-section">
         <div>
-          <span class="eyebrow">Jednostavna cena</span>
-          <h2>9.99€ mesečno po biznis profilu</h2>
+          <span class="eyebrow">Paketi prema potrebi biznisa</span>
+          <h2>Od jednostavnog QR profila do kataloga i Garaža oglasa.</h2>
           <p class="muted">
-            Bez komplikovanih paketa u prvoj verziji. Aktivacija, podešavanje i saradnja se dogovaraju direktno.
+            Aktivacija, podešavanje i paket se dogovaraju direktno prema tome šta biznis želi da prikaže:
+            usluge, proizvode, galeriju radova, prijave problema ili oglase za vozila i mašine.
           </p>
         </div>
-        <a class="btn btn-primary" href="mailto:duskomacak@gmail.com?subject=CityStyle.app%20aktivacija%20profila">Zatraži aktivaciju</a>
+        <a class="btn btn-primary" href="mailto:duskomacak@gmail.com?subject=CityStyle.app%20aktivacija%20profila">Zatraži informacije</a>
       </section>
 
       <section class="legal-notice-box">
