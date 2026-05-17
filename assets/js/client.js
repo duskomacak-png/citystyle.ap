@@ -253,6 +253,10 @@ async function renderPlatformLanding() {
             <div class="cs-phone-screen-showcase">${phoneDisplay}</div>
             <div class="cs-phone-notice">🔔 Novi zahtev je stigao</div>
           </div>
+          <div class="cs-phone-install-actions" aria-label="Preuzimanje CityStyle aplikacije">
+            <button class="btn btn-primary cs-home-install-btn" type="button" onclick="installApp('Na telefonu otvorite meni browsera i izaberite Dodaj na početni ekran. Ako koristite iPhone: Share → Add to Home Screen.', 'CityStyle app je dodata na telefon.')">📱 Preuzmi app</button>
+            <p>Vlasnik može dodati CityStyle kao prečicu/app za brži ulaz.</p>
+          </div>
         </div>
       </section>
 
