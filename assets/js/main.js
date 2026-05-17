@@ -49,6 +49,56 @@ function showMessage(message, type = "info") {
   setTimeout(() => toast.remove(), 3500);
 }
 
+
+async function copyText(text, buttonEl = null) {
+  const value = String(text || window.location.href || "");
+  const originalText = buttonEl ? buttonEl.textContent : "";
+
+  function markDone() {
+    if (buttonEl) {
+      buttonEl.textContent = "Link je kopiran";
+      setTimeout(() => { buttonEl.textContent = originalText || "Kopiraj link profila"; }, 2200);
+    }
+    showMessage("Link profila je kopiran.", "success");
+  }
+
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(value);
+      markDone();
+      return true;
+    }
+  } catch (err) {
+    console.warn("Clipboard API nije uspeo, koristi se fallback:", err);
+  }
+
+  try {
+    const area = document.createElement("textarea");
+    area.value = value;
+    area.setAttribute("readonly", "readonly");
+    area.style.position = "fixed";
+    area.style.left = "-9999px";
+    area.style.top = "0";
+    document.body.appendChild(area);
+    area.focus();
+    area.select();
+    const ok = document.execCommand("copy");
+    area.remove();
+    if (ok) {
+      markDone();
+      return true;
+    }
+  } catch (err) {
+    console.warn("Fallback copy nije uspeo:", err);
+  }
+
+  showMessage("Telefon nije dozvolio automatsko kopiranje. Označite i kopirajte link ručno.", "error");
+  window.prompt("Kopirajte link profila:", value);
+  return false;
+}
+
+window.copyText = copyText;
+
 function formatDate(dateString) {
   if (!dateString) return "";
   const date = new Date(dateString + (String(dateString).includes("T") ? "" : "T00:00:00"));
@@ -568,7 +618,7 @@ function updateManifestForOwner() {
     name: "CityStyle - Panel vlasnika",
     short_name: "CityStyle",
     description: "Prečica za direktan ulaz u panel vlasnika biznisa.",
-    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=business10pwa`,
+    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=business11copyfix`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -643,7 +693,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=business10pwa`,
+    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=business11copyfix`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -693,7 +743,7 @@ function showInstallHelp(noPromptMessage = "Na iPhone-u: Share → Add to Home S
       <p>${escapeHtml(noPromptMessage)}</p>
       <p class="muted">Ako browser ne ponudi instalaciju, to je ograničenje telefona/browsera kada je CityStyle već instaliran. Link ovog profila možete kopirati i ručno dodati kao prečicu.</p>
       <div class="card-actions center">
-        <button class="btn btn-primary" type="button" onclick="copyText('${escapeJs(currentUrl)}')">Kopiraj link profila</button>
+        <button class="btn btn-primary" type="button" onclick="copyText('${escapeJs(currentUrl)}', this)">Kopiraj link profila</button>
         <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
       </div>
     </div>
@@ -799,7 +849,7 @@ async function registerPushForSalon(salonId) {
       return false;
     }
 
-    const registration = await navigator.serviceWorker.register("/sw.js?v=business10pwa", { scope: "/" });
+    const registration = await navigator.serviceWorker.register("/sw.js?v=business11copyfix", { scope: "/" });
     await navigator.serviceWorker.ready;
 
     let subscription = await registration.pushManager.getSubscription();
