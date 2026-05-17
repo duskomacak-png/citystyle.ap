@@ -1,5 +1,7 @@
 // assets/js/admin.js
 
+let adminPlatformHomeImagesCache = [];
+
 
 function adminEscapeHtml(value) {
   return window.App?.escapeHtml ? window.App.escapeHtml(value) : String(value || "")
@@ -412,6 +414,7 @@ function renderAdminDashboard() {
       </div>
       <div class="toolbar-actions">
         <button class="btn btn-primary" type="button" onclick="showAddSalonForm()">Dodaj biznis profil</button>
+        <button class="btn btn-dark" type="button" onclick="showPlatformHomeImagesModal()">Slike za početnu</button>
         <button class="btn btn-dark" type="button" onclick="handleAdminLogout()">Odjavi se</button>
       </div>
     </div>
@@ -425,6 +428,212 @@ function renderAdminDashboard() {
     <div id="salons-list"><div class="loading-box">Učitavanje profila...</div></div>
   `;
 }
+
+function showPlatformHomeImagesModal() {
+  const old = document.querySelector(".admin-platform-home-modal");
+  if (old) old.remove();
+
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop admin-platform-home-modal";
+  modal.innerHTML = `
+    <div class="modal-card admin-platform-home-card" role="dialog" aria-modal="true" aria-label="Slike za početnu stranicu">
+      <div class="section-head compact-section-head">
+        <div>
+          <h2>📱 Slike u telefonu na početnoj</h2>
+          <p class="muted">Admin može dodati do 30 slika. One se prikazuju u displeju telefona na naslovnoj strani.</p>
+        </div>
+        <button class="btn btn-dark btn-small" type="button" onclick="closePlatformHomeImagesModal()">Zatvori</button>
+      </div>
+      <div class="card admin-home-upload-card">
+        <label for="platform-home-images-input">Dodaj slike za displej telefona</label>
+        <input id="platform-home-images-input" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+        <label for="platform-home-caption-input">Kratak natpis za slike</label>
+        <input id="platform-home-caption-input" type="text" maxlength="80" placeholder="npr. Galerija biznisa, Katalog proizvoda, Garaža ponuda...">
+        <p class="muted">Dozvoljeno: JPG, PNG, WEBP. Maksimalno 5 MB po slici. Prvo treba pokrenuti SQL za tabelu <b>platform_home_images</b>.</p>
+        <div class="card-actions">
+          <button class="btn btn-primary" type="button" onclick="uploadPlatformHomeImages()">Upload slika</button>
+        </div>
+      </div>
+      <div id="platform-home-images-status" class="muted">Učitavanje slika...</div>
+      <div id="platform-home-images-grid" class="admin-platform-gallery-grid"></div>
+    </div>
+  `;
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) closePlatformHomeImagesModal();
+  });
+  document.body.appendChild(modal);
+  loadPlatformHomeImagesForAdmin();
+}
+
+function closePlatformHomeImagesModal() {
+  document.querySelector(".admin-platform-home-modal")?.remove();
+}
+
+async function loadPlatformHomeImagesForAdmin() {
+  const status = document.getElementById("platform-home-images-status");
+  const grid = document.getElementById("platform-home-images-grid");
+  if (!status || !grid) return;
+
+  try {
+    const { data, error } = await window.db
+      .from("platform_home_images")
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      status.innerHTML = `<span class="error-text">Tabela platform_home_images nije dostupna ili SQL nije pokrenut. Pokreni SQL koji sam ti dao ispod poruke, pa probaj ponovo.</span>`;
+      grid.innerHTML = "";
+      return;
+    }
+
+    adminPlatformHomeImagesCache = data || [];
+    renderPlatformHomeImagesAdmin();
+  } catch (err) {
+    console.error(err);
+    status.innerHTML = `<span class="error-text">Greška pri učitavanju slika za početnu.</span>`;
+  }
+}
+
+function renderPlatformHomeImagesAdmin() {
+  const status = document.getElementById("platform-home-images-status");
+  const grid = document.getElementById("platform-home-images-grid");
+  if (!status || !grid) return;
+
+  const items = adminPlatformHomeImagesCache || [];
+  const activeCount = items.filter(item => item.active !== false).length;
+  status.innerHTML = `<strong>${activeCount}/30 aktivnih slika</strong> za telefon na početnoj strani. Slike se prikazuju po redosledu sortiranja.`;
+
+  if (!items.length) {
+    grid.innerHTML = `<div class="card center"><h3>Još nema slika</h3><p class="muted">Dodaj prve slike i displej telefona na početnoj će prikazati galeriju.</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = items.map((item, index) => `
+    <div class="admin-platform-image-card ${item.active === false ? "muted-image" : ""}">
+      <img src="${adminEscapeHtml(item.image_url)}" alt="Slika za početnu ${index + 1}">
+      <div>
+        <strong>${adminEscapeHtml(item.caption || "Galerija biznisa")}</strong>
+        <small>${item.active === false ? "Sakriveno" : "Aktivno"} • sort: ${Number(item.sort_order || 100)}</small>
+      </div>
+      <div class="card-actions admin-image-actions">
+        <button class="btn btn-dark btn-small" type="button" onclick="togglePlatformHomeImage('${item.id}', ${item.active === false ? "true" : "false"})">${item.active === false ? "Prikaži" : "Sakrij"}</button>
+        <button class="btn btn-dark btn-small" type="button" onclick="editPlatformHomeImageSort('${item.id}', ${Number(item.sort_order || 100)})">Sort</button>
+        <button class="btn btn-danger btn-small" type="button" onclick="deletePlatformHomeImage('${item.id}', '${adminEscapeJs(item.image_url)}')">Obriši</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+async function uploadPlatformHomeImages() {
+  const input = document.getElementById("platform-home-images-input");
+  const captionInput = document.getElementById("platform-home-caption-input");
+  const files = Array.from(input?.files || []);
+  const caption = (captionInput?.value || "Galerija biznisa").trim().slice(0, 80) || "Galerija biznisa";
+  const activeCount = (adminPlatformHomeImagesCache || []).filter(item => item.active !== false).length;
+  const freeSlots = Math.max(0, 30 - activeCount);
+
+  if (!files.length) {
+    window.App.showMessage("Izaberi bar jednu sliku.", "error");
+    return;
+  }
+
+  if (freeSlots <= 0) {
+    window.App.showMessage("Već imaš 30 aktivnih slika. Prvo sakrij ili obriši neku sliku.", "error");
+    return;
+  }
+
+  if (files.length > freeSlots) {
+    window.App.showMessage(`Možeš dodati još ${freeSlots} aktivnih slika. Izabrano je ${files.length}.`, "error");
+    return;
+  }
+
+  const button = document.querySelector(".admin-home-upload-card .btn-primary");
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Upload u toku...";
+  }
+
+  try {
+    const rows = [];
+    let nextSort = Math.max(0, ...(adminPlatformHomeImagesCache || []).map(item => Number(item.sort_order || 0))) + 10;
+
+    for (const file of files) {
+      const url = await window.StorageHelper.uploadImage(file, "platform-home", "landing");
+      if (!url) continue;
+      rows.push({
+        image_url: url,
+        caption,
+        sort_order: nextSort,
+        active: true
+      });
+      nextSort += 10;
+    }
+
+    if (!rows.length) {
+      window.App.showMessage("Nijedna slika nije uploadovana.", "error");
+      return;
+    }
+
+    const { error } = await window.db.from("platform_home_images").insert(rows);
+    if (error) {
+      console.error(error);
+      window.App.showMessage("Upload slika je uspeo, ali upis u tabelu nije. Proveri SQL/RLS.", "error");
+      return;
+    }
+
+    if (input) input.value = "";
+    window.App.showMessage("Slike za početnu su dodate.", "success");
+    await loadPlatformHomeImagesForAdmin();
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Upload slika";
+    }
+  }
+}
+
+async function togglePlatformHomeImage(id, nextActive) {
+  const { error } = await window.db.from("platform_home_images").update({ active: !!nextActive }).eq("id", id);
+  if (error) {
+    console.error(error);
+    window.App.showMessage("Greška pri izmeni vidljivosti slike.", "error");
+    return;
+  }
+  await loadPlatformHomeImagesForAdmin();
+}
+
+async function editPlatformHomeImageSort(id, currentSort) {
+  const entered = prompt("Redosled slike na početnoj (manji broj ide pre):", String(currentSort || 100));
+  if (entered === null) return;
+  const sortOrder = Number(entered);
+  if (!Number.isFinite(sortOrder)) {
+    window.App.showMessage("Sort mora biti broj.", "error");
+    return;
+  }
+  const { error } = await window.db.from("platform_home_images").update({ sort_order: sortOrder }).eq("id", id);
+  if (error) {
+    console.error(error);
+    window.App.showMessage("Greška pri izmeni sort redosleda.", "error");
+    return;
+  }
+  await loadPlatformHomeImagesForAdmin();
+}
+
+async function deletePlatformHomeImage(id, imageUrl) {
+  if (!confirm("Obrisati ovu sliku sa početne strane?")) return;
+  const { error } = await window.db.from("platform_home_images").delete().eq("id", id);
+  if (error) {
+    console.error(error);
+    window.App.showMessage("Greška pri brisanju slike iz baze.", "error");
+    return;
+  }
+  try { await window.StorageHelper.deleteImage(imageUrl); } catch (err) { console.warn(err); }
+  window.App.showMessage("Slika je obrisana.", "success");
+  await loadPlatformHomeImagesForAdmin();
+}
+
 
 async function loadSalonsList() {
   const list = document.getElementById("salons-list");
