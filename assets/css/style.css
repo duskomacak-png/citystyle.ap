@@ -1136,12 +1136,13 @@ body[class*="theme-"] textarea:focus {
 .cs-phone-gallery-dots button:hover{opacity:.85}
 @media(max-width:620px){.cs-phone-gallery-slides{height:240px}}
 
-/* Home phone gallery image fit improvement */
-.cs-phone-screen-showcase{display:flex}
-.cs-phone-gallery-card{display:grid;grid-template-rows:auto 1fr auto auto;align-items:stretch}
-.cs-phone-gallery-slides{height:auto;min-height:340px;display:block}
-.cs-phone-gallery-card .cs-phone-gallery-slides img.cs-phone-slide{object-position:center center;background:linear-gradient(180deg,rgba(5,5,10,.96),rgba(24,24,33,.96))}
-.cs-phone-gallery-card .cs-phone-gallery-slides img.cs-phone-slide.fit-cover{object-fit:cover}
-.cs-phone-gallery-card .cs-phone-gallery-slides img.cs-phone-slide.fit-contain{object-fit:contain;padding:10px}
-.cs-phone-gallery-card .cs-phone-gallery-slides img.cs-phone-slide.fit-tall{object-fit:contain;background:linear-gradient(180deg,rgba(5,5,10,.98),rgba(16,16,24,.98))}
-@media(max-width:620px){.cs-phone-gallery-slides{min-height:250px}}
+/* Home phone gallery FINAL full-screen phone display fix */
+.cs-phone-screen-showcase{display:block;min-height:452px}
+.cs-phone-gallery-card{height:100%;min-height:452px;display:flex;flex-direction:column;padding:14px;gap:10px}
+.cs-phone-gallery-slides{position:relative!important;width:100%!important;height:342px!important;min-height:342px!important;border-radius:24px!important;overflow:hidden!important;border:1px solid rgba(255,255,255,.13)!important;box-shadow:0 20px 44px rgba(0,0,0,.32)!important;background:#09090b!important}
+.cs-phone-gallery-card .cs-phone-gallery-slides img.cs-phone-slide{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important;object-position:center center!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#09090b!important;opacity:0;transform:scale(1.01);transition:opacity .65s ease,transform 1s ease;pointer-events:none}
+.cs-phone-gallery-card .cs-phone-gallery-slides img.cs-phone-slide.active{opacity:1!important;transform:scale(1)!important;pointer-events:auto}
+.cs-phone-gallery-meta{margin-top:2px}
+.cs-phone-gallery-caption{max-width:68%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cs-phone-gallery-dots{min-height:14px}
+@media(max-width:620px){.cs-phone-screen-showcase{min-height:420px}.cs-phone-gallery-card{min-height:420px}.cs-phone-gallery-slides{height:300px!important;min-height:300px!important}}

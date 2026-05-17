@@ -354,32 +354,6 @@ function initPlatformHomePhoneGallery(images) {
   const total = Math.min(slides.length, 30);
   let current = 0;
 
-  function applyImageFit(slide) {
-    if (!slide) return;
-    const finalizeFit = () => {
-      const naturalWidth = Number(slide.naturalWidth || 0);
-      const naturalHeight = Number(slide.naturalHeight || 0);
-      if (!naturalWidth || !naturalHeight) return;
-      const ratio = naturalWidth / naturalHeight;
-      slide.classList.remove("fit-cover", "fit-contain", "fit-tall");
-      if (ratio >= 0.88 && ratio <= 1.12) {
-        slide.classList.add("fit-contain");
-      } else if (ratio < 0.72) {
-        slide.classList.add("fit-tall");
-      } else {
-        slide.classList.add("fit-cover");
-      }
-    };
-
-    if (slide.complete) {
-      finalizeFit();
-    } else {
-      slide.addEventListener("load", finalizeFit, { once: true });
-    }
-  }
-
-  slides.forEach((slide) => applyImageFit(slide));
-
   function showSlide(nextIndex) {
     current = ((nextIndex % total) + total) % total;
     slides.forEach((slide, i) => slide.classList.toggle("active", i === current));
