@@ -1255,7 +1255,7 @@ async function loadGarageListings() {
             <div class="card-actions wrap-actions">
               ${adminOwnerPreviewMode ? "" : `
                 <button class="btn btn-dark btn-small" type="button" onclick="showGarageForm('${salonEscapeJs(item.id)}')">Izmeni</button>
-                <button class="btn btn-dark btn-small" type="button" onclick="showGarageImages('${salonEscapeJs(item.id)}')">Slike ${images.length}/${garageMaxImages()}</button>
+                <button class="btn btn-dark btn-small" type="button" onclick="showGarageImages('${salonEscapeJs(item.id)}')">Slike ${images.length}/${getGarageImageLimit()}</button>
                 <button class="btn btn-dark btn-small" type="button" onclick="setGarageStatus('${salonEscapeJs(item.id)}','${item.status === 'hidden' ? 'available' : 'hidden'}')">${item.status === 'hidden' ? 'Prikaži' : 'Sakrij'}</button>
                 <button class="btn btn-dark btn-small" type="button" onclick="setGarageStatus('${salonEscapeJs(item.id)}','reserved')">Rezervisano</button>
                 <button class="btn btn-dark btn-small" type="button" onclick="setGarageStatus('${salonEscapeJs(item.id)}','sold')">Prodato</button>
@@ -1289,7 +1289,6 @@ async function showGarageForm(listingId = "") {
   box.innerHTML = `
     <div class="card">
       <h3>${item ? "Izmeni oglas" : "Dodaj oglas u Garažu"}</h3>
-      <p class="muted garage-help-text"><strong>Slike oglasa:</strong> prvo sačuvajte oglas, pa na kartici oglasa kliknite <strong>Slike 0/10</strong> za dodavanje do ${garageMaxImages()} fotografija.</p>
       <div class="form-grid two-cols">
         <label>Naslov oglasa *<input id="garage-title" type="text" value="${salonEscapeHtml(item?.title || '')}" placeholder="Audi A4 2016 / CAT 330"></label>
         <label>Tip ponude
@@ -1320,6 +1319,10 @@ async function showGarageForm(listingId = "") {
         <label>Redosled<input id="garage-sort" type="number" value="${salonEscapeHtml(item?.sort_order ?? 100)}"></label>
       </div>
       <label>Opis oglasa<textarea id="garage-description" rows="4" placeholder="Opis stanja, opreme, napomena...">${salonEscapeHtml(item?.description || '')}</textarea></label>
+      <div class="card mini-card garage-help-box">
+        <strong>Slike oglasa</strong>
+        <p class="muted">Prvo sačuvajte oglas, zatim na kartici oglasa kliknite <strong>Slike 0/${getGarageImageLimit()}</strong> za dodavanje do ${getGarageImageLimit()} fotografija. Svaka slika se može trajno obrisati.</p>
+      </div>
       <div class="form-actions">
         <button class="btn btn-primary" type="button" onclick="saveGarageListing('${salonEscapeJs(listingId)}')">Sačuvaj oglas</button>
         <button class="btn btn-dark" type="button" onclick="document.getElementById('garage-form-box').innerHTML=''">Otkaži</button>
