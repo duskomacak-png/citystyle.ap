@@ -197,15 +197,19 @@ async function renderPlatformLanding() {
   })).filter(item => item.url);
 
   const phoneDisplay = safeImages.length ? `
-    <div class="cs-phone-gallery-card">
+    <div class="cs-phone-gallery-card" data-gallery-count="${Math.min(safeImages.length, 30)}">
       <div class="cs-phone-ui-top"><span>‹</span><b>Vaš profil</b><span>•••</span></div>
-      <img src="${safeImages[0].url}" alt="Slika iz admin galerije za početnu">
-      <div class="cs-phone-gallery-meta">
-        <strong>${safeImages[0].caption}</strong>
-        <span>1 / ${Math.min(safeImages.length, 30)}</span>
+      <div class="cs-phone-gallery-slides">
+        ${safeImages.slice(0, 30).map((item, i) => `
+          <img class="cs-phone-slide ${i === 0 ? "active" : ""}" data-index="${i}" src="${item.url}" alt="Slika ${i + 1} iz admin galerije za početnu">
+        `).join("")}
       </div>
-      <div class="cs-phone-gallery-dots">
-        ${safeImages.slice(0, 10).map((_, i) => `<span class="${i === 0 ? "active" : ""}"></span>`).join("")}
+      <div class="cs-phone-gallery-meta">
+        <strong class="cs-phone-gallery-caption">${safeImages[0].caption}</strong>
+        <span class="cs-phone-gallery-counter">1 / ${Math.min(safeImages.length, 30)}</span>
+      </div>
+      <div class="cs-phone-gallery-dots" aria-label="Automatska galerija slika na početnoj">
+        ${safeImages.slice(0, 10).map((_, i) => `<button type="button" class="${i === 0 ? "active" : ""}" data-index="${i}" aria-label="Prikaži sliku ${i + 1}"></button>`).join("")}
       </div>
     </div>
   ` : `
@@ -331,7 +335,47 @@ async function renderPlatformLanding() {
       </footer>
     </section>
   `;
+  initPlatformHomePhoneGallery(safeImages);
 }
+
+function initPlatformHomePhoneGallery(images) {
+  if (window._platformHomeGalleryTimer) {
+    clearInterval(window._platformHomeGalleryTimer);
+    window._platformHomeGalleryTimer = null;
+  }
+
+  const card = document.querySelector(".cs-phone-gallery-card");
+  if (!card || !Array.isArray(images) || images.length <= 1) return;
+
+  const slides = Array.from(card.querySelectorAll(".cs-phone-slide"));
+  const dots = Array.from(card.querySelectorAll(".cs-phone-gallery-dots button"));
+  const captionEl = card.querySelector(".cs-phone-gallery-caption");
+  const counterEl = card.querySelector(".cs-phone-gallery-counter");
+  const total = Math.min(slides.length, 30);
+  let current = 0;
+
+  function showSlide(nextIndex) {
+    current = ((nextIndex % total) + total) % total;
+    slides.forEach((slide, i) => slide.classList.toggle("active", i === current));
+    dots.forEach((dot, i) => dot.classList.toggle("active", i === current));
+    if (captionEl) captionEl.textContent = images[current]?.caption || "Galerija biznisa";
+    if (counterEl) counterEl.textContent = `${current + 1} / ${total}`;
+  }
+
+  dots.forEach((dot) => {
+    dot.addEventListener("click", () => {
+      const index = Number(dot.dataset.index || 0);
+      showSlide(index);
+      if (window._platformHomeGalleryTimer) {
+        clearInterval(window._platformHomeGalleryTimer);
+      }
+      window._platformHomeGalleryTimer = setInterval(() => showSlide(current + 1), 10000);
+    });
+  });
+
+  window._platformHomeGalleryTimer = setInterval(() => showSlide(current + 1), 10000);
+}
+
 function scrollToHowItWorks() {
   document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" });
 }
