@@ -1421,3 +1421,29 @@ body[class*="theme-"] textarea:focus {
 .cs-phone-install-actions .cs-home-install-btn{width:100%;max-width:280px;font-size:16px;padding:14px 18px;border-radius:16px;box-shadow:0 18px 42px rgba(220,38,38,.24)}
 .cs-phone-install-actions p{margin:0;color:#d4d4d8;font-size:13px;font-weight:700;line-height:1.35;max-width:330px}
 @media(max-width:620px){.cs-phone-install-actions{width:100%}.cs-phone-install-actions .cs-home-install-btn{max-width:100%}}
+
+/* === SAFE UI DETAIL: thin red borders on actions and form fields === */
+button,
+a.btn,
+.btn,
+.button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"]{
+  border:1px solid rgba(239,68,68,.72)!important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+textarea,
+select{
+  border:1px solid rgba(239,68,68,.72)!important;
+  outline-color:rgba(239,68,68,.72)!important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):focus,
+textarea:focus,
+select:focus{
+  border-color:rgba(248,113,113,.95)!important;
+  box-shadow:0 0 0 2px rgba(239,68,68,.14)!important;
+}

@@ -226,7 +226,6 @@ async function renderPlatformLanding() {
         </a>
         <div class="landing-actions nav-actions">
           <a class="btn btn-dark" href="salon/">Ulaz za vlasnika</a>
-          <a class="btn btn-primary subtle-admin-link" href="admin/">Admin panel</a>
         </div>
       </header>
 
@@ -328,6 +327,7 @@ async function renderPlatformLanding() {
           <button type="button" class="footer-link-btn" onclick="openLegalModal('terms')">Uslovi korišćenja</button>
           <button type="button" class="footer-link-btn" onclick="openLegalModal('privacy')">Politika privatnosti</button>
           <a href="mailto:duskomacak@gmail.com">Kontakt</a>
+          <a class="subtle-admin-link" href="admin/">Admin panel</a>
         </div>
       </footer>
     </section>
