@@ -101,15 +101,18 @@ async function loadClientApp() {
       return;
     }
 
-    // If an owner installed CityStyle and is already logged in, open the owner panel directly.
+    // If an owner is already logged in on this device, open the owner panel directly.
+    // This works both in the installed PWA and in a normal browser, so owners do not
+    // have to type email + company code every time they open citystyle.app.
+    // Public QR/profile links are handled above by ?salon=slug and are not affected.
     const isStandalone = window.App?.isStandaloneMode?.() === true;
     const ownerSession = window.App?.getLocal?.(window.APP_CONFIG?.salonSessionKey || "citystyle_salon_session");
-    if (!forcePlatform && isStandalone && ownerSession?.salon_id) {
+    if (!forcePlatform && ownerSession?.salon_id) {
       window.location.href = window.App.getAppPath("salon/");
       return;
     }
 
-    // Root citystyle.app in normal browser is the platform landing page.
+    // Root citystyle.app in normal browser is the platform landing page when there is no saved owner login.
     // If the app was installed from a public profile page, open that saved profile directly.
     const savedSlug = window.App?.getSavedSalonSlug?.();
     if (savedSlug && isStandalone) {

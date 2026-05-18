@@ -159,7 +159,7 @@ function renderSalonLogin() {
   document.getElementById("salon-content").innerHTML = `
     <div class="card login-card">
       <h2>Ulaz za vlasnika biznisa</h2>
-      <p class="muted">Unesite email adresu biznisa i kod firme koji vam je dodelio administrator.</p>
+      <p class="muted">Unesite email adresu biznisa i kod firme koji vam je dodelio administrator. Posle uspešne prijave ostajete prijavljeni na ovom uređaju dok ne kliknete „Odjavi se”.</p>
       <label>Email vlasnika / biznisa</label>
       <input id="salon-login-email" type="email" placeholder="salon@email.com">
       <label>Kod firme</label>
