@@ -931,7 +931,7 @@ function renderProductFeedCard(product = {}, index = 0) {
   const hasManyImages = images.length > 1;
   return `
     <section class="product-feed-slide" data-product-id="${escapeHtml(product.id)}" data-image-index="0">
-      <div class="product-feed-media">
+      <div class="product-feed-media" onclick="toggleProductImageZoom(event)">
         ${firstImage ? `<img class="product-feed-current-image" src="${escapeHtml(firstImage)}" alt="${escapeHtml(product.name)}">` : `<div class="product-feed-empty">Dodajte sliku proizvoda</div>`}
         ${hasManyImages ? `
           <div class="product-gallery-swipe-hint">Prevuci levo/desno za slike</div>
@@ -940,7 +940,7 @@ function renderProductFeedCard(product = {}, index = 0) {
         ` : ""}
       </div>
       <div class="product-feed-topbar" aria-hidden="true"></div>
-      <button class="feed-action-btn feed-action-btn--close product-feed-close-action" type="button" onclick="this.closest('.product-feed-modal').remove()" aria-label="Izađi iz proizvoda">
+      <button class="feed-action-btn feed-action-btn--close product-feed-close-action" type="button" onclick="handleProductFeedClose(this)" aria-label="Izađi iz proizvoda">
         <span class="feed-action-icon">${getFeedActionIcon("close")}</span>
       </button>
       <div class="product-feed-side-actions tiktok-actions product-feed-bottom-actions">
@@ -965,6 +965,25 @@ function renderProductFeedCard(product = {}, index = 0) {
       </div>
     </section>
   `;
+}
+
+
+function toggleProductImageZoom(event) {
+  const target = event && event.target;
+  if (target && target.closest && target.closest(".feed-action-btn, .product-gallery-dot, button, a, input, select, textarea")) return;
+  const modal = target && target.closest ? target.closest(".product-feed-modal") : null;
+  if (!modal) return;
+  modal.classList.add("product-image-zoomed");
+}
+
+function handleProductFeedClose(button) {
+  const modal = button && button.closest ? button.closest(".product-feed-modal") : null;
+  if (!modal) return;
+  if (modal.classList.contains("product-image-zoomed")) {
+    modal.classList.remove("product-image-zoomed");
+    return;
+  }
+  modal.remove();
 }
 
 function setProductImage(productId, nextIndex) {
