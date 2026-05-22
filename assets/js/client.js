@@ -817,6 +817,15 @@ function getPublicContactPhone() {
   return String(currentSalon?._publicPhone || currentSalon?.phone || currentSalon?.whatsapp || "").replace(/\D/g, "");
 }
 
+function callPublicProfile() {
+  const phone = getPublicContactPhone();
+  if (!phone) {
+    window.App?.showMessage?.("Telefon nije podešen za ovaj profil.", "error");
+    return;
+  }
+  window.location.href = `tel:+${phone}`;
+}
+
 function buildProductWhatsApp(product = {}) {
   const phone = getPublicContactPhone();
   if (!phone) return "";
@@ -876,6 +885,9 @@ function getFeedActionIcon(type) {
   if (type === "share") {
     return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l5 0 0 5"></path><path d="M10 14L19 5"></path><path d="M19 13v4a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4"></path></svg>`;
   }
+  if (type === "call") {
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.7.6 2.5a2 2 0 0 1-.4 2.1L8.1 9.5a16 16 0 0 0 6.4 6.4l1.2-1.2a2 2 0 0 1 2.1-.4c.8.3 1.6.5 2.5.6a2 2 0 0 1 1.7 2z"></path></svg>`;
+  }
   return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 10h8"></path><path d="M8 14h5"></path><path d="M12 21l-3.2-3H7a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-1.8L12 21z"></path></svg>`;
 }
 
@@ -899,6 +911,10 @@ function renderProductFeedCard(product = {}, index = 0) {
         ${whatsapp
           ? `<a class="feed-action-btn feed-action-btn--ask" href="${whatsapp}" target="_blank" rel="noopener" aria-label="Pitaj za proizvod"><span class="feed-action-icon">${getFeedActionIcon("ask")}</span><small class="feed-action-label">Pitaj</small></a>`
           : `<button class="feed-action-btn feed-action-btn--ask" type="button" onclick="askAboutProduct('${escapeJs(product.id)}')" aria-label="Pitaj za proizvod"><span class="feed-action-icon">${getFeedActionIcon("ask")}</span><small class="feed-action-label">Pitaj</small></button>`}
+        <button class="feed-action-btn feed-action-btn--call" type="button" onclick="callPublicProfile()" aria-label="Pozovi profil">
+          <span class="feed-action-icon">${getFeedActionIcon("call")}</span>
+          <small class="feed-action-label">Pozovi</small>
+        </button>
       </div>
       <div class="product-feed-info">
         <small>${escapeHtml(product.category || "Proizvod")}</small>
