@@ -2628,3 +2628,33 @@ select:focus{
   .product-feed-modal .product-gallery-counter{bottom:calc(138px + env(safe-area-inset-bottom, 0px)) !important;}
   .product-feed-modal .product-gallery-dots{bottom:calc(116px + env(safe-area-inset-bottom, 0px)) !important;}
 }
+
+
+/* v31 fix top icons escaping left side */
+.product-feed-modal .product-feed-side-actions.tiktok-actions.product-feed-top-actions{
+  left:auto !important;
+  right:12px !important;
+  width:auto !important;
+  max-width:calc(100% - 24px) !important;
+  justify-content:flex-start !important;
+  overflow:visible !important;
+}
+.product-feed-modal .product-feed-side-actions.tiktok-actions.product-feed-top-actions .feed-action-btn{
+  flex:0 0 auto !important;
+}
+@media (max-width: 820px){
+  .product-feed-modal .product-feed-side-actions.tiktok-actions.product-feed-top-actions{
+    left:auto !important;
+    right:10px !important;
+    max-width:calc(100% - 20px) !important;
+    gap:7px !important;
+  }
+  .product-feed-modal .product-feed-side-actions.tiktok-actions.product-feed-top-actions .feed-action-icon{
+    width:36px !important;
+    height:36px !important;
+  }
+  .product-feed-modal .product-feed-side-actions.tiktok-actions.product-feed-top-actions .feed-action-icon svg{
+    width:17px !important;
+    height:17px !important;
+  }
+}
