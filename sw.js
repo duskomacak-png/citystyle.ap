@@ -1,6 +1,6 @@
 // sw.js
 // Minimal cache reset service worker for CityStyle.app
-const CACHE_NAME = "citystyle-business-v27-one-swipe";
+const CACHE_NAME = "citystyle-business-v28-left-safe";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

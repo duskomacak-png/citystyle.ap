@@ -2323,3 +2323,181 @@ select:focus{
   filter:none !important;
   box-shadow:none !important;
 }
+
+
+/* v28 - safer TikTok feed direction + left compact action rail
+   Vertical swipe up/down changes exactly one product; horizontal swipe changes images. */
+.product-feed-shell{
+  overflow:hidden !important;
+  scroll-snap-type:none !important;
+  overscroll-behavior:contain !important;
+  -webkit-overflow-scrolling:auto !important;
+  touch-action:none !important;
+}
+.product-feed-slide,
+.product-feed-media,
+.product-feed-current-image{
+  touch-action:none !important;
+}
+.product-feed-side-actions.tiktok-actions,
+.product-feed-modal .product-feed-side-actions.tiktok-actions{
+  left:10px !important;
+  right:auto !important;
+  top:clamp(126px, 28vh, 210px) !important;
+  bottom:auto !important;
+  transform:none !important;
+  width:50px !important;
+  gap:8px !important;
+  z-index:40 !important;
+  pointer-events:none !important;
+}
+.product-feed-side-actions.tiktok-actions .feed-action-btn,
+.product-feed-modal .product-feed-side-actions.tiktok-actions .feed-action-btn{
+  width:50px !important;
+  min-height:50px !important;
+  max-height:50px !important;
+  padding:0 !important;
+  gap:2px !important;
+  pointer-events:auto !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  filter:none !important;
+}
+.product-feed-side-actions.tiktok-actions .feed-action-icon,
+.product-feed-modal .product-feed-side-actions.tiktok-actions .feed-action-icon{
+  width:36px !important;
+  height:36px !important;
+  min-width:36px !important;
+  min-height:36px !important;
+  border-radius:999px !important;
+  border:1px solid rgba(255,255,255,.30) !important;
+  box-shadow:none !important;
+  filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
+.product-feed-side-actions.tiktok-actions .feed-action-icon svg,
+.product-feed-modal .product-feed-side-actions.tiktok-actions .feed-action-icon svg{
+  width:18px !important;
+  height:18px !important;
+  stroke-width:2.25 !important;
+}
+.product-feed-side-actions.tiktok-actions .feed-action-label,
+.product-feed-modal .product-feed-side-actions.tiktok-actions .feed-action-label{
+  font-size:8.5px !important;
+  line-height:1 !important;
+  letter-spacing:.01em !important;
+  text-shadow:none !important;
+  color:#fff !important;
+}
+.product-feed-side-actions.tiktok-actions .feed-action-btn--close .feed-action-icon,
+.product-feed-modal .feed-action-btn--close .feed-action-icon{
+  background:#111827 !important;
+  border-color:rgba(255,255,255,.28) !important;
+}
+.product-feed-side-actions.tiktok-actions .feed-action-btn--share .feed-action-icon,
+.product-feed-modal .feed-action-btn--share .feed-action-icon{
+  background:#ef4444 !important;
+  border-color:rgba(254,202,202,.86) !important;
+}
+.product-feed-side-actions.tiktok-actions .feed-action-btn--ask .feed-action-icon,
+.product-feed-modal .feed-action-btn--ask .feed-action-icon{
+  background:#38bdf8 !important;
+  border-color:rgba(186,230,253,.9) !important;
+}
+.product-feed-side-actions.tiktok-actions .feed-action-btn--call .feed-action-icon,
+.product-feed-modal .feed-action-btn--call .feed-action-icon{
+  background:#16a34a !important;
+  border-color:rgba(134,239,172,.82) !important;
+}
+.product-feed-info,
+.product-feed-modal .product-feed-info{
+  left:72px !important;
+  right:18px !important;
+  max-width:calc(100% - 90px) !important;
+}
+.product-feed-topbar{
+  left:70px !important;
+  right:12px !important;
+}
+.product-feed-topbar span{
+  max-width:calc(100vw - 100px) !important;
+}
+.product-feed-close{
+  display:none !important;
+}
+.product-gallery-counter{
+  left:72px !important;
+  bottom:116px !important;
+}
+.product-gallery-dots{
+  bottom:116px !important;
+}
+.product-gallery-swipe-hint{
+  left:calc(50% + 26px) !important;
+}
+@media(max-width:560px){
+  .product-feed-side-actions.tiktok-actions,
+  .product-feed-modal .product-feed-side-actions.tiktok-actions{
+    left:8px !important;
+    top:clamp(122px, 27vh, 198px) !important;
+    width:46px !important;
+    gap:7px !important;
+  }
+  .product-feed-side-actions.tiktok-actions .feed-action-btn,
+  .product-feed-modal .product-feed-side-actions.tiktok-actions .feed-action-btn{
+    width:46px !important;
+    min-height:47px !important;
+    max-height:47px !important;
+  }
+  .product-feed-side-actions.tiktok-actions .feed-action-icon,
+  .product-feed-modal .product-feed-side-actions.tiktok-actions .feed-action-icon{
+    width:34px !important;
+    height:34px !important;
+    min-width:34px !important;
+    min-height:34px !important;
+  }
+  .product-feed-side-actions.tiktok-actions .feed-action-icon svg,
+  .product-feed-modal .product-feed-side-actions.tiktok-actions .feed-action-icon svg{
+    width:17px !important;
+    height:17px !important;
+  }
+  .product-feed-info,
+  .product-feed-modal .product-feed-info{
+    left:64px !important;
+    right:14px !important;
+    bottom:28px !important;
+    max-width:calc(100% - 78px) !important;
+  }
+  .product-feed-topbar{
+    left:62px !important;
+    right:10px !important;
+  }
+  .product-gallery-counter{left:64px !important; bottom:104px !important;}
+  .product-gallery-dots{bottom:104px !important;}
+  .product-gallery-swipe-hint{left:calc(50% + 22px) !important; bottom:132px !important;}
+}
+@media(max-height:690px){
+  .product-feed-side-actions.tiktok-actions,
+  .product-feed-modal .product-feed-side-actions.tiktok-actions{
+    top:112px !important;
+    gap:5px !important;
+  }
+  .product-feed-side-actions.tiktok-actions .feed-action-btn,
+  .product-feed-modal .product-feed-side-actions.tiktok-actions .feed-action-btn{
+    min-height:43px !important;
+    max-height:43px !important;
+  }
+  .product-feed-side-actions.tiktok-actions .feed-action-icon,
+  .product-feed-modal .product-feed-side-actions.tiktok-actions .feed-action-icon{
+    width:31px !important;
+    height:31px !important;
+    min-width:31px !important;
+    min-height:31px !important;
+  }
+  .product-feed-side-actions.tiktok-actions .feed-action-label,
+  .product-feed-modal .product-feed-side-actions.tiktok-actions .feed-action-label{
+    font-size:8px !important;
+  }
+}

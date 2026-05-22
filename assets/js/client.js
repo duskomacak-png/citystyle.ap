@@ -912,6 +912,9 @@ async function shareProduct(productId) {
 }
 
 function getFeedActionIcon(type) {
+  if (type === "close") {
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18"></path><path d="M6 6l12 12"></path></svg>`;
+  }
   if (type === "share") {
     return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l5 0 0 5"></path><path d="M10 14L19 5"></path><path d="M19 13v4a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4"></path></svg>`;
   }
@@ -938,9 +941,12 @@ function renderProductFeedCard(product = {}, index = 0) {
       </div>
       <div class="product-feed-topbar">
         <span>${escapeHtml(currentSalon?._publicName || currentSalon?.salon_name || "Profil")}</span>
-        <button class="product-feed-close" type="button" onclick="this.closest('.product-feed-modal').remove()">×</button>
       </div>
       <div class="product-feed-side-actions tiktok-actions">
+        <button class="feed-action-btn feed-action-btn--close" type="button" onclick="this.closest('.product-feed-modal').remove()" aria-label="Izađi iz proizvoda">
+          <span class="feed-action-icon">${getFeedActionIcon("close")}</span>
+          <small class="feed-action-label">Izađi</small>
+        </button>
         <button class="feed-action-btn feed-action-btn--share" type="button" onclick="shareProduct('${escapeJs(product.id)}')" aria-label="Podeli proizvod">
           <span class="feed-action-icon">${getFeedActionIcon("share")}</span>
           <small class="feed-action-label">Podeli</small>
@@ -1075,7 +1081,7 @@ function setupProductFeedSwipe(modal) {
         changeProductImage(productId, diffX < 0 ? 1 : -1);
         gestureHandled = true;
       } else if (absY > 54 && absY > absX * 1.15) {
-        goToSlide(index + (diffY > 0 ? 1 : -1));
+        goToSlide(index + (diffY < 0 ? 1 : -1));
         gestureHandled = true;
       } else {
         goToSlide(index);
