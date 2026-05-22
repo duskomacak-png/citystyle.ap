@@ -1045,7 +1045,8 @@ async function loadProducts() {
   list.innerHTML = products.map(product => `
     <div class="card product-card ${product.active ? "" : "muted-card"}">
       <div class="product-card-main">
-        <div>
+        ${product.image_url ? `<img class="product-thumb" src="${salonEscapeHtml(product.image_url)}" alt="${salonEscapeHtml(product.name)}">` : `<div class="product-thumb product-thumb-empty">Bez slike</div>`}
+        <div class="product-card-text">
           <strong>${salonEscapeHtml(product.name)}</strong>
           ${product.category ? `<span>${salonEscapeHtml(product.category)}</span>` : ""}
           ${product.description ? `<p class="muted">${salonEscapeHtml(product.description)}</p>` : ""}
@@ -1083,6 +1084,11 @@ async function showAddProductForm(productId = null) {
       <input id="product-category" type="text" value="${product ? salonEscapeHtml(product.category || "") : ""}" placeholder="Gume, kozmetika, auto delovi...">
       <label>Opis</label>
       <textarea id="product-description" rows="3" placeholder="Kratak opis, dimenzija, napomena ili šta korisnik treba da zna.">${product ? salonEscapeHtml(product.description || "") : ""}</textarea>
+      <input id="product-current-image" type="hidden" value="${product ? salonEscapeHtml(product.image_url || "") : ""}">
+      ${product?.image_url ? `<div class="product-image-preview"><img src="${salonEscapeHtml(product.image_url)}" alt="Slika proizvoda"><small>Trenutna slika proizvoda</small></div>` : ""}
+      <label>Slika proizvoda</label>
+      <input id="product-image-file" type="file" accept="image/png,image/jpeg,image/webp">
+      <p class="muted small-note">Slika se automatski smanjuje pre slanja da ne troši prostor i da se brže otvara na telefonu.</p>
       <div class="price-grid">
         <div>
           <label>Cena</label>
@@ -1124,21 +1130,50 @@ async function saveProduct() {
   const currency = window.App.normalizeCurrency(document.getElementById("product-currency")?.value || "RSD");
   const stock_status = document.getElementById("product-stock-status")?.value || "available";
   const sort_order = Number(document.getElementById("product-sort-order")?.value || 100);
+  const existingImageUrl = document.getElementById("product-current-image")?.value || null;
+  const imageFile = document.getElementById("product-image-file")?.files?.[0] || null;
 
   if (!name) return window.App.showMessage("Unesite naziv proizvoda.", "error");
   if (price < 0) return window.App.showMessage("Cena ne može biti negativna.", "error");
 
-  const payload = { name, category, description, price, currency, stock_status, sort_order, updated_at: new Date().toISOString() };
-  if (id) {
-    const { error } = await window.db.from("products").update(payload).eq("id", id).eq("salon_id", currentSalonId);
-    if (error) return window.App.showMessage("Greška pri izmeni proizvoda.", "error");
-  } else {
-    const { error } = await window.db.from("products").insert({ ...payload, salon_id: currentSalonId, active: true });
-    if (error) return window.App.showMessage("Greška pri dodavanju proizvoda. Proverite da li je SQL za products tabelu pokrenut.", "error");
+  let image_url = existingImageUrl;
+  if (imageFile) {
+    image_url = await window.StorageHelper.uploadImage(imageFile, currentSalonId, "product");
+    if (!image_url) return;
+  }
+
+  const payload = { name, category, description, price, currency, stock_status, sort_order, image_url, updated_at: new Date().toISOString() };
+  const result = await saveProductPayload(id ? "update" : "insert", id, payload);
+  if (result.error) {
+    return window.App.showMessage("Greška pri čuvanju proizvoda. Proverite da li je SQL za products tabelu pokrenut.", "error");
   }
   hideProductForm();
   await loadProducts();
   window.App.showMessage("Proizvod je sačuvan u katalogu.", "success");
+}
+
+async function saveProductPayload(mode, id, payload) {
+  let result;
+  if (mode === "update") {
+    result = await window.db.from("products").update(payload).eq("id", id).eq("salon_id", currentSalonId);
+  } else {
+    result = await window.db.from("products").insert({ ...payload, salon_id: currentSalonId, active: true });
+  }
+  if (!result.error) return result;
+
+  const msg = String(result.error.message || "").toLowerCase();
+  if (msg.includes("image_url") || msg.includes("schema cache")) {
+    const fallback = { ...payload };
+    delete fallback.image_url;
+    const retry = mode === "update"
+      ? await window.db.from("products").update(fallback).eq("id", id).eq("salon_id", currentSalonId)
+      : await window.db.from("products").insert({ ...fallback, salon_id: currentSalonId, active: true });
+    if (!retry.error) {
+      window.App.showMessage("Proizvod je sačuvan, ali Supabase još nema kolonu image_url. Pokrenite SQL iz poruke da bi slike proizvoda radile.", "info");
+    }
+    return retry;
+  }
+  return result;
 }
 
 async function toggleProductActive(id, currentActive) {

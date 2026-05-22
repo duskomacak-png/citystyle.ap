@@ -599,7 +599,7 @@ async function renderSalonHome() {
         <div class="client-actions">
           <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(profileLabels.action)}</button>
           <button class="btn btn-dark" type="button" onclick="showServices()">${escapeHtml(profileLabels.services)}</button>
-          <button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>
+          <button class="btn btn-dark" type="button" onclick="openProductFeed()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>
           ${garageListings.length ? `<button class="btn btn-dark" type="button" onclick="showGarage()">Garaža / oglasi</button>` : ""}
           ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app ovog profila")}</button>`}
         </div>
@@ -811,6 +811,96 @@ function getProductStatusLabel(status) {
   }[status] || "Na upit";
 }
 
+
+function getPublicContactPhone() {
+  return String(currentSalon?._publicPhone || currentSalon?.phone || currentSalon?.whatsapp || "").replace(/\D/g, "");
+}
+
+function buildProductWhatsApp(product = {}) {
+  const phone = getPublicContactPhone();
+  if (!phone) return "";
+  const message = encodeURIComponent(`Poštovani, interesuje me proizvod: ${product.name}. Cena: ${renderProductPrice(product)}. Da li je dostupno?`);
+  return `https://wa.me/${phone}?text=${message}`;
+}
+
+function buildProductShareUrl(product = {}) {
+  const url = new URL(window.location.href);
+  url.hash = product?.id ? `product-${product.id}` : "products";
+  return url.toString();
+}
+
+async function shareProduct(productId) {
+  const product = products.find(row => String(row.id) === String(productId));
+  if (!product) return;
+  const shareData = {
+    title: product.name || "CityStyle proizvod",
+    text: `${product.name} • ${renderProductPrice(product)}`,
+    url: buildProductShareUrl(product)
+  };
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+      return;
+    }
+    await navigator.clipboard.writeText(shareData.url);
+    window.App.showMessage("Link proizvoda je kopiran.", "success");
+  } catch (err) {
+    console.warn("Deljenje proizvoda nije uspelo:", err);
+  }
+}
+
+function renderProductFeedCard(product = {}, index = 0) {
+  const image = product.image_url || "";
+  const whatsapp = buildProductWhatsApp(product);
+  return `
+    <section class="product-feed-slide" data-product-id="${escapeHtml(product.id)}">
+      <div class="product-feed-media">
+        ${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(product.name)}">` : `<div class="product-feed-empty">Dodajte sliku proizvoda</div>`}
+      </div>
+      <div class="product-feed-topbar">
+        <span>CityStyle katalog</span>
+        <button class="product-feed-close" type="button" onclick="this.closest('.product-feed-modal').remove()">×</button>
+      </div>
+      <div class="product-feed-side-actions">
+        <button type="button" onclick="shareProduct('${escapeJs(product.id)}')">↗<small>Podeli</small></button>
+        ${whatsapp ? `<a href="${whatsapp}" target="_blank" rel="noopener">💬<small>Poruči</small></a>` : `<button type="button" onclick="showBookingForm(); this.closest('.product-feed-modal').remove();">✉<small>Upit</small></button>`}
+      </div>
+      <div class="product-feed-info">
+        <small>${escapeHtml(product.category || "Proizvod")}</small>
+        <h2>${escapeHtml(product.name)}</h2>
+        ${product.description ? `<p>${escapeHtml(product.description)}</p>` : ""}
+        <div class="product-feed-price-row">
+          <strong>${renderProductPrice(product)}</strong>
+          <span>${getProductStatusLabel(product.stock_status)}</span>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function openProductFeed(startProductId = null) {
+  if (!products.length) {
+    showProducts();
+    return;
+  }
+  const orderedProducts = [...products];
+  if (startProductId) {
+    const index = orderedProducts.findIndex(row => String(row.id) === String(startProductId));
+    if (index > 0) {
+      const [selected] = orderedProducts.splice(index, 1);
+      orderedProducts.unshift(selected);
+    }
+  }
+  const modal = document.createElement("div");
+  modal.className = "product-feed-modal";
+  modal.innerHTML = `
+    <div class="product-feed-shell">
+      ${orderedProducts.map((product, index) => renderProductFeedCard(product, index)).join("")}
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
 function renderClientProductsPreview() {
   if (!products.length) return "";
   return `
@@ -821,10 +911,12 @@ function renderClientProductsPreview() {
       </summary>
       <div class="client-services-panel-body">
         <p class="muted">Pregled proizvoda, artikala ili cenovnika koje ovaj biznis nudi.</p>
+        <button class="btn btn-primary" type="button" onclick="openProductFeed()">Otvori TikTok pregled</button>
         <div class="product-public-grid">
           ${products.map(product => `
-            <div class="product-public-card">
-              <div>
+            <button type="button" class="product-public-card product-public-clickable" onclick="openProductFeed('${escapeJs(product.id)}')">
+              ${product.image_url ? `<img class="product-public-img" src="${escapeHtml(product.image_url)}" alt="${escapeHtml(product.name)}">` : ""}
+              <div class="product-public-body">
                 <strong>${escapeHtml(product.name)}</strong>
                 ${product.category ? `<span>${escapeHtml(product.category)}</span>` : ""}
                 ${product.description ? `<p>${escapeHtml(product.description)}</p>` : ""}
@@ -833,7 +925,7 @@ function renderClientProductsPreview() {
                 <b>${renderProductPrice(product)}</b>
                 <small>${getProductStatusLabel(product.stock_status)}</small>
               </div>
-            </div>
+            </button>
           `).join("")}
         </div>
       </div>
@@ -859,8 +951,9 @@ function showProducts() {
       <div class="client-services-panel-body">
         <div class="product-public-grid">
           ${products.map(product => `
-            <div class="product-public-card">
-              <div>
+            <button type="button" class="product-public-card product-public-clickable" onclick="openProductFeed('${escapeJs(product.id)}')">
+              ${product.image_url ? `<img class="product-public-img" src="${escapeHtml(product.image_url)}" alt="${escapeHtml(product.name)}">` : ""}
+              <div class="product-public-body">
                 <strong>${escapeHtml(product.name)}</strong>
                 ${product.category ? `<span>${escapeHtml(product.category)}</span>` : ""}
                 ${product.description ? `<p>${escapeHtml(product.description)}</p>` : ""}
@@ -869,7 +962,7 @@ function showProducts() {
                 <b>${renderProductPrice(product)}</b>
                 <small>${getProductStatusLabel(product.stock_status)}</small>
               </div>
-            </div>
+            </button>
           `).join("")}
         </div>
       </div>
