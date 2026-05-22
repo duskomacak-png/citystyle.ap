@@ -1,6 +1,6 @@
 // sw.js
 // Minimal cache reset service worker for CityStyle.app
-const CACHE_NAME = "citystyle-business-v31-top-icons-fix";
+const CACHE_NAME = "citystyle-business-v32-requested-layout";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
