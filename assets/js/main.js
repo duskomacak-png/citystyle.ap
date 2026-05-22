@@ -264,22 +264,22 @@ function applySalonTheme(value) {
 
 const BUSINESS_PROFILE_LABELS = {
   general: {
-    name: "Opšti biznis", action: "Pošalji zahtev", services: "Usluge / ponuda", formTitle: "Pošaljite zahtev", formIntro: "Izaberite uslugu, datum i slobodan termin. U napomeni možete opisati šta vam treba.", noteLabel: "Napomena / opis zahteva", notePlaceholder: "Napišite dodatne informacije za vlasnika profila.", requestKindLabel: "Vrsta zahteva", requestKindPlaceholder: "npr. upit, usluga, ponuda"
+    name: "Biznis profil", action: "Pošalji upit", services: "Ponuda i usluge", formTitle: "Pošaljite upit", formIntro: "Izaberite uslugu, datum i slobodan termin. U napomeni možete opisati šta vam treba.", noteLabel: "Napomena / opis zahteva", notePlaceholder: "Napišite dodatne informacije za vlasnika profila.", requestKindLabel: "Vrsta upita", requestKindPlaceholder: "npr. upit, usluga, ponuda"
   },
   salon: {
     name: "Salon / termini", action: "Zakaži termin", services: "Usluge i cenovnik", formTitle: "Zakažite termin", formIntro: "Izaberite uslugu, datum i slobodan termin.", noteLabel: "Napomena", notePlaceholder: "Opcionalno", requestKindLabel: "Željena usluga", requestKindPlaceholder: "npr. šišanje, farbanje, tretman"
   },
   repair: {
-    name: "Majstor / kvarovi", action: "Prijavi kvar", services: "Usluge, kvarovi i intervencije", formTitle: "Prijavite kvar ili problem", formIntro: "Izaberite uslugu/intervenciju, željeni termin i opišite kvar. Vlasnik će vas kontaktirati radi potvrde.", noteLabel: "Opis kvara / problema", notePlaceholder: "npr. klima ne hladi, curi voda, grejanje ne radi...", requestKindLabel: "Vrsta kvara", requestKindPlaceholder: "npr. klima, grejanje, voda, struja"
+    name: "Biznis profil", action: "Pošalji upit", services: "Ponuda i usluge", formTitle: "Pošaljite upit", formIntro: "Pošaljite kratak opis zahteva i vlasnik profila će vas kontaktirati.", noteLabel: "Opis", notePlaceholder: "Napišite dodatne informacije.", requestKindLabel: "Vrsta upita", requestKindPlaceholder: "npr. servis, popravka, ponuda"
   },
   craft: {
-    name: "Zanatlija / radovi", action: "Pošalji upit za radove", services: "Radovi i ponuda", formTitle: "Pošaljite upit za radove", formIntro: "Izaberite tip rada i željeni termin za kontakt/procenu. U opisu navedite lokaciju i obim posla.", noteLabel: "Opis posla", notePlaceholder: "npr. kupatilo 20m², krečenje stana, keramika, gips...", requestKindLabel: "Vrsta rada", requestKindPlaceholder: "npr. keramika, moleraj, stolarija"
+    name: "Biznis profil", action: "Pošalji upit za radove", services: "Ponuda i usluge", formTitle: "Pošaljite upit za radove", formIntro: "Izaberite tip rada i željeni termin za kontakt/procenu.", noteLabel: "Opis posla", notePlaceholder: "npr. kupatilo 20m², krečenje stana, keramika...", requestKindLabel: "Vrsta rada", requestKindPlaceholder: "npr. keramika, moleraj, stolarija"
   },
   auto: {
-    name: "Auto servis", action: "Pošalji zahtev za servis", services: "Servisne usluge", formTitle: "Pošaljite zahtev za servis", formIntro: "Izaberite servisnu uslugu, željeni termin i ukratko opišite vozilo/problem.", noteLabel: "Opis problema / vozilo", notePlaceholder: "npr. Golf 6, neće da upali, mali servis, gume...", requestKindLabel: "Vrsta servisa", requestKindPlaceholder: "npr. mali servis, kvar, vulkanizer"
+    name: "Biznis profil", action: "Pošalji upit", services: "Ponuda i usluge", formTitle: "Pošaljite upit", formIntro: "Pošaljite kratak opis i vlasnik profila će vas kontaktirati.", noteLabel: "Opis", notePlaceholder: "npr. deo, servis, cena, termin...", requestKindLabel: "Vrsta upita", requestKindPlaceholder: "npr. servis, proizvod, dostupnost"
   },
   catalog: {
-    name: "Katalog / proizvodi", action: "Pitaj za proizvod", services: "Ponuda i usluge", formTitle: "Pošaljite upit", formIntro: "Izaberite ponudu ili proizvod i pošaljite upit vlasniku profila.", noteLabel: "Poruka / upit", notePlaceholder: "Napišite šta vas zanima, količinu, dimenziju ili dodatno pitanje.", requestKindLabel: "Predmet upita", requestKindPlaceholder: "npr. proizvod, cena, dostupnost"
+    name: "Katalog / proizvodi", action: "Pitaj za proizvod", services: "Proizvodi", formTitle: "Pošaljite upit", formIntro: "Izaberite proizvod i pošaljite upit vlasniku profila.", noteLabel: "Poruka / upit", notePlaceholder: "Napišite šta vas zanima, količinu, dimenziju ili dodatno pitanje.", requestKindLabel: "Predmet upita", requestKindPlaceholder: "npr. proizvod, cena, dostupnost"
   }
 };
 
@@ -311,7 +311,7 @@ const APP_TRANSLATIONS = {
     welcomeDefault: "Dobrodošli. Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev.",
     sendRequest: "Pošalji zahtev",
     servicesOffer: "Usluge / ponuda",
-    installThisProfile: "Preuzmi app ovog profila",
+    installThisProfile: "Preuzmi app profila",
     noServicesSmall: "Nema dostupnih usluga",
     noServicesText: "Trenutno nema dostupnih usluga za online zahtev.",
     showList: "Prikaži listu",
@@ -618,7 +618,7 @@ function updateManifestForOwner() {
     name: "CityStyle - Panel vlasnika",
     short_name: "CityStyle",
     description: "Prečica za direktan ulaz u panel vlasnika biznisa.",
-    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=business13tiktokfeed`,
+    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=business18catalogtiktok`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -693,7 +693,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=business13tiktokfeed`,
+    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=business18catalogtiktok`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -849,7 +849,7 @@ async function registerPushForSalon(salonId) {
       return false;
     }
 
-    const registration = await navigator.serviceWorker.register("/sw.js?v=business13tiktokfeed", { scope: "/" });
+    const registration = await navigator.serviceWorker.register("/sw.js?v=business18catalogtiktok", { scope: "/" });
     await navigator.serviceWorker.ready;
 
     let subscription = await registration.pushManager.getSubscription();

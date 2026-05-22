@@ -555,6 +555,16 @@ async function renderSalonHome() {
   const businessType = window.App.normalizeBusinessType ? window.App.normalizeBusinessType(currentSalon.business_type) : String(currentSalon.business_type || "general");
   const profileLabels = window.App.getBusinessProfileLabels(currentSalon.business_type);
   const isCatalogProfile = businessType === "catalog";
+  const rawWelcomeText = String(settings?.welcome_text || "").trim();
+  const genericCatalogTexts = [
+    "Dobrodošli. Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev.",
+    "Pošaljite zahtev ili zakažite termin brzo i jednostavno.",
+    "Dobrodošli",
+    ""
+  ];
+  const introText = isCatalogProfile && genericCatalogTexts.includes(rawWelcomeText)
+    ? "Pogledajte proizvode i otvorite svaki oglas u jednom potezu."
+    : (rawWelcomeText || C("welcomeDefault", "Dobrodošli. Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev."));
   const primaryActionHtml = isCatalogProfile
     ? `<button class="btn btn-primary" type="button" onclick="openProductFeed()">${products.length ? "Pogledaj proizvode" : "Proizvodi još nisu dodati"}</button>`
     : `<button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(profileLabels.action)}</button>`;
@@ -594,7 +604,7 @@ async function renderSalonHome() {
 
         <h1>${escapeHtml(publicName)}</h1>
         <div class="public-profile-text">
-          <p class="intro-text">${escapeHtml(settings?.welcome_text || C("welcomeDefault", "Dobrodošli. Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev."))}</p>
+          <p class="intro-text">${escapeHtml(introText)}</p>
           ${(settings?.phone || settings?.address) ? `
             <div class="public-profile-contact">
               ${settings?.phone ? `<a href="tel:${escapeHtml(window.App.normalizePhoneForTel ? window.App.normalizePhoneForTel(settings.phone) : settings.phone)}">📞 ${escapeHtml(settings.phone)}</a>` : ""}
@@ -610,7 +620,7 @@ async function renderSalonHome() {
       </div>
 
       <div id="client-extra">
-        ${isCatalogProfile ? renderClientProductsPreview(true) : renderClientServicesPreview()}
+        ${isCatalogProfile ? "" : renderClientServicesPreview()}
         ${isCatalogProfile ? "" : renderClientProductsPreview(false)}
         ${isCatalogProfile ? "" : renderClientGalleryPreview()}
         ${!isCatalogProfile ? renderClientWorkingHours(workingHours || []) : ""}
@@ -862,6 +872,13 @@ async function shareProduct(productId) {
   }
 }
 
+function getFeedActionIcon(type) {
+  if (type === "share") {
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l5 0 0 5"></path><path d="M10 14L19 5"></path><path d="M19 13v4a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4"></path></svg>`;
+  }
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 10h8"></path><path d="M8 14h5"></path><path d="M12 21l-3.2-3H7a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-1.8L12 21z"></path></svg>`;
+}
+
 function renderProductFeedCard(product = {}, index = 0) {
   const image = product.image_url || "";
   const whatsapp = buildProductWhatsApp(product);
@@ -875,10 +892,13 @@ function renderProductFeedCard(product = {}, index = 0) {
         <button class="product-feed-close" type="button" onclick="this.closest('.product-feed-modal').remove()">×</button>
       </div>
       <div class="product-feed-side-actions tiktok-actions">
-        <button class="feed-action-btn" type="button" onclick="shareProduct('${escapeJs(product.id)}')" aria-label="Podeli proizvod">
-          <span class="feed-action-icon">↗</span><small>Podeli</small>
+        <button class="feed-action-btn feed-action-btn--share" type="button" onclick="shareProduct('${escapeJs(product.id)}')" aria-label="Podeli proizvod">
+          <span class="feed-action-icon">${getFeedActionIcon("share")}</span>
+          <small class="feed-action-label">Podeli</small>
         </button>
-        ${whatsapp ? `<a class="feed-action-btn" href="${whatsapp}" target="_blank" rel="noopener" aria-label="Pitaj za proizvod"><span class="feed-action-icon">?</span><small>Pitaj</small></a>` : `<button class="feed-action-btn" type="button" onclick="askAboutProduct('${escapeJs(product.id)}')" aria-label="Pitaj za proizvod"><span class="feed-action-icon">?</span><small>Pitaj</small></button>`}
+        ${whatsapp
+          ? `<a class="feed-action-btn feed-action-btn--ask" href="${whatsapp}" target="_blank" rel="noopener" aria-label="Pitaj za proizvod"><span class="feed-action-icon">${getFeedActionIcon("ask")}</span><small class="feed-action-label">Pitaj</small></a>`
+          : `<button class="feed-action-btn feed-action-btn--ask" type="button" onclick="askAboutProduct('${escapeJs(product.id)}')" aria-label="Pitaj za proizvod"><span class="feed-action-icon">${getFeedActionIcon("ask")}</span><small class="feed-action-label">Pitaj</small></button>`}
       </div>
       <div class="product-feed-info">
         <small>${escapeHtml(product.category || "Proizvod")}</small>

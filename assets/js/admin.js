@@ -32,11 +32,8 @@ const ADMIN_THEME_OPTIONS = [
 
 
 const ADMIN_BUSINESS_TYPE_OPTIONS = [
-  { value: "general", label: "Opšti biznis", icon: "🏢", hint: "zahtevi, termini i ponuda" },
+  { value: "general", label: "Biznis profil", icon: "🏢", hint: "opšti QR profil, kontakt i ponuda" },
   { value: "salon", label: "Salon / termini", icon: "💇", hint: "frizer, beauty, nokti, masaža" },
-  { value: "repair", label: "Majstor / kvarovi", icon: "🛠️", hint: "grejanje, hlađenje, voda, struja" },
-  { value: "craft", label: "Zanatlija / radovi", icon: "🧱", hint: "keramičar, moler, stolar, gipsar" },
-  { value: "auto", label: "Auto servis", icon: "🚗", hint: "mehaničar, vulkanizer, auto-klima" },
   { value: "catalog", label: "Katalog / proizvodi", icon: "🛒", hint: "prodaja, proizvodi, oprema" }
 ];
 
@@ -67,9 +64,9 @@ function renderBusinessTypeOptions(selectedValue = "general") {
 
 
 const ADMIN_PACKAGE_OPTIONS = [
-  { value: "business", label: "Biznis", icon: "🏢", hint: "QR profil, termini/usluge, galerija, zahtevi i statistika", max_listings: 0, max_images: 0, price: 9.99 },
-  { value: "catalog", label: "Katalog", icon: "🛒", hint: "QR profil + proizvodi/katalog + TikTok-style listanje", max_listings: 0, max_images: 0, price: 14.99 },
-  { value: "custom", label: "Custom", icon: "⭐", hint: "ručni dogovor za posebne biznise", max_listings: 0, max_images: 10, price: 0 }
+  { value: "business", label: "Biznis", icon: "🏢", hint: "QR profil, kontakt, usluge i statistika", max_listings: 0, max_images: 0, price: 9.99 },
+  { value: "catalog", label: "Katalog", icon: "🛒", hint: "QR profil + proizvodi + TikTok-style pregled", max_listings: 0, max_images: 0, price: 14.99 },
+  { value: "custom", label: "Custom", icon: "⭐", hint: "ručni dogovor za posebne profile", max_listings: 0, max_images: 10, price: 0 }
 ];
 
 function getAdminPackageOption(value) {
