@@ -940,10 +940,10 @@ function renderProductFeedCard(product = {}, index = 0) {
         ` : ""}
       </div>
       <div class="product-feed-topbar" aria-hidden="true"></div>
-      <div class="product-feed-side-actions tiktok-actions product-feed-top-actions">
-        <button class="feed-action-btn feed-action-btn--close" type="button" onclick="this.closest('.product-feed-modal').remove()" aria-label="Izađi iz proizvoda">
-          <span class="feed-action-icon">${getFeedActionIcon("close")}</span>
-        </button>
+      <button class="feed-action-btn feed-action-btn--close product-feed-close-action" type="button" onclick="this.closest('.product-feed-modal').remove()" aria-label="Izađi iz proizvoda">
+        <span class="feed-action-icon">${getFeedActionIcon("close")}</span>
+      </button>
+      <div class="product-feed-side-actions tiktok-actions product-feed-bottom-actions">
         <button class="feed-action-btn feed-action-btn--share" type="button" onclick="shareProduct('${escapeJs(product.id)}')" aria-label="Podeli proizvod">
           <span class="feed-action-icon">${getFeedActionIcon("share")}</span>
         </button>
@@ -1029,6 +1029,11 @@ function setupProductFeedSwipe(modal) {
     window.setTimeout(() => { wheelLocked = false; }, 520);
   }, { passive: false });
 
+
+    function isProductActionTarget(target) {
+      return !!(target && target.closest && target.closest(".feed-action-btn, .product-gallery-dot, button, a, input, select, textarea"));
+    }
+
   slides.forEach((slide, index) => {
     let startX = 0;
     let startY = 0;
@@ -1038,6 +1043,7 @@ function setupProductFeedSwipe(modal) {
     let gestureHandled = false;
 
     slide.addEventListener("touchstart", event => {
+      if (isProductActionTarget(event.target)) return;
       const touch = event.touches && event.touches[0];
       if (!touch) return;
       startX = touch.clientX;
@@ -1050,6 +1056,7 @@ function setupProductFeedSwipe(modal) {
     }, { passive: true });
 
     slide.addEventListener("touchmove", event => {
+      if (isProductActionTarget(event.target)) return;
       const touch = event.touches && event.touches[0];
       if (!touch) return;
       lastX = touch.clientX;
@@ -1065,6 +1072,7 @@ function setupProductFeedSwipe(modal) {
     }, { passive: false });
 
     slide.addEventListener("touchend", event => {
+      if (isProductActionTarget(event.target)) return;
       if (gestureHandled) return;
       const diffX = lastX - startX;
       const diffY = lastY - startY;
