@@ -931,8 +931,7 @@ function renderProductFeedCard(product = {}, index = 0) {
       <div class="product-feed-media">
         ${firstImage ? `<img class="product-feed-current-image" src="${escapeHtml(firstImage)}" alt="${escapeHtml(product.name)}">` : `<div class="product-feed-empty">Dodajte sliku proizvoda</div>`}
         ${hasManyImages ? `
-          <button class="product-gallery-arrow product-gallery-arrow--left" type="button" onclick="changeProductImage('${escapeJs(product.id)}', -1)" aria-label="Prethodna slika">‹</button>
-          <button class="product-gallery-arrow product-gallery-arrow--right" type="button" onclick="changeProductImage('${escapeJs(product.id)}', 1)" aria-label="Sledeća slika">›</button>
+          <div class="product-gallery-swipe-hint">Prevuci levo/desno za slike</div>
           <div class="product-gallery-counter"><span class="product-gallery-current">1</span>/${images.length}</div>
           <div class="product-gallery-dots">${images.map((_, dotIndex) => `<button type="button" class="product-gallery-dot ${dotIndex === 0 ? "active" : ""}" onclick="setProductImage('${escapeJs(product.id)}', ${dotIndex})" aria-label="Slika ${dotIndex + 1}"></button>`).join("")}</div>
         ` : ""}
@@ -991,6 +990,58 @@ function changeProductImage(productId, direction) {
   setProductImage(productId, currentIndex + Number(direction || 1));
 }
 
+
+function setupProductFeedSwipe(modal) {
+  if (!modal) return;
+  const slides = modal.querySelectorAll(".product-feed-slide");
+  slides.forEach(slide => {
+    let startX = 0;
+    let startY = 0;
+    let lastX = 0;
+    let lastY = 0;
+    let lockedAxis = null;
+
+    slide.addEventListener("touchstart", event => {
+      const touch = event.touches && event.touches[0];
+      if (!touch) return;
+      startX = touch.clientX;
+      startY = touch.clientY;
+      lastX = startX;
+      lastY = startY;
+      lockedAxis = null;
+    }, { passive: true });
+
+    slide.addEventListener("touchmove", event => {
+      const touch = event.touches && event.touches[0];
+      if (!touch) return;
+      lastX = touch.clientX;
+      lastY = touch.clientY;
+      const diffX = lastX - startX;
+      const diffY = lastY - startY;
+      if (!lockedAxis && (Math.abs(diffX) > 12 || Math.abs(diffY) > 12)) {
+        lockedAxis = Math.abs(diffX) > Math.abs(diffY) ? "x" : "y";
+      }
+      if (lockedAxis === "x") {
+        event.preventDefault();
+      }
+    }, { passive: false });
+
+    slide.addEventListener("touchend", () => {
+      const diffX = lastX - startX;
+      const diffY = lastY - startY;
+      if (Math.abs(diffX) > 54 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
+        const productId = slide.dataset.productId;
+        changeProductImage(productId, diffX < 0 ? 1 : -1);
+      }
+      startX = 0;
+      startY = 0;
+      lastX = 0;
+      lastY = 0;
+      lockedAxis = null;
+    }, { passive: true });
+  });
+}
+
 function openProductFeed(startProductId = null) {
   if (!products.length) {
     showProducts();
@@ -1012,6 +1063,7 @@ function openProductFeed(startProductId = null) {
     </div>
   `;
   document.body.appendChild(modal);
+  setupProductFeedSwipe(modal);
 }
 
 function renderClientProductsPreview(forceOpen = false) {

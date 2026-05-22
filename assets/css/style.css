@@ -2220,3 +2220,56 @@ select:focus{
   .product-gallery-arrow--right { right: 72px; }
   .product-gallery-counter, .product-gallery-dots { bottom: 104px; }
 }
+
+
+/* v26 - TikTok gesture model: vertical swipe changes product, horizontal swipe changes product image */
+.product-feed-shell{
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scroll-snap-type: y mandatory !important;
+  touch-action: pan-y !important;
+}
+.product-feed-slide{
+  touch-action: pan-y !important;
+}
+.product-feed-media{
+  touch-action: pan-y !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+.product-feed-current-image{
+  touch-action: pan-y !important;
+  -webkit-user-drag: none !important;
+  user-select: none !important;
+}
+.product-gallery-arrow,
+.product-gallery-arrow--left,
+.product-gallery-arrow--right{
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+.product-gallery-swipe-hint{
+  position:absolute;
+  left:50%;
+  bottom:148px;
+  z-index:8;
+  transform:translateX(-50%);
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(0,0,0,.42);
+  border:1px solid rgba(255,255,255,.16);
+  color:#fff;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.01em;
+  pointer-events:none;
+  opacity:.78;
+  box-shadow:none !important;
+  filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
+@media(max-width:560px){
+  .product-gallery-swipe-hint{bottom:132px;font-size:10px;max-width:calc(100% - 130px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+}
