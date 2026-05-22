@@ -939,24 +939,19 @@ function renderProductFeedCard(product = {}, index = 0) {
           <div class="product-gallery-dots">${images.map((_, dotIndex) => `<button type="button" class="product-gallery-dot ${dotIndex === 0 ? "active" : ""}" onclick="setProductImage('${escapeJs(product.id)}', ${dotIndex})" aria-label="Slika ${dotIndex + 1}"></button>`).join("")}</div>
         ` : ""}
       </div>
-      <div class="product-feed-topbar">
-        <span>${escapeHtml(currentSalon?._publicName || currentSalon?.salon_name || "Profil")}</span>
-      </div>
-      <div class="product-feed-side-actions tiktok-actions">
+      <div class="product-feed-topbar" aria-hidden="true"></div>
+      <div class="product-feed-side-actions tiktok-actions product-feed-top-actions">
         <button class="feed-action-btn feed-action-btn--close" type="button" onclick="this.closest('.product-feed-modal').remove()" aria-label="Izađi iz proizvoda">
           <span class="feed-action-icon">${getFeedActionIcon("close")}</span>
-          <small class="feed-action-label">Izađi</small>
         </button>
         <button class="feed-action-btn feed-action-btn--share" type="button" onclick="shareProduct('${escapeJs(product.id)}')" aria-label="Podeli proizvod">
           <span class="feed-action-icon">${getFeedActionIcon("share")}</span>
-          <small class="feed-action-label">Podeli</small>
         </button>
         ${whatsapp
-          ? `<a class="feed-action-btn feed-action-btn--ask" href="${whatsapp}" target="_blank" rel="noopener" aria-label="Pitaj za proizvod"><span class="feed-action-icon">${getFeedActionIcon("ask")}</span><small class="feed-action-label">Pitaj</small></a>`
-          : `<button class="feed-action-btn feed-action-btn--ask" type="button" onclick="askAboutProduct('${escapeJs(product.id)}')" aria-label="Pitaj za proizvod"><span class="feed-action-icon">${getFeedActionIcon("ask")}</span><small class="feed-action-label">Pitaj</small></button>`}
+          ? `<a class="feed-action-btn feed-action-btn--ask" href="${whatsapp}" target="_blank" rel="noopener" aria-label="Pitaj za proizvod"><span class="feed-action-icon">${getFeedActionIcon("ask")}</span></a>`
+          : `<button class="feed-action-btn feed-action-btn--ask" type="button" onclick="askAboutProduct('${escapeJs(product.id)}')" aria-label="Pitaj za proizvod"><span class="feed-action-icon">${getFeedActionIcon("ask")}</span></button>`}
         <button class="feed-action-btn feed-action-btn--call" type="button" onclick="callPublicProfile()" aria-label="Pozovi profil">
           <span class="feed-action-icon">${getFeedActionIcon("call")}</span>
-          <small class="feed-action-label">Pozovi</small>
         </button>
       </div>
       <div class="product-feed-info">
