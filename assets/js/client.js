@@ -993,13 +993,48 @@ function changeProductImage(productId, direction) {
 
 function setupProductFeedSwipe(modal) {
   if (!modal) return;
-  const slides = modal.querySelectorAll(".product-feed-slide");
-  slides.forEach(slide => {
+  const shell = modal.querySelector(".product-feed-shell");
+  const slides = Array.from(modal.querySelectorAll(".product-feed-slide"));
+  if (!shell || !slides.length) return;
+
+  let currentSlideIndex = 0;
+  let isMovingSlide = false;
+  let wheelLocked = false;
+
+  function goToSlide(nextIndex) {
+    const safeIndex = Math.max(0, Math.min(slides.length - 1, Number(nextIndex || 0)));
+    if (safeIndex === currentSlideIndex && Math.abs(shell.scrollTop - (slides[safeIndex]?.offsetTop || 0)) < 4) return;
+    currentSlideIndex = safeIndex;
+    isMovingSlide = true;
+    shell.scrollTo({ top: slides[safeIndex].offsetTop, behavior: "smooth" });
+    window.setTimeout(() => { isMovingSlide = false; }, 420);
+  }
+
+  shell.addEventListener("scroll", () => {
+    if (isMovingSlide) return;
+    const approxIndex = Math.round(shell.scrollTop / Math.max(1, shell.clientHeight));
+    currentSlideIndex = Math.max(0, Math.min(slides.length - 1, approxIndex));
+  }, { passive: true });
+
+  shell.addEventListener("wheel", event => {
+    if (wheelLocked) {
+      event.preventDefault();
+      return;
+    }
+    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+    event.preventDefault();
+    wheelLocked = true;
+    goToSlide(currentSlideIndex + (event.deltaY > 0 ? 1 : -1));
+    window.setTimeout(() => { wheelLocked = false; }, 520);
+  }, { passive: false });
+
+  slides.forEach((slide, index) => {
     let startX = 0;
     let startY = 0;
     let lastX = 0;
     let lastY = 0;
     let lockedAxis = null;
+    let gestureHandled = false;
 
     slide.addEventListener("touchstart", event => {
       const touch = event.touches && event.touches[0];
@@ -1009,6 +1044,8 @@ function setupProductFeedSwipe(modal) {
       lastX = startX;
       lastY = startY;
       lockedAxis = null;
+      gestureHandled = false;
+      currentSlideIndex = index;
     }, { passive: true });
 
     slide.addEventListener("touchmove", event => {
@@ -1018,27 +1055,39 @@ function setupProductFeedSwipe(modal) {
       lastY = touch.clientY;
       const diffX = lastX - startX;
       const diffY = lastY - startY;
-      if (!lockedAxis && (Math.abs(diffX) > 12 || Math.abs(diffY) > 12)) {
+      if (!lockedAxis && (Math.abs(diffX) > 10 || Math.abs(diffY) > 10)) {
         lockedAxis = Math.abs(diffX) > Math.abs(diffY) ? "x" : "y";
       }
-      if (lockedAxis === "x") {
+      if (lockedAxis === "x" || lockedAxis === "y") {
         event.preventDefault();
       }
     }, { passive: false });
 
-    slide.addEventListener("touchend", () => {
+    slide.addEventListener("touchend", event => {
+      if (gestureHandled) return;
       const diffX = lastX - startX;
       const diffY = lastY - startY;
-      if (Math.abs(diffX) > 54 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
+      const absX = Math.abs(diffX);
+      const absY = Math.abs(diffY);
+
+      if (absX > 48 && absX > absY * 1.2) {
         const productId = slide.dataset.productId;
         changeProductImage(productId, diffX < 0 ? 1 : -1);
+        gestureHandled = true;
+      } else if (absY > 54 && absY > absX * 1.15) {
+        goToSlide(index + (diffY > 0 ? 1 : -1));
+        gestureHandled = true;
+      } else {
+        goToSlide(index);
       }
+
+      if (event && event.cancelable) event.preventDefault();
       startX = 0;
       startY = 0;
       lastX = 0;
       lastY = 0;
       lockedAxis = null;
-    }, { passive: true });
+    }, { passive: false });
   });
 }
 

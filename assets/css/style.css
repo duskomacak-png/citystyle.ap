@@ -2273,3 +2273,53 @@ select:focus{
 @media(max-width:560px){
   .product-gallery-swipe-hint{bottom:132px;font-size:10px;max-width:calc(100% - 130px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 }
+
+
+/* v27 - one-by-one TikTok feed + colored clean action icons
+   Safe visual/gesture override: vertical swipe changes exactly one product; horizontal swipe changes image. */
+.product-feed-shell{
+  overflow-y:hidden !important;
+  overflow-x:hidden !important;
+  scroll-snap-type:none !important;
+  scroll-behavior:smooth !important;
+  overscroll-behavior:contain !important;
+  touch-action:none !important;
+}
+.product-feed-slide,
+.product-feed-media,
+.product-feed-current-image{
+  touch-action:none !important;
+}
+.product-feed-side-actions.tiktok-actions .feed-action-icon,
+.product-feed-modal .feed-action-icon{
+  border:1px solid rgba(255,255,255,.34) !important;
+  box-shadow:none !important;
+  filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
+.product-feed-side-actions.tiktok-actions .feed-action-icon svg,
+.product-feed-modal .feed-action-icon svg{
+  color:#fff !important;
+  stroke:currentColor !important;
+}
+.product-feed-side-actions.tiktok-actions .feed-action-btn--call .feed-action-icon,
+.product-feed-modal .feed-action-btn--call .feed-action-icon{
+  background:#16a34a !important;
+  border-color:rgba(134,239,172,.82) !important;
+}
+.product-feed-side-actions.tiktok-actions .feed-action-btn--ask .feed-action-icon,
+.product-feed-modal .feed-action-btn--ask .feed-action-icon{
+  background:#38bdf8 !important;
+  border-color:rgba(186,230,253,.9) !important;
+}
+.product-feed-side-actions.tiktok-actions .feed-action-btn--share .feed-action-icon,
+.product-feed-modal .feed-action-btn--share .feed-action-icon{
+  background:#ef4444 !important;
+  border-color:rgba(254,202,202,.86) !important;
+}
+.product-feed-side-actions.tiktok-actions .feed-action-btn:hover .feed-action-icon,
+.product-feed-modal .feed-action-btn:hover .feed-action-icon{
+  filter:none !important;
+  box-shadow:none !important;
+}
