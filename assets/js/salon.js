@@ -1019,15 +1019,26 @@ function productStatusLabel(status) {
 async function loadProducts() {
   const list = document.getElementById("products-list");
   if (!list) return;
-  const { data: products, error } = await window.db
+
+  let result = await window.db
     .from("products")
-    .select("*")
+    .select("*, product_images(*)")
     .eq("salon_id", currentSalonId)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error(error);
+  if (result.error) {
+    console.warn("Product images relation is not available yet, loading products only:", result.error);
+    result = await window.db
+      .from("products")
+      .select("*")
+      .eq("salon_id", currentSalonId)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
+  }
+
+  if (result.error) {
+    console.error(result.error);
     list.innerHTML = `
       <div class="card">
         <h3>Proizvodi nisu spremni u bazi</h3>
@@ -1037,19 +1048,25 @@ async function loadProducts() {
     return;
   }
 
+  const products = normalizeOwnerProductImages(result.data || []);
+
   if (!products?.length) {
     list.innerHTML = `<div class="card center"><p class="muted">Još nemate proizvode u katalogu. Dodajte prvi proizvod, artikal ili cenu iz ponude.</p></div>`;
     return;
   }
 
-  list.innerHTML = products.map(product => `
+  list.innerHTML = products.map(product => {
+    const images = getOwnerProductImages(product);
+    const cover = images[0] || "";
+    return `
     <div class="card product-card ${product.active ? "" : "muted-card"}">
       <div class="product-card-main">
-        ${product.image_url ? `<img class="product-thumb" src="${salonEscapeHtml(product.image_url)}" alt="${salonEscapeHtml(product.name)}">` : `<div class="product-thumb product-thumb-empty">Bez slike</div>`}
+        ${cover ? `<img class="product-thumb" src="${salonEscapeHtml(cover)}" alt="${salonEscapeHtml(product.name)}">` : `<div class="product-thumb product-thumb-empty">Bez slike</div>`}
         <div class="product-card-text">
           <strong>${salonEscapeHtml(product.name)}</strong>
           ${product.category ? `<span>${salonEscapeHtml(product.category)}</span>` : ""}
           ${product.description ? `<p class="muted">${salonEscapeHtml(product.description)}</p>` : ""}
+          <small class="muted">${images.length || 0} slika po artiklu</small>
         </div>
         <div class="product-price-box">
           <b>${productPriceLabel(product)}</b>
@@ -1059,11 +1076,33 @@ async function loadProducts() {
       </div>
       ${adminOwnerPreviewMode ? `<div class="card-actions"><span class="status-pill">Admin pregled</span></div>` : `<div class="card-actions">
         <button class="btn btn-dark" type="button" onclick="editProduct('${product.id}')">Uredi</button>
+        <button class="btn btn-dark" type="button" onclick="showProductImages('${product.id}')">Slike ${images.length}/10</button>
         <button class="btn btn-dark" type="button" onclick="toggleProductActive('${product.id}', ${product.active ? "true" : "false"})">${product.active ? "Sakrij" : "Aktiviraj"}</button>
         <button class="btn btn-danger" type="button" onclick="deleteProduct('${product.id}')">Obriši</button>
       </div>`}
-    </div>
-  `).join("");
+    </div>`;
+  }).join("");
+}
+
+function normalizeOwnerProductImages(rows = []) {
+  return rows.map(product => {
+    const extra = Array.isArray(product.product_images)
+      ? [...product.product_images].sort((a, b) => Number(a.sort_order || 100) - Number(b.sort_order || 100))
+      : [];
+    const urls = [];
+    if (product.image_url) urls.push(product.image_url);
+    extra.forEach(img => { if (img?.image_url && !urls.includes(img.image_url)) urls.push(img.image_url); });
+    return { ...product, product_images: extra, _image_urls: urls };
+  });
+}
+
+function getOwnerProductImages(product = {}) {
+  if (Array.isArray(product._image_urls) && product._image_urls.length) return product._image_urls;
+  const extra = Array.isArray(product.product_images) ? product.product_images.map(img => img.image_url).filter(Boolean) : [];
+  const urls = [];
+  if (product.image_url) urls.push(product.image_url);
+  extra.forEach(url => { if (!urls.includes(url)) urls.push(url); });
+  return urls;
 }
 
 async function showAddProductForm(productId = null) {
@@ -1086,9 +1125,9 @@ async function showAddProductForm(productId = null) {
       <textarea id="product-description" rows="3" placeholder="Kratak opis, dimenzija, napomena ili šta korisnik treba da zna.">${product ? salonEscapeHtml(product.description || "") : ""}</textarea>
       <input id="product-current-image" type="hidden" value="${product ? salonEscapeHtml(product.image_url || "") : ""}">
       ${product?.image_url ? `<div class="product-image-preview"><img src="${salonEscapeHtml(product.image_url)}" alt="Slika proizvoda"><small>Trenutna slika proizvoda</small></div>` : ""}
-      <label>Slika proizvoda</label>
-      <input id="product-image-file" type="file" accept="image/png,image/jpeg,image/webp">
-      <p class="muted small-note">Slika se automatski smanjuje pre slanja da ne troši prostor i da se brže otvara na telefonu.</p>
+      <label>Slike proizvoda</label>
+      <input id="product-image-file" type="file" accept="image/png,image/jpeg,image/webp" multiple>
+      <p class="muted small-note">Možete dodati više slika odjednom. Prva slika ostaje glavna, a dodatne slike korisnik lista levo/desno.</p>
       <div class="price-grid">
         <div>
           <label>Cena</label>
@@ -1131,14 +1170,14 @@ async function saveProduct() {
   const stock_status = document.getElementById("product-stock-status")?.value || "available";
   const sort_order = Number(document.getElementById("product-sort-order")?.value || 100);
   const existingImageUrl = document.getElementById("product-current-image")?.value || null;
-  const imageFile = document.getElementById("product-image-file")?.files?.[0] || null;
+  const imageFiles = Array.from(document.getElementById("product-image-file")?.files || []);
 
   if (!name) return window.App.showMessage("Unesite naziv proizvoda.", "error");
   if (price < 0) return window.App.showMessage("Cena ne može biti negativna.", "error");
 
   let image_url = existingImageUrl;
-  if (imageFile) {
-    image_url = await window.StorageHelper.uploadImage(imageFile, currentSalonId, "product");
+  if (!image_url && imageFiles[0]) {
+    image_url = await window.StorageHelper.uploadImage(imageFiles[0], currentSalonId, "product");
     if (!image_url) return;
   }
 
@@ -1147,6 +1186,15 @@ async function saveProduct() {
   if (result.error) {
     return window.App.showMessage("Greška pri čuvanju proizvoda. Proverite da li je SQL za products tabelu pokrenut.", "error");
   }
+
+  const savedProductId = id || result.data?.id;
+  if (savedProductId && imageFiles.length) {
+    const filesForGallery = image_url === existingImageUrl ? imageFiles : imageFiles.slice(1);
+    if (filesForGallery.length) {
+      await uploadProductExtraImages(savedProductId, filesForGallery);
+    }
+  }
+
   hideProductForm();
   await loadProducts();
   window.App.showMessage("Proizvod je sačuvan u katalogu.", "success");
@@ -1155,9 +1203,9 @@ async function saveProduct() {
 async function saveProductPayload(mode, id, payload) {
   let result;
   if (mode === "update") {
-    result = await window.db.from("products").update(payload).eq("id", id).eq("salon_id", currentSalonId);
+    result = await window.db.from("products").update(payload).eq("id", id).eq("salon_id", currentSalonId).select("id, image_url").maybeSingle();
   } else {
-    result = await window.db.from("products").insert({ ...payload, salon_id: currentSalonId, active: true });
+    result = await window.db.from("products").insert({ ...payload, salon_id: currentSalonId, active: true }).select("id, image_url").maybeSingle();
   }
   if (!result.error) return result;
 
@@ -1166,14 +1214,87 @@ async function saveProductPayload(mode, id, payload) {
     const fallback = { ...payload };
     delete fallback.image_url;
     const retry = mode === "update"
-      ? await window.db.from("products").update(fallback).eq("id", id).eq("salon_id", currentSalonId)
-      : await window.db.from("products").insert({ ...fallback, salon_id: currentSalonId, active: true });
+      ? await window.db.from("products").update(fallback).eq("id", id).eq("salon_id", currentSalonId).select("id").maybeSingle()
+      : await window.db.from("products").insert({ ...fallback, salon_id: currentSalonId, active: true }).select("id").maybeSingle();
     if (!retry.error) {
-      window.App.showMessage("Proizvod je sačuvan, ali Supabase još nema kolonu image_url. Pokrenite SQL iz poruke da bi slike proizvoda radile.", "info");
+      window.App.showMessage("Proizvod je sačuvan, ali Supabase još nema kolonu image_url. Pokrenite SQL iz poruke da bi glavna slika radila.", "info");
     }
     return retry;
   }
   return result;
+}
+
+async function uploadProductExtraImages(productId, files = []) {
+  if (!files.length) return;
+  const { count } = await window.db.from("product_images").select("id", { count: "exact", head: true }).eq("product_id", productId);
+  const currentCount = Number(count || 0);
+  const maxImages = 9;
+  const remaining = Math.max(0, maxImages - currentCount);
+  if (!remaining) {
+    window.App.showMessage("Dodatne slike nisu dodate jer je dostignut limit slika za artikal.", "info");
+    return;
+  }
+
+  const rows = [];
+  for (const [index, file] of files.slice(0, remaining).entries()) {
+    const url = await window.StorageHelper.uploadImage(file, currentSalonId, "product");
+    if (url) rows.push({ product_id: productId, image_url: url, sort_order: (currentCount + index + 2) * 10 });
+  }
+  if (!rows.length) return;
+
+  const { error } = await window.db.from("product_images").insert(rows);
+  if (error) {
+    console.warn(error);
+    window.App.showMessage("Proizvod je sačuvan, ali dodatne slike nisu upisane. Pokrenite SQL za product_images.", "info");
+  }
+}
+
+async function showProductImages(productId) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  const box = document.getElementById("product-form-box");
+  if (!box) return;
+  const { data: product } = await window.db.from("products").select("*").eq("id", productId).eq("salon_id", currentSalonId).maybeSingle();
+  const { data: images, error } = await window.db.from("product_images").select("*").eq("product_id", productId).order("sort_order", { ascending: true }).order("created_at", { ascending: true });
+  const extras = error ? [] : (images || []);
+  box.innerHTML = `
+    <div class="card product-edit-card">
+      <h3>Slike artikla: ${salonEscapeHtml(product?.name || "Proizvod")}</h3>
+      <p class="muted">Glavna slika je ona iz proizvoda. Dodatne slike se prikazuju posle nje i korisnik ih lista levo/desno.</p>
+      ${product?.image_url ? `<div class="product-image-preview"><img src="${salonEscapeHtml(product.image_url)}" alt="Glavna slika"><small>Glavna slika</small></div>` : `<p class="muted">Nema glavne slike.</p>`}
+      <label>Dodaj još slika</label>
+      <input id="product-extra-images-file" type="file" accept="image/png,image/jpeg,image/webp" multiple>
+      <div class="card-actions">
+        <button class="btn btn-primary" type="button" onclick="addProductImages('${salonEscapeJs(productId)}')">Dodaj slike</button>
+        <button class="btn btn-dark" type="button" onclick="hideProductForm()">Zatvori</button>
+      </div>
+      ${error ? `<p class="error-text">Tabela product_images još nije dostupna. Pokreni SQL iz poruke.</p>` : ""}
+      <div class="owner-gallery-grid product-extra-gallery">
+        ${extras.map(img => `
+          <div class="card owner-gallery-card">
+            <img src="${salonEscapeHtml(img.image_url)}" alt="Dodatna slika proizvoda">
+            <small>Redosled: ${Number(img.sort_order || 100)}</small>
+            <button class="btn btn-danger btn-small" type="button" onclick="deleteProductImage('${salonEscapeJs(img.id)}','${salonEscapeJs(productId)}','${salonEscapeJs(img.image_url)}')">Obriši sliku</button>
+          </div>
+        `).join("")}
+      </div>
+    </div>`;
+}
+
+async function addProductImages(productId) {
+  const files = Array.from(document.getElementById("product-extra-images-file")?.files || []);
+  if (!files.length) return window.App.showMessage("Izaberite bar jednu sliku.", "error");
+  await uploadProductExtraImages(productId, files);
+  await showProductImages(productId);
+  await loadProducts();
+}
+
+async function deleteProductImage(imageId, productId, imageUrl) {
+  if (!confirm("Obrisati ovu dodatnu sliku proizvoda?")) return;
+  await window.StorageHelper.deleteImage(imageUrl);
+  const { error } = await window.db.from("product_images").delete().eq("id", imageId);
+  if (error) return window.App.showMessage("Greška pri brisanju slike.", "error");
+  await showProductImages(productId);
+  await loadProducts();
 }
 
 async function toggleProductActive(id, currentActive) {
@@ -1186,6 +1307,15 @@ async function toggleProductActive(id, currentActive) {
 async function deleteProduct(id) {
   if (stopAdminOwnerPreviewEdit()) return;
   if (!confirm("Obrisati proizvod iz kataloga? Ako ga samo trenutno nemate, bolje ga sakrijte.")) return;
+  try {
+    const { data: extraImages } = await window.db.from("product_images").select("image_url").eq("product_id", id);
+    for (const img of (extraImages || [])) {
+      await window.StorageHelper.deleteImage(img.image_url);
+    }
+    await window.db.from("product_images").delete().eq("product_id", id);
+  } catch (err) {
+    console.warn("Dodatne slike proizvoda nisu obrisane ili tabela ne postoji:", err);
+  }
   const { error } = await window.db.from("products").delete().eq("id", id).eq("salon_id", currentSalonId);
   if (error) return window.App.showMessage("Greška pri brisanju proizvoda.", "error");
   await loadProducts();

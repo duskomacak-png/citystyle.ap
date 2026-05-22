@@ -472,20 +472,50 @@ async function loadProducts() {
     products = [];
     return;
   }
-  const { data, error } = await window.db
+
+  let result = await window.db
     .from("products")
-    .select("*")
+    .select("*, product_images(*)")
     .eq("salon_id", currentSalon.id)
     .eq("active", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.warn("Products table/list is not available yet:", error);
+  if (result.error) {
+    console.warn("Product images relation is not available yet, loading products only:", result.error);
+    result = await window.db
+      .from("products")
+      .select("*")
+      .eq("salon_id", currentSalon.id)
+      .eq("active", true)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
+  }
+
+  if (result.error) {
+    console.warn("Products table/list is not available yet:", result.error);
     products = [];
     return;
   }
-  products = data || [];
+
+  products = normalizeProductImages(result.data || []);
+}
+
+function normalizeProductImages(rows = []) {
+  return rows.map(product => {
+    const extra = Array.isArray(product.product_images)
+      ? [...product.product_images].sort((a, b) => Number(a.sort_order || 100) - Number(b.sort_order || 100))
+      : [];
+    const urls = [];
+    if (product.image_url) urls.push(product.image_url);
+    extra.forEach(img => { if (img?.image_url && !urls.includes(img.image_url)) urls.push(img.image_url); });
+    return { ...product, product_images: extra, _image_urls: urls };
+  });
+}
+
+function getProductImages(product = {}) {
+  if (Array.isArray(product._image_urls) && product._image_urls.length) return product._image_urls;
+  return product.image_url ? [product.image_url] : [];
 }
 
 
@@ -892,12 +922,20 @@ function getFeedActionIcon(type) {
 }
 
 function renderProductFeedCard(product = {}, index = 0) {
-  const image = product.image_url || "";
+  const images = getProductImages(product);
   const whatsapp = buildProductWhatsApp(product);
+  const firstImage = images[0] || "";
+  const hasManyImages = images.length > 1;
   return `
-    <section class="product-feed-slide" data-product-id="${escapeHtml(product.id)}">
+    <section class="product-feed-slide" data-product-id="${escapeHtml(product.id)}" data-image-index="0">
       <div class="product-feed-media">
-        ${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(product.name)}">` : `<div class="product-feed-empty">Dodajte sliku proizvoda</div>`}
+        ${firstImage ? `<img class="product-feed-current-image" src="${escapeHtml(firstImage)}" alt="${escapeHtml(product.name)}">` : `<div class="product-feed-empty">Dodajte sliku proizvoda</div>`}
+        ${hasManyImages ? `
+          <button class="product-gallery-arrow product-gallery-arrow--left" type="button" onclick="changeProductImage('${escapeJs(product.id)}', -1)" aria-label="Prethodna slika">‹</button>
+          <button class="product-gallery-arrow product-gallery-arrow--right" type="button" onclick="changeProductImage('${escapeJs(product.id)}', 1)" aria-label="Sledeća slika">›</button>
+          <div class="product-gallery-counter"><span class="product-gallery-current">1</span>/${images.length}</div>
+          <div class="product-gallery-dots">${images.map((_, dotIndex) => `<button type="button" class="product-gallery-dot ${dotIndex === 0 ? "active" : ""}" onclick="setProductImage('${escapeJs(product.id)}', ${dotIndex})" aria-label="Slika ${dotIndex + 1}"></button>`).join("")}</div>
+        ` : ""}
       </div>
       <div class="product-feed-topbar">
         <span>${escapeHtml(currentSalon?._publicName || currentSalon?.salon_name || "Profil")}</span>
@@ -917,7 +955,7 @@ function renderProductFeedCard(product = {}, index = 0) {
         </button>
       </div>
       <div class="product-feed-info">
-        <small>${escapeHtml(product.category || "Proizvod")}</small>
+        <small>${escapeHtml(product.category || "Proizvod")}${images.length > 1 ? ` • ${images.length} slika` : ""}</small>
         <h2>${escapeHtml(product.name)}</h2>
         <div class="product-feed-price-row">
           <strong>${renderProductPrice(product)}</strong>
@@ -927,6 +965,30 @@ function renderProductFeedCard(product = {}, index = 0) {
       </div>
     </section>
   `;
+}
+
+function setProductImage(productId, nextIndex) {
+  const product = products.find(row => String(row.id) === String(productId));
+  const images = getProductImages(product);
+  if (!product || !images.length) return;
+  const slide = document.querySelector(`.product-feed-slide[data-product-id="${CSS.escape(String(productId))}"]`);
+  if (!slide) return;
+  const safeIndex = ((Number(nextIndex) % images.length) + images.length) % images.length;
+  slide.dataset.imageIndex = String(safeIndex);
+  const img = slide.querySelector(".product-feed-current-image");
+  if (img) {
+    img.src = images[safeIndex];
+    img.alt = product.name || "Proizvod";
+  }
+  const current = slide.querySelector(".product-gallery-current");
+  if (current) current.textContent = String(safeIndex + 1);
+  slide.querySelectorAll(".product-gallery-dot").forEach((dot, index) => dot.classList.toggle("active", index === safeIndex));
+}
+
+function changeProductImage(productId, direction) {
+  const slide = document.querySelector(`.product-feed-slide[data-product-id="${CSS.escape(String(productId))}"]`);
+  const currentIndex = Number(slide?.dataset?.imageIndex || 0);
+  setProductImage(productId, currentIndex + Number(direction || 1));
 }
 
 function openProductFeed(startProductId = null) {
@@ -966,7 +1028,7 @@ function renderClientProductsPreview(forceOpen = false) {
       <div class="product-public-strip">
         ${products.slice(0, 6).map(product => `
           <button type="button" class="product-public-mini" onclick="openProductFeed('${escapeJs(product.id)}')">
-            ${product.image_url ? `<img src="${escapeHtml(product.image_url)}" alt="${escapeHtml(product.name)}">` : `<span>Proizvod</span>`}
+            ${getProductImages(product)[0] ? `<img src="${escapeHtml(getProductImages(product)[0])}" alt="${escapeHtml(product.name)}">` : `<span>Proizvod</span>`}
             <b>${escapeHtml(product.name)}</b>
             <small>${renderProductPrice(product)}</small>
           </button>
@@ -995,7 +1057,7 @@ function showProducts() {
         <div class="product-public-grid">
           ${products.map(product => `
             <button type="button" class="product-public-card product-public-clickable" onclick="openProductFeed('${escapeJs(product.id)}')">
-              ${product.image_url ? `<img class="product-public-img" src="${escapeHtml(product.image_url)}" alt="${escapeHtml(product.name)}">` : ""}
+              ${getProductImages(product)[0] ? `<img class="product-public-img" src="${escapeHtml(getProductImages(product)[0])}" alt="${escapeHtml(product.name)}">` : ""}
               <div class="product-public-body">
                 <strong>${escapeHtml(product.name)}</strong>
                 ${product.category ? `<span>${escapeHtml(product.category)}</span>` : ""}
