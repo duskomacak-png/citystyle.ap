@@ -78,15 +78,14 @@ function getAdminPackageOption(value) {
 }
 
 function isGaragePackage(value) {
-  const key = getAdminPackageOption(value).value;
-  return key.startsWith("garage_") || key === "custom";
+  return false;
 }
 
 function renderPackageBadge(value, maxListings = null, maxImages = null) {
   const pkg = getAdminPackageOption(value);
   const listings = Number(maxListings ?? pkg.max_listings ?? 0);
   const images = Number(maxImages ?? pkg.max_images ?? 0);
-  const suffix = isGaragePackage(pkg.value) ? ` • ${listings || "∞"} oglasa • ${images || 10} slika/oglas` : "";
+  const suffix = "";
   return `<span class="business-type-badge package-badge">${pkg.icon} ${adminEscapeHtml(pkg.label)}${adminEscapeHtml(suffix)}</span>`;
 }
 
@@ -116,10 +115,10 @@ function promptPackage(currentValue = "business") {
   let maxListings = limits.max_garage_listings;
   let maxImages = limits.max_images_per_listing;
   if (isGaragePackage(pkg.value)) {
-    const enteredListings = prompt("Maksimalan broj posebnih objava:", String(maxListings || 30));
+    const enteredListings = prompt("Maksimalan broj stavki:", String(maxListings || 30));
     if (enteredListings === null) return null;
     maxListings = Math.max(1, Number(enteredListings || maxListings || 30));
-    const enteredImages = prompt("Maksimalan broj slika po oglasu:", String(maxImages || 10));
+    const enteredImages = prompt("Maksimalan broj slika po stavci:", String(maxImages || 10));
     if (enteredImages === null) return null;
     maxImages = Math.max(1, Number(enteredImages || maxImages || 10));
   }
@@ -444,7 +443,7 @@ function showPlatformHomeImagesModal() {
         <label for="platform-home-images-input">Dodaj slike za displej telefona</label>
         <input id="platform-home-images-input" type="file" accept="image/jpeg,image/png,image/webp" multiple>
         <label for="platform-home-caption-input">Kratak natpis za slike</label>
-        <input id="platform-home-caption-input" type="text" maxlength="80" placeholder="npr. Galerija biznisa, Katalog proizvoda, Garaža ponuda...">
+        <input id="platform-home-caption-input" type="text" maxlength="80" placeholder="npr. Galerija biznisa, Katalog proizvoda, akcije...">
         <p class="muted">Dozvoljeno: JPG, PNG, WEBP. Maksimalno 5 MB po slici. Prvo treba pokrenuti SQL za tabelu <b>platform_home_images</b>.</p>
         <div class="card-actions">
           <button class="btn btn-primary" type="button" onclick="uploadPlatformHomeImages()">Upload slika</button>
@@ -860,7 +859,7 @@ function showAddSalonForm() {
 
         <div class="business-type-helper" id="business-type-helper">
           <strong>${renderBusinessTypeBadge("general")}</strong>
-          <span>Biznis: termini/usluge. Katalog: proizvodi sa TikTok-style listanjem. Garaža paketi su sklonjeni iz CityStyle-a da aplikacija ostane čista.</span>
+          <span>Biznis: termini/usluge. Katalog: proizvodi sa TikTok-style listanjem. CityStyle ostaje čist: salon, usluge i katalog proizvoda.</span>
         </div>
 
         <div class="card-actions admin-modal-actions">

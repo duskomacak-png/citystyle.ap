@@ -289,7 +289,6 @@ async function renderPlatformLanding() {
           <article class="cs-package-card"><div class="pkg-icon">🔗</div><h3>QR Start</h3><p>Za biznise kojima treba jasan digitalni profil i brz kontakt.</p><ul><li>QR link profila</li><li>Logo, opis i kontakt</li><li>Radno vreme i lokacija</li><li>Osnovni upit klijenta</li></ul></article>
           <article class="cs-package-card featured"><div class="pkg-icon">📅</div><h3>Rezervacije</h3><p>Za salone, servise i usluge koje rade preko termina.</p><ul><li>Usluge i trajanje</li><li>Zakazivanje termina</li><li>Panel za zahteve</li><li>Zvučna i vizuelna notifikacija</li></ul></article>
           <article class="cs-package-card"><div class="pkg-icon">🛍️</div><h3>Katalog</h3><p>Za radnje, majstore i biznise koji žele prikaz ponude.</p><ul><li>Proizvodi i usluge</li><li>Opis, cena i status</li><li>Upit za proizvod/uslugu</li><li>QR statistika izvora</li></ul></article>
-          <article class="cs-package-card premium"><div class="pkg-icon">🚗</div><h3>Garaža</h3><p>Za auto-placeve, mašine, bagere, kamione i veće oglase.</p><ul><li>Listing vozila ili mašina</li><li>Više slika po oglasu</li><li>Karakteristike i status</li><li>Premium prikaz ponude</li></ul></article>
         </div>
       </section>
 
@@ -305,7 +304,7 @@ async function renderPlatformLanding() {
         <span class="eyebrow">Za koga je?</span>
         <h2>Za male biznise koji žele da ih klijent lakše pronađe i zapamti.</h2>
         <div class="business-types-grid">
-          <div>💈 Frizeri i saloni</div><div>💅 Kozmetika</div><div>🛞 Vulkanizeri</div><div>🔧 Auto servisi</div><div>🎨 Moleri i majstori</div><div>🛠️ Servisi i radionice</div><div>🛒 Male radnje</div><div>🚜 Garaža / mašine</div>
+          <div>💈 Frizeri i saloni</div><div>💅 Kozmetika</div><div>🛞 Vulkanizeri</div><div>🔧 Auto servisi</div><div>🎨 Moleri i majstori</div><div>🛠️ Servisi i radionice</div><div>🛒 Male radnje</div>
         </div>
       </section>
 
