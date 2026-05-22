@@ -1,6 +1,6 @@
 // sw.js
 // Minimal cache reset service worker for CityStyle.app
-const CACHE_NAME = "citystyle-business-v19-text-overlay";
+const CACHE_NAME = "citystyle-business-v24-hard-clean";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

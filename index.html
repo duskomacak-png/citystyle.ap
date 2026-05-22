@@ -24,7 +24,7 @@
         var params = new URLSearchParams(window.location.search || "");
         var slug = params.get("salon");
         if (!slug) {
-          addManifest("manifest.json?v=business23cleanicons");
+          addManifest("manifest.json?v=business24hardclean");
           return;
         }
         var encodedSlug = encodeURIComponent(slug);
@@ -34,7 +34,7 @@
           name: profileName,
           short_name: profileName.length > 12 ? profileName.slice(0, 12).trim() : profileName,
           description: "Prečica za direktan ulaz u ovaj CityStyle profil.",
-          start_url: "/?salon=" + encodedSlug + "&pwa_profile=" + encodedSlug + "&v=business23cleanicons",
+          start_url: "/?salon=" + encodedSlug + "&pwa_profile=" + encodedSlug + "&v=business24hardclean",
           scope: "/",
           display: "standalone",
           background_color: "#0b0b0f",
@@ -48,18 +48,18 @@
         var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
         addManifest(URL.createObjectURL(blob));
       } catch (err) {
-        addManifest("manifest.json?v=business23cleanicons");
+        addManifest("manifest.json?v=business24hardclean");
       }
     })();
   </script>
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-  <link rel="stylesheet" href="assets/css/style.css?v=business23cleanicons">
+  <link rel="stylesheet" href="assets/css/style.css?v=business24hardclean">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=business23cleanicons"></script>
-  <script src="assets/js/main.js?v=business23cleanicons"></script>
-  <script src="assets/js/auth.js?v=business23cleanicons"></script>
-  <script src="assets/js/booking-logic.js?v=business23cleanicons"></script>
-  <script src="assets/js/client.js?v=business23cleanicons" defer></script>
+  <script src="assets/js/config.js?v=business24hardclean"></script>
+  <script src="assets/js/main.js?v=business24hardclean"></script>
+  <script src="assets/js/auth.js?v=business24hardclean"></script>
+  <script src="assets/js/booking-logic.js?v=business24hardclean"></script>
+  <script src="assets/js/client.js?v=business24hardclean" defer></script>
 </head>
 <body>
   <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>

@@ -2013,3 +2013,174 @@ select:focus{
   .product-feed-modal .feed-action-label{font-size:11px !important;}
   .product-feed-modal .product-feed-side-actions.tiktok-actions{gap:8px !important;top:30% !important;}
 }
+
+/* v23 product feed clean image + clear action icons
+   Safe visual override only: removes overlay line and blur/glow around icons. */
+.product-feed-modal .product-feed-media{
+  background:#050508 !important;
+}
+.product-feed-modal .product-feed-slide::after{
+  content:none !important;
+  display:none !important;
+  background:none !important;
+  height:0 !important;
+}
+.product-feed-modal .product-feed-media img{
+  object-fit:contain !important;
+  object-position:center center !important;
+  filter:none !important;
+  box-shadow:none !important;
+}
+.product-feed-modal .feed-action-btn,
+.product-feed-modal .feed-action-icon,
+.product-feed-modal .product-feed-topbar span,
+.product-feed-modal .product-feed-close,
+.product-feed-modal .product-feed-side-actions button,
+.product-feed-modal .product-feed-side-actions a{
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  filter:none !important;
+}
+.product-feed-modal .feed-action-icon{
+  background:rgba(10,10,14,.88) !important;
+  border:1px solid rgba(255,255,255,.30) !important;
+  box-shadow:none !important;
+}
+.product-feed-modal .feed-action-btn--ask .feed-action-icon,
+.product-feed-modal .feed-action-btn--share .feed-action-icon,
+.product-feed-modal .feed-action-btn--call .feed-action-icon{
+  background:rgba(10,10,14,.88) !important;
+  box-shadow:none !important;
+}
+.product-feed-modal .feed-action-btn:hover .feed-action-icon{
+  background:rgba(185,28,28,.95) !important;
+}
+.product-feed-modal .feed-action-label{
+  text-shadow:0 2px 8px rgba(0,0,0,.85) !important;
+}
+.product-feed-modal .product-feed-info,
+.product-feed-modal .product-feed-info h2,
+.product-feed-modal .product-feed-price-row strong,
+.product-feed-modal .product-feed-info p,
+.product-feed-modal .product-feed-info small{
+  filter:none !important;
+}
+.product-feed-modal .product-feed-info h2,
+.product-feed-modal .product-feed-price-row strong,
+.product-feed-modal .product-feed-info p{
+  text-shadow:0 2px 9px rgba(0,0,0,.95) !important;
+}
+.product-feed-modal .product-feed-topbar span,
+.product-feed-modal .product-feed-close{
+  background:rgba(10,10,14,.88) !important;
+  box-shadow:none !important;
+}
+
+/* v24 HARD CLEAN PRODUCT FEED
+   Purpose: no overlay line on images, no blur/fog/glow around action icons.
+   Safe CSS-only override: does not touch JS, Supabase, login, upload, call or message logic. */
+.product-feed-slide::before,
+.product-feed-slide::after,
+.product-feed-modal .product-feed-slide::before,
+.product-feed-modal .product-feed-slide::after{
+  content:none !important;
+  display:none !important;
+  opacity:0 !important;
+  visibility:hidden !important;
+  background:none !important;
+  border:0 !important;
+  box-shadow:none !important;
+  height:0 !important;
+  width:0 !important;
+}
+.product-feed-media,
+.product-feed-modal .product-feed-media{
+  position:absolute !important;
+  inset:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:#050508 !important;
+  overflow:hidden !important;
+  border:0 !important;
+  box-shadow:none !important;
+  filter:none !important;
+}
+.product-feed-media img,
+.product-feed-modal .product-feed-media img{
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+  display:block !important;
+  background:#050508 !important;
+  border:0 !important;
+  box-shadow:none !important;
+  filter:none !important;
+}
+.product-feed-topbar span,
+.product-feed-close,
+.product-feed-side-actions button,
+.product-feed-side-actions a,
+.feed-action-btn,
+.feed-action-icon,
+.product-feed-side-actions.tiktok-actions .feed-action-btn,
+.product-feed-side-actions.tiktok-actions .feed-action-icon{
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+  filter:none !important;
+  box-shadow:none !important;
+  text-shadow:none !important;
+}
+.feed-action-btn,
+.product-feed-side-actions.tiktok-actions .feed-action-btn{
+  background:transparent !important;
+  border:0 !important;
+}
+.feed-action-icon,
+.product-feed-side-actions.tiktok-actions .feed-action-icon,
+.product-feed-modal .feed-action-icon{
+  background:rgba(8,8,12,.92) !important;
+  border:1px solid rgba(255,255,255,.32) !important;
+  box-shadow:none !important;
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+  filter:none !important;
+}
+.feed-action-btn--ask .feed-action-icon,
+.feed-action-btn--share .feed-action-icon,
+.feed-action-btn--call .feed-action-icon,
+.product-feed-modal .feed-action-btn--ask .feed-action-icon,
+.product-feed-modal .feed-action-btn--share .feed-action-icon,
+.product-feed-modal .feed-action-btn--call .feed-action-icon{
+  background:rgba(8,8,12,.92) !important;
+  box-shadow:none !important;
+  filter:none !important;
+}
+.feed-action-label,
+.product-feed-side-actions.tiktok-actions .feed-action-label,
+.product-feed-modal .feed-action-label{
+  text-shadow:none !important;
+  filter:none !important;
+}
+.product-feed-info,
+.product-feed-modal .product-feed-info{
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+  filter:none !important;
+}
+.product-feed-info h2,
+.product-feed-info p,
+.product-feed-info small,
+.product-feed-price-row strong,
+.product-feed-modal .product-feed-info h2,
+.product-feed-modal .product-feed-info p,
+.product-feed-modal .product-feed-info small,
+.product-feed-modal .product-feed-price-row strong{
+  filter:none !important;
+}
