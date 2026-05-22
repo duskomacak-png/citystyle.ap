@@ -67,13 +67,9 @@ function renderBusinessTypeOptions(selectedValue = "general") {
 
 
 const ADMIN_PACKAGE_OPTIONS = [
-  { value: "business", label: "Biznis", icon: "🏢", hint: "osnovni QR profil, usluge, galerija, zahtevi i statistika", max_listings: 0, max_images: 0, price: 9.99 },
-  { value: "catalog", label: "Katalog", icon: "🛒", hint: "biznis profil + proizvodi/katalog", max_listings: 0, max_images: 0, price: 14.99 },
-  { value: "garage_start", label: "Garaža Start", icon: "🚗", hint: "do 30 oglasa, do 10 slika po oglasu", max_listings: 30, max_images: 10, price: 29.99 },
-  { value: "garage_plus", label: "Garaža Plus", icon: "🚙", hint: "do 75 oglasa, do 10 slika po oglasu", max_listings: 75, max_images: 10, price: 49.99 },
-  { value: "garage_pro", label: "Garaža PRO", icon: "🏗️", hint: "do 150 oglasa, do 10 slika po oglasu", max_listings: 150, max_images: 10, price: 79.99 },
-  { value: "garage_max", label: "Garaža MAX", icon: "🚛", hint: "do 300 oglasa, do 10 slika po oglasu", max_listings: 300, max_images: 10, price: 129.99 },
-  { value: "custom", label: "Custom", icon: "⭐", hint: "ručni dogovor i ručno podešeni limiti", max_listings: 0, max_images: 10, price: 0 }
+  { value: "business", label: "Biznis", icon: "🏢", hint: "QR profil, termini/usluge, galerija, zahtevi i statistika", max_listings: 0, max_images: 0, price: 9.99 },
+  { value: "catalog", label: "Katalog", icon: "🛒", hint: "QR profil + proizvodi/katalog + TikTok-style listanje", max_listings: 0, max_images: 0, price: 14.99 },
+  { value: "custom", label: "Custom", icon: "⭐", hint: "ručni dogovor za posebne biznise", max_listings: 0, max_images: 10, price: 0 }
 ];
 
 function getAdminPackageOption(value) {
@@ -120,7 +116,7 @@ function promptPackage(currentValue = "business") {
   let maxListings = limits.max_garage_listings;
   let maxImages = limits.max_images_per_listing;
   if (isGaragePackage(pkg.value)) {
-    const enteredListings = prompt("Maksimalan broj Garaža oglasa:", String(maxListings || 30));
+    const enteredListings = prompt("Maksimalan broj posebnih objava:", String(maxListings || 30));
     if (enteredListings === null) return null;
     maxListings = Math.max(1, Number(enteredListings || maxListings || 30));
     const enteredImages = prompt("Maksimalan broj slika po oglasu:", String(maxImages || 10));
@@ -864,7 +860,7 @@ function showAddSalonForm() {
 
         <div class="business-type-helper" id="business-type-helper">
           <strong>${renderBusinessTypeBadge("general")}</strong>
-          <span>Opšti biznis: zahtevi, termini i ponuda. Paket Biznis nema Garaža tab.</span>
+          <span>Biznis: termini/usluge. Katalog: proizvodi sa TikTok-style listanjem. Garaža paketi su sklonjeni iz CityStyle-a da aplikacija ostane čista.</span>
         </div>
 
         <div class="card-actions admin-modal-actions">

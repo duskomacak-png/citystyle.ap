@@ -1,6 +1,6 @@
 // sw.js
 // Minimal cache reset service worker for CityStyle.app
-const CACHE_NAME = "citystyle-business-v13-tiktokfeed";
+const CACHE_NAME = "citystyle-business-v15-cataloginstall";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

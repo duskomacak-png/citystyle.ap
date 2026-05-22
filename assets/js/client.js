@@ -553,7 +553,15 @@ async function renderSalonHome() {
     .order("day_of_week", { ascending: true });
 
   const publicName = settings?.welcome_title || currentSalon.salon_name || "Profil";
+  const businessType = window.App.normalizeBusinessType ? window.App.normalizeBusinessType(currentSalon.business_type) : String(currentSalon.business_type || "general");
   const profileLabels = window.App.getBusinessProfileLabels(currentSalon.business_type);
+  const isCatalogProfile = businessType === "catalog";
+  const primaryActionHtml = isCatalogProfile
+    ? `<button class="btn btn-primary" type="button" onclick="openProductFeed()">${products.length ? "Pogledaj proizvode" : "Proizvodi još nisu dodati"}</button>`
+    : `<button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(profileLabels.action)}</button>`;
+  const secondaryActionsHtml = isCatalogProfile
+    ? `<button class="btn btn-dark btn-profile-install" type="button" onclick="installCurrentSalonApp()">📱 Preuzmi app profila</button>`
+    : `${services.length ? `<button class="btn btn-dark" type="button" onclick="showServices()">${escapeHtml(profileLabels.services)}</button>` : ""}${products.length ? `<button class="btn btn-dark" type="button" onclick="openProductFeed()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>` : ""}<button class="btn btn-dark btn-profile-install" type="button" onclick="installCurrentSalonApp()">📱 Preuzmi app profila</button>`;
   currentSalon._publicName = publicName;
   currentSalon._publicLogo = settings?.logo_url || "";
   currentSalon._publicPhone = settings?.phone || currentSalon.phone || "";
@@ -596,21 +604,17 @@ async function renderSalonHome() {
           ` : ""}
         </div>
 
-        <div class="client-actions">
-          <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(profileLabels.action)}</button>
-          <button class="btn btn-dark" type="button" onclick="showServices()">${escapeHtml(profileLabels.services)}</button>
-          <button class="btn btn-dark" type="button" onclick="openProductFeed()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>
-          ${garageListings.length ? `<button class="btn btn-dark" type="button" onclick="showGarage()">Garaža / oglasi</button>` : ""}
-          ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app ovog profila")}</button>`}
+        <div class="client-actions client-actions-minimal">
+          ${primaryActionHtml}
+          ${secondaryActionsHtml}
         </div>
       </div>
 
       <div id="client-extra">
-        ${renderClientServicesPreview()}
-        ${renderClientProductsPreview()}
-        ${renderClientGaragePreview()}
-        ${renderClientGalleryPreview()}
-        ${renderClientWorkingHours(workingHours || [])}
+        ${isCatalogProfile ? renderClientProductsPreview(true) : renderClientServicesPreview()}
+        ${isCatalogProfile ? "" : renderClientProductsPreview(false)}
+        ${isCatalogProfile ? "" : renderClientGalleryPreview()}
+        ${!isCatalogProfile ? renderClientWorkingHours(workingHours || []) : ""}
       </div>
       <div id="booking-box"></div>
     </section>
@@ -760,19 +764,7 @@ function installCurrentSalonApp() {
 
 function renderClientServicesPreview() {
   const profileLabels = window.App.getBusinessProfileLabels(currentSalon?.business_type);
-  if (!services.length) {
-    return `
-      <details class="card client-hours-panel client-services-panel">
-        <summary>
-          <span>${escapeHtml(profileLabels.services)}</span>
-          <small>${C("noServicesSmall", "Nema dostupnih usluga")}</small>
-        </summary>
-        <div class="client-services-panel-body">
-          <p class="muted">${C("noServicesText", "Trenutno nema dostupnih usluga za online zahtev.")}</p>
-        </div>
-      </details>
-    `;
-  }
+  if (!services.length) return "";
 
   return `
     <details class="card client-hours-panel client-services-panel">
@@ -823,6 +815,28 @@ function buildProductWhatsApp(product = {}) {
   return `https://wa.me/${phone}?text=${message}`;
 }
 
+function openWhatsAppMessage(message) {
+  const phone = getPublicContactPhone();
+  if (!phone) {
+    window.App?.showMessage?.("Kontakt telefon / WhatsApp nije podešen za ovaj profil.", "error");
+    return;
+  }
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank", "noopener");
+}
+
+function askForProductGeneral() {
+  openWhatsAppMessage(`Poštovani, interesuje me vaša ponuda proizvoda. Možete li mi poslati više informacija?`);
+}
+
+function askAboutProduct(productId) {
+  const product = products.find(row => String(row.id) === String(productId));
+  if (!product) {
+    askForProductGeneral();
+    return;
+  }
+  openWhatsAppMessage(`Poštovani, interesuje me proizvod: ${product.name}. Cena: ${renderProductPrice(product)}. Da li je dostupno?`);
+}
+
 function buildProductShareUrl(product = {}) {
   const url = new URL(window.location.href);
   url.hash = product?.id ? `product-${product.id}` : "products";
@@ -858,21 +872,23 @@ function renderProductFeedCard(product = {}, index = 0) {
         ${image ? `<img src="${escapeHtml(image)}" alt="${escapeHtml(product.name)}">` : `<div class="product-feed-empty">Dodajte sliku proizvoda</div>`}
       </div>
       <div class="product-feed-topbar">
-        <span>CityStyle katalog</span>
+        <span>${escapeHtml(currentSalon?._publicName || currentSalon?.salon_name || "Profil")}</span>
         <button class="product-feed-close" type="button" onclick="this.closest('.product-feed-modal').remove()">×</button>
       </div>
-      <div class="product-feed-side-actions">
-        <button type="button" onclick="shareProduct('${escapeJs(product.id)}')">↗<small>Podeli</small></button>
-        ${whatsapp ? `<a href="${whatsapp}" target="_blank" rel="noopener">💬<small>Poruči</small></a>` : `<button type="button" onclick="showBookingForm(); this.closest('.product-feed-modal').remove();">✉<small>Upit</small></button>`}
+      <div class="product-feed-side-actions tiktok-actions">
+        <button class="feed-action-btn" type="button" onclick="shareProduct('${escapeJs(product.id)}')" aria-label="Podeli proizvod">
+          <span class="feed-action-icon">↗</span><small>Podeli</small>
+        </button>
+        ${whatsapp ? `<a class="feed-action-btn" href="${whatsapp}" target="_blank" rel="noopener" aria-label="Pitaj za proizvod"><span class="feed-action-icon">?</span><small>Pitaj</small></a>` : `<button class="feed-action-btn" type="button" onclick="askAboutProduct('${escapeJs(product.id)}')" aria-label="Pitaj za proizvod"><span class="feed-action-icon">?</span><small>Pitaj</small></button>`}
       </div>
       <div class="product-feed-info">
         <small>${escapeHtml(product.category || "Proizvod")}</small>
         <h2>${escapeHtml(product.name)}</h2>
-        ${product.description ? `<p>${escapeHtml(product.description)}</p>` : ""}
         <div class="product-feed-price-row">
           <strong>${renderProductPrice(product)}</strong>
           <span>${getProductStatusLabel(product.stock_status)}</span>
         </div>
+        ${product.description ? `<p>${escapeHtml(product.description)}</p>` : ""}
       </div>
     </section>
   `;
@@ -901,35 +917,27 @@ function openProductFeed(startProductId = null) {
   document.body.appendChild(modal);
 }
 
-function renderClientProductsPreview() {
+function renderClientProductsPreview(forceOpen = false) {
   if (!products.length) return "";
   return `
-    <details class="card client-hours-panel client-products-panel">
-      <summary>
-        <span>${C("productsCatalog", "Proizvodi / cenovnik")}</span>
-        <small>${C("showList", "Prikaži listu")}</small>
-      </summary>
-      <div class="client-services-panel-body">
-        <p class="muted">Pregled proizvoda, artikala ili cenovnika koje ovaj biznis nudi.</p>
-        <button class="btn btn-primary" type="button" onclick="openProductFeed()">Otvori TikTok pregled</button>
-        <div class="product-public-grid">
-          ${products.map(product => `
-            <button type="button" class="product-public-card product-public-clickable" onclick="openProductFeed('${escapeJs(product.id)}')">
-              ${product.image_url ? `<img class="product-public-img" src="${escapeHtml(product.image_url)}" alt="${escapeHtml(product.name)}">` : ""}
-              <div class="product-public-body">
-                <strong>${escapeHtml(product.name)}</strong>
-                ${product.category ? `<span>${escapeHtml(product.category)}</span>` : ""}
-                ${product.description ? `<p>${escapeHtml(product.description)}</p>` : ""}
-              </div>
-              <div class="product-public-meta">
-                <b>${renderProductPrice(product)}</b>
-                <small>${getProductStatusLabel(product.stock_status)}</small>
-              </div>
-            </button>
-          `).join("")}
+    <section class="card client-products-simple ${forceOpen ? "client-products-featured" : ""}">
+      <div class="client-products-simple-head">
+        <div>
+          <h2>${C("productsCatalog", "Proizvodi / cenovnik")}</h2>
+          <p class="muted">Otvorite proizvode u punom prikazu: slika, cena, opis, podeli i pitaj.</p>
         </div>
+        <button class="btn btn-primary" type="button" onclick="openProductFeed()">Pogledaj proizvode</button>
       </div>
-    </details>
+      <div class="product-public-strip">
+        ${products.slice(0, 6).map(product => `
+          <button type="button" class="product-public-mini" onclick="openProductFeed('${escapeJs(product.id)}')">
+            ${product.image_url ? `<img src="${escapeHtml(product.image_url)}" alt="${escapeHtml(product.name)}">` : `<span>Proizvod</span>`}
+            <b>${escapeHtml(product.name)}</b>
+            <small>${renderProductPrice(product)}</small>
+          </button>
+        `).join("")}
+      </div>
+    </section>
   `;
 }
 
@@ -1045,6 +1053,12 @@ async function selectServiceById(serviceId) {
 function showBookingForm() {
   const box = document.getElementById("booking-box");
   if (!box) return;
+
+  const businessType = window.App.normalizeBusinessType ? window.App.normalizeBusinessType(currentSalon?.business_type) : String(currentSalon?.business_type || "general");
+  if (businessType === "catalog") {
+    askForProductGeneral();
+    return;
+  }
 
   if (!services.length) {
     box.innerHTML = `<div class="card"><h2>${C("bookingUnavailable", "Zakazivanje nije dostupno")}</h2><p class="muted">${C("noServicesText", "Trenutno nema dostupnih usluga za online zahtev.")}</p></div>`;
