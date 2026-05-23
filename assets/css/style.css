@@ -1942,3 +1942,53 @@ select:focus{
     background:#f3fff8 !important;
   }
 }
+
+
+/* v80 SAFE: mobile viewer graphite glass theme
+   - remove green tint from fullscreen mobile viewer
+   - keep buttons and dots separated
+   - preserve all existing logic and layout behavior */
+@media(max-width:899px){
+  .shoe-viewer{
+    background:
+      radial-gradient(circle at top, rgba(255,255,255,.045), transparent 34%),
+      radial-gradient(circle at bottom, rgba(255,255,255,.03), transparent 40%),
+      linear-gradient(180deg, rgba(8,10,14,.965), rgba(5,7,10,.985)) !important;
+  }
+  .shoe-viewer .shoe-viewer-media{
+    background:transparent !important;
+  }
+  .shoe-viewer:before{
+    background:linear-gradient(to bottom, rgba(5,8,12,.72), rgba(5,8,12,0)) !important;
+  }
+  .shoe-viewer:after{
+    background:linear-gradient(to top, rgba(5,8,12,.80), rgba(5,8,12,0)) !important;
+  }
+  .shoe-viewer-top small,
+  .shoe-viewer-top h2,
+  .shoe-viewer-top b{
+    text-shadow:0 2px 14px rgba(0,0,0,.58);
+  }
+  .shoe-action,
+  .shoe-action.red,
+  .shoe-action.blue,
+  .shoe-action.green{
+    background:rgba(255,255,255,.055) !important;
+    border:1px solid rgba(255,255,255,.16) !important;
+    box-shadow:0 12px 28px rgba(0,0,0,.30) !important;
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+  }
+  .shoe-dots{
+    background:rgba(255,255,255,.055) !important;
+    border:1px solid rgba(255,255,255,.14) !important;
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+  }
+  .shoe-dots button{
+    background:rgba(255,255,255,.28) !important;
+  }
+  .shoe-dots button.active{
+    background:#ffffff !important;
+  }
+}
