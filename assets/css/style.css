@@ -1810,3 +1810,17 @@ select:focus{
     object-fit:contain !important;
   }
 }
+
+
+/* v77 SAFE: mobile double-tap zoom for product viewer image only */
+@media(max-width:899px){
+  .shoe-viewer .shoe-viewer-media img{
+    transition:transform .22s ease, max-height .22s ease, max-width .22s ease;
+    transform-origin:center center;
+  }
+  .shoe-viewer.shoe-viewer-zoomed .shoe-viewer-media img{
+    transform:scale(1.85) !important;
+    max-width:calc(100vw - 18px) !important;
+    max-height:calc(100vh - 210px) !important;
+  }
+}

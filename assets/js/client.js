@@ -1305,7 +1305,7 @@ function showProducts() {
 
 function openShoeViewer(index = 0) {
   if (!products.length) return;
-  csViewerState = { index: Math.max(0, Math.min(index, products.length - 1)), image: 0, startX: 0, startY: 0 };
+  csViewerState = { index: Math.max(0, Math.min(index, products.length - 1)), image: 0, startX: 0, startY: 0, lastTap: 0, lastTapX: 0, lastTapY: 0, zoomed: false };
   renderShoeViewer();
 }
 function closeShoeViewer() { document.getElementById("shoeViewer")?.remove(); csViewerState = null; }
@@ -1381,6 +1381,13 @@ function csSmartCropShoeImage(img){
   }
 }
 
+function csToggleShoeZoom(){
+  if (!csViewerState) return;
+  csViewerState.zoomed = !csViewerState.zoomed;
+  const viewer = document.getElementById("shoeViewer");
+  if (viewer) viewer.classList.toggle("shoe-viewer-zoomed", !!csViewerState.zoomed);
+}
+
 function renderShoeViewer() {
   const product = currentShoeProduct();
   if (!product) return;
@@ -1393,6 +1400,7 @@ function renderShoeViewer() {
     viewer.className = "shoe-viewer";
     document.body.appendChild(viewer);
   }
+  viewer.classList.toggle("shoe-viewer-zoomed", !!csViewerState.zoomed);
   viewer.innerHTML = `
     <div class="shoe-viewer-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}" crossorigin="anonymous" onload="csSmartCropShoeImage(this)">` : `<span>Bez slike</span>`}</div>
     <div class="shoe-viewer-top"><small>${escapeHtml(csProductCode(product))}${product.category ? " • " + escapeHtml(product.category) : ""}${imgs.length > 1 ? ` • ${csViewerState.image + 1}/${imgs.length}` : ""}</small><h2>${escapeHtml(product.name || "Patike")}</h2><b>${escapeHtml(csProductPrice(product))}</b></div>
@@ -1405,6 +1413,23 @@ function renderShoeViewer() {
     const t = e.changedTouches[0];
     const dx = t.clientX - csViewerState.startX;
     const dy = t.clientY - csViewerState.startY;
+    const moved = Math.abs(dx) > 14 || Math.abs(dy) > 14;
+    const tappedImage = !!e.target?.closest?.(".shoe-viewer-media img");
+    if (!moved && tappedImage && window.matchMedia?.("(max-width: 899px)")?.matches) {
+      const now = Date.now();
+      const dist = Math.hypot((t.clientX || 0) - (csViewerState.lastTapX || 0), (t.clientY || 0) - (csViewerState.lastTapY || 0));
+      if (now - (csViewerState.lastTap || 0) < 330 && dist < 42) {
+        e.preventDefault?.();
+        csViewerState.lastTap = 0;
+        csToggleShoeZoom();
+        return;
+      }
+      csViewerState.lastTap = now;
+      csViewerState.lastTapX = t.clientX;
+      csViewerState.lastTapY = t.clientY;
+      return;
+    }
+    if (csViewerState.zoomed) return;
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 42) shoeChangeImage(dx < 0 ? 1 : -1);
     else if (Math.abs(dy) > 42) shoeChangeProduct(dy < 0 ? 1 : -1);
   };
@@ -1424,17 +1449,19 @@ function shoeChangeProduct(delta) {
   if (next < 0 || next >= products.length) return;
   csViewerState.index = next;
   csViewerState.image = 0;
+  csViewerState.zoomed = false;
   renderShoeViewer();
 }
 function shoeChangeImage(delta) {
   const imgs = csProductImages(currentShoeProduct());
   if (!imgs.length) return;
   csViewerState.image = (csViewerState.image + delta + imgs.length) % imgs.length;
+  csViewerState.zoomed = false;
   renderShoeViewer();
 }
-function shoeSetImage(i) { csViewerState.image = i; renderShoeViewer(); }
+function shoeSetImage(i) { csViewerState.image = i; csViewerState.zoomed = false; renderShoeViewer(); }
 async function shareShoeProduct(e) { e?.stopPropagation?.(); const p=currentShoeProduct(); const url=csProductUrl(p); const text=`${p.name || 'Patike'} - ${csProductPrice(p)}`; if(navigator.share){try{await navigator.share({title:p.name||'Oglas',text,url});return;}catch(_){}} navigator.clipboard?.writeText(url); window.App.showMessage("Link oglasa je kopiran.", "success"); }
 function askShoeProduct(e) { e?.stopPropagation?.(); const p=currentShoeProduct(); const phone=csWhatsAppPhone(currentSalon._publicPhone || ""); if(!phone) return window.App.showMessage("Vlasnik nije upisao WhatsApp/telefon.", "error"); const msg=encodeURIComponent(`Zdravo, zanima me ovaj oglas:\n\nOglas: ${csProductCode(p)}\nNaziv: ${p.name || 'Patike'}\nCena: ${csProductPrice(p)}\nLink: ${csProductUrl(p)}`); window.location.href=`https://wa.me/${phone}?text=${msg}`; }
 function callShoeShop(e) { e?.stopPropagation?.(); const phone=csSafePhone(currentSalon._publicPhone || ""); if(!phone) return window.App.showMessage("Telefon nije upisan.", "error"); window.location.href=`tel:${phone}`; }
 
-Object.assign(window, { openShoeViewer, closeShoeViewer, shoeChangeProduct, shoeChangeImage, shoeSetImage, shareShoeProduct, askShoeProduct, callShoeShop, csSmartCropShoeImage });
+Object.assign(window, { openShoeViewer, closeShoeViewer, shoeChangeProduct, shoeChangeImage, shoeSetImage, shareShoeProduct, askShoeProduct, callShoeShop, csSmartCropShoeImage, csToggleShoeZoom });
