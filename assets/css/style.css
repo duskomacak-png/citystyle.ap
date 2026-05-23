@@ -1992,3 +1992,42 @@ select:focus{
     background:#ffffff !important;
   }
 }
+
+
+/* v81 SAFE: mobile viewer grey fog glass refinement
+   - switch fullscreen mobile viewer to softer grey smoky glass
+   - reduce transparency so background content is less distracting
+   - preserve existing layout, buttons, dots, zoom, and interactions */
+@media(max-width:899px){
+  .shoe-viewer{
+    background:rgba(10,12,16,.86) !important;
+    backdrop-filter:blur(12px) saturate(105%);
+    -webkit-backdrop-filter:blur(12px) saturate(105%);
+  }
+  .shoe-viewer .shoe-viewer-media{
+    background:transparent !important;
+  }
+  .shoe-viewer:before{
+    background:linear-gradient(to bottom, rgba(34,38,45,.42), rgba(34,38,45,0)) !important;
+  }
+  .shoe-viewer:after{
+    background:linear-gradient(to top, rgba(34,38,45,.48), rgba(34,38,45,0)) !important;
+  }
+  .shoe-action,
+  .shoe-action.red,
+  .shoe-action.blue,
+  .shoe-action.green,
+  .shoe-dots{
+    background:rgba(185,190,198,.10) !important;
+    border:1px solid rgba(255,255,255,.15) !important;
+    box-shadow:0 12px 28px rgba(0,0,0,.28) !important;
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+  }
+  .shoe-dots button{
+    background:rgba(255,255,255,.26) !important;
+  }
+  .shoe-dots button.active{
+    background:#ffffff !important;
+  }
+}
