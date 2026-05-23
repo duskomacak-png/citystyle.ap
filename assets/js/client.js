@@ -1267,7 +1267,7 @@ function renderShoeShopHome(settings = {}) {
       ${cover ? `<div class="shoe-cover"><img src="${escapeHtml(cover)}" alt="${escapeHtml(name)} početna slika"></div>` : `<div class="shoe-cover shoe-cover-empty"><span>${escapeHtml(name)}</span></div>`}
       <div class="shoe-info-row">
         ${logo ? `<img class="shoe-logo" src="${escapeHtml(logo)}" alt="${escapeHtml(name)} logo">` : `<div class="shoe-logo shoe-logo-fallback">${escapeHtml(name.charAt(0).toUpperCase())}</div>`}
-        <div class="shoe-info-copy"><h1>${escapeHtml(name)}</h1>${text ? `<p>${escapeHtml(text)}</p>` : ""}<div class="shoe-meta">${phone ? `<span>📞 ${escapeHtml(phone)}</span>` : ""}${address ? `<span>📍 ${escapeHtml(address)}</span>` : ""}</div></div>
+        <div class="shoe-info-copy"><h1>${escapeHtml(name)}</h1>${text ? `<p>${escapeHtml(text)}</p>` : ""}<div class="shoe-meta">${phone ? `<a class="shoe-meta-link" href="tel:${escapeHtml(csSafePhone(phone))}">📞 ${escapeHtml(phone)}</a>` : ""}${address ? `<span>📍 ${escapeHtml(address)}</span>` : ""}</div></div>
       </div>
       ${ownerPreviewMode ? "" : `<div class="shoe-install-row"><button class="btn btn-dark shoe-install-btn" type="button" onclick="installCurrentSalonApp()">📱 Preuzmi app prodavnice</button><small>Prečica otvara baš ovaj profil${logo ? " i koristi logo firme gde browser dozvoljava" : ""}.</small></div>`}
       <section class="shoe-products-section">
