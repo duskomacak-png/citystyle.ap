@@ -195,141 +195,50 @@ async function renderPlatformLanding() {
   const phoneImages = await loadPlatformHomeImagesForLanding();
   const safeImages = phoneImages.map((item, index) => ({
     url: escapeHtml(item.image_url || ""),
-    caption: escapeHtml(item.caption || "Galerija biznisa"),
+    caption: escapeHtml(item.caption || "CityStyle.app"),
     index
   })).filter(item => item.url);
 
   const phoneDisplay = safeImages.length ? `
     <div class="cs-phone-gallery-card cs-phone-gallery-card--minimal" data-gallery-count="${Math.min(safeImages.length, 30)}">
-      <div class="cs-phone-gallery-slides" aria-label="Galerija slika iz admin panela">
+      <div class="cs-phone-gallery-slides" aria-label="Slike koje admin dodaje za početnu stranicu">
         ${safeImages.slice(0, 30).map((item, i) => `
-          <img class="cs-phone-slide ${i === 0 ? "active" : ""}" data-index="${i}" src="${item.url}" alt="Slika ${i + 1} iz admin galerije za početnu">
+          <img class="cs-phone-slide ${i === 0 ? "active" : ""}" data-index="${i}" src="${item.url}" alt="CityStyle početna slika ${i + 1}">
         `).join("")}
       </div>
-      <div class="cs-phone-gallery-dots" aria-label="Automatska galerija slika na početnoj">
+      <div class="cs-phone-gallery-dots" aria-label="Slajd slike na početnoj">
         ${safeImages.slice(0, 10).map((_, i) => `<button type="button" class="${i === 0 ? "active" : ""}" data-index="${i}" aria-label="Prikaži sliku ${i + 1}"></button>`).join("")}
       </div>
     </div>
   ` : `
-    <div class="cs-phone-fallback-profile cs-phone-fallback-minimal" aria-label="Primer prikaza telefona">
+    <div class="cs-phone-fallback-profile cs-phone-fallback-minimal" aria-label="Primer CityStyle aplikacije">
       <div class="cs-phone-fallback-glow"></div>
       <div class="cs-phone-fallback-badge"></div>
+      <span class="cs-phone-fallback-text">CityStyle</span>
     </div>
   `;
 
   app.innerHTML = `
-    <section class="landing-page sales-homepage cs-pro-home">
-      <header class="landing-nav sales-nav cs-pro-nav">
-        <a class="brand-mark" href="./?home=1" aria-label="CityStyle.app početna">
-          <div class="brand-icon">CS</div>
-          <strong>CITYSTYLE<span>.APP</span></strong>
-        </a>
-        <div class="landing-actions nav-actions">
-          <a class="btn btn-dark" href="salon/">Ulaz za vlasnika</a>
+    <section class="cs-minimal-home" aria-label="CityStyle.app početna">
+      <h1 class="cs-minimal-title">CityStyle<span>.app</span></h1>
+
+      <div class="cs-minimal-phone-wrap" aria-label="Telefon sa slikama aplikacije">
+        <div class="cs-minimal-phone">
+          <div class="cs-minimal-phone-notch"></div>
+          <div class="cs-minimal-phone-screen">${phoneDisplay}</div>
         </div>
-      </header>
+      </div>
 
-      <section class="cs-hero-pro">
-        <div class="cs-hero-glow"></div>
-        <div class="cs-hero-copy">
-          <span class="eyebrow">QR profil za salone, majstore, servise, radnje i lokalne biznise</span>
-          <h1>Izgradite digitalni profil koji klijent otvara jednim skeniranjem.</h1>
-          <p class="hero-lead">
-            CityStyle.app pretvara običan QR kod u moderan ulaz u vaš biznis. Mušterija skenira QR kod, vidi usluge,
-            katalog, radno vreme, fotografije i kontakt, a zatim može da zakaže termin, pošalje upit, zatraži uslugu ili pogleda ponudu.
-          </p>
-          <div class="cs-hero-points">
-            <div><b>🔔</b><span>Kada klijent pošalje zahtev, dobijate zvučnu i vizuelnu notifikaciju u panelu.</span></div>
-            <div><b>📱</b><span>Klijent može sačuvati prečicu na telefonu — kao malu app ikonu za brzi povratak baš u vaš biznis.</span></div>
-          </div>
-          <div class="hero-buttons simple-buttons">
-            <a class="btn btn-primary" href="salon/">Ulaz za vlasnika biznisa</a>
-            <button class="btn btn-dark" type="button" onclick="scrollToHowItWorks()">Kako radi?</button>
-            <a class="btn btn-dark" href="mailto:duskomacak@gmail.com?subject=CityStyle.app%20saradnja">Kontakt za saradnju</a>
-          </div>
-        </div>
+      <div class="cs-minimal-owner-entry">
+        <a class="btn btn-primary cs-minimal-owner-btn" href="salon/">Ulaz za vlasnike</a>
+      </div>
 
-        <div class="cs-phone-stage" aria-label="Primer telefona sa slikama iz admin panela">
-          <div class="cs-phone-shell">
-            <div class="cs-phone-top"></div>
-            <div class="cs-phone-screen-showcase">${phoneDisplay}</div>
-            <div class="cs-phone-notice">🔔 Novi zahtev je stigao</div>
-          </div>
-          <div class="cs-phone-install-actions" aria-label="Preuzimanje CityStyle aplikacije">
-            <button class="btn btn-primary cs-home-install-btn" type="button" onclick="installApp('Na telefonu otvorite meni browsera i izaberite Dodaj na početni ekran. Ako koristite iPhone: Share → Add to Home Screen.', 'CityStyle app je dodata na telefon.')">📱 Preuzmi app</button>
-            <p>Vlasnik može dodati CityStyle kao prečicu/app za brži ulaz.</p>
-          </div>
-        </div>
-      </section>
+      <div class="cs-minimal-legal-links">
+        <button type="button" onclick="openLegalModal('terms')">Uslovi korišćenja</button>
+        <button type="button" onclick="openLegalModal('privacy')">Politika privatnosti</button>
+      </div>
 
-      <section class="cs-trust-strip">
-        <div><strong>QR ulaz</strong><span>jedan link za vaš profil</span></div>
-        <div><strong>Prečica</strong><span>klijent čuva vaš biznis na telefonu</span></div>
-        <div><strong>Notifikacije</strong><span>zvučno i vizuelno obaveštenje</span></div>
-        <div><strong>Panel</strong><span>zahtevi, termini, katalog i statistika</span></div>
-      </section>
-
-      <section id="how-it-works" class="sales-section cs-how-premium">
-        <span class="eyebrow">Kako korisnik vidi vaš biznis?</span>
-        <h2>QR kod vodi klijenta direktno u vaš profil.</h2>
-        <p class="muted cs-section-lead">Bez traženja po porukama i bez komplikacije. Skenira kod, vidi vašu ponudu i ima prečicu za sledeći put.</p>
-        <div class="steps-grid cs-journey-grid">
-          <div class="step-card"><strong>1</strong><h3>Skenira QR</h3><p>QR može biti na vratima, vizit karti, društvenim mrežama, oglasu ili flajeru.</p></div>
-          <div class="step-card"><strong>2</strong><h3>Vidi profil</h3><p>Usluge, proizvodi, slike, radno vreme, kontakt i lokacija su složeni pregledno.</p></div>
-          <div class="step-card"><strong>3</strong><h3>Šalje zahtev</h3><p>Korisnik zakazuje termin, traži uslugu, šalje upit ili pita za proizvod.</p></div>
-          <div class="step-card"><strong>4</strong><h3>Čuva prečicu</h3><p>Na telefonu može sačuvati ikonu koja ga vraća baš na profil vašeg biznisa.</p></div>
-        </div>
-      </section>
-
-      <section class="sales-section cs-packages-section">
-        <span class="eyebrow">Paketi bez prikaza cena</span>
-        <h2>Paketi su složeni po tipu biznisa i količini ponude.</h2>
-        <div class="cs-package-row"><span>QR START</span><span>REZERVACIJE</span><span>KATALOG</span><span>GARAŽA</span></div>
-        <div class="cs-package-grid">
-          <article class="cs-package-card"><div class="pkg-icon">🔗</div><h3>QR Start</h3><p>Za biznise kojima treba jasan digitalni profil i brz kontakt.</p><ul><li>QR link profila</li><li>Logo, opis i kontakt</li><li>Radno vreme i lokacija</li><li>Osnovni upit klijenta</li></ul></article>
-          <article class="cs-package-card featured"><div class="pkg-icon">📅</div><h3>Rezervacije</h3><p>Za salone, servise i usluge koje rade preko termina.</p><ul><li>Usluge i trajanje</li><li>Zakazivanje termina</li><li>Panel za zahteve</li><li>Zvučna i vizuelna notifikacija</li></ul></article>
-          <article class="cs-package-card"><div class="pkg-icon">🛍️</div><h3>Katalog</h3><p>Za radnje, majstore i biznise koji žele prikaz ponude.</p><ul><li>Proizvodi i usluge</li><li>Opis, cena i status</li><li>Upit za proizvod/uslugu</li><li>QR statistika izvora</li></ul></article>
-          <article class="cs-package-card premium"><div class="pkg-icon">🚗</div><h3>Garaža</h3><p>Za auto-placeve, mašine, bagere, kamione i veće oglase.</p><ul><li>Listing vozila ili mašina</li><li>Više slika po oglasu</li><li>Karakteristike i status</li><li>Premium prikaz ponude</li></ul></article>
-        </div>
-      </section>
-
-      <section class="sales-section cs-owner-section">
-        <span class="eyebrow">Šta dobija vlasnik?</span>
-        <h2>Jedan panel za profil, zahteve, ponudu i QR rezultate.</h2>
-        <div class="check-grid cs-benefit-grid">
-          <div>✓ naziv, logo i javni profil</div><div>✓ QR kodovi za više izvora</div><div>✓ slike i galerija biznisa</div><div>✓ usluge, proizvodi ili garaža</div><div>✓ termini i zahtevi</div><div>✓ zvučna i vizuelna notifikacija</div><div>✓ statistika poseta</div><div>✓ WhatsApp/kontakt poruke</div>
-        </div>
-      </section>
-
-      <section class="sales-section cs-business-types">
-        <span class="eyebrow">Za koga je?</span>
-        <h2>Za male biznise koji žele da ih klijent lakše pronađe i zapamti.</h2>
-        <div class="business-types-grid">
-          <div>💈 Frizeri i saloni</div><div>💅 Kozmetika</div><div>🛞 Vulkanizeri</div><div>🔧 Auto servisi</div><div>🎨 Moleri i majstori</div><div>🛠️ Servisi i radionice</div><div>🛒 Male radnje</div><div>🚜 Garaža / mašine</div>
-        </div>
-      </section>
-
-      <section class="legal-notice-box cs-legal-clean">
-        <h2>Važna napomena o odgovornosti</h2>
-        <p>CityStyle.app je tehnička platforma koja omogućava biznisima da prikažu svoje usluge, proizvode, cene, radno vreme i da primaju zahteve korisnika.</p>
-        <p>Svaki biznis samostalno odgovara za tačnost svojih podataka, kvalitet usluga, proizvode, cene, termine, reklamacije, račune, poreze i svoje zakonsko poslovanje.</p>
-      </section>
-
-      <section class="platform-contact-box sales-contact-box cs-contact-pro">
-        <h2>Kontakt za saradnju</h2>
-        <p>Za informacije, aktivaciju biznis profila ili prijavu problema pišite na:</p>
-        <a href="mailto:duskomacak@gmail.com">duskomacak@gmail.com</a>
-      </section>
-
-      <footer class="sales-footer">
-        <p>© 2026 CityStyle.app — tehnička platforma za QR biznis profile.</p>
-        <div>
-          <button type="button" class="footer-link-btn" onclick="openLegalModal('terms')">Uslovi korišćenja</button>
-          <button type="button" class="footer-link-btn" onclick="openLegalModal('privacy')">Politika privatnosti</button>
-          <a href="mailto:duskomacak@gmail.com">Kontakt</a>
-          <a class="subtle-admin-link" href="admin/">Admin panel</a>
-        </div>
-      </footer>
+      <a class="cs-minimal-admin-link" href="admin/">Admin</a>
     </section>
   `;
   initPlatformHomePhoneGallery(safeImages);

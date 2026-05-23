@@ -1,6 +1,6 @@
 // sw.js
 // Minimal cache reset service worker for CityStyle.app
-const CACHE_NAME = "citystyle-business-v66-ios-install";
+const CACHE_NAME = "citystyle-business-v66-minimal-home";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
