@@ -29,7 +29,7 @@ function renderProfile(){
   const logo=City.profileLogo(currentProfile,currentSettings); const name=City.profileName(currentProfile); const text=City.profileText(currentProfile,currentSettings);
   const phone=City.profilePhone(currentProfile,currentSettings); const address=City.profileAddress(currentProfile,currentSettings);
   if(currentKind==='shop'){
-    app.innerHTML=`<section class="shop-client-page"><div class="shop-client-head">${logo?`<img class="shop-logo" src="${City.esc(logo)}" alt="Logo profila">`:`<div class="shop-logo shop-logo-fallback">${City.esc(name[0]||'S')}</div>`}<div class="shop-client-copy"><h1>${City.esc(name)}</h1>${text?`<p>${City.esc(text)}</p>`:''}<div class="shop-client-meta">${phone?`<span class="meta-pill">📞 ${City.esc(phone)}</span>`:''}${address?`<span class="meta-pill">📍 ${City.esc(address)}</span>`:''}</div></div></div><section id="content"></section></section>`;
+    app.innerHTML=`<section class="shop-client-page"><div class="shop-client-head public-profile-card">${logo?`<img class="shop-logo" src="${City.esc(logo)}" alt="Logo profila" onerror="this.style.display='none'">`:`<div class="shop-logo shop-logo-fallback">${City.esc(name[0]||'S')}</div>`}<div class="shop-client-copy"><h1>${City.esc(name)}</h1>${text?`<p>${City.esc(text)}</p>`:''}<div class="shop-client-meta">${phone?`<span class="meta-pill">📞 ${City.esc(phone)}</span>`:''}${address?`<span class="meta-pill">📍 ${City.esc(address)}</span>`:''}</div></div></div><section id="content"></section></section>`;
     showProducts();
     return;
   }

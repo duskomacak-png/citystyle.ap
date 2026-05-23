@@ -1,4 +1,4 @@
-const BUILD = 'fresh-salons-shoes-v9';
+const BUILD = 'fresh-salons-shoes-v10';
 const $ = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 function esc(v){return String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
@@ -31,11 +31,11 @@ function formatPrice(p,currency='RSD'){
 function profileType(profile, productsCount=0){const raw = `${profile?.profile_type||''} ${profile?.business_type||''} ${profile?.type||''} ${profile?.category||''} ${profile?.salon_type||''}`.toLowerCase(); if(raw.match(/shop|prodav|patik|katalog|store|shoes|sneaker/)) return 'shop'; if(raw.match(/salon|beauty|barber|frizer|kozmet/)) return 'salon'; if(productsCount>0) return 'shop'; return 'salon';}
 async function getProfile(slug){ if(!window.db) throw new Error('Supabase nije učitan'); const {data,error}=await db.from('salons').select('*').eq('slug',slug).neq('status','deleted').maybeSingle(); if(error) throw error; return data; }
 async function getSettings(salon_id){ try{const {data}=await db.from('salon_settings').select('*').eq('salon_id',salon_id).maybeSingle();return data||{};}catch(e){return {}} }
-function profilePhone(profile, settings={}){return settings.phone || settings.whatsapp || profile.phone || profile.mobile || profile.whatsapp || ''}
+function profilePhone(profile, settings={}){return settings.phone || settings.whatsapp || settings.contact_phone || profile.phone || profile.mobile || profile.whatsapp || profile.contact_phone || ''}
 function profileName(p){return p?.salon_name || p?.name || p?.business_name || 'CityStyle profil'}
-function profileLogo(p,s={}){return s.logo_url || p.logo_url || ''}
+function profileLogo(p,s={}){return s.logo_url || s.logo || p.logo_url || p.logo || p.avatar_url || ''}
 function profileText(p,s={}){return s.welcome_text || p.description || p.about || ''}
-function profileAddress(profile, settings={}){return settings.address || profile.address || [profile.city, profile.country].filter(Boolean).join(', ') || ''}
+function profileAddress(profile, settings={}){return settings.address || settings.location || profile.address || profile.location || [profile.city, profile.country].filter(Boolean).join(', ') || ''}
 function directLink(slug, code){return `${location.origin}${location.pathname}?salon=${encodeURIComponent(slug)}&product=${encodeURIComponent(code)}`}
 async function copyText(text){try{await navigator.clipboard.writeText(text);toast('Kopirano');}catch(e){prompt('Kopiraj link:',text)}}
 window.City = {esc,qs,toast,normalizePhone,normalizePriceInput,formatPrice,profileType,getProfile,getSettings,profilePhone,profileName,profileLogo,profileText,profileAddress,directLink,copyText,BUILD};
