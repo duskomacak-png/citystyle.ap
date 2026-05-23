@@ -1678,3 +1678,19 @@ select:focus{
   .shoe-viewer .shoe-viewer-media{padding:78px 10px 92px !important;}
   .shoe-viewer .shoe-viewer-media img{max-width:calc(100vw - 20px) !important;max-height:calc(100vh - 170px) !important;}
 }
+
+/* v71 SAFE: laptop-only bigger product image in fullscreen viewer
+   Keeps mobile rules unchanged. Uses contain so the product is larger but not cropped. */
+@media(min-width:900px){
+  .shoe-viewer .shoe-viewer-media{
+    padding:18px !important;
+  }
+  .shoe-viewer .shoe-viewer-media img{
+    width:100% !important;
+    height:100% !important;
+    max-width:calc(100vw - 380px) !important;
+    max-height:calc(100vh - 36px) !important;
+    object-fit:contain !important;
+    object-position:center center !important;
+  }
+}
