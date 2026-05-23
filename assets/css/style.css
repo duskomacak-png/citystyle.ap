@@ -1797,3 +1797,16 @@ select:focus{
     display:none !important;
   }
 }
+
+
+/* v76 SAFE: mobile product viewer consistent image size
+   Smart-cropped images keep the product larger while original fallback still works. */
+@media(max-width:899px){
+  .shoe-viewer .shoe-viewer-media img.shoe-img-smart-cropped{
+    width:calc(100vw - 28px) !important;
+    height:auto !important;
+    max-width:calc(100vw - 28px) !important;
+    max-height:calc(100vh - 250px) !important;
+    object-fit:contain !important;
+  }
+}

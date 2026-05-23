@@ -1320,6 +1320,67 @@ function csViewerPhoneIcon(){
   return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 16.2v3a1.8 1.8 0 0 1-1.96 1.8C10.74 20.28 3.72 13.26 3 4.96A1.8 1.8 0 0 1 4.8 3h3a1.8 1.8 0 0 1 1.8 1.55c.14 1.02.43 2 .85 2.92a1.8 1.8 0 0 1-.41 2.02l-1.27 1.27a14.4 14.4 0 0 0 4.47 4.47l1.27-1.27a1.8 1.8 0 0 1 2.02-.41c.92.42 1.9.71 2.92.85A1.8 1.8 0 0 1 21 16.2Z"></path></svg>';
 }
 
+function csSmartCropShoeImage(img){
+  // v76: display-only smart trim for product photos with large white margins.
+  // If browser/CORS blocks canvas, original image stays unchanged.
+  try {
+    if (!img || img.dataset.smartCropDone === "1") return;
+    img.dataset.smartCropDone = "1";
+    const nw = img.naturalWidth || 0;
+    const nh = img.naturalHeight || 0;
+    if (nw < 80 || nh < 80) return;
+    const maxSide = 900;
+    const scale = Math.min(1, maxSide / Math.max(nw, nh));
+    const w = Math.max(1, Math.round(nw * scale));
+    const h = Math.max(1, Math.round(nh * scale));
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return;
+    ctx.drawImage(img, 0, 0, w, h);
+    const data = ctx.getImageData(0, 0, w, h).data;
+    let minX = w, minY = h, maxX = -1, maxY = -1;
+    for (let y = 0; y < h; y += 2) {
+      for (let x = 0; x < w; x += 2) {
+        const i = (y * w + x) * 4;
+        const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+        // Treat pure/near white and transparent background as margin.
+        const isBg = a < 16 || (r > 238 && g > 238 && b > 238) || (r > 246 && g > 246 && b > 246);
+        if (!isBg) {
+          if (x < minX) minX = x;
+          if (y < minY) minY = y;
+          if (x > maxX) maxX = x;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    if (maxX <= minX || maxY <= minY) return;
+    const bw = maxX - minX + 1;
+    const bh = maxY - minY + 1;
+    const cropRatio = (bw * bh) / (w * h);
+    // Only crop when there is obvious empty margin.
+    if (cropRatio > 0.82) return;
+    const pad = Math.round(Math.max(bw, bh) * 0.10);
+    minX = Math.max(0, minX - pad);
+    minY = Math.max(0, minY - pad);
+    maxX = Math.min(w - 1, maxX + pad);
+    maxY = Math.min(h - 1, maxY + pad);
+    const cw = maxX - minX + 1;
+    const ch = maxY - minY + 1;
+    const out = document.createElement("canvas");
+    out.width = cw; out.height = ch;
+    const octx = out.getContext("2d");
+    if (!octx) return;
+    octx.fillStyle = "#ffffff";
+    octx.fillRect(0, 0, cw, ch);
+    octx.drawImage(c, minX, minY, cw, ch, 0, 0, cw, ch);
+    img.src = out.toDataURL("image/jpeg", 0.92);
+    img.classList.add("shoe-img-smart-cropped");
+  } catch (_) {
+    // Keep original image if smart crop is not possible.
+  }
+}
+
 function renderShoeViewer() {
   const product = currentShoeProduct();
   if (!product) return;
@@ -1333,7 +1394,7 @@ function renderShoeViewer() {
     document.body.appendChild(viewer);
   }
   viewer.innerHTML = `
-    <div class="shoe-viewer-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}">` : `<span>Bez slike</span>`}</div>
+    <div class="shoe-viewer-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}" crossorigin="anonymous" onload="csSmartCropShoeImage(this)">` : `<span>Bez slike</span>`}</div>
     <div class="shoe-viewer-top"><small>${escapeHtml(csProductCode(product))}${product.category ? " • " + escapeHtml(product.category) : ""}${imgs.length > 1 ? ` • ${csViewerState.image + 1}/${imgs.length}` : ""}</small><h2>${escapeHtml(product.name || "Patike")}</h2><b>${escapeHtml(csProductPrice(product))}</b></div>
     <button class="shoe-viewer-close" type="button" onclick="closeShoeViewer()">×</button>
     ${imgs.length > 1 ? `<button class="shoe-arrow shoe-arrow-left" type="button" onclick="event.stopPropagation(); shoeChangeImage(-1)">‹</button><button class="shoe-arrow shoe-arrow-right" type="button" onclick="event.stopPropagation(); shoeChangeImage(1)">›</button>` : ""}
@@ -1376,4 +1437,4 @@ async function shareShoeProduct(e) { e?.stopPropagation?.(); const p=currentShoe
 function askShoeProduct(e) { e?.stopPropagation?.(); const p=currentShoeProduct(); const phone=csWhatsAppPhone(currentSalon._publicPhone || ""); if(!phone) return window.App.showMessage("Vlasnik nije upisao WhatsApp/telefon.", "error"); const msg=encodeURIComponent(`Zdravo, zanima me ovaj oglas:\n\nOglas: ${csProductCode(p)}\nNaziv: ${p.name || 'Patike'}\nCena: ${csProductPrice(p)}\nLink: ${csProductUrl(p)}`); window.location.href=`https://wa.me/${phone}?text=${msg}`; }
 function callShoeShop(e) { e?.stopPropagation?.(); const phone=csSafePhone(currentSalon._publicPhone || ""); if(!phone) return window.App.showMessage("Telefon nije upisan.", "error"); window.location.href=`tel:${phone}`; }
 
-Object.assign(window, { openShoeViewer, closeShoeViewer, shoeChangeProduct, shoeChangeImage, shoeSetImage, shareShoeProduct, askShoeProduct, callShoeShop });
+Object.assign(window, { openShoeViewer, closeShoeViewer, shoeChangeProduct, shoeChangeImage, shoeSetImage, shareShoeProduct, askShoeProduct, callShoeShop, csSmartCropShoeImage });
