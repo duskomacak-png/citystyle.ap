@@ -1717,3 +1717,26 @@ select:focus{
 @media(min-width:900px){
   .shoe-action svg{width:26px;height:26px;}
 }
+
+
+/* v73 SAFE: improve public client logo display only
+   Goal: client sees a larger, cleaner logo card without affecting viewer logic. */
+.shoe-logo{
+  width:78px !important;
+  height:78px !important;
+  min-width:78px !important;
+  border-radius:20px !important;
+  background:rgba(255,255,255,.03) !important;
+  border:1px solid rgba(255,255,255,.08) !important;
+  padding:6px !important;
+  box-shadow:0 10px 24px rgba(0,0,0,.16);
+}
+@media(max-width:720px){
+  .shoe-logo{
+    width:84px !important;
+    height:84px !important;
+    min-width:84px !important;
+    border-radius:22px !important;
+    padding:6px !important;
+  }
+}
