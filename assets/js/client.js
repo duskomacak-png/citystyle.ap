@@ -156,6 +156,11 @@ async function loadSalon(slug, saveThisSalon = true) {
   await loadGalleryImages();
   await loadGarageListings();
   await renderSalonHome();
+
+  const directProductId = getDirectProductIdFromUrl();
+  if (directProductId && products.some(row => String(row.id) === String(directProductId))) {
+    window.setTimeout(() => openProductFeed(directProductId), 250);
+  }
 }
 
 async function loadPlatformHomeImagesForLanding() {
@@ -909,9 +914,31 @@ function askAboutProduct(productId) {
   openWhatsAppMessage(buildProductOrderMessage(product));
 }
 
+function getDirectProductIdFromUrl() {
+  const fromQuery = window.App?.getUrlParam?.("product");
+  if (fromQuery) return fromQuery;
+
+  const hash = String(window.location.hash || "").replace(/^#/, "");
+  if (hash.startsWith("product-")) return hash.replace("product-", "");
+  return "";
+}
+
 function buildProductShareUrl(product = {}) {
   const url = new URL(window.location.href);
-  url.hash = product?.id ? `product-${product.id}` : "products";
+  const salonSlug = currentSalon?.slug || window.App?.getUrlParam?.("salon") || window.App?.getSavedSalonSlug?.() || "";
+
+  if (salonSlug) {
+    url.searchParams.set("salon", salonSlug);
+  }
+
+  if (product?.id) {
+    url.searchParams.set("product", String(product.id));
+    url.hash = `product-${product.id}`;
+  } else {
+    url.searchParams.delete("product");
+    url.hash = "products";
+  }
+
   return url.toString();
 }
 
