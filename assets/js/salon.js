@@ -44,5 +44,24 @@ function renderServices(){const c=$('#ownerContent'); c.innerHTML=`<div class="c
 async function saveService(){const payload={salon_id:ownerProfile.id,name:$('#sName').value.trim(),price:City.normalizePriceInput($('#sPrice').value),currency:'RSD',duration_minutes:Number($('#sDur').value||30),active:true,sort_order:100}; if(!payload.name){toast('Naziv usluge');return;} const {error}=await db.from('services').insert(payload); if(error){toast(error.message);return;} await loadServices(); renderServices();}
 function renderSettings(){const c=$('#ownerContent'); c.innerHTML=`<div class="card form"><h2>Podešavanje profila</h2><label>Opis<textarea id="setText">${City.esc(City.profileText(ownerProfile,ownerSettings))}</textarea></label><label>Telefon/WhatsApp<input id="setPhone" value="${City.esc(City.profilePhone(ownerProfile,ownerSettings))}"></label><label>Logo<input id="setLogo" type="file" accept="image/*"></label><button class="btn primary" onclick="saveSettings()">Sačuvaj</button></div>`}
 async function saveSettings(){let logo=ownerSettings.logo_url||''; const f=$('#setLogo').files[0]; if(f) logo=await uploadAsset(f,`logos/${ownerProfile.id}`); const payload={salon_id:ownerProfile.id,welcome_text:$('#setText').value.trim(),phone:$('#setPhone').value.trim(),whatsapp:$('#setPhone').value.trim(),logo_url:logo}; const {error}=await db.from('salon_settings').upsert(payload,{onConflict:'salon_id'}); if(error){toast(error.message);return;} toast('Sačuvano.'); ownerSettings={...ownerSettings,...payload};}
-function renderQr(){const url=publicUrl(); $('#ownerContent').innerHTML=`<div class="card"><h2>Javni link</h2><p class="muted">${City.esc(url)}</p><div class="actions"><button class="btn primary" onclick="copyText('${url}')">Kopiraj</button><a class="btn ghost" href="${url}" target="_blank">Otvori</a></div></div>`}
+function renderQr(){
+  const url = publicUrl();
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=12&data=${encodeURIComponent(url)}`;
+  const safeUrl = City.esc(url);
+  const safeQr = City.esc(qrSrc);
+  $('#ownerContent').innerHTML = `
+    <div class="card qr-card">
+      <h2>QR kod profila</h2>
+      <p class="muted">Mušterija skenira ovaj kod i otvara baš ovaj profil.</p>
+      <div class="qr-box">
+        <img class="qr-img" src="${safeQr}" alt="QR kod profila" loading="lazy">
+      </div>
+      <p class="muted qr-link-text">${safeUrl}</p>
+      <div class="actions">
+        <button class="btn primary" onclick="copyText('${url}')">Kopiraj link</button>
+        <a class="btn ghost" href="${safeQr}" target="_blank" rel="noopener">Otvori QR</a>
+        <a class="btn ghost" href="${safeUrl}" target="_blank" rel="noopener">Otvori profil</a>
+      </div>
+    </div>`;
+}
 Object.assign(window,{ownerLogin,logout,renderOwner,renderProducts,saveProduct,editProduct,cancelProductEdit,deleteProduct,openProductImages,uploadProductImages,deleteProductImage,renderAppointments,renderServices,saveService,renderSettings,saveSettings,renderQr,copyText:City.copyText});

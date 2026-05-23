@@ -8,3 +8,11 @@
 .viewer.zoom .viewer-info,.viewer.zoom .viewer-actions,.viewer.zoom .viewer-dots{display:block!important;}
 .viewer::before{height:150px!important;}
 .viewer::after{height:96px!important;}
+
+
+/* v54 QR panel fix */
+.qr-card{text-align:center;}
+.qr-box{display:inline-flex;align-items:center;justify-content:center;background:#fff;border-radius:22px;padding:14px;margin:16px auto;border:1px solid rgba(255,255,255,.18);box-shadow:0 18px 45px rgba(0,0,0,.28)}
+.qr-img{width:260px;height:260px;max-width:72vw;max-height:72vw;display:block;border-radius:10px;background:#fff;object-fit:contain;}
+.qr-link-text{word-break:break-all;margin:6px auto 14px;max-width:520px;}
+@media(max-width:560px){.qr-img{width:220px;height:220px}.qr-box{padding:12px;border-radius:18px}.qr-card .actions{justify-content:center}.qr-card .actions .btn{width:100%;}}
