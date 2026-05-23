@@ -1,6 +1,6 @@
 // CityStyle v40 nuclear cache reset
-const CACHE_NAME = "citystyle-business-v40-nuclear-cache";
-const BUILD = "business40nuclearcache";
+const CACHE_NAME = "citystyle-business-v41-owner-catalog";
+const BUILD = "business41ownercatalog";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

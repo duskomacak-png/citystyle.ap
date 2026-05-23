@@ -3871,3 +3871,7 @@ select:focus{
 .product-feed-modal.product-image-zoomed .product-feed-bottom-actions,
 .product-feed-modal.product-image-zoomed .product-gallery-dots{display:none !important;}
 .product-feed-modal.product-image-zoomed .product-feed-close-action{display:grid !important;z-index:90 !important;}
+
+
+/* v41 owner catalog panel cleanup */
+#salon-tabs button.hidden{display:none!important;}

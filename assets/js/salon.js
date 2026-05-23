@@ -180,7 +180,7 @@ async function handleSalonLogin() {
   window.App?.setAppLanguage?.(salon.app_language || "sr");
   window.App?.applySalonTheme?.(salon.theme_color);
   renderSalonDashboard();
-  await showSection("appointments");
+  await showSection(getOwnerDefaultSection());
 }
 
 async function loadSalonForAdminPreview(salonId) {
@@ -202,7 +202,7 @@ async function loadSalonForAdminPreview(salonId) {
   window.App?.setAppLanguage?.(data.app_language || "sr");
   window.App?.applySalonTheme?.(data.theme_color);
   renderSalonDashboard();
-  await showSection("appointments");
+  await showSection(getOwnerDefaultSection());
 }
 
 async function loadSalonFromSession(salonId) {
@@ -229,7 +229,7 @@ async function loadSalonFromSession(salonId) {
   window.App?.setAppLanguage?.(data.app_language || "sr");
   window.App?.applySalonTheme?.(data.theme_color);
   renderSalonDashboard();
-  await showSection("appointments");
+  await showSection(getOwnerDefaultSection());
 }
 
 function renderBlockedSalon(salon) {
@@ -276,6 +276,30 @@ function garagePackageLabel() {
   }[pkg] || "Biznis";
 }
 
+function isCatalogOwnerPanel() {
+  const businessType = window.App?.normalizeBusinessType
+    ? window.App.normalizeBusinessType(currentSalon?.business_type)
+    : String(currentSalon?.business_type || "general").trim().toLowerCase();
+  const pkg = getCurrentPackageType();
+  return businessType === "catalog" || pkg === "catalog";
+}
+
+function getOwnerAllowedSections() {
+  const base = isCatalogOwnerPanel()
+    ? ["products", "analytics", "settings"]
+    : ["appointments", "services", "products", "analytics", "gallery", "hours", "settings"];
+  if (ownerHasGaragePackage()) base.splice(Math.max(0, base.indexOf("settings")), 0, "garage");
+  return base;
+}
+
+function getOwnerDefaultSection() {
+  return isCatalogOwnerPanel() ? "products" : "appointments";
+}
+
+function isOwnerSectionAllowed(section) {
+  return getOwnerAllowedSections().includes(section);
+}
+
 function renderSalonDashboard() {
   const labels = {
     appointments: S("tabAppointments", "Zahtevi / termini"),
@@ -287,9 +311,11 @@ function renderSalonDashboard() {
     hours: S("tabHours", "Radno vreme"),
     settings: S("tabSettings", "Podešavanje profila")
   };
+  const allowedSections = getOwnerAllowedSections();
   document.querySelectorAll("#salon-tabs button").forEach(btn => {
     if (labels[btn.dataset.section]) btn.textContent = labels[btn.dataset.section];
-    if (btn.dataset.section === "garage") btn.classList.toggle("hidden", !ownerHasGaragePackage());
+    btn.classList.toggle("hidden", !allowedSections.includes(btn.dataset.section));
+    btn.classList.remove("active");
   });
   document.getElementById("salon-install-btn").textContent = S("ownerInstallBtn", "Preuzmi panel vlasnika");
   document.getElementById("salon-logout-btn").textContent = S("logout", "Odjavi se");
@@ -314,6 +340,9 @@ function setActiveTab(section) {
 
 async function showSection(section) {
   if (!currentSalonId) return renderSalonLogin();
+  if (!isOwnerSectionAllowed(section)) {
+    section = getOwnerDefaultSection();
+  }
   setActiveTab(section);
   if (section === "appointments") return renderAppointments();
   if (section === "services") return renderServices();
@@ -322,7 +351,7 @@ async function showSection(section) {
   if (section === "garage") {
     if (!ownerHasGaragePackage()) {
       window.App.showMessage("Garaža je dostupna samo za Garaža pakete koje uključuje admin.", "error");
-      return renderAppointments();
+      return showSection(getOwnerDefaultSection());
     }
     return renderGarage();
   }
