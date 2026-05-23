@@ -1740,3 +1740,25 @@ select:focus{
     padding:6px !important;
   }
 }
+
+
+/* v74 SAFE: mobile client cover image fix only
+   Goal: public top image on phone should show cleaner and more fully, without touching laptop layout. */
+@media(max-width:720px){
+  .shoe-cover{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:8px;
+    background:#111217;
+  }
+  .shoe-cover img{
+    width:100% !important;
+    height:auto !important;
+    max-height:52vh !important;
+    object-fit:contain !important;
+    object-position:center center !important;
+    border-radius:20px !important;
+    background:#111217;
+  }
+}
