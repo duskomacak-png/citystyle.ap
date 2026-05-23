@@ -5,19 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CityStyle Admin panel</title>
   <meta name="theme-color" content="#0b0b0f">
-  <link rel="stylesheet" href="../assets/css/style.css?v=business39whatsappcover">
+  <link rel="stylesheet" href="../assets/css/style.css?v=business40nuclearcache">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../assets/js/config.js?v=business39whatsappcover"></script>
-  <script src="../assets/js/main.js?v=business39whatsappcover"></script>
-  <script src="../assets/js/auth.js?v=business39whatsappcover"></script>
-  <script src="../assets/js/storage.js?v=business39whatsappcover"></script>
-  <script src="../assets/js/admin.js?v=business39whatsappcover" defer></script>
+  <script src="../assets/js/config.js?v=business40nuclearcache"></script>
+  <script src="../assets/js/main.js?v=business40nuclearcache"></script>
+  <script src="../assets/js/auth.js?v=business40nuclearcache"></script>
+  <script src="../assets/js/storage.js?v=business40nuclearcache"></script>
+  <script src="../assets/js/admin.js?v=business40nuclearcache" defer></script>
 
   <script>
-    window.CITYSTYLE_BUILD = "business39whatsappcover";
+    window.CITYSTYLE_BUILD = "business40nuclearcache";
     if ("caches" in window) {
       caches.keys().then(function(keys){ return Promise.all(keys.map(function(k){ return caches.delete(k); })); }).catch(function(){});
     }
+  </script>
+<!-- NUCLEAR_CACHE_RESET_V40 -->
+  <script>
+    (function(){
+      var build = "business40nuclearcache";
+      try {
+        if (window.CITYSTYLE_BUILD !== build) window.CITYSTYLE_BUILD = build;
+        if ("caches" in window) {
+          caches.keys().then(function(keys){
+            return Promise.all(keys.map(function(k){
+              if (k.indexOf("citystyle") !== -1 || k.indexOf("business") !== -1) return caches.delete(k);
+              return Promise.resolve(false);
+            }));
+          });
+        }
+      } catch(e) {}
+    })();
   </script>
 </head>
 <body>
