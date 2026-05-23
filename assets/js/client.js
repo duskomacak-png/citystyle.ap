@@ -1305,7 +1305,7 @@ function showProducts() {
 
 function openShoeViewer(index = 0) {
   if (!products.length) return;
-  csViewerState = { index: Math.max(0, Math.min(index, products.length - 1)), image: 0, startX: 0, startY: 0, lastTap: 0, lastTapX: 0, lastTapY: 0, zoomed: false };
+  csViewerState = { index: Math.max(0, Math.min(index, products.length - 1)), image: 0, startX: 0, startY: 0, startPanX: 0, startPanY: 0, panX: 0, panY: 0, didPan: false, lastTap: 0, lastTapX: 0, lastTapY: 0, zoomed: false };
   renderShoeViewer();
 }
 function closeShoeViewer() { document.getElementById("shoeViewer")?.remove(); csViewerState = null; }
@@ -1381,11 +1381,35 @@ function csSmartCropShoeImage(img){
   }
 }
 
+function csClampZoomPan(value, min, max){
+  return Math.max(min, Math.min(max, value));
+}
+function csApplyShoePanZoom(){
+  if (!csViewerState) return;
+  const img = document.querySelector("#shoeViewer .shoe-viewer-main-img");
+  if (!img) return;
+  if (!csViewerState.zoomed) {
+    img.style.transform = "";
+    return;
+  }
+  img.style.transform = `translate(${csViewerState.panX || 0}px, ${csViewerState.panY || 0}px) scale(2.05)`;
+}
+function csResetShoePan(){
+  if (!csViewerState) return;
+  csViewerState.panX = 0;
+  csViewerState.panY = 0;
+  csViewerState.startPanX = 0;
+  csViewerState.startPanY = 0;
+  csViewerState.didPan = false;
+}
+
 function csToggleShoeZoom(){
   if (!csViewerState) return;
   csViewerState.zoomed = !csViewerState.zoomed;
+  if (!csViewerState.zoomed) csResetShoePan();
   const viewer = document.getElementById("shoeViewer");
   if (viewer) viewer.classList.toggle("shoe-viewer-zoomed", !!csViewerState.zoomed);
+  csApplyShoePanZoom();
 }
 
 function renderShoeViewer() {
@@ -1408,12 +1432,31 @@ function renderShoeViewer() {
     ${imgs.length > 1 ? `<button class="shoe-arrow shoe-arrow-left" type="button" onclick="event.stopPropagation(); shoeChangeImage(-1)">‹</button><button class="shoe-arrow shoe-arrow-right" type="button" onclick="event.stopPropagation(); shoeChangeImage(1)">›</button>` : ""}
     <div class="shoe-viewer-actions"><button class="shoe-action red" type="button" onclick="shareShoeProduct(event)" aria-label="Podeli oglas" title="Podeli oglas">${csViewerShareIcon()}</button><button class="shoe-action blue" type="button" onclick="askShoeProduct(event)" aria-label="Pošalji poruku" title="Pošalji poruku">${csViewerMessageIcon()}</button><button class="shoe-action green" type="button" onclick="callShoeShop(event)" aria-label="Pozovi prodavnicu" title="Pozovi prodavnicu">${csViewerPhoneIcon()}</button></div>
     ${imgs.length > 1 ? `<div class="shoe-dots">${imgs.map((_,i)=>`<button class="${i===csViewerState.image?'active':''}" onclick="event.stopPropagation(); shoeSetImage(${i})"></button>`).join("")}</div>` : ""}`;
-  viewer.ontouchstart = e => { const t = e.changedTouches[0]; csViewerState.startX = t.clientX; csViewerState.startY = t.clientY; };
+  csApplyShoePanZoom();
+  viewer.ontouchstart = e => {
+    const t = e.changedTouches[0];
+    csViewerState.startX = t.clientX;
+    csViewerState.startY = t.clientY;
+    csViewerState.startPanX = csViewerState.panX || 0;
+    csViewerState.startPanY = csViewerState.panY || 0;
+    csViewerState.didPan = false;
+  };
+  viewer.ontouchmove = e => {
+    if (!csViewerState?.zoomed || !window.matchMedia?.("(max-width: 899px)")?.matches) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - csViewerState.startX;
+    const dy = t.clientY - csViewerState.startY;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) csViewerState.didPan = true;
+    e.preventDefault?.();
+    csViewerState.panX = csClampZoomPan((csViewerState.startPanX || 0) + dx, -170, 170);
+    csViewerState.panY = csClampZoomPan((csViewerState.startPanY || 0) + dy, -220, 220);
+    csApplyShoePanZoom();
+  };
   viewer.ontouchend = e => {
     const t = e.changedTouches[0];
     const dx = t.clientX - csViewerState.startX;
     const dy = t.clientY - csViewerState.startY;
-    const moved = Math.abs(dx) > 14 || Math.abs(dy) > 14;
+    const moved = Math.abs(dx) > 14 || Math.abs(dy) > 14 || !!csViewerState.didPan;
     const tappedImage = !!e.target?.closest?.(".shoe-viewer-main-img");
     if (!moved && tappedImage && window.matchMedia?.("(max-width: 899px)")?.matches) {
       const now = Date.now();
@@ -1450,6 +1493,7 @@ function shoeChangeProduct(delta) {
   csViewerState.index = next;
   csViewerState.image = 0;
   csViewerState.zoomed = false;
+  csResetShoePan();
   renderShoeViewer();
 }
 function shoeChangeImage(delta) {
@@ -1457,11 +1501,12 @@ function shoeChangeImage(delta) {
   if (!imgs.length) return;
   csViewerState.image = (csViewerState.image + delta + imgs.length) % imgs.length;
   csViewerState.zoomed = false;
+  csResetShoePan();
   renderShoeViewer();
 }
-function shoeSetImage(i) { csViewerState.image = i; csViewerState.zoomed = false; renderShoeViewer(); }
+function shoeSetImage(i) { csViewerState.image = i; csViewerState.zoomed = false; csResetShoePan(); renderShoeViewer(); }
 async function shareShoeProduct(e) { e?.stopPropagation?.(); const p=currentShoeProduct(); const url=csProductUrl(p); const text=`${p.name || 'Patike'} - ${csProductPrice(p)}`; if(navigator.share){try{await navigator.share({title:p.name||'Oglas',text,url});return;}catch(_){}} navigator.clipboard?.writeText(url); window.App.showMessage("Link oglasa je kopiran.", "success"); }
 function askShoeProduct(e) { e?.stopPropagation?.(); const p=currentShoeProduct(); const phone=csWhatsAppPhone(currentSalon._publicPhone || ""); if(!phone) return window.App.showMessage("Vlasnik nije upisao WhatsApp/telefon.", "error"); const msg=encodeURIComponent(`Zdravo, zanima me ovaj oglas:\n\nOglas: ${csProductCode(p)}\nNaziv: ${p.name || 'Patike'}\nCena: ${csProductPrice(p)}\nLink: ${csProductUrl(p)}`); window.location.href=`https://wa.me/${phone}?text=${msg}`; }
 function callShoeShop(e) { e?.stopPropagation?.(); const phone=csSafePhone(currentSalon._publicPhone || ""); if(!phone) return window.App.showMessage("Telefon nije upisan.", "error"); window.location.href=`tel:${phone}`; }
 
-Object.assign(window, { openShoeViewer, closeShoeViewer, shoeChangeProduct, shoeChangeImage, shoeSetImage, shareShoeProduct, askShoeProduct, callShoeShop, csSmartCropShoeImage, csToggleShoeZoom });
+Object.assign(window, { openShoeViewer, closeShoeViewer, shoeChangeProduct, shoeChangeImage, shoeSetImage, shareShoeProduct, askShoeProduct, callShoeShop, csSmartCropShoeImage, csToggleShoeZoom, csApplyShoePanZoom });

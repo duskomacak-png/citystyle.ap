@@ -2475,3 +2475,25 @@ select:focus{
     background:#ffffff !important;
   }
 }
+
+
+/* v94 SAFE: mobile double-tap zoom with finger pan
+   - double tap image = zoom in/out
+   - when zoomed, drag image left/right/up/down
+   - product/image changes reset zoom and pan */
+@media(max-width:899px){
+  .shoe-viewer .shoe-viewer-main-img{
+    transition:transform .20s ease, max-height .20s ease, max-width .20s ease;
+    transform-origin:center center !important;
+    will-change:transform;
+    touch-action:none;
+  }
+  .shoe-viewer.shoe-viewer-zoomed .shoe-viewer-main-img{
+    cursor:grab;
+    max-width:calc(100vw - 10px) !important;
+    max-height:calc(100vh - 112px) !important;
+  }
+  .shoe-viewer.shoe-viewer-zoomed .shoe-viewer-media-bg{
+    opacity:.10 !important;
+  }
+}
