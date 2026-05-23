@@ -2375,3 +2375,69 @@ select:focus{
     max-height:calc(100vh - 150px) !important;
   }
 }
+
+
+/* v89 SAFE: mobile viewer right-side action rail
+   - close button matches other glass action buttons
+   - move share/message/call into a vertical column on the right under close
+   - free bottom space so the product image can use more height */
+@media(max-width:899px){
+  .shoe-viewer-close{
+    right:14px !important;
+    top:14px !important;
+    width:56px !important;
+    height:56px !important;
+    border-radius:999px !important;
+    border:1px solid rgba(255,255,255,.16) !important;
+    background:rgba(255,255,255,.055) !important;
+    box-shadow:0 12px 28px rgba(0,0,0,.30) !important;
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    color:#fff !important;
+    font-size:42px !important;
+    line-height:1 !important;
+    display:grid !important;
+    place-items:center !important;
+    padding:0 !important;
+  }
+  .shoe-viewer-top{
+    right:82px !important;
+  }
+  .shoe-viewer-actions{
+    left:auto !important;
+    right:14px !important;
+    top:82px !important;
+    bottom:auto !important;
+    display:flex !important;
+    flex-direction:column !important;
+    gap:12px !important;
+    z-index:6 !important;
+  }
+  .shoe-action,
+  .shoe-action.red,
+  .shoe-action.blue,
+  .shoe-action.green{
+    width:56px !important;
+    height:56px !important;
+    background:rgba(255,255,255,.055) !important;
+    border:1px solid rgba(255,255,255,.16) !important;
+    box-shadow:0 12px 28px rgba(0,0,0,.30) !important;
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+  }
+  .shoe-action svg{width:28px !important;height:28px !important;}
+  .shoe-dots{
+    left:50% !important;
+    right:auto !important;
+    bottom:calc(18px + env(safe-area-inset-bottom,0px)) !important;
+    transform:translateX(-50%) !important;
+    z-index:6 !important;
+  }
+  .shoe-viewer .shoe-viewer-media{
+    padding:58px 12px 34px !important;
+  }
+  .shoe-viewer-main-img,
+  .shoe-viewer .shoe-viewer-media img{
+    max-height:calc(100vh - 126px) !important;
+  }
+}
