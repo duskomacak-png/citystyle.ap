@@ -1647,3 +1647,34 @@ select:focus{
     border-radius: 10px;
   }
 }
+
+/* v70 STRONG SAFE: product viewer image is drawn as real full image, not stretched to the whole media box */
+.shoe-viewer .shoe-viewer-media{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  overflow:hidden !important;
+  padding:18px !important;
+  background:#050508 !important;
+}
+.shoe-viewer .shoe-viewer-media img{
+  width:auto !important;
+  height:auto !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+  display:block !important;
+  background:#fff !important;
+  border-radius:14px !important;
+}
+@media(min-width:900px){
+  .shoe-viewer{grid-template-columns:minmax(0,1fr) 340px !important;}
+  .shoe-viewer .shoe-viewer-media{height:100vh !important;padding:32px !important;}
+  .shoe-viewer .shoe-viewer-media img{max-width:calc(100vw - 420px) !important;max-height:calc(100vh - 64px) !important;}
+  .shoe-arrow-right{left:calc(100vw - 400px) !important;}
+}
+@media(max-width:899px){
+  .shoe-viewer .shoe-viewer-media{padding:78px 10px 92px !important;}
+  .shoe-viewer .shoe-viewer-media img{max-width:calc(100vw - 20px) !important;max-height:calc(100vh - 170px) !important;}
+}
