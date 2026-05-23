@@ -3273,3 +3273,347 @@ select:focus{
   .product-feed-modal .product-feed-bottom-actions .feed-action-icon{width:40px !important;height:40px !important;min-width:40px !important;min-height:40px !important;}
   .product-feed-modal .product-gallery-dots{right:14px !important;bottom:calc(25px + env(safe-area-inset-bottom, 0px)) !important;}
 }
+
+
+/* v36 TRUE FULLSCREEN CLEAN FEED
+   Hard override: image is the whole slide; UI is only overlay, no layout bars pushing image. */
+.product-feed-modal,
+.product-feed-modal .product-feed-shell,
+.product-feed-modal .product-feed-slide{
+  background:#000 !important;
+  overflow:hidden !important;
+}
+.product-feed-modal .product-feed-media{
+  position:absolute !important;
+  inset:0 !important;
+  top:0 !important;
+  right:0 !important;
+  bottom:0 !important;
+  left:0 !important;
+  width:100% !important;
+  height:100% !important;
+  background:#000 !important;
+  z-index:1 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  overflow:hidden !important;
+  filter:none !important;
+  transform:none !important;
+  box-shadow:none !important;
+  cursor:zoom-in !important;
+  touch-action:manipulation !important;
+}
+.product-feed-modal .product-feed-media img,
+.product-feed-modal img.product-feed-current-image{
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:100% !important;
+  min-height:100% !important;
+  max-width:none !important;
+  max-height:none !important;
+  object-fit:cover !important;
+  object-position:center center !important;
+  background:#000 !important;
+  opacity:1 !important;
+  filter:none !important;
+  transform:none !important;
+  box-shadow:none !important;
+  border:0 !important;
+}
+.product-feed-modal .product-feed-slide::before,
+.product-feed-modal .product-feed-slide::after,
+.product-feed-modal .product-feed-media::before,
+.product-feed-modal .product-feed-media::after{
+  content:none !important;
+  display:none !important;
+  background:none !important;
+  opacity:0 !important;
+  filter:none !important;
+}
+.product-feed-modal .product-feed-topbar{
+  position:absolute !important;
+  top:0 !important;
+  left:0 !important;
+  right:0 !important;
+  height:112px !important;
+  background:linear-gradient(to bottom, rgba(0,0,0,.54), rgba(0,0,0,.22) 58%, rgba(0,0,0,0)) !important;
+  z-index:4 !important;
+  pointer-events:none !important;
+}
+.product-feed-modal .product-feed-info{
+  position:absolute !important;
+  top:10px !important;
+  left:12px !important;
+  right:70px !important;
+  bottom:auto !important;
+  height:auto !important;
+  max-width:none !important;
+  min-height:0 !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  z-index:8 !important;
+  pointer-events:none !important;
+}
+.product-feed-modal .product-feed-info small{
+  display:block !important;
+  color:#fff !important;
+  opacity:.9 !important;
+  font-size:12px !important;
+  line-height:1.1 !important;
+  margin:0 0 3px !important;
+  text-shadow:0 2px 8px rgba(0,0,0,.8) !important;
+}
+.product-feed-modal .product-feed-info h2{
+  color:#fff !important;
+  font-size:clamp(20px,6.2vw,30px) !important;
+  line-height:1.03 !important;
+  margin:0 0 6px !important;
+  max-height:58px !important;
+  overflow:hidden !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.82) !important;
+}
+.product-feed-modal .product-feed-price-row{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:8px !important;
+  flex-wrap:wrap !important;
+  margin:0 !important;
+}
+.product-feed-modal .product-feed-price-row strong{
+  color:#fff !important;
+  font-size:clamp(19px,6vw,28px) !important;
+  line-height:1 !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.85) !important;
+}
+.product-feed-modal .product-feed-price-row span{
+  color:#fff !important;
+  background:rgba(220,38,38,.92) !important;
+  border-radius:999px !important;
+  padding:6px 12px !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  text-shadow:none !important;
+}
+.product-feed-modal .product-feed-info p{display:none !important;}
+.product-feed-modal .product-feed-close-action{
+  position:absolute !important;
+  top:12px !important;
+  right:12px !important;
+  left:auto !important;
+  bottom:auto !important;
+  width:42px !important;
+  height:42px !important;
+  min-width:42px !important;
+  min-height:42px !important;
+  padding:0 !important;
+  margin:0 !important;
+  z-index:40 !important;
+  pointer-events:auto !important;
+  touch-action:manipulation !important;
+  background:transparent !important;
+  border:0 !important;
+}
+.product-feed-modal .product-feed-bottom-actions{
+  position:absolute !important;
+  left:12px !important;
+  bottom:calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+  right:auto !important;
+  top:auto !important;
+  width:auto !important;
+  max-width:none !important;
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:9px !important;
+  z-index:40 !important;
+  pointer-events:auto !important;
+  transform:none !important;
+}
+.product-feed-modal .product-feed-bottom-actions .feed-action-btn,
+.product-feed-modal .product-feed-close-action.feed-action-btn{
+  flex:0 0 auto !important;
+  width:40px !important;
+  height:40px !important;
+  min-width:40px !important;
+  min-height:40px !important;
+  padding:0 !important;
+  margin:0 !important;
+  display:grid !important;
+  place-items:center !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  pointer-events:auto !important;
+  touch-action:manipulation !important;
+}
+.product-feed-modal .product-feed-bottom-actions .feed-action-icon,
+.product-feed-modal .product-feed-close-action .feed-action-icon{
+  width:40px !important;
+  height:40px !important;
+  min-width:40px !important;
+  min-height:40px !important;
+  border-radius:999px !important;
+  display:grid !important;
+  place-items:center !important;
+  border:1px solid rgba(255,255,255,.22) !important;
+  box-shadow:0 6px 16px rgba(0,0,0,.28) !important;
+  filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
+.product-feed-modal .product-feed-close-action .feed-action-icon{
+  background:rgba(17,24,39,.88) !important;
+}
+.product-feed-modal .feed-action-btn--share .feed-action-icon{background:#ef4444 !important;}
+.product-feed-modal .feed-action-btn--ask .feed-action-icon{background:#38bdf8 !important;}
+.product-feed-modal .feed-action-btn--call .feed-action-icon{background:#16a34a !important;}
+.product-feed-modal .product-feed-bottom-actions .feed-action-icon svg,
+.product-feed-modal .product-feed-close-action .feed-action-icon svg{
+  width:19px !important;
+  height:19px !important;
+}
+.product-feed-modal .feed-action-label,
+.product-feed-modal .product-feed-topbar span,
+.product-feed-modal .product-gallery-counter,
+.product-feed-modal .product-gallery-swipe-hint{
+  display:none !important;
+}
+.product-feed-modal .product-gallery-dots{
+  position:absolute !important;
+  left:auto !important;
+  right:12px !important;
+  bottom:calc(24px + env(safe-area-inset-bottom, 0px)) !important;
+  z-index:35 !important;
+}
+.product-feed-modal.product-image-zoomed .product-feed-media{
+  z-index:35 !important;
+  cursor:zoom-out !important;
+  background:#000 !important;
+}
+.product-feed-modal.product-image-zoomed .product-feed-media img,
+.product-feed-modal.product-image-zoomed img.product-feed-current-image{
+  object-fit:contain !important;
+  background:#000 !important;
+}
+.product-feed-modal.product-image-zoomed .product-feed-topbar,
+.product-feed-modal.product-image-zoomed .product-feed-info,
+.product-feed-modal.product-image-zoomed .product-feed-bottom-actions,
+.product-feed-modal.product-image-zoomed .product-gallery-dots{
+  display:none !important;
+}
+.product-feed-modal.product-image-zoomed .product-feed-close-action{
+  display:grid !important;
+  z-index:50 !important;
+}
+
+
+/* v37 HARD COVER DISPLAY
+   Goal: product image behaves like a TikTok screen: fills the whole visible display without distortion.
+   Normal mode uses cover; tap/zoom mode uses contain so the user can inspect the whole photo. */
+.product-feed-modal{
+  position:fixed !important;
+  inset:0 !important;
+  width:100vw !important;
+  height:100dvh !important;
+  min-height:100dvh !important;
+  max-height:100dvh !important;
+  background:#000 !important;
+  overflow:hidden !important;
+  z-index:9999 !important;
+}
+.product-feed-modal .product-feed-shell{
+  width:100vw !important;
+  height:100dvh !important;
+  min-height:100dvh !important;
+  max-height:100dvh !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  scroll-snap-type:y mandatory !important;
+  background:#000 !important;
+}
+.product-feed-modal .product-feed-slide{
+  position:relative !important;
+  width:100vw !important;
+  height:100dvh !important;
+  min-height:100dvh !important;
+  max-height:100dvh !important;
+  overflow:hidden !important;
+  scroll-snap-align:start !important;
+  scroll-snap-stop:always !important;
+  background:#000 !important;
+}
+.product-feed-modal .product-feed-media{
+  position:absolute !important;
+  inset:0 !important;
+  width:100vw !important;
+  height:100dvh !important;
+  min-width:100vw !important;
+  min-height:100dvh !important;
+  max-width:100vw !important;
+  max-height:100dvh !important;
+  display:block !important;
+  background:#000 !important;
+  overflow:hidden !important;
+  z-index:1 !important;
+  cursor:zoom-in !important;
+}
+.product-feed-modal .product-feed-media img.product-feed-current-image,
+.product-feed-modal img.product-feed-current-image{
+  position:absolute !important;
+  inset:0 !important;
+  width:100vw !important;
+  height:100dvh !important;
+  min-width:100vw !important;
+  min-height:100dvh !important;
+  max-width:none !important;
+  max-height:none !important;
+  object-fit:cover !important;
+  object-position:center center !important;
+  display:block !important;
+  background:#000 !important;
+  transform:none !important;
+  filter:none !important;
+  opacity:1 !important;
+  box-shadow:none !important;
+  border:0 !important;
+}
+.product-feed-modal.product-image-zoomed .product-feed-media{
+  z-index:45 !important;
+  cursor:zoom-out !important;
+}
+.product-feed-modal.product-image-zoomed .product-feed-media img.product-feed-current-image,
+.product-feed-modal.product-image-zoomed img.product-feed-current-image{
+  object-fit:contain !important;
+  object-position:center center !important;
+  background:#000 !important;
+}
+.product-feed-modal .product-feed-topbar{
+  height:118px !important;
+  background:linear-gradient(to bottom, rgba(0,0,0,.62), rgba(0,0,0,.22) 58%, rgba(0,0,0,0)) !important;
+  pointer-events:none !important;
+}
+.product-feed-modal .product-feed-info{
+  top:12px !important;
+  left:12px !important;
+  right:70px !important;
+  z-index:30 !important;
+  pointer-events:none !important;
+  background:transparent !important;
+}
+.product-feed-modal .product-feed-close-action,
+.product-feed-modal .product-feed-bottom-actions{
+  z-index:60 !important;
+  pointer-events:auto !important;
+}
+.product-feed-modal .product-feed-bottom-actions{
+  left:12px !important;
+  bottom:calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+  flex-direction:row !important;
+}
