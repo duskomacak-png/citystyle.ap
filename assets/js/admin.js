@@ -32,12 +32,12 @@ const ADMIN_THEME_OPTIONS = [
 
 
 const ADMIN_BUSINESS_TYPE_OPTIONS = [
-  { value: "salon", label: "Salon", icon: "💇", hint: "zakazivanje termina, usluge, radno vreme" },
-  { value: "catalog", label: "Prodavnica patika", icon: "👟", hint: "katalog patika, oglasi, WhatsApp/Pozovi/Podeli" }
+  { value: "salon", label: "Salon", icon: "💇", hint: "termini, usluge, radno vreme i notifikacije" },
+  { value: "catalog", label: "Prodavnica patika", icon: "👟", hint: "oglasi, slike, TikTok pregled, WhatsApp i poziv po oglasu" }
 ];
 
 function getAdminBusinessTypeOption(value) {
-  const normalized = String(value || "general").trim().toLowerCase();
+  const normalized = String(value || "salon").trim().toLowerCase();
   return ADMIN_BUSINESS_TYPE_OPTIONS.find(item => item.value === normalized) || ADMIN_BUSINESS_TYPE_OPTIONS[0];
 }
 
@@ -46,7 +46,7 @@ function renderBusinessTypeBadge(value) {
   return `<span class="business-type-badge">${type.icon} ${adminEscapeHtml(type.label)}</span>`;
 }
 
-function promptBusinessType(currentValue = "general") {
+function promptBusinessType(currentValue = "salon") {
   const current = getAdminBusinessTypeOption(currentValue).value;
   const optionsText = ADMIN_BUSINESS_TYPE_OPTIONS.map(item => `${item.value} = ${item.label}`).join("\n");
   const input = prompt(`Vrsta profila:\n${optionsText}`, current);
@@ -54,7 +54,7 @@ function promptBusinessType(currentValue = "general") {
   return getAdminBusinessTypeOption(input).value;
 }
 
-function renderBusinessTypeOptions(selectedValue = "general") {
+function renderBusinessTypeOptions(selectedValue = "salon") {
   const selected = getAdminBusinessTypeOption(selectedValue).value;
   return ADMIN_BUSINESS_TYPE_OPTIONS.map(item => `
     <option value="${adminEscapeHtml(item.value)}" ${item.value === selected ? "selected" : ""}>${item.icon} ${adminEscapeHtml(item.label)} — ${adminEscapeHtml(item.hint)}</option>
@@ -895,7 +895,7 @@ async function handleAddBusinessProfile(event) {
   const phone = getAdminFormValue("new-business-phone") || null;
   const ownerPhoneRaw = getAdminFormValue("new-business-owner-phone") || phone || null;
   const appLanguage = getAdminLanguageOption(getAdminFormValue("new-business-language") || "sr").value;
-  const businessType = getAdminBusinessTypeOption(getAdminFormValue("new-business-type") || "salon").value;
+  const businessType = getAdminBusinessTypeOption(getAdminFormValue("new-business-type") || "general").value;
   const packageType = getAdminPackageOption(getAdminFormValue("new-package-type") || "business").value;
   const packageLimits = getPackageLimits(packageType);
 
@@ -1009,7 +1009,7 @@ async function editSalonProfile(id) {
   const ownerPhone = prompt("Telefon vlasnika za admin kontakt / WhatsApp:", salon.owner_phone || salon.phone || "");
   if (ownerPhone === null) return;
 
-  const businessType = promptBusinessType(salon.business_type || "salon");
+  const businessType = promptBusinessType(salon.business_type || "general");
   if (businessType === null) return;
 
   const packageChoice = promptPackage(salon.package_type || "business");

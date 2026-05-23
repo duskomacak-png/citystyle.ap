@@ -3,7 +3,6 @@
 let currentSalon = null;
 let services = [];
 let products = [];
-let productImages = {};
 let galleryImages = [];
 let garageListings = [];
 let selectedService = null;
@@ -186,7 +185,6 @@ async function renderPlatformLanding() {
   currentSalon = null;
   services = [];
   products = [];
-  productImages = {};
   galleryImages = [];
   garageListings = [];
   selectedService = null;
@@ -489,53 +487,6 @@ async function loadProducts() {
     return;
   }
   products = data || [];
-  await loadProductImages();
-}
-
-async function loadProductImages() {
-  productImages = {};
-  if (!products.length) return;
-  try {
-    const ids = products.map(item => item.id).filter(Boolean);
-    const { data, error } = await window.db
-      .from("product_images")
-      .select("*")
-      .in("product_id", ids)
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true });
-    if (error) throw error;
-    (data || []).forEach(img => {
-      if (!img.product_id || !img.image_url) return;
-      (productImages[img.product_id] ||= []).push(img);
-    });
-  } catch (err) {
-    console.warn("Dodatne slike proizvoda nisu dostupne:", err);
-    productImages = {};
-  }
-}
-
-function isShopClientProfile() {
-  const type = window.App.normalizeBusinessType(currentSalon?.business_type);
-  return type === "catalog";
-}
-
-function getProductPublicCode(product = {}) {
-  return product.public_code || String(product.id || "").slice(0, 8).toUpperCase();
-}
-
-function getProductImages(product = {}) {
-  const images = [];
-  if (product.image_url) images.push(product.image_url);
-  (productImages[product.id] || []).forEach(img => {
-    if (img.image_url && !images.includes(img.image_url)) images.push(img.image_url);
-  });
-  return images;
-}
-
-function getProductPublicLink(product = {}) {
-  const base = window.App.getSalonPublicLink(currentSalon?.slug || "");
-  const sep = base.includes("?") ? "&" : "?";
-  return `${base}${sep}product=${encodeURIComponent(getProductPublicCode(product))}`;
 }
 
 
@@ -606,13 +557,7 @@ async function renderSalonHome() {
   currentSalon._publicName = publicName;
   currentSalon._publicLogo = settings?.logo_url || "";
   currentSalon._publicPhone = settings?.phone || currentSalon.phone || "";
-  currentSalon._publicAddress = settings?.address || currentSalon.city || "";
   window.App?.updateManifestForSalon?.(currentSalon.slug, { name: publicName, iconUrl: settings?.logo_url, themeColor: currentSalon.theme_color });
-
-  if (isShopClientProfile()) {
-    renderShopClientHome(settings || {});
-    return;
-  }
 
   app.innerHTML = `
     <section class="client-page salon-themed-page">
@@ -672,103 +617,6 @@ async function renderSalonHome() {
   `;
 }
 
-function renderShopClientHome(settings = {}) {
-  const app = document.getElementById("app");
-  const publicName = currentSalon?._publicName || currentSalon?.salon_name || "Prodavnica";
-  const logo = currentSalon?._publicLogo || settings.logo_url || "";
-  const phone = currentSalon?._publicPhone || settings.phone || currentSalon?.phone || "";
-  const address = currentSalon?._publicAddress || settings.address || currentSalon?.city || "";
-  app.innerHTML = `
-    <section class="client-page shop-profile-page salon-themed-page">
-      ${adminPreviewMode ? `<div class="owner-preview-bar admin-preview-bar"><div><strong>Admin pregled</strong><span>Ovako kupac vidi prodavnicu.</span></div><a class="btn btn-primary" href="${window.App.getAppPath('admin/')}">Nazad u admin</a></div>` : ownerPreviewMode ? `<div class="owner-preview-bar"><div><strong>Pregled javne stranice</strong><span>Ovako kupac vidi prodavnicu.</span></div><a class="btn btn-primary" href="${window.App.getAppPath('salon/')}">Nazad u panel</a></div>` : ""}
-      <div class="shop-public-header card">
-        ${logo ? `<img class="shop-public-logo" src="${escapeHtml(logo)}" alt="${escapeHtml(publicName)} logo">` : `<div class="shop-public-logo fallback">${escapeHtml(publicName.charAt(0).toUpperCase() || "P")}</div>`}
-        <div class="shop-public-head-text">
-          <h1>${escapeHtml(publicName)}</h1>
-          ${settings.welcome_text ? `<p>${escapeHtml(settings.welcome_text)}</p>` : `<p>Pregledajte aktuelne patike i pošaljite pitanje za konkretan oglas.</p>`}
-          <div class="shop-public-meta">
-            ${phone ? `<span>📞 ${escapeHtml(phone)}</span>` : ""}
-            ${address ? `<span>📍 ${escapeHtml(address)}</span>` : ""}
-          </div>
-        </div>
-      </div>
-      <div id="client-extra">${renderShopProductsGrid()}</div>
-    </section>`;
-  const directProduct = window.App?.getUrlParam("product");
-  if (directProduct && products.length) {
-    setTimeout(() => openShopProductByCode(directProduct), 60);
-  }
-}
-
-function renderShopProductsGrid() {
-  if (!products.length) return `<div class="card center"><h2>Nema oglasa</h2><p class="muted">Vlasnik još nije dodao patike u katalog.</p></div>`;
-  return `<div class="shop-product-grid">${products.map((product, index) => {
-    const cover = getProductImages(product)[0] || "";
-    return `<button class="shop-product-card" type="button" onclick="openShopViewer(${index})">
-      <div class="shop-product-image">${cover ? `<img src="${escapeHtml(cover)}" alt="${escapeHtml(product.name || 'Patike')}">` : `<span>Bez slike</span>`}</div>
-      <div class="shop-product-body">
-        <small>${escapeHtml(getProductPublicCode(product))}${product.category ? ` • ${escapeHtml(product.category)}` : ""}</small>
-        <strong>${escapeHtml(product.name || "Patike")}</strong>
-        <b>${renderProductPrice(product)}</b>
-      </div>
-    </button>`;
-  }).join("")}</div>`;
-}
-
-let shopViewerState = null;
-function openShopProductByCode(code) {
-  const needle = String(code || "").toLowerCase();
-  const index = products.findIndex(p => String(getProductPublicCode(p)).toLowerCase() === needle || String(p.id).toLowerCase() === needle);
-  openShopViewer(index >= 0 ? index : 0);
-}
-function openShopViewer(index = 0) {
-  if (!products.length) return;
-  shopViewerState = { index: Math.max(0, Math.min(index, products.length - 1)), image: 0, startX: 0, startY: 0, wheelLock: false };
-  renderShopViewer();
-}
-function closeShopViewer() { document.getElementById("shop-product-viewer")?.remove(); shopViewerState = null; }
-function currentShopProduct() { return products[shopViewerState?.index || 0] || null; }
-function renderShopViewer() {
-  const product = currentShopProduct();
-  if (!product) return;
-  const images = getProductImages(product);
-  const img = images[shopViewerState.image] || "";
-  let viewer = document.getElementById("shop-product-viewer");
-  if (!viewer) {
-    viewer = document.createElement("div");
-    viewer.id = "shop-product-viewer";
-    viewer.className = "shop-viewer";
-    document.body.appendChild(viewer);
-    viewer.addEventListener("touchstart", e => { shopViewerState.startX = e.touches[0].clientX; shopViewerState.startY = e.touches[0].clientY; }, { passive: true });
-    viewer.addEventListener("touchend", handleShopTouchEnd, { passive: true });
-    viewer.addEventListener("wheel", handleShopWheel, { passive: false });
-    document.addEventListener("keydown", handleShopKeydown);
-  }
-  viewer.innerHTML = `
-    <div class="shop-viewer-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}">` : `<div class="shop-viewer-empty">Bez slike</div>`}</div>
-    <div class="shop-viewer-info"><small>${escapeHtml(getProductPublicCode(product))}${product.category ? ` • ${escapeHtml(product.category)}` : ""}${images.length > 1 ? ` • ${shopViewerState.image + 1}/${images.length}` : ""}</small><h2>${escapeHtml(product.name || "Patike")}</h2><strong>${renderProductPrice(product)}</strong><span>${getProductStatusLabel(product.stock_status)}</span></div>
-    <button class="shop-viewer-close" type="button" onclick="closeShopViewer()" aria-label="Zatvori">×</button>
-    ${images.length > 1 ? `<button class="shop-viewer-arrow left" type="button" onclick="changeShopImage(-1)" aria-label="Prethodna slika">‹</button><button class="shop-viewer-arrow right" type="button" onclick="changeShopImage(1)" aria-label="Sledeća slika">›</button>` : ""}
-    <div class="shop-viewer-actions"><button class="shop-action red" onclick="shareShopProduct(event)" aria-label="Podeli">↗</button><button class="shop-action blue" onclick="askShopProduct(event)" aria-label="Pitaj">💬</button><button class="shop-action green" onclick="callShopProfile(event)" aria-label="Pozovi">☎</button></div>
-    ${images.length > 1 ? `<div class="shop-viewer-dots">${images.map((_, i) => `<button class="${i === shopViewerState.image ? 'active' : ''}" onclick="setShopImage(${i})" aria-label="Slika ${i + 1}"></button>`).join("")}</div>` : ""}`;
-}
-function changeShopProduct(delta) { if (!shopViewerState) return; shopViewerState.index = (shopViewerState.index + delta + products.length) % products.length; shopViewerState.image = 0; renderShopViewer(); }
-function changeShopImage(delta) { const product = currentShopProduct(); const images = getProductImages(product); if (images.length < 2) return; shopViewerState.image = (shopViewerState.image + delta + images.length) % images.length; renderShopViewer(); }
-function setShopImage(i) { shopViewerState.image = Number(i || 0); renderShopViewer(); }
-function handleShopTouchEnd(e) {
-  if (!shopViewerState) return;
-  const dx = (e.changedTouches[0].clientX || 0) - shopViewerState.startX;
-  const dy = (e.changedTouches[0].clientY || 0) - shopViewerState.startY;
-  if (Math.max(Math.abs(dx), Math.abs(dy)) < 45) return;
-  if (Math.abs(dx) > Math.abs(dy)) changeShopImage(dx < 0 ? 1 : -1);
-  else changeShopProduct(dy < 0 ? 1 : -1);
-}
-function handleShopWheel(e) { if (!shopViewerState || shopViewerState.wheelLock) return; e.preventDefault(); shopViewerState.wheelLock = true; changeShopProduct(e.deltaY > 0 ? 1 : -1); setTimeout(() => { if (shopViewerState) shopViewerState.wheelLock = false; }, 520); }
-function handleShopKeydown(e) { if (!shopViewerState) return; if (e.key === "Escape") closeShopViewer(); if (e.key === "ArrowLeft") changeShopImage(-1); if (e.key === "ArrowRight") changeShopImage(1); if (e.key === "ArrowUp") changeShopProduct(-1); if (e.key === "ArrowDown") changeShopProduct(1); }
-function shopWhatsAppMessage(product) { return `Zdravo, zanima me ovaj oglas:%0A%0AOglas: ${encodeURIComponent(getProductPublicCode(product))}%0ANaziv: ${encodeURIComponent(product.name || 'Patike')}%0ACena: ${encodeURIComponent(renderProductPrice(product))}%0ALink: ${encodeURIComponent(getProductPublicLink(product))}`; }
-function askShopProduct(e) { e?.stopPropagation?.(); const product = currentShopProduct(); const rawPhone = currentSalon?._publicPhone || currentSalon?.phone || ""; const phone = String(window.App.normalizePhoneForTel ? window.App.normalizePhoneForTel(rawPhone) : rawPhone).replace(/\D/g, ""); if (!phone) return window.App.showMessage("Vlasnik nije upisao WhatsApp/telefon.", "error"); window.location.href = `https://wa.me/${phone}?text=${shopWhatsAppMessage(product)}`; }
-function callShopProfile(e) { e?.stopPropagation?.(); const phone = currentSalon?._publicPhone || currentSalon?.phone || ""; if (!phone) return window.App.showMessage("Telefon nije upisan.", "error"); window.location.href = `tel:${window.App.normalizePhoneForTel ? window.App.normalizePhoneForTel(phone) : phone}`; }
-async function shareShopProduct(e) { e?.stopPropagation?.(); const product = currentShopProduct(); const url = getProductPublicLink(product); const title = `${product.name || 'Patike'} - ${renderProductPrice(product)}`; if (navigator.share) { try { await navigator.share({ title, text: title, url }); return; } catch(_) {} } window.copyText ? window.copyText(url) : navigator.clipboard?.writeText(url); window.App.showMessage("Link oglasa je kopiran.", "success"); }
 
 
 function renderGaragePrice(item = {}) {
@@ -1385,4 +1233,223 @@ async function submitAppointment() {
 }
 
 
-Object.assign(window, { openShopViewer, closeShopViewer, changeShopImage, setShopImage, shareShopProduct, askShopProduct, callShopProfile, openShopProductByCode });
+/* v63 FINAL SALON + SHOE SHOP EXTENSION
+   Stable add-on: shop public cover, product grid, TikTok-style viewer, direct product actions. */
+let csShopProductImages = {};
+let csViewerState = null;
+let csViewerWheelLock = 0;
+
+function csIsShopProfile(salon = currentSalon, productCount = products.length) {
+  const raw = `${salon?.business_type || ""} ${salon?.profile_type || ""} ${salon?.type || ""} ${salon?.package_type || ""}`.toLowerCase();
+  if (/catalog|katalog|prodav|shop|store|patik|shoe|sneaker/.test(raw)) return true;
+  if (/salon|beauty|frizer|barber|nokti|kozmet/.test(raw)) return false;
+  return Number(productCount || 0) > 0;
+}
+
+function csSafePhone(raw) {
+  if (window.App?.normalizePhoneForTel) return window.App.normalizePhoneForTel(raw || "");
+  return String(raw || "").replace(/[^0-9+]/g, "");
+}
+function csWhatsAppPhone(raw) {
+  let s = String(raw || "").replace(/[^0-9+]/g, "");
+  if (!s) return "";
+  if (s.startsWith("+")) s = s.slice(1);
+  if (s.startsWith("00")) s = s.slice(2);
+  if (s.startsWith("0")) s = "381" + s.slice(1);
+  return s;
+}
+function csProductCode(product = {}) {
+  return product.public_code || String(product.id || "").slice(0, 8).toUpperCase() || "OGLAS";
+}
+function csProductImages(product = {}) {
+  const arr = [];
+  if (product.image_url) arr.push(product.image_url);
+  (csShopProductImages[product.id] || []).forEach(img => {
+    if (img?.image_url && !arr.includes(img.image_url)) arr.push(img.image_url);
+  });
+  return arr;
+}
+function csProductPrice(product = {}) { return renderProductPrice(product); }
+function csProductUrl(product = {}) {
+  const code = csProductCode(product);
+  return `${window.location.origin}${window.App?.getAppPath ? window.App.getAppPath('') : '/'}?salon=${encodeURIComponent(currentSalon.slug)}&product=${encodeURIComponent(code)}`;
+}
+
+async function loadProducts() {
+  if (!currentSalon?.id) { products = []; csShopProductImages = {}; return; }
+  const { data, error } = await window.db
+    .from("products")
+    .select("*")
+    .eq("salon_id", currentSalon.id)
+    .eq("active", true)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+  if (error) { console.warn("Products not available:", error); products = []; csShopProductImages = {}; return; }
+  products = data || [];
+  csShopProductImages = {};
+  if (products.length) {
+    try {
+      const ids = products.map(p => p.id).filter(Boolean);
+      const { data: imgs, error: imgError } = await window.db
+        .from("product_images")
+        .select("*")
+        .in("product_id", ids)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true });
+      if (!imgError) (imgs || []).forEach(img => (csShopProductImages[img.product_id] ||= []).push(img));
+    } catch (e) { csShopProductImages = {}; }
+  }
+}
+
+async function renderSalonHome() {
+  const app = document.getElementById("app");
+  app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
+
+  const { data: settings } = await window.db.from("salon_settings").select("*").eq("salon_id", currentSalon.id).maybeSingle();
+  const { data: workingHours } = await window.db.from("working_hours").select("*").eq("salon_id", currentSalon.id).order("day_of_week", { ascending: true });
+
+  const publicName = settings?.welcome_title || currentSalon.salon_name || "Profil";
+  currentSalon._publicName = publicName;
+  currentSalon._publicLogo = settings?.logo_url || "";
+  currentSalon._publicPhone = settings?.phone || currentSalon.phone || "";
+  window.App?.updateManifestForSalon?.(currentSalon.slug, { name: publicName, iconUrl: settings?.logo_url, themeColor: currentSalon.theme_color });
+
+  if (csIsShopProfile(currentSalon, products.length)) return renderShoeShopHome(settings || {});
+
+  const profileLabels = window.App.getBusinessProfileLabels(currentSalon.business_type);
+  app.innerHTML = `
+    <section class="client-page salon-themed-page">
+      ${adminPreviewMode ? `<div class="owner-preview-bar admin-preview-bar"><div><strong>${C("adminClientPreviewTitle", "Admin pregled: korisnička strana")}</strong><span>${C("adminClientPreviewText", "Ovako korisnik vidi ovaj profil. Ovo dugme vidi samo prijavljeni admin.")}</span></div><a class="btn btn-primary" href="${window.App.getAppPath('admin/')}">${C("backToAdmin", "Nazad u admin")}</a></div>` : ownerPreviewMode ? `<div class="owner-preview-bar"><div><strong>${C("ownerPreviewTitle", "Pregled javne stranice")}</strong><span>${C("ownerPreviewText", "Ovako korisnik vidi vaš profil.")}</span></div><a class="btn btn-primary" href="${window.App.getAppPath('salon/')}">${C("backToOwnerPanel", "Nazad u panel vlasnika")}</a></div>` : ""}
+      <div class="hero-card salon-header">
+        ${settings?.logo_url ? `<img src="${escapeHtml(settings.logo_url)}" alt="${escapeHtml(publicName)} logo" class="salon-logo">` : `<div class="logo-circle">${escapeHtml(publicName?.charAt(0).toUpperCase() || "S")}</div>`}
+        <h1>${escapeHtml(publicName)}</h1>
+        <div class="public-profile-text">
+          <p class="intro-text">${escapeHtml(settings?.welcome_text || C("welcomeDefault", "Dobrodošli. Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev."))}</p>
+          ${(settings?.phone || settings?.address) ? `<div class="public-profile-contact">${settings?.phone ? `<a href="tel:${escapeHtml(csSafePhone(settings.phone))}">📞 ${escapeHtml(settings.phone)}</a>` : ""}${settings?.address ? `<span>📍 ${escapeHtml(settings.address)}</span>` : ""}</div>` : ""}
+        </div>
+        <div class="client-actions">
+          <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(profileLabels.action)}</button>
+          <button class="btn btn-dark" type="button" onclick="showServices()">${escapeHtml(profileLabels.services)}</button>
+          ${products.length ? `<button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>` : ""}
+          ${garageListings.length ? `<button class="btn btn-dark" type="button" onclick="showGarage()">Garaža / oglasi</button>` : ""}
+          ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app ovog profila")}</button>`}
+        </div>
+      </div>
+      <div id="client-extra">${renderClientServicesPreview()}${renderClientProductsPreview()}${renderClientGaragePreview()}${renderClientGalleryPreview()}${renderClientWorkingHours(workingHours || [])}</div>
+      <div id="booking-box"></div>
+    </section>`;
+}
+
+function renderShoeShopHome(settings = {}) {
+  const app = document.getElementById("app");
+  const name = settings?.welcome_title || currentSalon?.salon_name || "Prodavnica patika";
+  const logo = settings?.logo_url || "";
+  const cover = settings?.cover_image_url || settings?.home_image_url || galleryImages?.[0]?.image_url || logo || "";
+  const phone = settings?.phone || currentSalon?.phone || "";
+  const address = settings?.address || "";
+  const text = settings?.welcome_text || "";
+  app.innerHTML = `
+    <section class="shoe-shop-page">
+      ${adminPreviewMode ? `<div class="owner-preview-bar admin-preview-bar"><div><strong>Admin pregled</strong><span>Ovako kupac vidi prodavnicu.</span></div><a class="btn btn-primary" href="${window.App.getAppPath('admin/')}">Nazad u admin</a></div>` : ownerPreviewMode ? `<div class="owner-preview-bar"><div><strong>Pregled javne stranice</strong><span>Ovako kupac vidi prodavnicu.</span></div><a class="btn btn-primary" href="${window.App.getAppPath('salon/')}">Nazad u panel vlasnika</a></div>` : ""}
+      ${cover ? `<div class="shoe-cover"><img src="${escapeHtml(cover)}" alt="${escapeHtml(name)} početna slika"></div>` : `<div class="shoe-cover shoe-cover-empty"><span>${escapeHtml(name)}</span></div>`}
+      <div class="shoe-info-row">
+        ${logo ? `<img class="shoe-logo" src="${escapeHtml(logo)}" alt="${escapeHtml(name)} logo">` : `<div class="shoe-logo shoe-logo-fallback">${escapeHtml(name.charAt(0).toUpperCase())}</div>`}
+        <div class="shoe-info-copy"><h1>${escapeHtml(name)}</h1>${text ? `<p>${escapeHtml(text)}</p>` : ""}<div class="shoe-meta">${phone ? `<span>📞 ${escapeHtml(phone)}</span>` : ""}${address ? `<span>📍 ${escapeHtml(address)}</span>` : ""}</div></div>
+      </div>
+      <section class="shoe-products-section">
+        ${products.length ? `<div class="shoe-grid">${products.map((product, index) => renderShoeProductCard(product, index)).join("")}</div>` : `<div class="card"><h2>Još nema oglasa</h2><p class="muted">Vlasnik još nije dodao patike u katalog.</p></div>`}
+      </section>
+    </section>`;
+  const requestedProduct = window.App?.getUrlParam?.("product");
+  if (requestedProduct && products.length) {
+    const idx = products.findIndex(p => String(csProductCode(p)).toLowerCase() === String(requestedProduct).toLowerCase() || String(p.id) === String(requestedProduct));
+    if (idx >= 0) setTimeout(() => openShoeViewer(idx), 150);
+  }
+}
+
+function renderShoeProductCard(product, index) {
+  const imgs = csProductImages(product);
+  const img = imgs[0] || "";
+  return `<button class="shoe-card" type="button" onclick="openShoeViewer(${index})">
+    <div class="shoe-card-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}">` : `<span>Bez slike</span>`}</div>
+    <div class="shoe-card-info"><small>${escapeHtml(csProductCode(product))}${product.category ? " • " + escapeHtml(product.category) : ""}</small><strong>${escapeHtml(product.name || "Patike")}</strong><b>${escapeHtml(csProductPrice(product))}</b></div>
+  </button>`;
+}
+
+function showProducts() {
+  const box = document.getElementById("client-extra");
+  if (!box) return;
+  if (csIsShopProfile(currentSalon, products.length)) {
+    const section = document.querySelector(".shoe-products-section");
+    if (section) section.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  if (!products.length) { box.innerHTML = `<div class="card"><h2>${C("productsCatalog", "Proizvodi / cenovnik")}</h2><p class="muted">Ovaj profil trenutno nema javno prikazane proizvode.</p></div>`; return; }
+  box.innerHTML = `<details class="card client-hours-panel client-products-panel" open><summary><span>${C("productsCatalog", "Proizvodi / cenovnik")}</span><small>${C("hideList", "Sakrij listu")}</small></summary><div class="client-services-panel-body"><div class="product-public-grid">${products.map(product => `<div class="product-public-card"><div><strong>${escapeHtml(product.name)}</strong>${product.category ? `<span>${escapeHtml(product.category)}</span>` : ""}${product.description ? `<p>${escapeHtml(product.description)}</p>` : ""}</div><div class="product-public-meta"><b>${renderProductPrice(product)}</b><small>${getProductStatusLabel(product.stock_status)}</small></div></div>`).join("")}</div></div></details>`;
+  box.scrollIntoView({ behavior: "smooth" });
+}
+
+function openShoeViewer(index = 0) {
+  if (!products.length) return;
+  csViewerState = { index: Math.max(0, Math.min(index, products.length - 1)), image: 0, startX: 0, startY: 0 };
+  renderShoeViewer();
+}
+function closeShoeViewer() { document.getElementById("shoeViewer")?.remove(); csViewerState = null; }
+function currentShoeProduct() { return products[csViewerState?.index || 0]; }
+function renderShoeViewer() {
+  const product = currentShoeProduct();
+  if (!product) return;
+  const imgs = csProductImages(product);
+  const img = imgs[csViewerState.image] || imgs[0] || "";
+  let viewer = document.getElementById("shoeViewer");
+  if (!viewer) {
+    viewer = document.createElement("div");
+    viewer.id = "shoeViewer";
+    viewer.className = "shoe-viewer";
+    document.body.appendChild(viewer);
+  }
+  viewer.innerHTML = `
+    <div class="shoe-viewer-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}">` : `<span>Bez slike</span>`}</div>
+    <div class="shoe-viewer-top"><small>${escapeHtml(csProductCode(product))}${product.category ? " • " + escapeHtml(product.category) : ""}${imgs.length > 1 ? ` • ${csViewerState.image + 1}/${imgs.length}` : ""}</small><h2>${escapeHtml(product.name || "Patike")}</h2><b>${escapeHtml(csProductPrice(product))}</b></div>
+    <button class="shoe-viewer-close" type="button" onclick="closeShoeViewer()">×</button>
+    ${imgs.length > 1 ? `<button class="shoe-arrow shoe-arrow-left" type="button" onclick="event.stopPropagation(); shoeChangeImage(-1)">‹</button><button class="shoe-arrow shoe-arrow-right" type="button" onclick="event.stopPropagation(); shoeChangeImage(1)">›</button>` : ""}
+    <div class="shoe-viewer-actions"><button class="shoe-action red" type="button" onclick="shareShoeProduct(event)">↗</button><button class="shoe-action blue" type="button" onclick="askShoeProduct(event)">💬</button><button class="shoe-action green" type="button" onclick="callShoeShop(event)">☎</button></div>
+    ${imgs.length > 1 ? `<div class="shoe-dots">${imgs.map((_,i)=>`<button class="${i===csViewerState.image?'active':''}" onclick="event.stopPropagation(); shoeSetImage(${i})"></button>`).join("")}</div>` : ""}`;
+  viewer.ontouchstart = e => { const t = e.changedTouches[0]; csViewerState.startX = t.clientX; csViewerState.startY = t.clientY; };
+  viewer.ontouchend = e => {
+    const t = e.changedTouches[0];
+    const dx = t.clientX - csViewerState.startX;
+    const dy = t.clientY - csViewerState.startY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 42) shoeChangeImage(dx < 0 ? 1 : -1);
+    else if (Math.abs(dy) > 42) shoeChangeProduct(dy < 0 ? 1 : -1);
+  };
+  viewer.onwheel = e => { e.preventDefault(); const now=Date.now(); if(now-csViewerWheelLock<450) return; csViewerWheelLock=now; shoeChangeProduct(e.deltaY > 0 ? 1 : -1); };
+  document.onkeydown = e => {
+    if (!document.getElementById("shoeViewer")) return;
+    if (e.key === "Escape") closeShoeViewer();
+    if (e.key === "ArrowLeft") shoeChangeImage(-1);
+    if (e.key === "ArrowRight") shoeChangeImage(1);
+    if (e.key === "ArrowUp") shoeChangeProduct(-1);
+    if (e.key === "ArrowDown") shoeChangeProduct(1);
+  };
+}
+function shoeChangeProduct(delta) {
+  if (!csViewerState) return;
+  const next = csViewerState.index + delta;
+  if (next < 0 || next >= products.length) return;
+  csViewerState.index = next;
+  csViewerState.image = 0;
+  renderShoeViewer();
+}
+function shoeChangeImage(delta) {
+  const imgs = csProductImages(currentShoeProduct());
+  if (!imgs.length) return;
+  csViewerState.image = (csViewerState.image + delta + imgs.length) % imgs.length;
+  renderShoeViewer();
+}
+function shoeSetImage(i) { csViewerState.image = i; renderShoeViewer(); }
+async function shareShoeProduct(e) { e?.stopPropagation?.(); const p=currentShoeProduct(); const url=csProductUrl(p); const text=`${p.name || 'Patike'} - ${csProductPrice(p)}`; if(navigator.share){try{await navigator.share({title:p.name||'Oglas',text,url});return;}catch(_){}} navigator.clipboard?.writeText(url); window.App.showMessage("Link oglasa je kopiran.", "success"); }
+function askShoeProduct(e) { e?.stopPropagation?.(); const p=currentShoeProduct(); const phone=csWhatsAppPhone(currentSalon._publicPhone || ""); if(!phone) return window.App.showMessage("Vlasnik nije upisao WhatsApp/telefon.", "error"); const msg=encodeURIComponent(`Zdravo, zanima me ovaj oglas:\n\nOglas: ${csProductCode(p)}\nNaziv: ${p.name || 'Patike'}\nCena: ${csProductPrice(p)}\nLink: ${csProductUrl(p)}`); window.location.href=`https://wa.me/${phone}?text=${msg}`; }
+function callShoeShop(e) { e?.stopPropagation?.(); const phone=csSafePhone(currentSalon._publicPhone || ""); if(!phone) return window.App.showMessage("Telefon nije upisan.", "error"); window.location.href=`tel:${phone}`; }
+
+Object.assign(window, { openShoeViewer, closeShoeViewer, shoeChangeProduct, shoeChangeImage, shoeSetImage, shareShoeProduct, askShoeProduct, callShoeShop });
