@@ -32,8 +32,11 @@ const ADMIN_THEME_OPTIONS = [
 
 
 const ADMIN_BUSINESS_TYPE_OPTIONS = [
-  { value: "general", label: "Biznis profil", icon: "🏢", hint: "opšti QR profil, kontakt i ponuda" },
+  { value: "general", label: "Opšti biznis", icon: "🏢", hint: "zahtevi, termini i ponuda" },
   { value: "salon", label: "Salon / termini", icon: "💇", hint: "frizer, beauty, nokti, masaža" },
+  { value: "repair", label: "Majstor / kvarovi", icon: "🛠️", hint: "grejanje, hlađenje, voda, struja" },
+  { value: "craft", label: "Zanatlija / radovi", icon: "🧱", hint: "keramičar, moler, stolar, gipsar" },
+  { value: "auto", label: "Auto servis", icon: "🚗", hint: "mehaničar, vulkanizer, auto-klima" },
   { value: "catalog", label: "Katalog / proizvodi", icon: "🛒", hint: "prodaja, proizvodi, oprema" }
 ];
 
@@ -64,9 +67,13 @@ function renderBusinessTypeOptions(selectedValue = "general") {
 
 
 const ADMIN_PACKAGE_OPTIONS = [
-  { value: "business", label: "Biznis", icon: "🏢", hint: "QR profil, kontakt, usluge i statistika", max_listings: 0, max_images: 0, price: 9.99 },
-  { value: "catalog", label: "Katalog", icon: "🛒", hint: "QR profil + proizvodi + TikTok-style pregled", max_listings: 0, max_images: 0, price: 14.99 },
-  { value: "custom", label: "Custom", icon: "⭐", hint: "ručni dogovor za posebne profile", max_listings: 0, max_images: 10, price: 0 }
+  { value: "business", label: "Biznis", icon: "🏢", hint: "osnovni QR profil, usluge, galerija, zahtevi i statistika", max_listings: 0, max_images: 0, price: 9.99 },
+  { value: "catalog", label: "Katalog", icon: "🛒", hint: "biznis profil + proizvodi/katalog", max_listings: 0, max_images: 0, price: 14.99 },
+  { value: "garage_start", label: "Garaža Start", icon: "🚗", hint: "do 30 oglasa, do 10 slika po oglasu", max_listings: 30, max_images: 10, price: 29.99 },
+  { value: "garage_plus", label: "Garaža Plus", icon: "🚙", hint: "do 75 oglasa, do 10 slika po oglasu", max_listings: 75, max_images: 10, price: 49.99 },
+  { value: "garage_pro", label: "Garaža PRO", icon: "🏗️", hint: "do 150 oglasa, do 10 slika po oglasu", max_listings: 150, max_images: 10, price: 79.99 },
+  { value: "garage_max", label: "Garaža MAX", icon: "🚛", hint: "do 300 oglasa, do 10 slika po oglasu", max_listings: 300, max_images: 10, price: 129.99 },
+  { value: "custom", label: "Custom", icon: "⭐", hint: "ručni dogovor i ručno podešeni limiti", max_listings: 0, max_images: 10, price: 0 }
 ];
 
 function getAdminPackageOption(value) {
@@ -75,14 +82,15 @@ function getAdminPackageOption(value) {
 }
 
 function isGaragePackage(value) {
-  return false;
+  const key = getAdminPackageOption(value).value;
+  return key.startsWith("garage_") || key === "custom";
 }
 
 function renderPackageBadge(value, maxListings = null, maxImages = null) {
   const pkg = getAdminPackageOption(value);
   const listings = Number(maxListings ?? pkg.max_listings ?? 0);
   const images = Number(maxImages ?? pkg.max_images ?? 0);
-  const suffix = "";
+  const suffix = isGaragePackage(pkg.value) ? ` • ${listings || "∞"} oglasa • ${images || 10} slika/oglas` : "";
   return `<span class="business-type-badge package-badge">${pkg.icon} ${adminEscapeHtml(pkg.label)}${adminEscapeHtml(suffix)}</span>`;
 }
 
@@ -112,10 +120,10 @@ function promptPackage(currentValue = "business") {
   let maxListings = limits.max_garage_listings;
   let maxImages = limits.max_images_per_listing;
   if (isGaragePackage(pkg.value)) {
-    const enteredListings = prompt("Maksimalan broj stavki:", String(maxListings || 30));
+    const enteredListings = prompt("Maksimalan broj Garaža oglasa:", String(maxListings || 30));
     if (enteredListings === null) return null;
     maxListings = Math.max(1, Number(enteredListings || maxListings || 30));
-    const enteredImages = prompt("Maksimalan broj slika po stavci:", String(maxImages || 10));
+    const enteredImages = prompt("Maksimalan broj slika po oglasu:", String(maxImages || 10));
     if (enteredImages === null) return null;
     maxImages = Math.max(1, Number(enteredImages || maxImages || 10));
   }
@@ -440,7 +448,7 @@ function showPlatformHomeImagesModal() {
         <label for="platform-home-images-input">Dodaj slike za displej telefona</label>
         <input id="platform-home-images-input" type="file" accept="image/jpeg,image/png,image/webp" multiple>
         <label for="platform-home-caption-input">Kratak natpis za slike</label>
-        <input id="platform-home-caption-input" type="text" maxlength="80" placeholder="npr. Galerija biznisa, Katalog proizvoda, akcije...">
+        <input id="platform-home-caption-input" type="text" maxlength="80" placeholder="npr. Galerija biznisa, Katalog proizvoda, Garaža ponuda...">
         <p class="muted">Dozvoljeno: JPG, PNG, WEBP. Maksimalno 5 MB po slici. Prvo treba pokrenuti SQL za tabelu <b>platform_home_images</b>.</p>
         <div class="card-actions">
           <button class="btn btn-primary" type="button" onclick="uploadPlatformHomeImages()">Upload slika</button>
@@ -856,7 +864,7 @@ function showAddSalonForm() {
 
         <div class="business-type-helper" id="business-type-helper">
           <strong>${renderBusinessTypeBadge("general")}</strong>
-          <span>Biznis: termini/usluge. Katalog: proizvodi sa TikTok-style listanjem. CityStyle ostaje čist: salon, usluge i katalog proizvoda.</span>
+          <span>Opšti biznis: zahtevi, termini i ponuda. Paket Biznis nema Garaža tab.</span>
         </div>
 
         <div class="card-actions admin-modal-actions">

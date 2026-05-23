@@ -24,7 +24,7 @@
         var params = new URLSearchParams(window.location.search || "");
         var slug = params.get("salon");
         if (!slug) {
-          addManifest("manifest.json?v=business44bottomfixed");
+          addManifest("manifest.json?v=business46stableclean");
           return;
         }
         var encodedSlug = encodeURIComponent(slug);
@@ -34,7 +34,7 @@
           name: profileName,
           short_name: profileName.length > 12 ? profileName.slice(0, 12).trim() : profileName,
           description: "Prečica za direktan ulaz u ovaj CityStyle profil.",
-          start_url: "/?salon=" + encodedSlug + "&pwa_profile=" + encodedSlug + "&v=business44bottomfixed",
+          start_url: "/?salon=" + encodedSlug + "&pwa_profile=" + encodedSlug + "&v=business46stableclean",
           scope: "/",
           display: "standalone",
           background_color: "#0b0b0f",
@@ -48,42 +48,18 @@
         var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
         addManifest(URL.createObjectURL(blob));
       } catch (err) {
-        addManifest("manifest.json?v=business44bottomfixed");
+        addManifest("manifest.json?v=business46stableclean");
       }
     })();
   </script>
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-  <link rel="stylesheet" href="assets/css/style.css?v=business44bottomfixed">
+  <link rel="stylesheet" href="assets/css/style.css?v=business46stableclean">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=business44bottomfixed"></script>
-  <script src="assets/js/main.js?v=business44bottomfixed"></script>
-  <script src="assets/js/auth.js?v=business44bottomfixed"></script>
-  <script src="assets/js/booking-logic.js?v=business44bottomfixed"></script>
-  <script src="assets/js/client.js?v=business44bottomfixed" defer></script>
-
-  <script>
-    window.CITYSTYLE_BUILD = "business44bottomfixed";
-    if ("caches" in window) {
-      caches.keys().then(function(keys){ return Promise.all(keys.map(function(k){ return caches.delete(k); })); }).catch(function(){});
-    }
-  </script>
-<!-- NUCLEAR_CACHE_RESET_V40 -->
-  <script>
-    (function(){
-      var build = "business44bottomfixed";
-      try {
-        if (window.CITYSTYLE_BUILD !== build) window.CITYSTYLE_BUILD = build;
-        if ("caches" in window) {
-          caches.keys().then(function(keys){
-            return Promise.all(keys.map(function(k){
-              if (k.indexOf("citystyle") !== -1 || k.indexOf("business") !== -1) return caches.delete(k);
-              return Promise.resolve(false);
-            }));
-          });
-        }
-      } catch(e) {}
-    })();
-  </script>
+  <script src="assets/js/config.js?v=business46stableclean"></script>
+  <script src="assets/js/main.js?v=business46stableclean"></script>
+  <script src="assets/js/auth.js?v=business46stableclean"></script>
+  <script src="assets/js/booking-logic.js?v=business46stableclean"></script>
+  <script src="assets/js/client.js?v=business46stableclean" defer></script>
 </head>
 <body>
   <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>
