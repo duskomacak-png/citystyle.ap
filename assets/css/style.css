@@ -2139,3 +2139,53 @@ select:focus{
 @media(max-width:899px){
   .shoe-viewer{overscroll-behavior:contain;}
 }
+
+
+/* v85 SAFE: mobile viewer ocean blue solid theme
+   - set fullscreen viewer background to sky/ocean blue gradient
+   - remove transparency/backdrop from the main fullscreen layer so cards behind are not visible
+   - keep TikTok-style blurred product backdrop and all viewer logic intact */
+@media(max-width:899px){
+  .shoe-viewer{
+    background:linear-gradient(180deg, #6aa8d8 0%, #4d8fca 30%, #2b6ea9 65%, #174a78 100%) !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+    overscroll-behavior:contain;
+  }
+  .shoe-viewer .shoe-viewer-media{
+    background:transparent !important;
+  }
+  .shoe-viewer:before{
+    background:linear-gradient(to bottom, rgba(14,44,76,.26), rgba(14,44,76,0)) !important;
+  }
+  .shoe-viewer:after{
+    background:linear-gradient(to top, rgba(12,38,66,.32), rgba(12,38,66,0)) !important;
+  }
+  .shoe-viewer-top small,
+  .shoe-viewer-top h2,
+  .shoe-viewer-top b{
+    text-shadow:0 2px 14px rgba(4,20,38,.42) !important;
+  }
+  .shoe-action,
+  .shoe-action.red,
+  .shoe-action.blue,
+  .shoe-action.green{
+    background:rgba(16,46,74,.28) !important;
+    border:1px solid rgba(230,244,255,.24) !important;
+    box-shadow:0 12px 28px rgba(5,16,30,.26) !important;
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+  }
+  .shoe-dots{
+    background:rgba(16,46,74,.26) !important;
+    border:1px solid rgba(230,244,255,.22) !important;
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+  }
+  .shoe-dots button{
+    background:rgba(236,247,255,.40) !important;
+  }
+  .shoe-dots button.active{
+    background:#ffffff !important;
+  }
+}
