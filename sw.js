@@ -1,6 +1,6 @@
 // CityStyle v40 nuclear cache reset
 const CACHE_NAME = "citystyle-business-v43-real-fix";
-const BUILD = "business43realfix";
+const BUILD = "business44bottomfixed";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
