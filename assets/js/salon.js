@@ -1064,6 +1064,7 @@ async function loadProducts() {
         ${cover ? `<img class="product-thumb" src="${salonEscapeHtml(cover)}" alt="${salonEscapeHtml(product.name)}">` : `<div class="product-thumb product-thumb-empty">Bez slike</div>`}
         <div class="product-card-text">
           <strong>${salonEscapeHtml(product.name)}</strong>
+          <span>Oglas: ${salonEscapeHtml(getOwnerProductPublicCode(product))}</span>
           ${product.category ? `<span>${salonEscapeHtml(product.category)}</span>` : ""}
           ${product.description ? `<p class="muted">${salonEscapeHtml(product.description)}</p>` : ""}
           <small class="muted">${images.length || 0} slika po artiklu</small>
@@ -1077,6 +1078,7 @@ async function loadProducts() {
       ${adminOwnerPreviewMode ? `<div class="card-actions"><span class="status-pill">Admin pregled</span></div>` : `<div class="card-actions">
         <button class="btn btn-dark" type="button" onclick="editProduct('${product.id}')">Uredi</button>
         <button class="btn btn-dark" type="button" onclick="showProductImages('${product.id}')">Slike ${images.length}/10</button>
+        <button class="btn btn-dark" type="button" onclick="copyProductPublicLink('${product.id}')">Kopiraj link</button>
         <button class="btn btn-dark" type="button" onclick="toggleProductActive('${product.id}', ${product.active ? "true" : "false"})">${product.active ? "Sakrij" : "Aktiviraj"}</button>
         <button class="btn btn-danger" type="button" onclick="deleteProduct('${product.id}')">Obriši</button>
       </div>`}
@@ -1104,6 +1106,34 @@ function getOwnerProductImages(product = {}) {
   extra.forEach(url => { if (!urls.includes(url)) urls.push(url); });
   return urls;
 }
+function getOwnerProductPublicCode(product = {}) {
+  const code = String(product.public_code || product.product_code || "").trim();
+  if (code) return code;
+  const id = String(product.id || "").replace(/-/g, "").toUpperCase();
+  return id ? `ART-${id.slice(0, 6)}` : "ARTIKAL";
+}
+
+function buildOwnerProductPublicLink(product = {}) {
+  const slug = currentSalon?.slug || "";
+  const code = product.public_code || product.product_code || product.id;
+  const url = new URL(window.App.getAppBaseUrl ? window.App.getAppBaseUrl() : window.location.origin + "/");
+  if (slug) url.searchParams.set("salon", slug);
+  if (code) url.searchParams.set("product", String(code));
+  return url.toString();
+}
+
+async function copyProductPublicLink(productId) {
+  const { data: product } = await window.db.from("products").select("*").eq("id", productId).eq("salon_id", currentSalonId).maybeSingle();
+  if (!product) return window.App.showMessage("Proizvod nije pronađen.", "error");
+  const link = buildOwnerProductPublicLink(product);
+  try {
+    await navigator.clipboard.writeText(link);
+    window.App.showMessage("Link proizvoda je kopiran.", "success");
+  } catch (err) {
+    window.prompt("Kopirajte link proizvoda:", link);
+  }
+}
+
 
 async function showAddProductForm(productId = null) {
   if (stopAdminOwnerPreviewEdit()) return;

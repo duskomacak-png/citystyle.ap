@@ -156,11 +156,7 @@ async function loadSalon(slug, saveThisSalon = true) {
   await loadGalleryImages();
   await loadGarageListings();
   await renderSalonHome();
-
-  const directProductId = getDirectProductIdFromUrl();
-  if (directProductId && products.some(row => String(row.id) === String(directProductId))) {
-    window.setTimeout(() => openProductFeed(directProductId), 250);
-  }
+  openProductFromUrlIfRequested();
 }
 
 async function loadPlatformHomeImagesForLanding() {
@@ -861,37 +857,69 @@ function callPublicProfile() {
   window.location.href = `tel:+${phone}`;
 }
 
-function buildProductOrderMessage(product = {}, imageIndex = 0) {
-  const images = getProductImages(product);
-  const safeImageIndex = images.length ? Math.max(0, Math.min(images.length - 1, Number(imageIndex || 0))) : 0;
-  const selectedImage = images[safeImageIndex] || product.image_url || "";
-  const productUrl = buildProductShareUrl(product, safeImageIndex);
-  const status = getProductStatusLabel(product.stock_status);
-  const salonName = currentSalon?.name || currentSalon?.business_name || "profil";
-
-  const lines = [
-    "Zdravo, kako mogu da poručim ovaj proizvod?",
-    "",
-    `Proizvod: ${product.name || "Proizvod"}`,
-    `Cena: ${renderProductPrice(product)}`,
-    `Status: ${status}`,
-    `Profil: ${salonName}`
-  ];
-
-  if (selectedImage) {
-    lines.push("", `Slika proizvoda: ${selectedImage}`);
-    if (images.length > 1) lines.push(`Izabrana slika: ${safeImageIndex + 1}/${images.length}`);
-  }
-
-  lines.push("", `Link proizvoda: ${productUrl}`);
-
-  return lines.join("\n");
+function productPublicCode(product = {}) {
+  const code = String(product.public_code || product.product_code || "").trim();
+  if (code) return code;
+  const id = String(product.id || "").replace(/-/g, "").toUpperCase();
+  return id ? `ART-${id.slice(0, 6)}` : "ARTIKAL";
 }
 
-function buildProductWhatsApp(product = {}, imageIndex = 0) {
+function findProductByCodeOrId(value = "") {
+  const wanted = String(value || "").trim();
+  if (!wanted) return null;
+  const wantedLower = wanted.toLowerCase();
+  return products.find(row => {
+    const id = String(row.id || "");
+    const code = String(row.public_code || row.product_code || "");
+    return id === wanted || code.toLowerCase() === wantedLower;
+  }) || null;
+}
+
+function buildProductShareUrl(product = {}) {
+  const url = new URL(window.location.origin + window.location.pathname);
+  if (currentSalon?.slug) url.searchParams.set("salon", currentSalon.slug);
+  const code = product.public_code || product.product_code || product.id;
+  if (code) url.searchParams.set("product", String(code));
+  return url.toString();
+}
+
+function buildProductQuestionMessage(product = {}) {
+  const code = productPublicCode(product);
+  const link = buildProductShareUrl(product);
+  return [
+    "Poštovani, interesuje me ovaj proizvod:",
+    "",
+    `Oglas: ${code}`,
+    `Naziv: ${product.name || "Proizvod"}`,
+    `Cena: ${renderProductPrice(product)}`,
+    "",
+    `Link proizvoda: ${link}`,
+    "",
+    "Da li je dostupno?"
+  ].join("\n");
+}
+
+function buildProductWhatsApp(product = {}) {
   const phone = getPublicContactPhone();
   if (!phone) return "";
-  return `https://wa.me/${phone}?text=${encodeURIComponent(buildProductOrderMessage(product, imageIndex))}`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(buildProductQuestionMessage(product))}`;
+}
+
+async function recordProductInquiry(product = {}) {
+  try {
+    if (!window.db || !currentSalon?.id || !product?.id) return;
+    await window.db.from("product_inquiries").insert({
+      salon_id: currentSalon.id,
+      product_id: product.id,
+      public_code_snapshot: productPublicCode(product),
+      product_name_snapshot: product.name || null,
+      price_snapshot: renderProductPrice(product),
+      product_url: buildProductShareUrl(product),
+      source: "whatsapp"
+    });
+  } catch (err) {
+    console.warn("Upit za proizvod nije upisan u bazu, WhatsApp se ipak otvara:", err);
+  }
 }
 
 function openWhatsAppMessage(message) {
@@ -907,67 +935,48 @@ function askForProductGeneral() {
   openWhatsAppMessage(`Poštovani, interesuje me vaša ponuda proizvoda. Možete li mi poslati više informacija?`);
 }
 
-function getProductImageIndexFromButton(button, productId) {
-  const slide = button && button.closest ? button.closest(`.product-feed-slide[data-product-id="${CSS.escape(String(productId))}"]`) : null;
-  return Math.max(0, Number(slide?.dataset?.imageIndex || 0));
-}
-
-function askAboutProduct(productId, button = null) {
-  const product = products.find(row => String(row.id) === String(productId));
+function askAboutProduct(productId) {
+  const product = findProductByCodeOrId(productId);
   if (!product) {
     askForProductGeneral();
     return;
   }
-  const imageIndex = getProductImageIndexFromButton(button, productId);
-  openWhatsAppMessage(buildProductOrderMessage(product, imageIndex));
-}
-
-function getDirectProductIdFromUrl() {
-  const fromQuery = window.App?.getUrlParam?.("product");
-  if (fromQuery) return fromQuery;
-
-  const hash = String(window.location.hash || "").replace(/^#/, "");
-  if (hash.startsWith("product-")) return hash.replace("product-", "");
-  return "";
-}
-
-function getDirectProductImageIndexFromUrl() {
-  const fromQuery = window.App?.getUrlParam?.("image");
-  const num = Number(fromQuery || 0);
-  return Number.isFinite(num) && num > 0 ? num - 1 : 0;
-}
-
-function buildProductShareUrl(product = {}, imageIndex = 0) {
-  const url = new URL(window.location.href);
-  const salonSlug = currentSalon?.slug || window.App?.getUrlParam?.("salon") || window.App?.getSavedSalonSlug?.() || "";
-
-  if (salonSlug) {
-    url.searchParams.set("salon", salonSlug);
+  const whatsappUrl = buildProductWhatsApp(product);
+  if (!whatsappUrl) {
+    window.App?.showMessage?.("Kontakt telefon / WhatsApp nije podešen za ovaj profil.", "error");
+    return;
   }
-
-  if (product?.id) {
-    url.searchParams.set("product", String(product.id));
-    const safeImageIndex = Math.max(0, Number(imageIndex || 0));
-    if (safeImageIndex > 0) url.searchParams.set("image", String(safeImageIndex + 1));
-    else url.searchParams.delete("image");
-    url.hash = `product-${product.id}`;
-  } else {
-    url.searchParams.delete("product");
-    url.searchParams.delete("image");
-    url.hash = "products";
-  }
-
-  return url.toString();
+  const popup = window.open("about:blank", "_blank");
+  recordProductInquiry(product).finally(() => {
+    if (popup) {
+      popup.location.href = whatsappUrl;
+    } else {
+      window.location.href = whatsappUrl;
+    }
+  });
 }
 
-async function shareProduct(productId, button = null) {
+function openProductFromUrlIfRequested() {
+  const requested = window.App?.getUrlParam?.("product") || window.App?.getUrlParam?.("pid") || "";
+  const hash = String(window.location.hash || "");
+  const hashProduct = hash.startsWith("#product-") ? hash.replace("#product-", "") : "";
+  const productKey = requested || hashProduct;
+  if (!productKey || !products.length) return;
+  const product = findProductByCodeOrId(productKey);
+  if (!product) {
+    window.App?.showMessage?.("Ovaj proizvod više nije dostupan ili je sakriven.", "error");
+    return;
+  }
+  window.setTimeout(() => openProductFeed(product.id), 120);
+}
+
+async function shareProduct(productId) {
   const product = products.find(row => String(row.id) === String(productId));
   if (!product) return;
-  const imageIndex = getProductImageIndexFromButton(button, productId);
   const shareData = {
     title: product.name || "CityStyle proizvod",
     text: `${product.name} • ${renderProductPrice(product)}`,
-    url: buildProductShareUrl(product, imageIndex)
+    url: buildProductShareUrl(product)
   };
   try {
     if (navigator.share) {
@@ -1013,10 +1022,10 @@ function renderProductFeedCard(product = {}, index = 0) {
         <span class="feed-action-icon">${getFeedActionIcon("close")}</span>
       </button>
       <div class="product-feed-side-actions tiktok-actions product-feed-bottom-actions">
-        <button class="feed-action-btn feed-action-btn--share" type="button" onclick="shareProduct('${escapeJs(product.id)}', this)" aria-label="Podeli proizvod">
+        <button class="feed-action-btn feed-action-btn--share" type="button" onclick="shareProduct('${escapeJs(product.id)}')" aria-label="Podeli proizvod">
           <span class="feed-action-icon">${getFeedActionIcon("share")}</span>
         </button>
-        <button class="feed-action-btn feed-action-btn--ask" type="button" onclick="askAboutProduct('${escapeJs(product.id)}', this)" aria-label="Pitaj za proizvod">
+        <button class="feed-action-btn feed-action-btn--ask" type="button" onclick="askAboutProduct('${escapeJs(product.id)}')" aria-label="Pitaj za proizvod">
           <span class="feed-action-icon">${getFeedActionIcon("ask")}</span>
         </button>
         <button class="feed-action-btn feed-action-btn--call" type="button" onclick="callPublicProfile()" aria-label="Pozovi profil">
@@ -1024,7 +1033,7 @@ function renderProductFeedCard(product = {}, index = 0) {
         </button>
       </div>
       <div class="product-feed-info">
-        <small>${escapeHtml(product.category || "Proizvod")}${images.length > 1 ? ` • ${images.length} slika` : ""}</small>
+        <small>${escapeHtml(productPublicCode(product))}${product.category ? ` • ${escapeHtml(product.category)}` : ""}${images.length > 1 ? ` • ${images.length} slika` : ""}</small>
         <h2>${escapeHtml(product.name)}</h2>
         <div class="product-feed-price-row">
           <strong>${renderProductPrice(product)}</strong>
@@ -1042,7 +1051,7 @@ function toggleProductImageZoom(event) {
   if (target && target.closest && target.closest(".feed-action-btn, .product-gallery-dot, button, a, input, select, textarea")) return;
   const modal = target && target.closest ? target.closest(".product-feed-modal") : null;
   if (!modal) return;
-  modal.classList.toggle("product-image-zoomed");
+  modal.classList.add("product-image-zoomed");
 }
 
 function handleProductFeedClose(button) {
@@ -1210,10 +1219,6 @@ function openProductFeed(startProductId = null) {
   `;
   document.body.appendChild(modal);
   setupProductFeedSwipe(modal);
-  if (startProductId) {
-    const directImageIndex = getDirectProductImageIndexFromUrl();
-    if (directImageIndex > 0) window.setTimeout(() => setProductImage(startProductId, directImageIndex), 50);
-  }
 }
 
 function renderClientProductsPreview(forceOpen = false) {

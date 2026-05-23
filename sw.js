@@ -1,6 +1,6 @@
 // sw.js
 // Minimal cache reset service worker for CityStyle.app
-const CACHE_NAME = "citystyle-business-v41-product-deeplink";
+const CACHE_NAME = "citystyle-business-v38-product-codes";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
