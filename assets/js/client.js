@@ -861,10 +861,11 @@ function callPublicProfile() {
   window.location.href = `tel:+${phone}`;
 }
 
-function buildProductOrderMessage(product = {}) {
+function buildProductOrderMessage(product = {}, imageIndex = 0) {
   const images = getProductImages(product);
-  const firstImage = images[0] || product.image_url || "";
-  const productUrl = buildProductShareUrl(product);
+  const safeImageIndex = images.length ? Math.max(0, Math.min(images.length - 1, Number(imageIndex || 0))) : 0;
+  const selectedImage = images[safeImageIndex] || product.image_url || "";
+  const productUrl = buildProductShareUrl(product, safeImageIndex);
   const status = getProductStatusLabel(product.stock_status);
   const salonName = currentSalon?.name || currentSalon?.business_name || "profil";
 
@@ -877,8 +878,9 @@ function buildProductOrderMessage(product = {}) {
     `Profil: ${salonName}`
   ];
 
-  if (firstImage) {
-    lines.push("", `Slika proizvoda: ${firstImage}`);
+  if (selectedImage) {
+    lines.push("", `Slika proizvoda: ${selectedImage}`);
+    if (images.length > 1) lines.push(`Izabrana slika: ${safeImageIndex + 1}/${images.length}`);
   }
 
   lines.push("", `Link proizvoda: ${productUrl}`);
@@ -886,10 +888,10 @@ function buildProductOrderMessage(product = {}) {
   return lines.join("\n");
 }
 
-function buildProductWhatsApp(product = {}) {
+function buildProductWhatsApp(product = {}, imageIndex = 0) {
   const phone = getPublicContactPhone();
   if (!phone) return "";
-  return `https://wa.me/${phone}?text=${encodeURIComponent(buildProductOrderMessage(product))}`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(buildProductOrderMessage(product, imageIndex))}`;
 }
 
 function openWhatsAppMessage(message) {
@@ -905,13 +907,19 @@ function askForProductGeneral() {
   openWhatsAppMessage(`Poštovani, interesuje me vaša ponuda proizvoda. Možete li mi poslati više informacija?`);
 }
 
-function askAboutProduct(productId) {
+function getProductImageIndexFromButton(button, productId) {
+  const slide = button && button.closest ? button.closest(`.product-feed-slide[data-product-id="${CSS.escape(String(productId))}"]`) : null;
+  return Math.max(0, Number(slide?.dataset?.imageIndex || 0));
+}
+
+function askAboutProduct(productId, button = null) {
   const product = products.find(row => String(row.id) === String(productId));
   if (!product) {
     askForProductGeneral();
     return;
   }
-  openWhatsAppMessage(buildProductOrderMessage(product));
+  const imageIndex = getProductImageIndexFromButton(button, productId);
+  openWhatsAppMessage(buildProductOrderMessage(product, imageIndex));
 }
 
 function getDirectProductIdFromUrl() {
@@ -923,7 +931,13 @@ function getDirectProductIdFromUrl() {
   return "";
 }
 
-function buildProductShareUrl(product = {}) {
+function getDirectProductImageIndexFromUrl() {
+  const fromQuery = window.App?.getUrlParam?.("image");
+  const num = Number(fromQuery || 0);
+  return Number.isFinite(num) && num > 0 ? num - 1 : 0;
+}
+
+function buildProductShareUrl(product = {}, imageIndex = 0) {
   const url = new URL(window.location.href);
   const salonSlug = currentSalon?.slug || window.App?.getUrlParam?.("salon") || window.App?.getSavedSalonSlug?.() || "";
 
@@ -933,22 +947,27 @@ function buildProductShareUrl(product = {}) {
 
   if (product?.id) {
     url.searchParams.set("product", String(product.id));
+    const safeImageIndex = Math.max(0, Number(imageIndex || 0));
+    if (safeImageIndex > 0) url.searchParams.set("image", String(safeImageIndex + 1));
+    else url.searchParams.delete("image");
     url.hash = `product-${product.id}`;
   } else {
     url.searchParams.delete("product");
+    url.searchParams.delete("image");
     url.hash = "products";
   }
 
   return url.toString();
 }
 
-async function shareProduct(productId) {
+async function shareProduct(productId, button = null) {
   const product = products.find(row => String(row.id) === String(productId));
   if (!product) return;
+  const imageIndex = getProductImageIndexFromButton(button, productId);
   const shareData = {
     title: product.name || "CityStyle proizvod",
     text: `${product.name} • ${renderProductPrice(product)}`,
-    url: buildProductShareUrl(product)
+    url: buildProductShareUrl(product, imageIndex)
   };
   try {
     if (navigator.share) {
@@ -977,7 +996,6 @@ function getFeedActionIcon(type) {
 
 function renderProductFeedCard(product = {}, index = 0) {
   const images = getProductImages(product);
-  const whatsapp = buildProductWhatsApp(product);
   const firstImage = images[0] || "";
   const hasManyImages = images.length > 1;
   return `
@@ -995,12 +1013,12 @@ function renderProductFeedCard(product = {}, index = 0) {
         <span class="feed-action-icon">${getFeedActionIcon("close")}</span>
       </button>
       <div class="product-feed-side-actions tiktok-actions product-feed-bottom-actions">
-        <button class="feed-action-btn feed-action-btn--share" type="button" onclick="shareProduct('${escapeJs(product.id)}')" aria-label="Podeli proizvod">
+        <button class="feed-action-btn feed-action-btn--share" type="button" onclick="shareProduct('${escapeJs(product.id)}', this)" aria-label="Podeli proizvod">
           <span class="feed-action-icon">${getFeedActionIcon("share")}</span>
         </button>
-        ${whatsapp
-          ? `<a class="feed-action-btn feed-action-btn--ask" href="${whatsapp}" target="_blank" rel="noopener" aria-label="Pitaj za proizvod"><span class="feed-action-icon">${getFeedActionIcon("ask")}</span></a>`
-          : `<button class="feed-action-btn feed-action-btn--ask" type="button" onclick="askAboutProduct('${escapeJs(product.id)}')" aria-label="Pitaj za proizvod"><span class="feed-action-icon">${getFeedActionIcon("ask")}</span></button>`}
+        <button class="feed-action-btn feed-action-btn--ask" type="button" onclick="askAboutProduct('${escapeJs(product.id)}', this)" aria-label="Pitaj za proizvod">
+          <span class="feed-action-icon">${getFeedActionIcon("ask")}</span>
+        </button>
         <button class="feed-action-btn feed-action-btn--call" type="button" onclick="callPublicProfile()" aria-label="Pozovi profil">
           <span class="feed-action-icon">${getFeedActionIcon("call")}</span>
         </button>
@@ -1192,6 +1210,10 @@ function openProductFeed(startProductId = null) {
   `;
   document.body.appendChild(modal);
   setupProductFeedSwipe(modal);
+  if (startProductId) {
+    const directImageIndex = getDirectProductImageIndexFromUrl();
+    if (directImageIndex > 0) window.setTimeout(() => setProductImage(startProductId, directImageIndex), 50);
+  }
 }
 
 function renderClientProductsPreview(forceOpen = false) {
