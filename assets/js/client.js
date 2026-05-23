@@ -973,7 +973,7 @@ function toggleProductImageZoom(event) {
   if (target && target.closest && target.closest(".feed-action-btn, .product-gallery-dot, button, a, input, select, textarea")) return;
   const modal = target && target.closest ? target.closest(".product-feed-modal") : null;
   if (!modal) return;
-  modal.classList.add("product-image-zoomed");
+  modal.classList.toggle("product-image-zoomed");
 }
 
 function handleProductFeedClose(button) {
