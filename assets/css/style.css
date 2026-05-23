@@ -91,3 +91,32 @@
 @media(max-width:720px){
   .shop-client-page{padding:10px 8px 18px!important}.shop-client-head{padding:12px;border-radius:20px}.shop-logo,.shop-logo-fallback{width:62px!important;height:62px!important;border-radius:18px!important}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}.product-card-body{min-height:96px}.price{font-size:18px!important}.topbar{display:block}.topbar .actions{justify-content:flex-start}.row{display:block}.row .actions{justify-content:flex-start;margin-top:10px}.viewer-info{top:12px!important;left:12px!important;right:70px!important}.viewer-close{width:46px!important;height:46px!important}.icon-btn{width:48px!important;height:48px!important;}
 }
+
+
+/* v59 laptop arrows for product image browsing */
+.viewer-arrow{display:none;}
+@media (min-width: 901px){
+  .viewer-arrow{
+    display:grid!important;
+    place-items:center!important;
+    position:fixed!important;
+    z-index:7!important;
+    top:50%!important;
+    transform:translateY(-50%)!important;
+    width:54px!important;
+    height:76px!important;
+    border-radius:18px!important;
+    border:1px solid rgba(255,255,255,.22)!important;
+    background:rgba(8,8,12,.62)!important;
+    color:#fff!important;
+    font-size:52px!important;
+    line-height:1!important;
+    font-weight:300!important;
+    box-shadow:0 14px 35px rgba(0,0,0,.35)!important;
+    backdrop-filter:blur(8px)!important;
+  }
+  .viewer-arrow:hover{background:rgba(220,38,38,.82)!important;}
+  .viewer-arrow-left{left:48px!important;}
+  .viewer-arrow-right{left:calc(100vw - 450px)!important;}
+}
+@media (max-width: 900px){.viewer-arrow{display:none!important;}}
