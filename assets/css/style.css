@@ -2189,3 +2189,53 @@ select:focus{
     background:#ffffff !important;
   }
 }
+
+
+/* v86 SAFE: mobile viewer solid black return
+   - return fullscreen mobile viewer to clean black background
+   - remove transparency from main viewer layer so nothing behind shows
+   - keep TikTok-style blurred product backdrop, actions, dots, zoom and feed logic intact */
+@media(max-width:899px){
+  .shoe-viewer{
+    background:linear-gradient(180deg,#050608 0%, #000000 38%, #000000 100%) !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+    overscroll-behavior:contain;
+  }
+  .shoe-viewer .shoe-viewer-media{
+    background:transparent !important;
+  }
+  .shoe-viewer:before{
+    background:linear-gradient(to bottom, rgba(0,0,0,.56), rgba(0,0,0,0)) !important;
+  }
+  .shoe-viewer:after{
+    background:linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,0)) !important;
+  }
+  .shoe-viewer-top small,
+  .shoe-viewer-top h2,
+  .shoe-viewer-top b{
+    text-shadow:0 2px 14px rgba(0,0,0,.70) !important;
+  }
+  .shoe-action,
+  .shoe-action.red,
+  .shoe-action.blue,
+  .shoe-action.green{
+    background:rgba(255,255,255,.055) !important;
+    border:1px solid rgba(255,255,255,.16) !important;
+    box-shadow:0 12px 28px rgba(0,0,0,.30) !important;
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+  }
+  .shoe-dots{
+    background:rgba(255,255,255,.05) !important;
+    border:1px solid rgba(255,255,255,.14) !important;
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+  }
+  .shoe-dots button{
+    background:rgba(255,255,255,.30) !important;
+  }
+  .shoe-dots button.active{
+    background:#ffffff !important;
+  }
+}
