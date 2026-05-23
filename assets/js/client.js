@@ -560,6 +560,14 @@ async function loadGarageListings() {
   }));
 }
 
+
+function clientIsCatalogProfile() {
+  const type = String(currentSalon?.business_type || "").toLowerCase();
+  const pkg = String(currentSalon?.package_type || "").toLowerCase();
+  const name = String(currentSalon?.salon_name || "").toLowerCase();
+  return type === "catalog" || pkg === "catalog" || name.includes("plac") || name.includes("auto") || name.includes("katalog") || name.includes("shop") || name.includes("prodav");
+}
+
 async function renderSalonHome() {
   const app = document.getElementById("app");
   app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
@@ -578,6 +586,11 @@ async function renderSalonHome() {
 
   const publicName = settings?.welcome_title || currentSalon.salon_name || "Profil";
   const profileLabels = window.App.getBusinessProfileLabels(currentSalon.business_type);
+  const isCatalogProfile = clientIsCatalogProfile();
+  const publicPhone = settings?.phone || currentSalon.phone || "";
+  const introFallback = isCatalogProfile
+    ? "Dobrodošli. Pogledajte proizvode, cene i dostupnost, pa pošaljite pitanje preko WhatsApp-a ili pozovite vlasnika."
+    : C("welcomeDefault", "Dobrodošli. Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev.");
   currentSalon._publicName = publicName;
   currentSalon._publicLogo = settings?.logo_url || "";
   currentSalon._publicPhone = settings?.phone || currentSalon.phone || "";
@@ -611,30 +624,39 @@ async function renderSalonHome() {
 
         <h1>${escapeHtml(publicName)}</h1>
         <div class="public-profile-text">
-          <p class="intro-text">${escapeHtml(settings?.welcome_text || C("welcomeDefault", "Dobrodošli. Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev."))}</p>
-          ${(settings?.phone || settings?.address) ? `
+          <p class="intro-text">${escapeHtml(settings?.welcome_text || introFallback)}</p>
+          ${((!isCatalogProfile && settings?.phone) || settings?.address) ? `
             <div class="public-profile-contact">
-              ${settings?.phone ? `<a href="tel:${escapeHtml(window.App.normalizePhoneForTel ? window.App.normalizePhoneForTel(settings.phone) : settings.phone)}">📞 ${escapeHtml(settings.phone)}</a>` : ""}
+              ${(!isCatalogProfile && settings?.phone) ? `<a href="tel:${escapeHtml(window.App.normalizePhoneForTel ? window.App.normalizePhoneForTel(settings.phone) : settings.phone)}">📞 ${escapeHtml(settings.phone)}</a>` : ""}
               ${settings?.address ? `<span>📍 ${escapeHtml(settings.address)}</span>` : ""}
             </div>
           ` : ""}
         </div>
 
-        <div class="client-actions">
-          <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(profileLabels.action)}</button>
-          <button class="btn btn-dark" type="button" onclick="showServices()">${escapeHtml(profileLabels.services)}</button>
-          <button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>
-          ${garageListings.length ? `<button class="btn btn-dark" type="button" onclick="showGarage()">Garaža / oglasi</button>` : ""}
-          ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app ovog profila")}</button>`}
+        <div class="client-actions ${isCatalogProfile ? 'client-actions-catalog' : ''}">
+          ${isCatalogProfile ? `
+            <button class="btn btn-primary" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / katalog")}</button>
+            ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app ovog profila")}</button>`}
+          ` : `
+            <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(profileLabels.action)}</button>
+            <button class="btn btn-dark" type="button" onclick="showServices()">${escapeHtml(profileLabels.services)}</button>
+            <button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>
+            ${garageListings.length ? `<button class="btn btn-dark" type="button" onclick="showGarage()">Garaža / oglasi</button>` : ""}
+            ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app ovog profila")}</button>`}
+          `}
         </div>
       </div>
 
       <div id="client-extra">
-        ${renderClientServicesPreview()}
-        ${renderClientProductsPreview()}
-        ${renderClientGaragePreview()}
-        ${renderClientGalleryPreview()}
-        ${renderClientWorkingHours(workingHours || [])}
+        ${isCatalogProfile ? `
+          ${renderClientProductsPreview()}
+        ` : `
+          ${renderClientServicesPreview()}
+          ${renderClientProductsPreview()}
+          ${renderClientGaragePreview()}
+          ${renderClientGalleryPreview()}
+          ${renderClientWorkingHours(workingHours || [])}
+        `}
       </div>
       <div id="booking-box"></div>
     </section>
@@ -1121,6 +1143,7 @@ async function selectServiceById(serviceId) {
 }
 
 function showBookingForm() {
+  if (clientIsCatalogProfile()) return showProducts();
   const box = document.getElementById("booking-box");
   if (!box) return;
 
