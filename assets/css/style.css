@@ -1824,3 +1824,54 @@ select:focus{
     max-height:calc(100vh - 210px) !important;
   }
 }
+
+
+/* v78 SAFE: mobile viewer polish only
+   - dots centered below product image area
+   - action buttons become glass / transparent
+   - keep desktop layout unchanged */
+@media(max-width:899px){
+  .shoe-viewer-actions{
+    left:16px !important;
+    bottom:calc(20px + env(safe-area-inset-bottom,0px)) !important;
+    gap:12px !important;
+  }
+  .shoe-action,
+  .shoe-action.red,
+  .shoe-action.blue,
+  .shoe-action.green{
+    background:rgba(255,255,255,.08) !important;
+    border:1px solid rgba(255,255,255,.22) !important;
+    box-shadow:0 10px 24px rgba(0,0,0,.28) !important;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+  }
+  .shoe-action svg{
+    stroke:#ffffff !important;
+  }
+  .shoe-action.blue svg circle{
+    fill:#ffffff !important;
+  }
+  .shoe-dots{
+    left:50% !important;
+    right:auto !important;
+    bottom:calc(28px + env(safe-area-inset-bottom,0px)) !important;
+    transform:translateX(-50%);
+    gap:8px !important;
+    padding:6px 10px;
+    border-radius:999px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.12);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+  }
+  .shoe-dots button{
+    width:10px !important;
+    height:10px !important;
+    background:rgba(255,255,255,.32) !important;
+  }
+  .shoe-dots button.active{
+    width:36px !important;
+    background:#ffffff !important;
+  }
+}
