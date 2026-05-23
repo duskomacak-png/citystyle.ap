@@ -618,7 +618,7 @@ function updateManifestForOwner() {
     name: "CityStyle - Panel vlasnika",
     short_name: "CityStyle",
     description: "Prečica za direktan ulaz u panel vlasnika biznisa.",
-    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=business65profilepwa`,
+    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=business66iosinstall`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -694,7 +694,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=business65profilepwa`,
+    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=business66iosinstall`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -733,16 +733,47 @@ function updateManifestForSalon(slug, options = {}) {
   }
 }
 
+
+function isIOSDevice() {
+  const ua = navigator.userAgent || "";
+  const platform = navigator.platform || "";
+  const iPadOS = platform === "MacIntel" && navigator.maxTouchPoints && navigator.maxTouchPoints > 1;
+  return /iPhone|iPad|iPod/i.test(ua) || iPadOS;
+}
+
+function isStandalonePwa() {
+  return window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone === true;
+}
+
 function showInstallHelp(noPromptMessage = "Na iPhone-u: Share → Add to Home Screen.") {
   document.querySelector(".install-help-modal")?.remove();
   const currentUrl = window.location.href;
+  const ios = isIOSDevice();
+  const standalone = isStandalonePwa();
   const modal = document.createElement("div");
   modal.className = "modal-backdrop install-help-modal";
-  modal.innerHTML = `
+  modal.innerHTML = ios ? `
+    <div class="modal-card install-help-card ios-install-card">
+      <h3>📱 Kako dodati app na iPhone</h3>
+      ${standalone ? `<p class="success-text">Ovaj profil već izgleda otvoren kao app/prečica.</p>` : ``}
+      <p class="muted">iPhone ne prikazuje Android dugme za instalaciju. Prečica se dodaje ručno preko Safari browsera.</p>
+      <ol class="install-steps">
+        <li>Otvorite ovaj profil u <strong>Safari</strong> browseru.</li>
+        <li>Dodirnite dugme <strong>Share / Podeli</strong> — kvadrat sa strelicom nagore.</li>
+        <li>Skrolujte dole i izaberite <strong>Add to Home Screen / Dodaj na početni ekran</strong>.</li>
+        <li>Proverite naziv profila i kliknite <strong>Add / Dodaj</strong>.</li>
+      </ol>
+      <p class="muted">Posle toga će se na početnom ekranu pojaviti prečica koja otvara baš ovaj profil. Logo firme se koristi gde iOS to dozvoli.</p>
+      <div class="card-actions center">
+        <button class="btn btn-primary" type="button" onclick="copyText('${escapeJs(currentUrl)}', this)">Kopiraj link profila</button>
+        <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Razumem</button>
+      </div>
+    </div>
+  ` : `
     <div class="modal-card install-help-card">
       <h3>Preuzimanje profila kao app</h3>
       <p>${escapeHtml(noPromptMessage)}</p>
-      <p class="muted">Ako browser ne ponudi instalaciju, otvorite meni browsera i izaberite Dodaj na početni ekran. Na Androidu/Chrome-u prečica najčešće koristi logo firme; iOS ponekad koristi ikonicu stranice.</p>
+      <p class="muted">Ako browser ne ponudi instalaciju, otvorite meni browsera i izaberite Dodaj na početni ekran. Na Androidu/Chrome-u prečica najčešće koristi logo firme.</p>
       <div class="card-actions center">
         <button class="btn btn-primary" type="button" onclick="copyText('${escapeJs(currentUrl)}', this)">Kopiraj link profila</button>
         <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
@@ -753,6 +784,10 @@ function showInstallHelp(noPromptMessage = "Na iPhone-u: Share → Add to Home S
 }
 
 async function installApp(noPromptMessage = "Na iPhone-u: Share → Add to Home Screen.", successMessage = "CityStyle je dodat na telefon.") {
+  if (isIOSDevice()) {
+    showInstallHelp(noPromptMessage);
+    return;
+  }
   if (!deferredPrompt) {
     showInstallHelp(noPromptMessage);
     return;
@@ -850,7 +885,7 @@ async function registerPushForSalon(salonId) {
       return false;
     }
 
-    const registration = await navigator.serviceWorker.register("/sw.js?v=business65profilepwa", { scope: "/" });
+    const registration = await navigator.serviceWorker.register("/sw.js?v=business66iosinstall", { scope: "/" });
     await navigator.serviceWorker.ready;
 
     let subscription = await registration.pushManager.getSubscription();
