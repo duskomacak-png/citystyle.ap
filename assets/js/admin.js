@@ -63,42 +63,52 @@ function renderBusinessTypeOptions(selectedValue = "salon") {
 
 
 const ADMIN_PACKAGE_OPTIONS = [
-  { value: "business", label: "Biznis", icon: "🏢", hint: "osnovni QR profil, usluge, galerija, zahtevi i statistika", max_listings: 0, max_images: 0, price: 9.99 },
-  { value: "catalog", label: "Katalog", icon: "🛒", hint: "biznis profil + proizvodi/katalog", max_listings: 0, max_images: 0, price: 14.99 },
-  { value: "garage_start", label: "Garaža Start", icon: "🚗", hint: "do 30 oglasa, do 10 slika po oglasu", max_listings: 30, max_images: 10, price: 29.99 },
-  { value: "garage_plus", label: "Garaža Plus", icon: "🚙", hint: "do 75 oglasa, do 10 slika po oglasu", max_listings: 75, max_images: 10, price: 49.99 },
-  { value: "garage_pro", label: "Garaža PRO", icon: "🏗️", hint: "do 150 oglasa, do 10 slika po oglasu", max_listings: 150, max_images: 10, price: 79.99 },
-  { value: "garage_max", label: "Garaža MAX", icon: "🚛", hint: "do 300 oglasa, do 10 slika po oglasu", max_listings: 300, max_images: 10, price: 129.99 },
-  { value: "custom", label: "Custom", icon: "⭐", hint: "ručni dogovor i ručno podešeni limiti", max_listings: 0, max_images: 10, price: 0 }
+  { value: "salon_basic", business_type: "salon", label: "Salon Mini", icon: "💇", hint: "osnovni salon profil, QR, usluge i termini", max_listings: 0, max_images: 0, price: 9.99 },
+  { value: "salon_standard", business_type: "salon", label: "Salon Standard", icon: "💈", hint: "salon profil, usluge, termini, QR, radno vreme i statistika", max_listings: 0, max_images: 0, price: 19.99 },
+  { value: "salon_pro", business_type: "salon", label: "Salon PRO", icon: "✨", hint: "salon profil sa punim prikazom, notifikacijama i naprednijom statistikom", max_listings: 0, max_images: 0, price: 29.99 },
+  { value: "shop_mini", business_type: "catalog", label: "Patike Mini", icon: "👟", hint: "do 10 oglasa, do 5 slika po oglasu", max_listings: 10, max_images: 5, price: 9.99 },
+  { value: "shop_standard", business_type: "catalog", label: "Patike Standard", icon: "🛍️", hint: "do 30 oglasa, do 10 slika po oglasu", max_listings: 30, max_images: 10, price: 19.99 },
+  { value: "shop_pro", business_type: "catalog", label: "Patike PRO", icon: "🔥", hint: "do 75 oglasa, do 10 slika po oglasu", max_listings: 75, max_images: 10, price: 39.99 },
+  { value: "shop_max", business_type: "catalog", label: "Patike MAX", icon: "🚀", hint: "do 150 oglasa, do 15 slika po oglasu", max_listings: 150, max_images: 15, price: 69.99 },
+  { value: "custom", business_type: "both", label: "Custom", icon: "⭐", hint: "ručni dogovor i ručno podešeni limiti", max_listings: 0, max_images: 10, price: 0 }
 ];
 
-function getAdminPackageOption(value) {
-  const normalized = String(value || "business").trim().toLowerCase();
-  return ADMIN_PACKAGE_OPTIONS.find(item => item.value === normalized) || ADMIN_PACKAGE_OPTIONS[0];
+function getAdminPackageOptionsForBusinessType(businessType = "salon") {
+  const type = getAdminBusinessTypeOption(businessType).value;
+  return ADMIN_PACKAGE_OPTIONS.filter(item => item.business_type === type || item.business_type === "both");
 }
 
-function isGaragePackage(value) {
-  const key = getAdminPackageOption(value).value;
-  return key.startsWith("garage_") || key === "custom";
+function getAdminPackageOption(value, businessType = null) {
+  const normalized = String(value || "").trim().toLowerCase();
+  const found = ADMIN_PACKAGE_OPTIONS.find(item => item.value === normalized);
+  if (found) return found;
+  const type = businessType ? getAdminBusinessTypeOption(businessType).value : "salon";
+  return getAdminPackageOptionsForBusinessType(type)[0] || ADMIN_PACKAGE_OPTIONS[0];
 }
 
-function renderPackageBadge(value, maxListings = null, maxImages = null) {
+function isListingPackage(value) {
   const pkg = getAdminPackageOption(value);
+  return Number(pkg.max_listings || 0) > 0 || pkg.value === "custom";
+}
+
+function renderPackageBadge(value, maxListings = null, maxImages = null, businessType = null) {
+  const pkg = getAdminPackageOption(value, businessType);
   const listings = Number(maxListings ?? pkg.max_listings ?? 0);
   const images = Number(maxImages ?? pkg.max_images ?? 0);
-  const suffix = isGaragePackage(pkg.value) ? ` • ${listings || "∞"} oglasa • ${images || 10} slika/oglas` : "";
+  const suffix = isListingPackage(pkg.value) ? ` • ${listings || "∞"} oglasa • ${images || 10} slika/oglas` : "";
   return `<span class="business-type-badge package-badge">${pkg.icon} ${adminEscapeHtml(pkg.label)}${adminEscapeHtml(suffix)}</span>`;
 }
 
-function renderPackageOptions(selectedValue = "business") {
-  const selected = getAdminPackageOption(selectedValue).value;
-  return ADMIN_PACKAGE_OPTIONS.map(item => `
+function renderPackageOptions(selectedValue = "", businessType = "salon") {
+  const options = getAdminPackageOptionsForBusinessType(businessType);
+  const selected = getAdminPackageOption(selectedValue || options[0]?.value, businessType).value;
+  return options.map(item => `
     <option value="${adminEscapeHtml(item.value)}" ${item.value === selected ? "selected" : ""}>${item.icon} ${adminEscapeHtml(item.label)} — ${adminEscapeHtml(item.hint)}</option>
   `).join("");
 }
 
-function getPackageLimits(packageType, manualListings = null, manualImages = null) {
-  const pkg = getAdminPackageOption(packageType);
+function getPackageLimits(packageType, manualListings = null, manualImages = null, businessType = null) {
+  const pkg = getAdminPackageOption(packageType, businessType);
   return {
     package_type: pkg.value,
     max_garage_listings: Number(manualListings || pkg.max_listings || 0),
@@ -106,20 +116,22 @@ function getPackageLimits(packageType, manualListings = null, manualImages = nul
   };
 }
 
-function promptPackage(currentValue = "business") {
-  const current = getAdminPackageOption(currentValue).value;
-  const optionsText = ADMIN_PACKAGE_OPTIONS.map(item => `${item.value} = ${item.label}`).join("\n");
-  const input = prompt(`Paket profila:\n${optionsText}`, current);
+function promptPackage(currentValue = "", businessType = "salon") {
+  const type = getAdminBusinessTypeOption(businessType).value;
+  const options = getAdminPackageOptionsForBusinessType(type);
+  const current = getAdminPackageOption(currentValue || options[0]?.value, type).value;
+  const optionsText = options.map(item => `${item.value} = ${item.label} (${item.hint})`).join("\n");
+  const input = prompt(`Paket profila za ${getAdminBusinessTypeOption(type).label}:\n${optionsText}`, current);
   if (input === null) return null;
-  const pkg = getAdminPackageOption(input);
-  const limits = getPackageLimits(pkg.value);
+  const pkg = getAdminPackageOption(input, type);
+  const limits = getPackageLimits(pkg.value, null, null, type);
   let maxListings = limits.max_garage_listings;
   let maxImages = limits.max_images_per_listing;
-  if (isGaragePackage(pkg.value)) {
-    const enteredListings = prompt("Maksimalan broj Garaža oglasa:", String(maxListings || 30));
+  if (Number(pkg.max_listings || 0) > 0 || pkg.value === "custom") {
+    const enteredListings = prompt("Maksimalan broj oglasa/proizvoda:", String(maxListings || 30));
     if (enteredListings === null) return null;
     maxListings = Math.max(1, Number(enteredListings || maxListings || 30));
-    const enteredImages = prompt("Maksimalan broj slika po oglasu:", String(maxImages || 10));
+    const enteredImages = prompt("Maksimalan broj slika po oglasu/proizvodu:", String(maxImages || 10));
     if (enteredImages === null) return null;
     maxImages = Math.max(1, Number(enteredImages || maxImages || 10));
   }
@@ -807,7 +819,7 @@ function showAddSalonForm() {
       <div class="section-head compact-section-head">
         <div>
           <h2>Dodaj biznis profil</h2>
-          <p class="muted">Izaberi vrstu profila iz liste. Ovo menja tekstove na javnom QR profilu.</p>
+          <p class="muted">Izaberi vrstu profila iz liste. Prvo izaberi Salon ili Prodavnicu patika; zatim se otvaraju samo paketi za taj tip profila.</p>
         </div>
         <button class="btn btn-dark btn-small" type="button" onclick="closeAdminBusinessModal()">Zatvori</button>
       </div>
@@ -816,18 +828,18 @@ function showAddSalonForm() {
         <div class="admin-form-grid">
           <div>
             <label for="new-business-name">Naziv biznisa *</label>
-            <input id="new-business-name" required placeholder="npr. Auto Servis Žika">
+            <input id="new-business-name" required placeholder="npr. Studio Ana ili Sport Line">
           </div>
           <div>
             <label for="new-business-type">Vrsta profila *</label>
             <select id="new-business-type" required>
-              ${renderBusinessTypeOptions("general")}
+              ${renderBusinessTypeOptions("salon")}
             </select>
           </div>
           <div>
             <label for="new-package-type">Paket profila *</label>
             <select id="new-package-type" required>
-              ${renderPackageOptions("business")}
+              ${renderPackageOptions("salon_basic", "salon")}
             </select>
           </div>
           <div>
@@ -859,8 +871,8 @@ function showAddSalonForm() {
         </div>
 
         <div class="business-type-helper" id="business-type-helper">
-          <strong>${renderBusinessTypeBadge("general")}</strong>
-          <span>Opšti biznis: zahtevi, termini i ponuda. Paket Biznis nema Garaža tab.</span>
+          <strong>${renderBusinessTypeBadge("salon")}</strong>
+          <span>Salon: termini, usluge i radno vreme. Paket se bira prema tipu profila.</span>
         </div>
 
         <div class="card-actions admin-modal-actions">
@@ -876,11 +888,18 @@ function showAddSalonForm() {
   const helper = document.getElementById("business-type-helper");
   const packageSelect = document.getElementById("new-package-type");
   function updateBusinessHelper() {
-    const option = getAdminBusinessTypeOption(typeSelect?.value || "general");
-    const pkg = getAdminPackageOption(packageSelect?.value || "business");
-    if (helper) helper.innerHTML = `<strong>${renderBusinessTypeBadge(option.value)} ${renderPackageBadge(pkg.value)}</strong><span>${adminEscapeHtml(option.label)}: ${adminEscapeHtml(option.hint)}. Paket: ${adminEscapeHtml(pkg.hint)}.</span>`;
+    const option = getAdminBusinessTypeOption(typeSelect?.value || "salon");
+    const pkg = getAdminPackageOption(packageSelect?.value, option.value);
+    if (helper) helper.innerHTML = `<strong>${renderBusinessTypeBadge(option.value)} ${renderPackageBadge(pkg.value, null, null, option.value)}</strong><span>${adminEscapeHtml(option.label)}: ${adminEscapeHtml(option.hint)}. Paket: ${adminEscapeHtml(pkg.hint)}.</span>`;
   }
-  if (typeSelect && helper) typeSelect.addEventListener("change", updateBusinessHelper);
+  if (typeSelect && helper) typeSelect.addEventListener("change", () => {
+    if (packageSelect) {
+      const type = getAdminBusinessTypeOption(typeSelect.value || "salon").value;
+      const firstPackage = getAdminPackageOptionsForBusinessType(type)[0]?.value || "salon_basic";
+      packageSelect.innerHTML = renderPackageOptions(firstPackage, type);
+    }
+    updateBusinessHelper();
+  });
   if (packageSelect && helper) packageSelect.addEventListener("change", updateBusinessHelper);
   updateBusinessHelper();
 }
@@ -895,9 +914,9 @@ async function handleAddBusinessProfile(event) {
   const phone = getAdminFormValue("new-business-phone") || null;
   const ownerPhoneRaw = getAdminFormValue("new-business-owner-phone") || phone || null;
   const appLanguage = getAdminLanguageOption(getAdminFormValue("new-business-language") || "sr").value;
-  const businessType = getAdminBusinessTypeOption(getAdminFormValue("new-business-type") || "general").value;
-  const packageType = getAdminPackageOption(getAdminFormValue("new-package-type") || "business").value;
-  const packageLimits = getPackageLimits(packageType);
+  const businessType = getAdminBusinessTypeOption(getAdminFormValue("new-business-type") || "salon").value;
+  const packageType = getAdminPackageOption(getAdminFormValue("new-package-type"), businessType).value;
+  const packageLimits = getPackageLimits(packageType, null, null, businessType);
 
   if (!cleanName || !cleanEmail || !cleanCode) {
     window.App.showMessage("Popuni naziv, email vlasnika i kod firme.", "error");
@@ -926,7 +945,7 @@ async function handleAddBusinessProfile(event) {
     status: "active",
     paid_from: paidFrom,
     paid_until: paidUntil,
-    monthly_price: getAdminPackageOption(packageType).price || 9.99,
+    monthly_price: getAdminPackageOption(packageType, businessType).price || 9.99,
     currency: "EUR",
     theme_color: "classic-red",
     app_language: appLanguage,
@@ -1012,7 +1031,7 @@ async function editSalonProfile(id) {
   const businessType = promptBusinessType(salon.business_type || "general");
   if (businessType === null) return;
 
-  const packageChoice = promptPackage(salon.package_type || "business");
+  const packageChoice = promptPackage(salon.package_type || "", businessType);
   if (packageChoice === null) return;
 
   const changeSlug = confirm(
