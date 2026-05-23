@@ -1,4 +1,4 @@
-const CACHE_NAME = 'citystyle-fresh-salons-shoes-v2';
+const CACHE_NAME = 'citystyle-fresh-salons-shoes-v3';
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
