@@ -3885,3 +3885,92 @@ select:focus{
   .product-feed-modal .product-feed-info{left:10px !important;right:62px !important;}
   .product-feed-modal .product-feed-bottom-actions{left:8px !important;gap:7px !important;}
 }
+
+/* v39 HARD FIX: keep action icons pinned to the real bottom-left of the screen.
+   This overrides older top/rail rules. Only visual CSS, no logic changed. */
+.product-feed-modal .product-feed-bottom-actions,
+.product-feed-modal .product-feed-side-actions.tiktok-actions.product-feed-bottom-actions{
+  position:fixed !important;
+  left:14px !important;
+  right:auto !important;
+  top:auto !important;
+  bottom:calc(18px + env(safe-area-inset-bottom, 0px)) !important;
+  width:auto !important;
+  max-width:calc(100vw - 120px) !important;
+  height:auto !important;
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:14px !important;
+  transform:none !important;
+  z-index:99999 !important;
+  pointer-events:auto !important;
+}
+.product-feed-modal .product-feed-bottom-actions .feed-action-btn,
+.product-feed-modal .product-feed-side-actions.tiktok-actions.product-feed-bottom-actions .feed-action-btn{
+  width:50px !important;
+  height:50px !important;
+  min-width:50px !important;
+  min-height:50px !important;
+  max-width:50px !important;
+  max-height:50px !important;
+  padding:0 !important;
+  margin:0 !important;
+  display:grid !important;
+  place-items:center !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+.product-feed-modal .product-feed-bottom-actions .feed-action-icon,
+.product-feed-modal .product-feed-side-actions.tiktok-actions.product-feed-bottom-actions .feed-action-icon{
+  width:50px !important;
+  height:50px !important;
+  min-width:50px !important;
+  min-height:50px !important;
+  border-radius:999px !important;
+  display:grid !important;
+  place-items:center !important;
+  box-shadow:0 8px 22px rgba(0,0,0,.38) !important;
+}
+.product-feed-modal .product-feed-bottom-actions .feed-action-icon svg,
+.product-feed-modal .product-feed-side-actions.tiktok-actions.product-feed-bottom-actions .feed-action-icon svg{
+  width:23px !important;
+  height:23px !important;
+}
+.product-feed-modal::after{
+  content:"" !important;
+  position:fixed !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:0 !important;
+  height:74px !important;
+  background:linear-gradient(to top, rgba(0,0,0,.78), rgba(0,0,0,.20) 68%, rgba(0,0,0,0)) !important;
+  z-index:99990 !important;
+  pointer-events:none !important;
+}
+.product-feed-modal .product-gallery-dots{
+  position:fixed !important;
+  right:14px !important;
+  bottom:calc(31px + env(safe-area-inset-bottom, 0px)) !important;
+  z-index:99999 !important;
+}
+@media(max-width:420px){
+  .product-feed-modal .product-feed-bottom-actions,
+  .product-feed-modal .product-feed-side-actions.tiktok-actions.product-feed-bottom-actions{
+    left:12px !important;
+    bottom:calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+    gap:12px !important;
+    max-width:calc(100vw - 112px) !important;
+  }
+  .product-feed-modal .product-feed-bottom-actions .feed-action-btn,
+  .product-feed-modal .product-feed-side-actions.tiktok-actions.product-feed-bottom-actions .feed-action-btn,
+  .product-feed-modal .product-feed-bottom-actions .feed-action-icon,
+  .product-feed-modal .product-feed-side-actions.tiktok-actions.product-feed-bottom-actions .feed-action-icon{
+    width:48px !important;
+    height:48px !important;
+    min-width:48px !important;
+    min-height:48px !important;
+  }
+}
