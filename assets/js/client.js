@@ -156,6 +156,7 @@ async function loadSalon(slug, saveThisSalon = true) {
   await loadGalleryImages();
   await loadGarageListings();
   await renderSalonHome();
+  setTimeout(openProductFromUrlIfNeeded, 150);
 }
 
 async function loadPlatformHomeImagesForLanding() {
@@ -473,6 +474,7 @@ async function loadProducts() {
     products = [];
     return;
   }
+
   const { data, error } = await window.db
     .from("products")
     .select("*")
@@ -486,29 +488,28 @@ async function loadProducts() {
     products = [];
     return;
   }
-  products = data || [];
-  await enrichProductsWithImages();
-}
 
-async function enrichProductsWithImages() {
-  const ids = (products || []).map(p => p.id).filter(Boolean);
-  if (!ids.length || !window.db) return;
+  products = data || [];
+
+  // Optional multi-image table. If it does not exist yet, app still works with image_url/main_image_url.
   try {
-    const { data, error } = await window.db
+    const productIds = products.map(p => p.id).filter(Boolean);
+    if (!productIds.length) return;
+    const { data: imageRows, error: imgError } = await window.db
       .from("product_images")
       .select("id, product_id, image_url, sort_order, created_at")
-      .in("product_id", ids)
+      .in("product_id", productIds)
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true });
-    if (error) return;
+    if (imgError) return;
     const grouped = {};
-    (data || []).forEach(img => {
-      if (!grouped[img.product_id]) grouped[img.product_id] = [];
-      grouped[img.product_id].push(img);
+    (imageRows || []).forEach(row => {
+      if (!grouped[row.product_id]) grouped[row.product_id] = [];
+      if (row.image_url) grouped[row.product_id].push(row.image_url);
     });
-    products = products.map(p => ({ ...p, product_images: grouped[p.id] || [] }));
+    products = products.map(product => ({ ...product, _images: grouped[product.id] || [] }));
   } catch (err) {
-    console.warn("Product images are not available yet:", err);
+    console.warn("Product images not loaded:", err);
   }
 }
 
@@ -638,7 +639,6 @@ async function renderSalonHome() {
       <div id="booking-box"></div>
     </section>
   `;
-  openProductFromUrlIfNeeded();
 }
 
 
@@ -835,214 +835,71 @@ function getProductStatusLabel(status) {
   }[status] || "Na upit";
 }
 
-
-function getProductPublicCode(product = {}) {
-  return String(product.public_code || product.code || (product.id ? ("ART-" + String(product.id).slice(0, 8).toUpperCase()) : "ARTIKAL"));
+function getProductPublicCode(product = {}, index = 0) {
+  if (product.public_code) return String(product.public_code);
+  const prefix = String(currentSalon?.slug || currentSalon?.salon_name || "CS").replace(/[^a-z0-9]/gi, "").toUpperCase().slice(0, 3) || "CS";
+  return `${prefix}-${String(index + 1).padStart(5, "0")}`;
 }
 
 function getProductImages(product = {}) {
   const list = [];
-  if (product.image_url) list.push(String(product.image_url));
-  (product.product_images || []).forEach(img => {
-    if (img?.image_url && !list.includes(String(img.image_url))) list.push(String(img.image_url));
-  });
-  return list;
+  if (Array.isArray(product._images)) list.push(...product._images);
+  [product.image_url, product.main_image_url, product.photo_url].forEach(url => { if (url) list.unshift(url); });
+  return [...new Set(list.filter(Boolean))];
 }
 
-function getProductLink(product = {}) {
-  const base = window.location.origin + window.App.getAppPath("");
-  const salonSlug = currentSalon?.slug || window.App.getUrlParam("salon") || "";
-  const code = encodeURIComponent(getProductPublicCode(product));
-  return `${base}?salon=${encodeURIComponent(salonSlug)}&product=${code}`;
+function getProductDirectLink(product = {}) {
+  const base = window.App.getSalonPublicLink(currentSalon?.slug || "");
+  const token = encodeURIComponent(product.public_code || product.id || "");
+  return `${base}&product=${token}`;
 }
 
-function renderProductPublicCard(product = {}) {
-  const imgs = getProductImages(product);
-  const cover = imgs[0] || "";
+function buildProductWhatsAppUrl(product = {}, index = 0) {
+  const phone = String(currentSalon?.phone || currentSalon?.whatsapp || currentSalon?.phone_number || "").replace(/[^0-9]/g, "");
+  if (!phone) return "";
+  const code = getProductPublicCode(product, index);
+  const text = [
+    "Poštovani, interesuje me ovaj proizvod:",
+    `Oglas: ${code}`,
+    `Naziv: ${product.name || ""}`,
+    `Cena: ${renderProductPrice(product)}`,
+    "",
+    `Link: ${getProductDirectLink(product)}`
+  ].join("\n");
+  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+}
+
+function renderProductThumb(product = {}, index = 0) {
+  const images = getProductImages(product);
+  const img = images[0] || "";
+  const code = getProductPublicCode(product, index);
   return `
-    <button type="button" class="product-public-card product-public-card-clickable" onclick="openProductFeed('${escapeJs(product.id)}')">
-      ${cover ? `<img class="product-public-thumb" src="${escapeHtml(cover)}" alt="${escapeHtml(product.name)}">` : `<span class="product-public-thumb product-public-thumb-empty">Bez slike</span>`}
-      <div>
-        <small class="product-code-chip">${escapeHtml(getProductPublicCode(product))}</small>
-        <strong>${escapeHtml(product.name)}</strong>
-        ${product.category ? `<span>${escapeHtml(product.category)}</span>` : ""}
-        ${product.description ? `<p>${escapeHtml(product.description)}</p>` : ""}
-      </div>
-      <div class="product-public-meta">
+    <button class="clean-product-card" type="button" onclick="openProductViewer(${index})">
+      <div class="clean-product-img">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Proizvod')}">` : `<span>Bez slike</span>`}</div>
+      <div class="clean-product-text">
+        <small>${escapeHtml(code)}${product.category ? ` • ${escapeHtml(product.category)}` : ""}</small>
+        <strong>${escapeHtml(product.name || "Proizvod")}</strong>
         <b>${renderProductPrice(product)}</b>
-        <small>${getProductStatusLabel(product.stock_status)}</small>
       </div>
     </button>
   `;
 }
 
-function getProductActionIcon(type) {
-  if (type === "close") return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>`;
-  if (type === "share") return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"></path><path d="M16 6l-4-4-4 4"></path><path d="M12 2v14"></path></svg>`;
-  if (type === "call") return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.7.6 2.5a2 2 0 0 1-.4 2.1L8.1 9.5a16 16 0 0 0 6.4 6.4l1.2-1.2a2 2 0 0 1 2.1-.4c.8.3 1.6.5 2.5.6a2 2 0 0 1 1.7 2z"></path></svg>`;
-  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 10h8"></path><path d="M8 14h5"></path><path d="M12 21l-3.2-3H7a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-1.8L12 21z"></path></svg>`;
-}
-
-function renderProductFeedSlide(product = {}) {
-  const imgs = getProductImages(product);
-  const first = imgs[0] || "";
-  return `
-    <section class="cs-product-slide" data-product-id="${escapeHtml(product.id)}" data-image-index="0">
-      <div class="cs-product-media" onclick="toggleProductZoom(this.closest('.cs-product-slide'))">
-        ${first ? `<img src="${escapeHtml(first)}" alt="${escapeHtml(product.name)}">` : `<div class="cs-product-noimage">Bez slike</div>`}
-      </div>
-      <div class="cs-product-topshade"></div>
-      <div class="cs-product-info">
-        <small>${escapeHtml(getProductPublicCode(product))}${product.category ? ` • ${escapeHtml(product.category)}` : ""}${imgs.length > 1 ? ` • ${imgs.length} slika` : ""}</small>
-        <h2>${escapeHtml(product.name)}</h2>
-        <div><strong>${renderProductPrice(product)}</strong><span>${getProductStatusLabel(product.stock_status)}</span></div>
-      </div>
-      <button class="cs-product-close" type="button" onclick="closeProductFeedOrZoom(this)" aria-label="Zatvori">${getProductActionIcon("close")}</button>
-      <div class="cs-product-bottom-bar">
-        <button class="cs-feed-action share" type="button" onclick="shareProduct('${escapeJs(product.id)}')" aria-label="Podeli">${getProductActionIcon("share")}</button>
-        <button class="cs-feed-action ask" type="button" onclick="askAboutProduct('${escapeJs(product.id)}')" aria-label="Pitaj">${getProductActionIcon("ask")}</button>
-        <button class="cs-feed-action call" type="button" onclick="callPublicProfile()" aria-label="Pozovi">${getProductActionIcon("call")}</button>
-        <div class="cs-product-dots">${imgs.map((_, i) => `<button type="button" class="${i === 0 ? "active" : ""}" onclick="setProductFeedImage('${escapeJs(product.id)}', ${i})" aria-label="Slika ${i + 1}"></button>`).join("")}</div>
-      </div>
-    </section>`;
-}
-
-function openProductFeed(productId = null) {
-  if (!products.length) return;
-  const startIndex = Math.max(0, products.findIndex(p => String(p.id) === String(productId) || getProductPublicCode(p) === String(productId)));
-  const modal = document.createElement("div");
-  modal.className = "cs-product-feed";
-  modal.innerHTML = `<div class="cs-product-shell">${products.map(p => renderProductFeedSlide(p)).join("")}</div>`;
-  document.body.appendChild(modal);
-  document.body.classList.add("cs-product-open");
-  const shell = modal.querySelector(".cs-product-shell");
-  const slides = Array.from(modal.querySelectorAll(".cs-product-slide"));
-  const target = slides[startIndex] || slides[0];
-  requestAnimationFrame(() => target?.scrollIntoView({ block: "start" }));
-  bindProductFeedSwipe(modal);
-}
-
-function closeProductFeedOrZoom(btn) {
-  const modal = btn.closest(".cs-product-feed");
-  const slide = btn.closest(".cs-product-slide");
-  if (slide?.classList.contains("zoomed")) {
-    slide.classList.remove("zoomed");
-    return;
-  }
-  modal?.remove();
-  document.body.classList.remove("cs-product-open");
-}
-
-function toggleProductZoom(slide) {
-  if (!slide) return;
-  slide.classList.toggle("zoomed");
-}
-
-function setProductFeedImage(productId, index) {
-  const product = products.find(p => String(p.id) === String(productId));
-  const slide = document.querySelector(`.cs-product-slide[data-product-id="${CSS.escape(String(productId))}"]`);
-  if (!product || !slide) return;
-  const imgs = getProductImages(product);
-  if (!imgs.length) return;
-  const next = Math.max(0, Math.min(index, imgs.length - 1));
-  const img = slide.querySelector(".cs-product-media img");
-  if (img) img.src = imgs[next];
-  slide.dataset.imageIndex = String(next);
-  slide.querySelectorAll(".cs-product-dots button").forEach((dot, i) => dot.classList.toggle("active", i === next));
-}
-
-function bindProductFeedSwipe(modal) {
-  modal.querySelectorAll(".cs-product-slide").forEach(slide => {
-    let startX = 0, startY = 0, startT = 0;
-    slide.addEventListener("touchstart", ev => {
-      const t = ev.touches?.[0]; if (!t) return;
-      startX = t.clientX; startY = t.clientY; startT = Date.now();
-    }, { passive: true });
-    slide.addEventListener("touchend", ev => {
-      if (ev.target.closest("button,a")) return;
-      const t = ev.changedTouches?.[0]; if (!t) return;
-      const dx = t.clientX - startX; const dy = t.clientY - startY;
-      if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.2) {
-        const product = products.find(p => String(p.id) === String(slide.dataset.productId));
-        const imgs = getProductImages(product || {});
-        if (imgs.length > 1) {
-          const cur = Number(slide.dataset.imageIndex || 0);
-          const next = dx < 0 ? Math.min(cur + 1, imgs.length - 1) : Math.max(cur - 1, 0);
-          setProductFeedImage(slide.dataset.productId, next);
-        }
-      }
-    }, { passive: true });
-  });
-}
-
-function getWhatsappNumber() {
-  return String(currentSalon?._publicPhone || currentSalon?.phone || "").replace(/\D/g, "");
-}
-
-async function askAboutProduct(productId) {
-  const product = products.find(p => String(p.id) === String(productId));
-  if (!product) return;
-  const phone = getWhatsappNumber();
-  if (!phone) {
-    window.App.showMessage("Vlasnik nije uneo WhatsApp/telefon.", "error");
-    return;
-  }
-  const link = getProductLink(product);
-  const text = `Poštovani, interesuje me ovaj proizvod:\n\nOglas: ${getProductPublicCode(product)}\nNaziv: ${product.name || ""}\nCena: ${renderProductPrice(product)}\n\nLink proizvoda:\n${link}`;
-  try {
-    await window.db?.from("product_inquiries")?.insert({
-      salon_id: currentSalon?.id,
-      product_id: product.id,
-      public_code_snapshot: getProductPublicCode(product),
-      product_name_snapshot: product.name || null,
-      price_snapshot: renderProductPrice(product),
-      product_url: link,
-      source: "whatsapp"
-    });
-  } catch (err) { console.warn("Inquiry log skipped:", err); }
-  window.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
-}
-
-async function shareProduct(productId) {
-  const product = products.find(p => String(p.id) === String(productId));
-  if (!product) return;
-  const url = getProductLink(product);
-  const title = `${product.name || "Proizvod"} — ${renderProductPrice(product)}`;
-  if (navigator.share) {
-    try { await navigator.share({ title, text: title, url }); return; } catch (err) {}
-  }
-  navigator.clipboard?.writeText(url).then(() => window.App.showMessage("Link proizvoda je kopiran.", "success")).catch(() => prompt("Kopiraj link proizvoda:", url));
-}
-
-function callPublicProfile() {
-  const phone = String(currentSalon?._publicPhone || currentSalon?.phone || "");
-  const tel = window.App.normalizePhoneForTel ? window.App.normalizePhoneForTel(phone) : phone.replace(/[^+\d]/g, "");
-  if (!tel) return window.App.showMessage("Vlasnik nije uneo broj telefona.", "error");
-  window.location.href = `tel:${tel}`;
-}
-
-function openProductFromUrlIfNeeded() {
-  const requested = window.App.getUrlParam("product");
-  if (!requested || !products.length) return;
-  const target = products.find(p => String(p.id) === String(requested) || getProductPublicCode(p) === String(requested));
-  if (target) setTimeout(() => openProductFeed(target.id), 250);
-}
-
 function renderClientProductsPreview() {
   if (!products.length) return "";
   return `
-    <details class="card client-hours-panel client-products-panel">
-      <summary>
-        <span>${C("productsCatalog", "Proizvodi / cenovnik")}</span>
-        <small>${C("showList", "Prikaži listu")}</small>
-      </summary>
-      <div class="client-services-panel-body">
-        <p class="muted">Pregled proizvoda, artikala ili cenovnika koje ovaj biznis nudi.</p>
-        <div class="product-public-grid">
-          ${products.map(product => renderProductPublicCard(product)).join("")}
+    <section class="card client-products-clean">
+      <div class="section-head">
+        <div>
+          <h2>${C("productsCatalog", "Proizvodi / katalog")}</h2>
+          <p class="muted">Pregled proizvoda i ponude ovog profila.</p>
         </div>
+        <button class="btn btn-primary" type="button" onclick="openProductViewer(0)">Otvori katalog</button>
       </div>
-    </details>
+      <div class="clean-product-grid">
+        ${products.slice(0, 6).map(renderProductThumb).join("")}
+      </div>
+    </section>
   `;
 }
 
@@ -1051,24 +908,145 @@ function showProducts() {
   if (!box) return;
 
   if (!products.length) {
-    box.innerHTML = `<div class="card"><h2>${C("productsCatalog", "Proizvodi / cenovnik")}</h2><p class="muted">Ovaj profil trenutno nema javno prikazane proizvode.</p></div>`;
+    box.innerHTML = `<div class="card"><h2>${C("productsCatalog", "Proizvodi / katalog")}</h2><p class="muted">Ovaj profil trenutno nema javno prikazane proizvode.</p></div>`;
     return;
   }
 
   box.innerHTML = `
-    <details class="card client-hours-panel client-products-panel" open>
-      <summary>
-        <span>${C("productsCatalog", "Proizvodi / cenovnik")}</span>
-        <small>${C("hideList", "Sakrij listu")}</small>
-      </summary>
-      <div class="client-services-panel-body">
-        <div class="product-public-grid">
-          ${products.map(product => renderProductPublicCard(product)).join("")}
+    <section class="card client-products-clean">
+      <div class="section-head">
+        <div>
+          <h2>${C("productsCatalog", "Proizvodi / katalog")}</h2>
+          <p class="muted">Kliknite na artikal za prikaz preko celog ekrana.</p>
         </div>
+        <button class="btn btn-primary" type="button" onclick="openProductViewer(0)">Fullscreen prikaz</button>
       </div>
-    </details>
+      <div class="clean-product-grid">
+        ${products.map(renderProductThumb).join("")}
+      </div>
+    </section>
   `;
   box.scrollIntoView({ behavior: "smooth" });
+}
+
+let productViewerIndex = 0;
+let productImageIndex = 0;
+let productViewerTouch = null;
+
+function openProductFromUrlIfNeeded() {
+  const token = window.App?.getUrlParam("product");
+  if (!token || !products.length) return;
+  const decoded = String(token).toLowerCase();
+  const idx = products.findIndex(p => String(p.public_code || "").toLowerCase() === decoded || String(p.id || "").toLowerCase() === decoded);
+  if (idx >= 0) openProductViewer(idx);
+}
+
+function openProductViewer(index = 0) {
+  if (!products.length) return;
+  productViewerIndex = Math.max(0, Math.min(Number(index) || 0, products.length - 1));
+  productImageIndex = 0;
+  let modal = document.getElementById("clean-product-viewer");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "clean-product-viewer";
+    modal.className = "clean-viewer";
+    document.body.appendChild(modal);
+  }
+  modal.classList.remove("zoomed");
+  renderCleanProductViewer();
+}
+
+function closeProductViewer() {
+  const modal = document.getElementById("clean-product-viewer");
+  if (!modal) return;
+  if (modal.classList.contains("zoomed")) {
+    modal.classList.remove("zoomed");
+    return;
+  }
+  modal.remove();
+}
+
+function renderCleanProductViewer() {
+  const modal = document.getElementById("clean-product-viewer");
+  if (!modal) return;
+  const product = products[productViewerIndex] || {};
+  const images = getProductImages(product);
+  const img = images[productImageIndex] || images[0] || "";
+  const code = getProductPublicCode(product, productViewerIndex);
+  const wa = buildProductWhatsAppUrl(product, productViewerIndex);
+  modal.innerHTML = `
+    <div class="clean-viewer-stage" data-product-index="${productViewerIndex}" data-image-index="${productImageIndex}">
+      <div class="clean-viewer-photo" onclick="toggleCleanProductZoom(event)">
+        ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Proizvod')}">` : `<div class="clean-viewer-empty">Nema slike</div>`}
+      </div>
+      <div class="clean-viewer-topshade"></div>
+      <div class="clean-viewer-info">
+        <small>${escapeHtml(code)}${product.category ? ` • ${escapeHtml(product.category)}` : ""}${images.length > 1 ? ` • ${images.length} slika` : ""}</small>
+        <h2>${escapeHtml(product.name || "Proizvod")}</h2>
+        <div class="clean-viewer-price"><strong>${renderProductPrice(product)}</strong><span>${getProductStatusLabel(product.stock_status)}</span></div>
+      </div>
+      <button class="clean-viewer-close" type="button" onclick="closeProductViewer()" aria-label="Zatvori">×</button>
+      <div class="clean-viewer-actions">
+        <button type="button" class="share" onclick="shareCurrentProduct()" aria-label="Podeli">${getCleanIcon('share')}</button>
+        ${wa ? `<a class="ask" href="${wa}" target="_blank" rel="noopener" aria-label="Pitaj">${getCleanIcon('ask')}</a>` : `<button type="button" class="ask" onclick="askCurrentProductFallback()" aria-label="Pitaj">${getCleanIcon('ask')}</button>`}
+        <button type="button" class="call" onclick="callPublicProfile()" aria-label="Pozovi">${getCleanIcon('call')}</button>
+      </div>
+      <div class="clean-viewer-dots">${images.map((_, i) => `<button type="button" class="${i === productImageIndex ? 'active' : ''}" onclick="setCleanProductImage(${i})" aria-label="Slika ${i + 1}"></button>`).join("")}</div>
+    </div>
+  `;
+  attachCleanViewerSwipe(modal);
+}
+
+function getCleanIcon(type) {
+  if (type === 'share') return '<svg viewBox="0 0 24 24"><path d="M14 3h7v7"></path><path d="M10 14 21 3"></path><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"></path></svg>';
+  if (type === 'call') return '<svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.7.6 2.5a2 2 0 0 1-.4 2.1L8.1 9.5a16 16 0 0 0 6.4 6.4l1.2-1.2a2 2 0 0 1 2.1-.4c.8.3 1.6.5 2.5.6a2 2 0 0 1 1.7 2z"></path></svg>';
+  return '<svg viewBox="0 0 24 24"><path d="M8 10h8"></path><path d="M8 14h5"></path><path d="M12 21l-3.2-3H7a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-1.8L12 21z"></path></svg>';
+}
+
+function attachCleanViewerSwipe(modal) {
+  modal.ontouchstart = (event) => {
+    const t = event.touches?.[0];
+    if (!t) return;
+    productViewerTouch = { x: t.clientX, y: t.clientY, time: Date.now() };
+  };
+  modal.ontouchend = (event) => {
+    if (!productViewerTouch) return;
+    if (event.target.closest('button,a')) return;
+    const t = event.changedTouches?.[0];
+    if (!t) return;
+    const dx = t.clientX - productViewerTouch.x;
+    const dy = t.clientY - productViewerTouch.y;
+    const adx = Math.abs(dx), ady = Math.abs(dy);
+    productViewerTouch = null;
+    if (Math.max(adx, ady) < 45) return;
+    if (adx > ady) {
+      if (dx < 0) nextCleanProductImage(); else prevCleanProductImage();
+    } else {
+      if (dy < 0) nextCleanProduct(); else prevCleanProduct();
+    }
+  };
+}
+
+function nextCleanProduct() { if (productViewerIndex < products.length - 1) { productViewerIndex++; productImageIndex = 0; renderCleanProductViewer(); } }
+function prevCleanProduct() { if (productViewerIndex > 0) { productViewerIndex--; productImageIndex = 0; renderCleanProductViewer(); } }
+function nextCleanProductImage() { const imgs = getProductImages(products[productViewerIndex] || {}); if (imgs.length > 1) { productImageIndex = (productImageIndex + 1) % imgs.length; renderCleanProductViewer(); } }
+function prevCleanProductImage() { const imgs = getProductImages(products[productViewerIndex] || {}); if (imgs.length > 1) { productImageIndex = (productImageIndex - 1 + imgs.length) % imgs.length; renderCleanProductViewer(); } }
+function setCleanProductImage(i) { productImageIndex = Number(i) || 0; renderCleanProductViewer(); }
+function toggleCleanProductZoom(event) { event?.stopPropagation?.(); document.getElementById("clean-product-viewer")?.classList.toggle("zoomed"); }
+
+async function shareCurrentProduct() {
+  const product = products[productViewerIndex] || {};
+  const url = getProductDirectLink(product);
+  const text = `${product.name || 'Proizvod'} • ${renderProductPrice(product)} • ${url}`;
+  try {
+    if (navigator.share) await navigator.share({ title: product.name || 'Proizvod', text, url });
+    else await navigator.clipboard.writeText(text);
+    window.App.showMessage("Link proizvoda je spreman za deljenje.", "success");
+  } catch (_) {}
+}
+
+function askCurrentProductFallback() {
+  window.App.showMessage("Vlasnik nije upisao WhatsApp/telefon za ovaj profil.", "error");
 }
 
 function renderClientWorkingHours(hours) {

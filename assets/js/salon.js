@@ -180,7 +180,7 @@ async function handleSalonLogin() {
   window.App?.setAppLanguage?.(salon.app_language || "sr");
   window.App?.applySalonTheme?.(salon.theme_color);
   renderSalonDashboard();
-  await showSection(getDefaultOwnerSection());
+  await showSection("appointments");
 }
 
 async function loadSalonForAdminPreview(salonId) {
@@ -202,7 +202,7 @@ async function loadSalonForAdminPreview(salonId) {
   window.App?.setAppLanguage?.(data.app_language || "sr");
   window.App?.applySalonTheme?.(data.theme_color);
   renderSalonDashboard();
-  await showSection(getDefaultOwnerSection());
+  await showSection("appointments");
 }
 
 async function loadSalonFromSession(salonId) {
@@ -229,7 +229,7 @@ async function loadSalonFromSession(salonId) {
   window.App?.setAppLanguage?.(data.app_language || "sr");
   window.App?.applySalonTheme?.(data.theme_color);
   renderSalonDashboard();
-  await showSection(getDefaultOwnerSection());
+  await showSection("appointments");
 }
 
 function renderBlockedSalon(salon) {
@@ -254,32 +254,6 @@ function ownerHasGaragePackage() {
   const pkg = getCurrentPackageType();
   return pkg.startsWith("garage_") || pkg === "custom";
 }
-
-function isCatalogOwnerProfile() {
-  const type = String(currentSalon?.business_type || "").trim().toLowerCase();
-  const pkg = String(currentSalon?.package_type || "").trim().toLowerCase();
-  return type === "catalog" || pkg === "catalog";
-}
-
-function getDefaultOwnerSection() {
-  if (isCatalogOwnerProfile()) return "products";
-  return "appointments";
-}
-
-function applyOwnerPanelTabs() {
-  const tabs = document.querySelectorAll("#salon-tabs button");
-  tabs.forEach(btn => {
-    const sec = btn.dataset.section;
-    let hide = false;
-    if (isCatalogOwnerProfile()) {
-      hide = ["appointments", "services", "gallery", "hours", "garage"].includes(sec);
-    } else if (sec === "garage" && !ownerHasGaragePackage()) {
-      hide = true;
-    }
-    btn.classList.toggle("hidden", hide);
-  });
-}
-
 
 function getGarageListingLimit() {
   const pkg = getCurrentPackageType();
@@ -330,7 +304,6 @@ function renderSalonDashboard() {
   document.getElementById("salon-tabs").classList.remove("hidden");
   document.getElementById("salon-logout-btn").classList.toggle("hidden", adminOwnerPreviewMode);
   document.getElementById("salon-install-btn")?.classList.toggle("hidden", adminOwnerPreviewMode);
-  applyOwnerPanelTabs();
   applyAdminOwnerPreviewHeader();
 }
 
@@ -341,7 +314,6 @@ function setActiveTab(section) {
 
 async function showSection(section) {
   if (!currentSalonId) return renderSalonLogin();
-  if (isCatalogOwnerProfile() && ["appointments", "services", "gallery", "hours", "garage"].includes(section)) section = "products";
   setActiveTab(section);
   if (section === "appointments") return renderAppointments();
   if (section === "services") return renderServices();
@@ -1764,4 +1736,227 @@ function isPaymentExpired(paidUntil) {
   const today = new Date(); today.setHours(0,0,0,0);
   const paidDate = new Date(paidUntil); paidDate.setHours(0,0,0,0);
   return paidDate < today;
+}
+
+/* v47 CLEAN CATALOG OWNER PANEL OVERRIDES */
+function isCatalogOwnerProfile() {
+  const type = String(currentSalon?.business_type || '').toLowerCase();
+  const pkg = String(currentSalon?.package_type || '').toLowerCase();
+  const name = String(currentSalon?.salon_name || '').toLowerCase();
+  return type === 'catalog' || pkg === 'catalog' || name.includes('plac') || name.includes('auto');
+}
+
+function renderSalonDashboard() {
+  const labels = {
+    appointments: S("tabAppointments", "Zahtevi / termini"),
+    services: S("tabServices", "Usluge / ponuda"),
+    products: S("tabProducts", "Proizvodi / katalog"),
+    analytics: "Statistika / QR",
+    garage: "Garaža",
+    gallery: "Galerija radova",
+    hours: S("tabHours", "Radno vreme"),
+    settings: S("tabSettings", "Podešavanje profila")
+  };
+  const catalog = isCatalogOwnerProfile();
+  document.querySelectorAll("#salon-tabs button").forEach(btn => {
+    const section = btn.dataset.section;
+    if (labels[section]) btn.textContent = labels[section];
+    const hideForCatalog = catalog && ["appointments", "services", "gallery", "hours", "garage"].includes(section);
+    const hideGarage = section === "garage" && !ownerHasGaragePackage();
+    btn.classList.toggle("hidden", hideForCatalog || hideGarage);
+  });
+  document.getElementById("salon-install-btn").textContent = S("ownerInstallBtn", "Preuzmi panel vlasnika");
+  document.getElementById("salon-logout-btn").textContent = S("logout", "Odjavi se");
+  document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
+  const expired = isPaymentExpired(currentSalon.paid_until);
+  document.getElementById("salon-status-text").innerHTML = adminOwnerPreviewMode
+    ? `Admin pregled vlasničkog panela • izmene su zaključane`
+    : expired
+      ? `Aktivan profil • <span class="danger-text">Uplata istekla</span>`
+      : `Aktivan profil`;
+  document.getElementById("salon-tabs").classList.remove("hidden");
+  document.getElementById("salon-logout-btn").classList.toggle("hidden", adminOwnerPreviewMode);
+  document.getElementById("salon-install-btn")?.classList.toggle("hidden", adminOwnerPreviewMode);
+  applyAdminOwnerPreviewHeader();
+  if (catalog && ["appointments", "services", "gallery", "hours", "garage"].includes(currentSection)) currentSection = "products";
+}
+
+async function showSection(section) {
+  if (!currentSalonId) return renderSalonLogin();
+  if (isCatalogOwnerProfile() && ["appointments", "services", "gallery", "hours", "garage"].includes(section)) section = "products";
+  setActiveTab(section);
+  if (section === "appointments") return renderAppointments();
+  if (section === "services") return renderServices();
+  if (section === "products") return renderProducts();
+  if (section === "analytics") return renderAnalytics();
+  if (section === "garage") return renderGarage();
+  if (section === "gallery") return renderGallery();
+  if (section === "hours") return renderWorkingHours();
+  if (section === "settings") return renderSalonSettings();
+}
+
+function ownerProductCode(product = {}, index = 0) {
+  if (product.public_code) return String(product.public_code);
+  const prefix = String(currentSalon?.slug || currentSalon?.salon_name || "CS").replace(/[^a-z0-9]/gi, "").toUpperCase().slice(0, 3) || "CS";
+  return `${prefix}-${String(index + 1).padStart(5, "0")}`;
+}
+
+function productLink(product = {}, index = 0) {
+  const base = window.App.getSalonPublicLink(currentSalon?.slug || "");
+  return `${base}&product=${encodeURIComponent(product.public_code || product.id || ownerProductCode(product, index))}`;
+}
+
+async function renderProducts() {
+  const content = document.getElementById("salon-content");
+  content.innerHTML = `
+    <div class="section-head">
+      <div>
+        <h2>Proizvodi / katalog</h2>
+        <p class="muted">Dodajte proizvode, više slika i cenu. Kupac preko QR profila može da pita direktno za tačan artikal.</p>
+      </div>
+      ${adminOwnerPreviewMode ? `<span class="status-pill">Samo pregled</span>` : `<button class="btn btn-primary" type="button" onclick="showAddProductForm()">Dodaj proizvod</button>`}
+    </div>
+    <div id="product-form-box"></div>
+    <div id="products-list" class="cards"><div class="loading-box">Učitavanje proizvoda...</div></div>
+  `;
+  await loadProducts();
+}
+
+async function loadProducts() {
+  const list = document.getElementById("products-list");
+  if (!list) return;
+  const { data, error } = await window.db
+    .from("products")
+    .select("*")
+    .eq("salon_id", currentSalonId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+  if (error) {
+    list.innerHTML = `<div class="card"><h3>Proizvodi nisu spremni u bazi</h3><p class="muted">Pokrenite SQL za products/product_images.</p></div>`;
+    return;
+  }
+  const products = data || [];
+  let imageMap = {};
+  try {
+    const ids = products.map(p => p.id).filter(Boolean);
+    if (ids.length) {
+      const { data: imgs } = await window.db.from("product_images").select("*").in("product_id", ids).order("sort_order", { ascending: true }).order("created_at", { ascending: true });
+      (imgs || []).forEach(img => { if (!imageMap[img.product_id]) imageMap[img.product_id] = []; imageMap[img.product_id].push(img); });
+    }
+  } catch (_) {}
+  if (!products.length) {
+    list.innerHTML = `<div class="card center"><p class="muted">Još nemate proizvode u katalogu.</p></div>`;
+    return;
+  }
+  list.innerHTML = products.map((product, index) => {
+    const imgs = imageMap[product.id] || [];
+    const first = imgs[0]?.image_url || product.image_url || product.main_image_url || "";
+    return `
+      <div class="card product-card ${product.active ? "" : "muted-card"}">
+        <div class="owner-product-row">
+          <div class="owner-product-thumb">${first ? `<img src="${salonEscapeHtml(first)}" alt="${salonEscapeHtml(product.name)}">` : `<span>Bez slike</span>`}</div>
+          <div class="owner-product-info">
+            <small>Oglas: ${salonEscapeHtml(ownerProductCode(product, index))} • Slike ${imgs.length}/10</small>
+            <strong>${salonEscapeHtml(product.name)}</strong>
+            ${product.category ? `<span>${salonEscapeHtml(product.category)}</span>` : ""}
+            ${product.description ? `<p class="muted">${salonEscapeHtml(product.description)}</p>` : ""}
+            <b>${productPriceLabel(product)} • ${productStatusLabel(product.stock_status)} • ${product.active ? "Javno" : "Sakriveno"}</b>
+          </div>
+        </div>
+        ${adminOwnerPreviewMode ? `<div class="card-actions"><span class="status-pill">Admin pregled</span></div>` : `<div class="card-actions">
+          <button class="btn btn-dark btn-small" type="button" onclick="editProduct('${salonEscapeJs(product.id)}')">Uredi</button>
+          <button class="btn btn-dark btn-small" type="button" onclick="showProductImages('${salonEscapeJs(product.id)}')">Slike ${imgs.length}/10</button>
+          <button class="btn btn-dark btn-small" type="button" onclick="copyText('${salonEscapeJs(productLink(product, index))}', this)">Kopiraj link</button>
+          <button class="btn btn-dark btn-small" type="button" onclick="toggleProductActive('${salonEscapeJs(product.id)}', ${product.active ? "true" : "false"})">${product.active ? "Sakrij" : "Aktiviraj"}</button>
+          <button class="btn btn-danger btn-small" type="button" onclick="deleteProduct('${salonEscapeJs(product.id)}')">Obriši</button>
+        </div>`}
+      </div>`;
+  }).join("");
+}
+
+async function showAddProductForm(productId = null) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  const box = document.getElementById("product-form-box");
+  let product = null;
+  if (productId) {
+    const { data } = await window.db.from("products").select("*").eq("id", productId).eq("salon_id", currentSalonId).maybeSingle();
+    product = data;
+  }
+  box.innerHTML = `
+    <div class="card product-edit-card">
+      <h3>${product ? "Uredi proizvod" : "Novi proizvod"}</h3>
+      <input id="product-edit-id" type="hidden" value="${product ? salonEscapeHtml(product.id) : ""}">
+      <label>Naziv proizvoda / artikla</label><input id="product-name" type="text" value="${product ? salonEscapeHtml(product.name) : ""}" placeholder="Nike patike / gume / preparat">
+      <label>Kategorija</label><input id="product-category" type="text" value="${product ? salonEscapeHtml(product.category || "") : ""}" placeholder="Patike, gume, delovi...">
+      <label>Opis</label><textarea id="product-description" rows="3" placeholder="Kratak opis artikla.">${product ? salonEscapeHtml(product.description || "") : ""}</textarea>
+      <div class="price-grid"><div><label>Cena</label><input id="product-price" type="number" min="0" step="0.01" value="${product ? Number(product.price || 0) : ""}"></div><div><label>Valuta</label><select id="product-currency"><option value="RSD" ${!product || (product.currency || "RSD") === "RSD" ? "selected" : ""}>RSD</option><option value="EUR" ${product && product.currency === "EUR" ? "selected" : ""}>EUR</option></select></div></div>
+      <label>Status</label><select id="product-stock-status"><option value="available" ${!product || product.stock_status === "available" ? "selected" : ""}>Na stanju</option><option value="preorder" ${product && product.stock_status === "preorder" ? "selected" : ""}>Po porudžbini</option><option value="out" ${product && product.stock_status === "out" ? "selected" : ""}>Trenutno nema</option></select>
+      <label>Redosled prikaza</label><input id="product-sort-order" type="number" value="${product ? Number(product.sort_order || 100) : 100}">
+      <div class="card-actions"><button class="btn btn-primary" type="button" onclick="saveProduct()">Sačuvaj</button><button class="btn btn-dark" type="button" onclick="hideProductForm()">Otkaži</button></div>
+    </div>`;
+  box.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function saveProduct() {
+  if (stopAdminOwnerPreviewEdit()) return;
+  const id = document.getElementById("product-edit-id")?.value || "";
+  const name = document.getElementById("product-name")?.value.trim();
+  const category = document.getElementById("product-category")?.value.trim() || null;
+  const description = document.getElementById("product-description")?.value.trim() || null;
+  const price = Number(document.getElementById("product-price")?.value || 0);
+  const currency = window.App.normalizeCurrency(document.getElementById("product-currency")?.value || "RSD");
+  const stock_status = document.getElementById("product-stock-status")?.value || "available";
+  const sort_order = Number(document.getElementById("product-sort-order")?.value || 100);
+  if (!name) return window.App.showMessage("Unesite naziv proizvoda.", "error");
+  const payload = { name, category, description, price, currency, stock_status, sort_order, updated_at: new Date().toISOString() };
+  const result = id
+    ? await window.db.from("products").update(payload).eq("id", id).eq("salon_id", currentSalonId)
+    : await window.db.from("products").insert({ ...payload, salon_id: currentSalonId, active: true });
+  if (result.error) return window.App.showMessage("Proizvod nije sačuvan. Proverite SQL za products.", "error");
+  hideProductForm();
+  await loadProducts();
+  window.App.showMessage("Proizvod je sačuvan.", "success");
+}
+
+async function showProductImages(productId) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  const box = document.getElementById("product-form-box");
+  const { data: product } = await window.db.from("products").select("*").eq("id", productId).eq("salon_id", currentSalonId).maybeSingle();
+  const { data: imgs, error } = await window.db.from("product_images").select("*").eq("product_id", productId).order("sort_order", { ascending: true }).order("created_at", { ascending: true });
+  if (error) return window.App.showMessage("Pokrenite SQL za product_images.", "error");
+  const rows = imgs || [];
+  box.innerHTML = `
+    <div class="card">
+      <h3>Slike proizvoda: ${salonEscapeHtml(product?.name || "")}</h3>
+      <p class="muted">${rows.length}/10 slika. Prva slika je glavna za javni prikaz.</p>
+      ${rows.length < 10 ? `<div class="form-grid two-cols"><label>Dodaj sliku<input id="product-image-file" type="file" accept="image/png,image/jpeg,image/webp"></label><label>Redosled<input id="product-image-sort" type="number" value="${(rows.length + 1) * 10}"></label></div><button class="btn btn-primary" type="button" onclick="uploadProductImage('${salonEscapeJs(productId)}')">Upload slike</button>` : `<p class="danger-text">Limit je 10 slika po proizvodu.</p>`}
+      <div class="garage-image-grid owner-gallery-grid">${rows.map(img => `<div class="owner-gallery-card"><img src="${salonEscapeHtml(img.image_url)}" alt="Slika proizvoda"><p class="muted">Redosled: ${Number(img.sort_order || 100)}</p><button class="btn btn-danger btn-small" type="button" onclick="deleteProductImage('${salonEscapeJs(img.id)}','${salonEscapeJs(productId)}','${salonEscapeJs(img.image_url)}')">Obriši</button></div>`).join("")}</div>
+      <div class="form-actions"><button class="btn btn-dark" type="button" onclick="hideProductForm()">Zatvori</button></div>
+    </div>`;
+  box.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function uploadProductImage(productId) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  const file = document.getElementById("product-image-file")?.files?.[0];
+  if (!file) return window.App.showMessage("Izaberite sliku.", "error");
+  const { count } = await window.db.from("product_images").select("id", { count: "exact", head: true }).eq("product_id", productId);
+  if (Number(count || 0) >= 10) return window.App.showMessage("Limit je 10 slika po proizvodu.", "error");
+  const url = await window.StorageHelper.uploadImage(file, currentSalonId, "product");
+  if (!url) return;
+  const sort_order = Number(document.getElementById("product-image-sort")?.value || 100);
+  const { error } = await window.db.from("product_images").insert({ product_id: productId, image_url: url, sort_order });
+  if (error) { await window.StorageHelper.deleteImage(url); return window.App.showMessage("Slika nije sačuvana u bazu. Pokrenite SQL za product_images.", "error"); }
+  window.App.showMessage("Slika je dodata.", "success");
+  await showProductImages(productId);
+  await loadProducts();
+}
+
+async function deleteProductImage(imageId, productId, imageUrl) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  if (!confirm("Obrisati sliku proizvoda?")) return;
+  await window.StorageHelper.deleteImage(imageUrl);
+  await window.db.from("product_images").delete().eq("id", imageId);
+  await showProductImages(productId);
+  await loadProducts();
 }
