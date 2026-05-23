@@ -1625,3 +1625,25 @@ select:focus{
   .shoe-logo{width:70px;height:70px;min-width:70px;}
   .shoe-info-copy{min-width:0;}
 }
+
+/* v69 safe fix: product fullscreen photo must never be cropped on laptop or mobile */
+.shoe-viewer-media {
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.shoe-viewer-media img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+}
+@media (min-width: 900px) {
+  .shoe-viewer-media {
+    padding: 12px;
+  }
+  .shoe-viewer-media img {
+    border-radius: 10px;
+  }
+}
