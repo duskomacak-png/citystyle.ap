@@ -1310,6 +1310,16 @@ function openShoeViewer(index = 0) {
 }
 function closeShoeViewer() { document.getElementById("shoeViewer")?.remove(); csViewerState = null; }
 function currentShoeProduct() { return products[csViewerState?.index || 0]; }
+function csViewerShareIcon(){
+  return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 16L16.5 7.5"></path><path d="M10 7.5H16.5V14"></path></svg>';
+}
+function csViewerMessageIcon(){
+  return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 11.5C20 15.64 16.42 19 12 19c-1.15 0-2.24-.22-3.23-.62L4 19.8l1.38-4.15C4.5 14.48 4 13.03 4 11.5 4 7.36 7.58 4 12 4s8 3.36 8 7.5Z"></path><circle cx="9" cy="11.5" r="1"></circle><circle cx="12" cy="11.5" r="1"></circle><circle cx="15" cy="11.5" r="1"></circle></svg>';
+}
+function csViewerPhoneIcon(){
+  return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 16.2v3a1.8 1.8 0 0 1-1.96 1.8C10.74 20.28 3.72 13.26 3 4.96A1.8 1.8 0 0 1 4.8 3h3a1.8 1.8 0 0 1 1.8 1.55c.14 1.02.43 2 .85 2.92a1.8 1.8 0 0 1-.41 2.02l-1.27 1.27a14.4 14.4 0 0 0 4.47 4.47l1.27-1.27a1.8 1.8 0 0 1 2.02-.41c.92.42 1.9.71 2.92.85A1.8 1.8 0 0 1 21 16.2Z"></path></svg>';
+}
+
 function renderShoeViewer() {
   const product = currentShoeProduct();
   if (!product) return;
@@ -1327,7 +1337,7 @@ function renderShoeViewer() {
     <div class="shoe-viewer-top"><small>${escapeHtml(csProductCode(product))}${product.category ? " • " + escapeHtml(product.category) : ""}${imgs.length > 1 ? ` • ${csViewerState.image + 1}/${imgs.length}` : ""}</small><h2>${escapeHtml(product.name || "Patike")}</h2><b>${escapeHtml(csProductPrice(product))}</b></div>
     <button class="shoe-viewer-close" type="button" onclick="closeShoeViewer()">×</button>
     ${imgs.length > 1 ? `<button class="shoe-arrow shoe-arrow-left" type="button" onclick="event.stopPropagation(); shoeChangeImage(-1)">‹</button><button class="shoe-arrow shoe-arrow-right" type="button" onclick="event.stopPropagation(); shoeChangeImage(1)">›</button>` : ""}
-    <div class="shoe-viewer-actions"><button class="shoe-action red" type="button" onclick="shareShoeProduct(event)">↗</button><button class="shoe-action blue" type="button" onclick="askShoeProduct(event)">💬</button><button class="shoe-action green" type="button" onclick="callShoeShop(event)">☎</button></div>
+    <div class="shoe-viewer-actions"><button class="shoe-action red" type="button" onclick="shareShoeProduct(event)" aria-label="Podeli oglas" title="Podeli oglas">${csViewerShareIcon()}</button><button class="shoe-action blue" type="button" onclick="askShoeProduct(event)" aria-label="Pošalji poruku" title="Pošalji poruku">${csViewerMessageIcon()}</button><button class="shoe-action green" type="button" onclick="callShoeShop(event)" aria-label="Pozovi prodavnicu" title="Pozovi prodavnicu">${csViewerPhoneIcon()}</button></div>
     ${imgs.length > 1 ? `<div class="shoe-dots">${imgs.map((_,i)=>`<button class="${i===csViewerState.image?'active':''}" onclick="event.stopPropagation(); shoeSetImage(${i})"></button>`).join("")}</div>` : ""}`;
   viewer.ontouchstart = e => { const t = e.changedTouches[0]; csViewerState.startX = t.clientX; csViewerState.startY = t.clientY; };
   viewer.ontouchend = e => {

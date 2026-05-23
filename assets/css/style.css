@@ -1694,3 +1694,26 @@ select:focus{
     object-position:center center !important;
   }
 }
+
+/* v72 SAFE: stronger, more professional viewer action icons */
+.shoe-action{
+  font-size:0 !important;
+  box-shadow:0 10px 24px rgba(0,0,0,.22);
+}
+.shoe-action svg{
+  width:24px;
+  height:24px;
+  display:block;
+  stroke:#fff;
+  stroke-width:2.7;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  fill:none;
+}
+.shoe-action.blue svg circle{
+  fill:#fff;
+  stroke:none;
+}
+@media(min-width:900px){
+  .shoe-action svg{width:26px;height:26px;}
+}
