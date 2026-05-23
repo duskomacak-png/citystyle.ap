@@ -1,84 +1,1388 @@
-let currentProfile=null,currentSettings={},currentKind='salon',services=[],products=[],productImages={},selectedService=null,selectedTime=null,viewerState=null;
-const app=document.getElementById('app');
-window.addEventListener('DOMContentLoaded', initClient);
-window.addEventListener('keydown', handleViewerKey);
-async function initClient(){
-  const slug=City.qs('salon') || localStorage.getItem('citystyle_saved_salon');
-  if(!slug){renderLanding();return;}
-  try{
-    currentProfile=await City.getProfile(slug); if(!currentProfile){renderMissing();return;}
-    currentSettings=await City.getSettings(currentProfile.id);
-    localStorage.setItem('citystyle_saved_salon', currentProfile.slug);
-    await loadBaseData();
-    currentKind=City.profileType(currentProfile, products.length);
-    renderProfile();
-    const productCode=City.qs('product'); if(productCode && products.length) openProductByCode(productCode);
-  }catch(e){console.error(e);app.innerHTML=`<div class="notice">Greška učitavanja profila: ${City.esc(e.message)}</div>`}
+// assets/js/client.js
+
+let currentSalon = null;
+let services = [];
+let products = [];
+let productImages = {};
+let galleryImages = [];
+let garageListings = [];
+let selectedService = null;
+let selectedDate = null;
+let selectedTime = null;
+let ownerPreviewMode = false;
+let adminPreviewMode = false;
+const C = (key, fallback = "") => window.App?.t ? window.App.t(key, fallback) : (fallback || key);
+
+
+function clientHasGaragePackage() {
+  const pkg = String(currentSalon?.package_type || "business").trim().toLowerCase();
+  return pkg.startsWith("garage_") || pkg === "custom";
 }
-function renderLanding(){app.innerHTML=`<section class="hero"><div class="brand-logo">CS</div><h1>CityStyle</h1><p class="muted">QR/PWA profili za salone i prodavnice patika.</p><div class="actions"><a class="btn primary" href="/admin/">Admin</a><a class="btn ghost" href="/salon/">Ulaz za vlasnika</a></div></section>`}
-function renderMissing(){app.innerHTML=`<section class="hero"><h1>Profil nije pronađen</h1><p class="muted">Proveri QR/link.</p></section>`}
-async function loadBaseData(){
-  const sid=currentProfile.id;
-  try{const {data}=await db.from('services').select('*').eq('salon_id',sid).eq('active',true).order('sort_order',{ascending:true});services=data||[]}catch(e){services=[]}
-  try{const {data}=await db.from('products').select('*').eq('salon_id',sid).eq('active',true).order('created_at',{ascending:false});products=data||[]}catch(e){products=[]}
-  if(products.length){
-    try{const ids=products.map(p=>p.id);const {data}=await db.from('product_images').select('*').in('product_id',ids).order('sort_order',{ascending:true}).order('created_at',{ascending:true});productImages={};(data||[]).forEach(img=>{(productImages[img.product_id] ||= []).push(img)});}catch(e){productImages={}}
+
+
+const VISIT_SOURCE_LABELS = {
+  facebook: "Facebook",
+  instagram: "Instagram",
+  tiktok: "TikTok",
+  kupujemprodajem: "KupujemProdajem",
+  polovniautomobili: "PolovniAutomobili",
+  qr: "QR kod / štampa",
+  google: "Google",
+  direct: "Direktan link",
+  other: "Ostalo"
+};
+
+function normalizeVisitSource(raw = "") {
+  const value = String(raw || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (["fb", "facebook", "meta"].includes(value)) return "facebook";
+  if (["ig", "instagram"].includes(value)) return "instagram";
+  if (["tt", "tiktok"].includes(value)) return "tiktok";
+  if (["kp", "kupujemprodajem"].includes(value)) return "kupujemprodajem";
+  if (["pa", "polovniautomobili", "polovniautomobili"].includes(value)) return "polovniautomobili";
+  if (["qr", "stamp", "stampa", "print"].includes(value)) return "qr";
+  if (["google"].includes(value)) return "google";
+  if (["direct", "direktno"].includes(value)) return "direct";
+  return "";
+}
+
+function detectVisitSource() {
+  const fromParam = normalizeVisitSource(window.App?.getUrlParam("src") || "");
+  if (fromParam) return fromParam;
+  const ref = String(document.referrer || "").toLowerCase();
+  if (!ref) return "direct";
+  if (ref.includes("facebook") || ref.includes("fb.")) return "facebook";
+  if (ref.includes("instagram")) return "instagram";
+  if (ref.includes("tiktok")) return "tiktok";
+  if (ref.includes("kupujemprodajem")) return "kupujemprodajem";
+  if (ref.includes("polovniautomobili")) return "polovniautomobili";
+  if (ref.includes("google")) return "google";
+  return "other";
+}
+
+async function recordProfileVisitIfNeeded(salon) {
+  try {
+    if (!salon?.id || !window.db) return;
+    if (ownerPreviewMode || adminPreviewMode) return;
+    const source = detectVisitSource();
+    const key = `citystyle_visit_${salon.id}_${source}`;
+    const now = Date.now();
+    const last = Number(localStorage.getItem(key) || 0);
+    // Ne brojimo svako osvežavanje stranice kao novu posetu.
+    if (last && now - last < 30 * 60 * 1000) return;
+    localStorage.setItem(key, String(now));
+    await window.db.from("profile_visits").insert({
+      salon_id: salon.id,
+      source
+    });
+  } catch (err) {
+    console.warn("Statistika posete nije upisana:", err);
   }
 }
-function renderProfile(){
-  const logo=City.profileLogo(currentProfile,currentSettings); const name=City.profileName(currentProfile); const text=City.profileText(currentProfile,currentSettings);
-  const phone=City.profilePhone(currentProfile,currentSettings); const address=City.profileAddress(currentProfile,currentSettings);
-  if(currentKind==='shop'){
-    app.innerHTML=`<section class="shop-client-page"><div class="shop-client-head public-profile-card">${logo?`<img class="shop-logo" src="${City.esc(logo)}" alt="Logo profila" onerror="this.style.display='none'">`:`<div class="shop-logo shop-logo-fallback">${City.esc(name[0]||'S')}</div>`}<div class="shop-client-copy"><h1>${City.esc(name)}</h1>${text?`<p>${City.esc(text)}</p>`:''}<div class="shop-client-meta">${phone?`<span class="meta-pill">📞 ${City.esc(phone)}</span>`:''}${address?`<span class="meta-pill">📍 ${City.esc(address)}</span>`:''}</div></div></div><section id="content"></section></section>`;
-    showProducts();
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadClientApp();
+});
+
+async function loadClientApp() {
+  const app = document.getElementById("app");
+
+  try {
+    const urlSlug = window.App?.getUrlParam("salon");
+    const forcePlatform = window.App?.getUrlParam("platform") === "1" || window.App?.getUrlParam("home") === "1";
+    const wantsAdminPreview = window.App?.getUrlParam("adminPreview") === "1" || window.App?.getUrlParam("preview") === "admin";
+    adminPreviewMode = wantsAdminPreview && await window.Auth?.isPlatformAdmin?.();
+    ownerPreviewMode = !adminPreviewMode && (window.App?.getUrlParam("ownerPreview") === "1" || window.App?.getUrlParam("preview") === "owner");
+
+    // QR/link salon page: ?salon=slug
+    // If admin/owner opens preview, do NOT save this as client shortcut.
+    if (urlSlug) {
+      app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
+      await loadSalon(urlSlug, !(ownerPreviewMode || adminPreviewMode));
+      return;
+    }
+
+    // If an owner is already logged in on this device, open the owner panel directly.
+    // This works both in the installed PWA and in a normal browser, so owners do not
+    // have to type email + company code every time they open citystyle.app.
+    // Public QR/profile links are handled above by ?salon=slug and are not affected.
+    const isStandalone = window.App?.isStandaloneMode?.() === true;
+    const ownerSession = window.App?.getLocal?.(window.APP_CONFIG?.salonSessionKey || "citystyle_salon_session");
+    if (!forcePlatform && ownerSession?.salon_id) {
+      window.location.href = window.App.getAppPath("salon/");
+      return;
+    }
+
+    // Root citystyle.app in normal browser is the platform landing page when there is no saved owner login.
+    // If the app was installed from a public profile page, open that saved profile directly.
+    const savedSlug = window.App?.getSavedSalonSlug?.();
+    if (savedSlug && isStandalone) {
+      app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
+      await loadSalon(savedSlug, false);
+      return;
+    }
+
+    await renderPlatformLanding();
+  } catch (err) {
+    console.error("CityStyle start error:", err);
+    renderPlatformLanding();
+  }
+}
+
+async function loadSalon(slug, saveThisSalon = true) {
+  const app = document.getElementById("app");
+  app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
+
+  const { data: salon, error } = await window.App.checkSalonAccess(slug);
+
+  if (error || !salon) {
+    app.innerHTML = `
+      <div class="card center">
+        <h2>${C("onlineUnavailableTitle", "Online zakazivanje trenutno nije dostupno")}</h2>
+        <p class="muted">${C("onlineUnavailableText", "Online zahtev trenutno nije dostupan za ovaj profil.")}</p>
+        <button class="btn btn-dark" type="button" onclick="renderPlatformLanding()">${C("platformHome", "Početna strana platforme")}</button>
+      </div>
+    `;
     return;
   }
-  app.innerHTML=`<section class="hero"><div>${logo?`<img class="brand-logo" src="${City.esc(logo)}" alt="">`:`<div class="brand-logo">${City.esc(name[0]||'C')}</div>`}</div><h1>${City.esc(name)}</h1>${text?`<p class="muted">${City.esc(text)}</p>`:''}${phone||address?`<div class="hero-meta">${phone?`<span class="meta-pill">📞 ${City.esc(phone)}</span>`:''}${address?`<span class="meta-pill">📍 ${City.esc(address)}</span>`:''}</div>`:''}<div class="actions"><button class="btn primary" onclick="showServices()">Zakaži termin</button><button class="btn ghost" onclick="installInfo()">Preuzmi app profila</button></div></section><section id="content"></section>`;
-  showServices();
+
+  currentSalon = salon;
+  window.App?.setAppLanguage?.(salon.app_language || "sr");
+  window.App?.applySalonTheme?.(salon.theme_color);
+  if (saveThisSalon) window.App.saveCurrentSalon(salon.slug);
+  recordProfileVisitIfNeeded(salon);
+
+  await loadServices();
+  await loadProducts();
+  await loadGalleryImages();
+  await loadGarageListings();
+  await renderSalonHome();
 }
-function installInfo(){toast('Na telefonu: Chrome/Safari meni → Add to Home screen / Dodaj na početni ekran')}
-function productMainImage(p){return p.image_url || (productImages[p.id]||[])[0]?.image_url || ''}
-function productAllImages(p){const set=[]; if(p.image_url) set.push(p.image_url); (productImages[p.id]||[]).forEach(i=>{if(i.image_url&&!set.includes(i.image_url)) set.push(i.image_url)}); return set;}
-function productCode(p){return p.public_code || String(p.id||'').slice(0,8).toUpperCase()}
-function productPrice(p){return City.formatPrice(p.price, p.currency || 'RSD')}
-function showProducts(){
-  const c=$('#content'); if(!c)return;
-  if(!products.length){c.innerHTML='<div class="card"><h2>Još nema proizvoda</h2><p class="muted">Vlasnik još nije dodao katalog.</p></div>';return;}
-  c.innerHTML=`<div class="product-grid shop-feed-grid">${products.map((p,i)=>`<button class="product-card" onclick="openViewer(${i})"><div class="product-card-img-wrap">${productMainImage(p)?`<img src="${City.esc(productMainImage(p))}" alt="">`:`<div class="empty-img">Bez slike</div>`}</div><div class="product-card-body"><small class="muted">${City.esc(productCode(p))}${p.category?' • '+City.esc(p.category):''}</small><h3>${City.esc(p.name||'Proizvod')}</h3><div class="price">${City.esc(productPrice(p))}</div></div></button>`).join('')}</div>`;
+
+async function loadPlatformHomeImagesForLanding() {
+  try {
+    if (!window.db) return [];
+    const { data, error } = await window.db
+      .from("platform_home_images")
+      .select("image_url, caption, sort_order, active")
+      .eq("active", true)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false })
+      .limit(30);
+    if (error) {
+      console.warn("Slike za početnu nisu dostupne:", error);
+      return [];
+    }
+    return data || [];
+  } catch (err) {
+    console.warn("Slike za početnu nisu učitane:", err);
+    return [];
+  }
 }
-function openProductByCode(code){const idx=products.findIndex(p=>String(productCode(p)).toLowerCase()===String(code).toLowerCase()||String(p.id)===String(code)); if(idx>=0) openViewer(idx); else showProducts();}
-function openViewer(index){viewerState={index,image:0,startX:0,startY:0,lastWheel:0,mouseX:0,mouseY:0}; renderViewer();}
-function renderViewer(){
-  const p=products[viewerState.index]; if(!p)return; const imgs=productAllImages(p); const img=imgs[viewerState.image]||'';
-  const el=document.createElement('div'); el.className='viewer'; el.id='productViewer';
-  el.innerHTML=`<div class="viewer-slide active">${img?`<img class="viewer-img" src="${City.esc(img)}" alt="${City.esc(p.name||'')}">`:`<div class="viewer-img" style="display:grid;place-items:center">Bez slike</div>`}</div>${imgs.length>1?`<button class="viewer-arrow viewer-arrow-left" onclick="changeImageFromButton(event,-1)" aria-label="Prethodna slika">‹</button><button class="viewer-arrow viewer-arrow-right" onclick="changeImageFromButton(event,1)" aria-label="Sledeća slika">›</button>`:''}<div class="viewer-info"><small>${City.esc(productCode(p))}${p.category?' • '+City.esc(p.category):''}${imgs.length>1?' • '+(viewerState.image+1)+'/'+imgs.length:''}</small><h2>${City.esc(p.name||'Proizvod')}</h2><div class="viewer-price">${City.esc(productPrice(p))}</div></div><button class="viewer-close" onclick="closeViewer()">×</button><div class="viewer-actions"><button class="icon-btn red" onclick="shareCurrentProduct(event)" aria-label="Podeli"><span>↗</span><b>Podeli</b></button><button class="icon-btn blue" onclick="askCurrentProduct(event)" aria-label="Pitaj"><span>💬</span><b>Pitaj</b></button><button class="icon-btn green" onclick="callProfile(event)" aria-label="Pozovi"><span>☎</span><b>Pozovi</b></button></div>${imgs.length>1?`<div class="viewer-dots">${imgs.map((_,i)=>`<button class="viewer-dot ${i===viewerState.image?'active':''}" onclick="setViewerImage(event,${i})"></button>`).join('')}</div>`:''}`;
-  el.addEventListener('touchstart',e=>{viewerState.startX=e.touches[0].clientX;viewerState.startY=e.touches[0].clientY;},{passive:true});
-  el.addEventListener('touchend',handleViewerSwipe,{passive:true});
-  el.addEventListener('wheel', handleViewerWheel, {passive:false});
-  el.addEventListener('mousedown', e=>{viewerState.mouseX=e.clientX;viewerState.mouseY=e.clientY;});
-  el.addEventListener('mouseup', handleViewerMouse);
-  $('#productViewer')?.remove(); document.body.appendChild(el);
+
+async function renderPlatformLanding() {
+  window.App?.clearSalonTheme?.();
+  window.App?.setAppLanguage?.("sr");
+  currentSalon = null;
+  services = [];
+  products = [];
+  productImages = {};
+  galleryImages = [];
+  garageListings = [];
+  selectedService = null;
+  selectedDate = null;
+  selectedTime = null;
+
+  const app = document.getElementById("app");
+  const phoneImages = await loadPlatformHomeImagesForLanding();
+  const safeImages = phoneImages.map((item, index) => ({
+    url: escapeHtml(item.image_url || ""),
+    caption: escapeHtml(item.caption || "Galerija biznisa"),
+    index
+  })).filter(item => item.url);
+
+  const phoneDisplay = safeImages.length ? `
+    <div class="cs-phone-gallery-card cs-phone-gallery-card--minimal" data-gallery-count="${Math.min(safeImages.length, 30)}">
+      <div class="cs-phone-gallery-slides" aria-label="Galerija slika iz admin panela">
+        ${safeImages.slice(0, 30).map((item, i) => `
+          <img class="cs-phone-slide ${i === 0 ? "active" : ""}" data-index="${i}" src="${item.url}" alt="Slika ${i + 1} iz admin galerije za početnu">
+        `).join("")}
+      </div>
+      <div class="cs-phone-gallery-dots" aria-label="Automatska galerija slika na početnoj">
+        ${safeImages.slice(0, 10).map((_, i) => `<button type="button" class="${i === 0 ? "active" : ""}" data-index="${i}" aria-label="Prikaži sliku ${i + 1}"></button>`).join("")}
+      </div>
+    </div>
+  ` : `
+    <div class="cs-phone-fallback-profile cs-phone-fallback-minimal" aria-label="Primer prikaza telefona">
+      <div class="cs-phone-fallback-glow"></div>
+      <div class="cs-phone-fallback-badge"></div>
+    </div>
+  `;
+
+  app.innerHTML = `
+    <section class="landing-page sales-homepage cs-pro-home">
+      <header class="landing-nav sales-nav cs-pro-nav">
+        <a class="brand-mark" href="./?home=1" aria-label="CityStyle.app početna">
+          <div class="brand-icon">CS</div>
+          <strong>CITYSTYLE<span>.APP</span></strong>
+        </a>
+        <div class="landing-actions nav-actions">
+          <a class="btn btn-dark" href="salon/">Ulaz za vlasnika</a>
+        </div>
+      </header>
+
+      <section class="cs-hero-pro">
+        <div class="cs-hero-glow"></div>
+        <div class="cs-hero-copy">
+          <span class="eyebrow">QR profil za salone, majstore, servise, radnje i lokalne biznise</span>
+          <h1>Izgradite digitalni profil koji klijent otvara jednim skeniranjem.</h1>
+          <p class="hero-lead">
+            CityStyle.app pretvara običan QR kod u moderan ulaz u vaš biznis. Mušterija skenira QR kod, vidi usluge,
+            katalog, radno vreme, fotografije i kontakt, a zatim može da zakaže termin, pošalje upit, zatraži uslugu ili pogleda ponudu.
+          </p>
+          <div class="cs-hero-points">
+            <div><b>🔔</b><span>Kada klijent pošalje zahtev, dobijate zvučnu i vizuelnu notifikaciju u panelu.</span></div>
+            <div><b>📱</b><span>Klijent može sačuvati prečicu na telefonu — kao malu app ikonu za brzi povratak baš u vaš biznis.</span></div>
+          </div>
+          <div class="hero-buttons simple-buttons">
+            <a class="btn btn-primary" href="salon/">Ulaz za vlasnika biznisa</a>
+            <button class="btn btn-dark" type="button" onclick="scrollToHowItWorks()">Kako radi?</button>
+            <a class="btn btn-dark" href="mailto:duskomacak@gmail.com?subject=CityStyle.app%20saradnja">Kontakt za saradnju</a>
+          </div>
+        </div>
+
+        <div class="cs-phone-stage" aria-label="Primer telefona sa slikama iz admin panela">
+          <div class="cs-phone-shell">
+            <div class="cs-phone-top"></div>
+            <div class="cs-phone-screen-showcase">${phoneDisplay}</div>
+            <div class="cs-phone-notice">🔔 Novi zahtev je stigao</div>
+          </div>
+          <div class="cs-phone-install-actions" aria-label="Preuzimanje CityStyle aplikacije">
+            <button class="btn btn-primary cs-home-install-btn" type="button" onclick="installApp('Na telefonu otvorite meni browsera i izaberite Dodaj na početni ekran. Ako koristite iPhone: Share → Add to Home Screen.', 'CityStyle app je dodata na telefon.')">📱 Preuzmi app</button>
+            <p>Vlasnik može dodati CityStyle kao prečicu/app za brži ulaz.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="cs-trust-strip">
+        <div><strong>QR ulaz</strong><span>jedan link za vaš profil</span></div>
+        <div><strong>Prečica</strong><span>klijent čuva vaš biznis na telefonu</span></div>
+        <div><strong>Notifikacije</strong><span>zvučno i vizuelno obaveštenje</span></div>
+        <div><strong>Panel</strong><span>zahtevi, termini, katalog i statistika</span></div>
+      </section>
+
+      <section id="how-it-works" class="sales-section cs-how-premium">
+        <span class="eyebrow">Kako korisnik vidi vaš biznis?</span>
+        <h2>QR kod vodi klijenta direktno u vaš profil.</h2>
+        <p class="muted cs-section-lead">Bez traženja po porukama i bez komplikacije. Skenira kod, vidi vašu ponudu i ima prečicu za sledeći put.</p>
+        <div class="steps-grid cs-journey-grid">
+          <div class="step-card"><strong>1</strong><h3>Skenira QR</h3><p>QR može biti na vratima, vizit karti, društvenim mrežama, oglasu ili flajeru.</p></div>
+          <div class="step-card"><strong>2</strong><h3>Vidi profil</h3><p>Usluge, proizvodi, slike, radno vreme, kontakt i lokacija su složeni pregledno.</p></div>
+          <div class="step-card"><strong>3</strong><h3>Šalje zahtev</h3><p>Korisnik zakazuje termin, traži uslugu, šalje upit ili pita za proizvod.</p></div>
+          <div class="step-card"><strong>4</strong><h3>Čuva prečicu</h3><p>Na telefonu može sačuvati ikonu koja ga vraća baš na profil vašeg biznisa.</p></div>
+        </div>
+      </section>
+
+      <section class="sales-section cs-packages-section">
+        <span class="eyebrow">Paketi bez prikaza cena</span>
+        <h2>Paketi su složeni po tipu biznisa i količini ponude.</h2>
+        <div class="cs-package-row"><span>QR START</span><span>REZERVACIJE</span><span>KATALOG</span><span>GARAŽA</span></div>
+        <div class="cs-package-grid">
+          <article class="cs-package-card"><div class="pkg-icon">🔗</div><h3>QR Start</h3><p>Za biznise kojima treba jasan digitalni profil i brz kontakt.</p><ul><li>QR link profila</li><li>Logo, opis i kontakt</li><li>Radno vreme i lokacija</li><li>Osnovni upit klijenta</li></ul></article>
+          <article class="cs-package-card featured"><div class="pkg-icon">📅</div><h3>Rezervacije</h3><p>Za salone, servise i usluge koje rade preko termina.</p><ul><li>Usluge i trajanje</li><li>Zakazivanje termina</li><li>Panel za zahteve</li><li>Zvučna i vizuelna notifikacija</li></ul></article>
+          <article class="cs-package-card"><div class="pkg-icon">🛍️</div><h3>Katalog</h3><p>Za radnje, majstore i biznise koji žele prikaz ponude.</p><ul><li>Proizvodi i usluge</li><li>Opis, cena i status</li><li>Upit za proizvod/uslugu</li><li>QR statistika izvora</li></ul></article>
+          <article class="cs-package-card premium"><div class="pkg-icon">🚗</div><h3>Garaža</h3><p>Za auto-placeve, mašine, bagere, kamione i veće oglase.</p><ul><li>Listing vozila ili mašina</li><li>Više slika po oglasu</li><li>Karakteristike i status</li><li>Premium prikaz ponude</li></ul></article>
+        </div>
+      </section>
+
+      <section class="sales-section cs-owner-section">
+        <span class="eyebrow">Šta dobija vlasnik?</span>
+        <h2>Jedan panel za profil, zahteve, ponudu i QR rezultate.</h2>
+        <div class="check-grid cs-benefit-grid">
+          <div>✓ naziv, logo i javni profil</div><div>✓ QR kodovi za više izvora</div><div>✓ slike i galerija biznisa</div><div>✓ usluge, proizvodi ili garaža</div><div>✓ termini i zahtevi</div><div>✓ zvučna i vizuelna notifikacija</div><div>✓ statistika poseta</div><div>✓ WhatsApp/kontakt poruke</div>
+        </div>
+      </section>
+
+      <section class="sales-section cs-business-types">
+        <span class="eyebrow">Za koga je?</span>
+        <h2>Za male biznise koji žele da ih klijent lakše pronađe i zapamti.</h2>
+        <div class="business-types-grid">
+          <div>💈 Frizeri i saloni</div><div>💅 Kozmetika</div><div>🛞 Vulkanizeri</div><div>🔧 Auto servisi</div><div>🎨 Moleri i majstori</div><div>🛠️ Servisi i radionice</div><div>🛒 Male radnje</div><div>🚜 Garaža / mašine</div>
+        </div>
+      </section>
+
+      <section class="legal-notice-box cs-legal-clean">
+        <h2>Važna napomena o odgovornosti</h2>
+        <p>CityStyle.app je tehnička platforma koja omogućava biznisima da prikažu svoje usluge, proizvode, cene, radno vreme i da primaju zahteve korisnika.</p>
+        <p>Svaki biznis samostalno odgovara za tačnost svojih podataka, kvalitet usluga, proizvode, cene, termine, reklamacije, račune, poreze i svoje zakonsko poslovanje.</p>
+      </section>
+
+      <section class="platform-contact-box sales-contact-box cs-contact-pro">
+        <h2>Kontakt za saradnju</h2>
+        <p>Za informacije, aktivaciju biznis profila ili prijavu problema pišite na:</p>
+        <a href="mailto:duskomacak@gmail.com">duskomacak@gmail.com</a>
+      </section>
+
+      <footer class="sales-footer">
+        <p>© 2026 CityStyle.app — tehnička platforma za QR biznis profile.</p>
+        <div>
+          <button type="button" class="footer-link-btn" onclick="openLegalModal('terms')">Uslovi korišćenja</button>
+          <button type="button" class="footer-link-btn" onclick="openLegalModal('privacy')">Politika privatnosti</button>
+          <a href="mailto:duskomacak@gmail.com">Kontakt</a>
+          <a class="subtle-admin-link" href="admin/">Admin panel</a>
+        </div>
+      </footer>
+    </section>
+  `;
+  initPlatformHomePhoneGallery(safeImages);
 }
-function handleViewerSwipe(e){if(!viewerState||e.target.closest('button,a'))return; const dx=e.changedTouches[0].clientX-viewerState.startX; const dy=e.changedTouches[0].clientY-viewerState.startY; if(Math.max(Math.abs(dx),Math.abs(dy))<45)return; if(Math.abs(dx)>Math.abs(dy)){changeImage(dx<0?1:-1)}else{changeProduct(dy<0?1:-1)}}
-function handleViewerMouse(e){if(!viewerState||e.target.closest('button,a'))return; const dx=e.clientX-viewerState.mouseX; const dy=e.clientY-viewerState.mouseY; if(Math.max(Math.abs(dx),Math.abs(dy))<55)return; if(Math.abs(dx)>Math.abs(dy)){changeImage(dx<0?1:-1)}else{changeProduct(dy<0?1:-1)}}
-function handleViewerWheel(e){if(!viewerState)return; if(Math.abs(e.deltaY)<25)return; e.preventDefault(); const now=Date.now(); if(now-(viewerState.lastWheel||0)<520)return; viewerState.lastWheel=now; changeProduct(e.deltaY>0?1:-1)}
-function handleViewerKey(e){if(!viewerState)return; if(e.key==='Escape')closeViewer(); if(e.key==='ArrowRight')changeImage(1); if(e.key==='ArrowLeft')changeImage(-1); if(e.key==='ArrowDown')changeProduct(1); if(e.key==='ArrowUp')changeProduct(-1);}
-function changeImage(dir){const p=products[viewerState.index], imgs=productAllImages(p); if(imgs.length<2)return; viewerState.image=(viewerState.image+dir+imgs.length)%imgs.length; renderViewer();}
-function changeProduct(dir){viewerState.index=(viewerState.index+dir+products.length)%products.length; viewerState.image=0; renderViewer();}
-function setViewerImage(e,i){e.stopPropagation(); viewerState.image=i; renderViewer();}
-function changeImageFromButton(e,dir){e.stopPropagation(); changeImage(dir);}
-function closeViewer(){ $('#productViewer')?.remove(); viewerState=null;}
-function closeOrUnzoom(){closeViewer();}
-function currentProduct(){return products[viewerState.index]}
-function productUrl(p){return City.directLink(currentProfile.slug, productCode(p))}
-async function shareCurrentProduct(e){e.stopPropagation(); const p=currentProduct(); const url=productUrl(p); const text=`${p.name||'Proizvod'} • ${productPrice(p)} • ${url}`; if(navigator.share){try{await navigator.share({title:p.name||'Proizvod',text,url});return;}catch(_){}} City.copyText(text)}
-function askCurrentProduct(e){e.stopPropagation(); const p=currentProduct(); const phone=City.normalizePhone(City.profilePhone(currentProfile,currentSettings)); if(!phone){toast('Vlasnik nije upisao WhatsApp/telefon.');return;} const msg=`Zdravo, zanima me ovaj proizvod:%0A%0AOglas: ${encodeURIComponent(productCode(p))}%0ANaziv: ${encodeURIComponent(p.name||'Proizvod')}%0ACena: ${encodeURIComponent(productPrice(p))}%0ALink: ${encodeURIComponent(productUrl(p))}`; location.href=`whatsapp://send?phone=${phone}&text=${msg}`; setTimeout(()=>{location.href=`https://wa.me/${phone}?text=${msg}`},900)}
-function callProfile(e){e.stopPropagation(); const phone=City.normalizePhone(City.profilePhone(currentProfile,currentSettings)); if(!phone){toast('Telefon nije upisan.');return;} location.href='tel:+'+phone;}
-function showServices(){
-  const c=$('#content'); if(!c)return; selectedService=null; selectedTime=null;
-  c.innerHTML=`<div class="card"><h2>Zakazivanje termina</h2>${services.length?`<div class="list">${services.map(s=>`<button class="service-card" onclick="selectService('${s.id}')"><b>${City.esc(s.name)}</b><p class="muted">${City.esc(City.formatPrice(s.price,s.currency||'RSD'))} • ${s.duration_minutes||s.duration_snapshot||30} min</p></button>`).join('')}</div>`:'<p class="muted">Vlasnik još nije dodao usluge.</p>'}</div><div id="bookingBox"></div>`;
+
+function initPlatformHomePhoneGallery(images) {
+  if (window._platformHomeGalleryTimer) {
+    clearInterval(window._platformHomeGalleryTimer);
+    window._platformHomeGalleryTimer = null;
+  }
+
+  const card = document.querySelector(".cs-phone-gallery-card");
+  if (!card || !Array.isArray(images) || !images.length) return;
+
+  const slides = Array.from(card.querySelectorAll(".cs-phone-slide"));
+  const dots = Array.from(card.querySelectorAll(".cs-phone-gallery-dots button"));
+  const captionEl = card.querySelector(".cs-phone-gallery-caption");
+  const counterEl = card.querySelector(".cs-phone-gallery-counter");
+  const total = Math.min(slides.length, 30);
+  let current = 0;
+
+  function showSlide(nextIndex) {
+    current = ((nextIndex % total) + total) % total;
+    slides.forEach((slide, i) => slide.classList.toggle("active", i === current));
+    dots.forEach((dot, i) => dot.classList.toggle("active", i === current));
+    if (captionEl) captionEl.textContent = images[current]?.caption || "Galerija biznisa";
+    if (counterEl) counterEl.textContent = `${current + 1} / ${total}`;
+  }
+
+  dots.forEach((dot) => {
+    dot.addEventListener("click", () => {
+      const index = Number(dot.dataset.index || 0);
+      showSlide(index);
+      if (window._platformHomeGalleryTimer) {
+        clearInterval(window._platformHomeGalleryTimer);
+      }
+      if (total > 1) {
+        window._platformHomeGalleryTimer = setInterval(() => showSlide(current + 1), 10000);
+      }
+    });
+  });
+
+  showSlide(0);
+  if (total > 1) {
+    window._platformHomeGalleryTimer = setInterval(() => showSlide(current + 1), 10000);
+  }
 }
-function selectService(id){selectedService=services.find(s=>s.id===id); const tomorrow=new Date(); tomorrow.setDate(tomorrow.getDate()+1); const date=tomorrow.toISOString().slice(0,10); $('#bookingBox').innerHTML=`<div class="card form"><h3>${City.esc(selectedService.name)}</h3><label>Datum<input type="date" id="bookDate" value="${date}" onchange="renderSlots()"></label><div id="slots"></div><label>Ime i prezime<input id="clientName" placeholder="Ime"></label><label>Telefon<input id="clientPhone" placeholder="Telefon"></label><label>Napomena<textarea id="clientNote" placeholder="Napomena"></textarea></label><button class="btn primary" onclick="submitBooking()">Pošalji zahtev</button></div>`; renderSlots();}
-function renderSlots(){const box=$('#slots'); const slots=['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00']; box.innerHTML=`<label>Termin</label><div class="time-grid">${slots.map(t=>`<button class="time-slot ${selectedTime===t?'selected':''}" onclick="selectedTime='${t}';renderSlots()">${t}</button>`).join('')}</div>`}
-async function submitBooking(){if(!selectedService||!selectedTime){toast('Izaberi uslugu i termin.');return;} const payload={salon_id:currentProfile.id,service_id:selectedService.id,service_name_snapshot:selectedService.name,price_snapshot:selectedService.price||null,duration_snapshot:selectedService.duration_minutes||30,appointment_date:$('#bookDate').value,appointment_time:selectedTime,client_name:$('#clientName').value.trim(),client_phone:$('#clientPhone').value.trim(),client_note:$('#clientNote').value.trim(),status:'new'}; if(!payload.client_name||!payload.client_phone){toast('Upiši ime i telefon.');return;} const {error}=await db.from('appointments').insert(payload); if(error){toast('Greška: '+error.message);return;} toast('Zahtev je poslat.'); showServices();}
-Object.assign(window,{showProducts,openViewer,closeViewer,closeOrUnzoom,setViewerImage,shareCurrentProduct,askCurrentProduct,callProfile,showServices,selectService,renderSlots,submitBooking,installInfo});
+
+function scrollToHowItWorks() {
+  document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" });
+}
+
+function openLegalModal(type) {
+  const existing = document.querySelector(".legal-modal-backdrop");
+  if (existing) existing.remove();
+
+  const isPrivacy = type === "privacy";
+  const title = isPrivacy ? "Politika privatnosti" : "Uslovi korišćenja";
+  const body = isPrivacy ? `
+    <p>CityStyle.app poštuje privatnost korisnika i koristi podatke samo za rad aplikacije.</p>
+    <h3>1. Koje podatke prikupljamo</h3>
+    <p>Kada korisnik pošalje zahtev ili zakaže termin, mogu se čuvati ime, broj telefona ili WhatsApp kontakt, izabrana usluga, izabrani proizvod ili poruka, datum i vreme termina i napomena koju korisnik unese.</p>
+    <p>Kada biznis koristi platformu, mogu se čuvati naziv biznisa, email vlasnika, kontakt telefon, adresa, logo, usluge, proizvodi, cene i podešavanja profila.</p>
+    <h3>2. Zašto koristimo podatke</h3>
+    <p>Podaci se koriste da bi korisnik mogao poslati zahtev biznisu, biznis mogao obraditi termine i upite, aplikacija prikazala javni profil, a vlasnik upravljao ponudom.</p>
+    <h3>3. Ko vidi podatke</h3>
+    <p>Podatke o zahtevu vidi biznis kome je zahtev poslat. CityStyle.app ne prodaje lične podatke trećim licima.</p>
+    <h3>4. Brisanje podataka</h3>
+    <p>Korisnik ili biznis može zatražiti brisanje podataka kontaktom na <a href="mailto:duskomacak@gmail.com">duskomacak@gmail.com</a>.</p>
+    <h3>5. Bezbednost</h3>
+    <p>CityStyle.app koristi tehničke mere za zaštitu podataka, ali nijedan internet sistem ne može garantovati apsolutnu sigurnost.</p>
+    <h3>6. Kontakt</h3>
+    <p>Za pitanja o privatnosti pišite na <a href="mailto:duskomacak@gmail.com">duskomacak@gmail.com</a>.</p>
+  ` : `
+    <p>Korišćenjem CityStyle.app platforme prihvatate ove uslove korišćenja.</p>
+    <h3>1. Šta je CityStyle.app</h3>
+    <p>CityStyle.app je digitalna platforma koja omogućava salonima, radnjama, servisima, majstorima i drugim biznisima da naprave svoj javni profil, prikažu usluge, proizvode, cene, radno vreme i primaju zahteve ili rezervacije od korisnika.</p>
+    <p>CityStyle.app je tehnički alat. Platforma nije pružalac usluga koje objavljuju pojedinačni biznisi i ne prodaje proizvode ili usluge u njihovo ime.</p>
+    <h3>2. Odgovornost biznisa</h3>
+    <p>Svaki biznis samostalno odgovara za tačnost podataka, opis usluga i proizvoda, cene, popuste, kvalitet usluge, stanje proizvoda, zakazivanje, otkazivanje, izdavanje računa, poreze, reklamacije i zakonsko poslovanje.</p>
+    <p>CityStyle.app ne proverava i ne garantuje tačnost podataka koje unose biznisi.</p>
+    <h3>3. Odgovornost korisnika</h3>
+    <p>Korisnik je odgovoran da pre zakazivanja ili kupovine proveri sve važne informacije direktno sa biznisom, uključujući cenu, termin, lokaciju, dostupnost proizvoda i uslove usluge.</p>
+    <p>Dogovor između korisnika i biznisa je njihov samostalan odnos. CityStyle.app nije strana u tom dogovoru.</p>
+    <h3>4. Termini i zahtevi</h3>
+    <p>Slanje zahteva ili rezervacije preko CityStyle.app ne znači da je termin automatski potvrđen, osim ako biznis to jasno potvrdi. Biznis može prihvatiti, odbiti, izmeniti ili otkazati zahtev u skladu sa svojim pravilima.</p>
+    <h3>5. Proizvodi i cene</h3>
+    <p>Cene i dostupnost proizvoda unosi sam biznis. CityStyle.app ne garantuje da je proizvod dostupan, da je cena konačna ili da su informacije uvek ažurne.</p>
+    <h3>6. Zabranjen sadržaj</h3>
+    <p>Zabranjeno je unositi sadržaj koji je nezakonit, obmanjujući, uvredljiv, nasilan, diskriminatoran, pornografski, lažan ili štetan. CityStyle.app može ukloniti ili blokirati profil koji krši ova pravila.</p>
+    <h3>7. Dostupnost aplikacije</h3>
+    <p>CityStyle.app se trudi da aplikacija bude dostupna i stabilna, ali ne garantuje neprekidan rad bez grešaka, prekida, tehničkih problema ili gubitka internet konekcije.</p>
+    <h3>8. Plaćanje korišćenja platforme</h3>
+    <p>Korišćenje biznis profila može biti naplaćeno prema dogovorenoj mesečnoj ceni. Ako biznis ne plati dogovoreno korišćenje, CityStyle.app može privremeno ograničiti, pauzirati ili ukloniti profil.</p>
+    <h3>9. Privatnost podataka</h3>
+    <p>CityStyle.app može obrađivati podatke koje korisnik unese prilikom slanja zahteva, kao što su ime, telefon, poruka, izabrana usluga, proizvod ili termin. Detalji su opisani u Politici privatnosti.</p>
+    <h3>10. Izmene uslova</h3>
+    <p>CityStyle.app može povremeno izmeniti ove uslove. Nastavkom korišćenja platforme nakon izmene, korisnik prihvata ažurirane uslove.</p>
+    <h3>11. Kontakt</h3>
+    <p>Za pitanja, prijavu problema ili zahtev za uklanjanje podataka pišite na <a href="mailto:duskomacak@gmail.com">duskomacak@gmail.com</a>.</p>
+  `;
+
+  const modal = document.createElement("div");
+  modal.className = "legal-modal-backdrop";
+  modal.innerHTML = `
+    <div class="legal-modal-card" role="dialog" aria-modal="true" aria-label="${title}">
+      <div class="legal-modal-head">
+        <h2>${title}</h2>
+        <button type="button" class="btn btn-dark" onclick="this.closest('.legal-modal-backdrop').remove()">Zatvori</button>
+      </div>
+      <div class="legal-modal-body">
+        ${body}
+        <p class="muted legal-small-note">Napomena: ovaj tekst je praktičan MVP tekst za platformu i nije zamena za individualni pravni savet.</p>
+      </div>
+    </div>
+  `;
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) modal.remove();
+  });
+  document.body.appendChild(modal);
+}
+
+async function loadServices() {
+  const { data, error } = await window.db
+    .from("services")
+    .select("*")
+    .eq("salon_id", currentSalon.id)
+    .eq("active", true)
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    console.error(error);
+    services = [];
+    return;
+  }
+  services = data || [];
+}
+
+async function loadProducts() {
+  if (!currentSalon?.id) {
+    products = [];
+    return;
+  }
+  const { data, error } = await window.db
+    .from("products")
+    .select("*")
+    .eq("salon_id", currentSalon.id)
+    .eq("active", true)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.warn("Products table/list is not available yet:", error);
+    products = [];
+    return;
+  }
+  products = data || [];
+  await loadProductImages();
+}
+
+async function loadProductImages() {
+  productImages = {};
+  if (!products.length) return;
+  try {
+    const ids = products.map(item => item.id).filter(Boolean);
+    const { data, error } = await window.db
+      .from("product_images")
+      .select("*")
+      .in("product_id", ids)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+    if (error) throw error;
+    (data || []).forEach(img => {
+      if (!img.product_id || !img.image_url) return;
+      (productImages[img.product_id] ||= []).push(img);
+    });
+  } catch (err) {
+    console.warn("Dodatne slike proizvoda nisu dostupne:", err);
+    productImages = {};
+  }
+}
+
+function isShopClientProfile() {
+  const type = window.App.normalizeBusinessType(currentSalon?.business_type);
+  return type === "catalog";
+}
+
+function getProductPublicCode(product = {}) {
+  return product.public_code || String(product.id || "").slice(0, 8).toUpperCase();
+}
+
+function getProductImages(product = {}) {
+  const images = [];
+  if (product.image_url) images.push(product.image_url);
+  (productImages[product.id] || []).forEach(img => {
+    if (img.image_url && !images.includes(img.image_url)) images.push(img.image_url);
+  });
+  return images;
+}
+
+function getProductPublicLink(product = {}) {
+  const base = window.App.getSalonPublicLink(currentSalon?.slug || "");
+  const sep = base.includes("?") ? "&" : "?";
+  return `${base}${sep}product=${encodeURIComponent(getProductPublicCode(product))}`;
+}
+
+
+async function loadGalleryImages() {
+  if (!currentSalon?.id) {
+    galleryImages = [];
+    return;
+  }
+  const { data, error } = await window.db
+    .from("home_images")
+    .select("*")
+    .eq("salon_id", currentSalon.id)
+    .eq("active", true)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  if (error) {
+    console.warn("Gallery images are not available yet:", error);
+    galleryImages = [];
+    return;
+  }
+  galleryImages = data || [];
+}
+
+async function loadGarageListings() {
+  if (!currentSalon?.id || !clientHasGaragePackage()) {
+    garageListings = [];
+    return;
+  }
+  const { data, error } = await window.db
+    .from("garage_listings")
+    .select("*, garage_listing_images(*)")
+    .eq("salon_id", currentSalon.id)
+    .in("status", ["available", "reserved", "sold"])
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.warn("Garage listings are not available yet:", error);
+    garageListings = [];
+    return;
+  }
+  garageListings = (data || []).map(item => ({
+    ...item,
+    garage_listing_images: (item.garage_listing_images || []).sort((a,b) => Number(a.sort_order||100) - Number(b.sort_order||100))
+  }));
+}
+
+async function renderSalonHome() {
+  const app = document.getElementById("app");
+  app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
+
+  const { data: settings } = await window.db
+    .from("salon_settings")
+    .select("*")
+    .eq("salon_id", currentSalon.id)
+    .maybeSingle();
+
+  const { data: workingHours } = await window.db
+    .from("working_hours")
+    .select("*")
+    .eq("salon_id", currentSalon.id)
+    .order("day_of_week", { ascending: true });
+
+  const publicName = settings?.welcome_title || currentSalon.salon_name || "Profil";
+  const profileLabels = window.App.getBusinessProfileLabels(currentSalon.business_type);
+  currentSalon._publicName = publicName;
+  currentSalon._publicLogo = settings?.logo_url || "";
+  currentSalon._publicPhone = settings?.phone || currentSalon.phone || "";
+  currentSalon._publicAddress = settings?.address || currentSalon.city || "";
+  window.App?.updateManifestForSalon?.(currentSalon.slug, { name: publicName, iconUrl: settings?.logo_url, themeColor: currentSalon.theme_color });
+
+  if (isShopClientProfile()) {
+    renderShopClientHome(settings || {});
+    return;
+  }
+
+  app.innerHTML = `
+    <section class="client-page salon-themed-page">
+      ${adminPreviewMode ? `
+        <div class="owner-preview-bar admin-preview-bar">
+          <div>
+            <strong>${C("adminClientPreviewTitle", "Admin pregled: korisnička strana")}</strong>
+            <span>${C("adminClientPreviewText", "Ovako korisnik vidi ovaj profil. Ovo dugme vidi samo prijavljeni admin.")}</span>
+          </div>
+          <a class="btn btn-primary" href="${window.App.getAppPath('admin/')}">${C("backToAdmin", "Nazad u admin")}</a>
+        </div>
+      ` : ownerPreviewMode ? `
+        <div class="owner-preview-bar">
+          <div>
+            <strong>${C("ownerPreviewTitle", "Pregled javne stranice")}</strong>
+            <span>${C("ownerPreviewText", "Ovako korisnik vidi vaš profil.")}</span>
+          </div>
+          <a class="btn btn-primary" href="${window.App.getAppPath('salon/')}">${C("backToOwnerPanel", "Nazad u panel vlasnika")}</a>
+        </div>
+      ` : ""}
+      <div class="hero-card salon-header">
+        ${settings?.logo_url ? `
+          <img src="${escapeHtml(settings.logo_url)}" alt="${escapeHtml(publicName)} logo" class="salon-logo">
+        ` : `
+          <div class="logo-circle">${escapeHtml(publicName?.charAt(0).toUpperCase() || "S")}</div>
+        `}
+
+        <h1>${escapeHtml(publicName)}</h1>
+        <div class="public-profile-text">
+          <p class="intro-text">${escapeHtml(settings?.welcome_text || C("welcomeDefault", "Dobrodošli. Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev."))}</p>
+          ${(settings?.phone || settings?.address) ? `
+            <div class="public-profile-contact">
+              ${settings?.phone ? `<a href="tel:${escapeHtml(window.App.normalizePhoneForTel ? window.App.normalizePhoneForTel(settings.phone) : settings.phone)}">📞 ${escapeHtml(settings.phone)}</a>` : ""}
+              ${settings?.address ? `<span>📍 ${escapeHtml(settings.address)}</span>` : ""}
+            </div>
+          ` : ""}
+        </div>
+
+        <div class="client-actions">
+          <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(profileLabels.action)}</button>
+          <button class="btn btn-dark" type="button" onclick="showServices()">${escapeHtml(profileLabels.services)}</button>
+          <button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>
+          ${garageListings.length ? `<button class="btn btn-dark" type="button" onclick="showGarage()">Garaža / oglasi</button>` : ""}
+          ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app ovog profila")}</button>`}
+        </div>
+      </div>
+
+      <div id="client-extra">
+        ${renderClientServicesPreview()}
+        ${renderClientProductsPreview()}
+        ${renderClientGaragePreview()}
+        ${renderClientGalleryPreview()}
+        ${renderClientWorkingHours(workingHours || [])}
+      </div>
+      <div id="booking-box"></div>
+    </section>
+  `;
+}
+
+function renderShopClientHome(settings = {}) {
+  const app = document.getElementById("app");
+  const publicName = currentSalon?._publicName || currentSalon?.salon_name || "Prodavnica";
+  const logo = currentSalon?._publicLogo || settings.logo_url || "";
+  const phone = currentSalon?._publicPhone || settings.phone || currentSalon?.phone || "";
+  const address = currentSalon?._publicAddress || settings.address || currentSalon?.city || "";
+  app.innerHTML = `
+    <section class="client-page shop-profile-page salon-themed-page">
+      ${adminPreviewMode ? `<div class="owner-preview-bar admin-preview-bar"><div><strong>Admin pregled</strong><span>Ovako kupac vidi prodavnicu.</span></div><a class="btn btn-primary" href="${window.App.getAppPath('admin/')}">Nazad u admin</a></div>` : ownerPreviewMode ? `<div class="owner-preview-bar"><div><strong>Pregled javne stranice</strong><span>Ovako kupac vidi prodavnicu.</span></div><a class="btn btn-primary" href="${window.App.getAppPath('salon/')}">Nazad u panel</a></div>` : ""}
+      <div class="shop-public-header card">
+        ${logo ? `<img class="shop-public-logo" src="${escapeHtml(logo)}" alt="${escapeHtml(publicName)} logo">` : `<div class="shop-public-logo fallback">${escapeHtml(publicName.charAt(0).toUpperCase() || "P")}</div>`}
+        <div class="shop-public-head-text">
+          <h1>${escapeHtml(publicName)}</h1>
+          ${settings.welcome_text ? `<p>${escapeHtml(settings.welcome_text)}</p>` : `<p>Pregledajte aktuelne patike i pošaljite pitanje za konkretan oglas.</p>`}
+          <div class="shop-public-meta">
+            ${phone ? `<span>📞 ${escapeHtml(phone)}</span>` : ""}
+            ${address ? `<span>📍 ${escapeHtml(address)}</span>` : ""}
+          </div>
+        </div>
+      </div>
+      <div id="client-extra">${renderShopProductsGrid()}</div>
+    </section>`;
+  const directProduct = window.App?.getUrlParam("product");
+  if (directProduct && products.length) {
+    setTimeout(() => openShopProductByCode(directProduct), 60);
+  }
+}
+
+function renderShopProductsGrid() {
+  if (!products.length) return `<div class="card center"><h2>Nema oglasa</h2><p class="muted">Vlasnik još nije dodao patike u katalog.</p></div>`;
+  return `<div class="shop-product-grid">${products.map((product, index) => {
+    const cover = getProductImages(product)[0] || "";
+    return `<button class="shop-product-card" type="button" onclick="openShopViewer(${index})">
+      <div class="shop-product-image">${cover ? `<img src="${escapeHtml(cover)}" alt="${escapeHtml(product.name || 'Patike')}">` : `<span>Bez slike</span>`}</div>
+      <div class="shop-product-body">
+        <small>${escapeHtml(getProductPublicCode(product))}${product.category ? ` • ${escapeHtml(product.category)}` : ""}</small>
+        <strong>${escapeHtml(product.name || "Patike")}</strong>
+        <b>${renderProductPrice(product)}</b>
+      </div>
+    </button>`;
+  }).join("")}</div>`;
+}
+
+let shopViewerState = null;
+function openShopProductByCode(code) {
+  const needle = String(code || "").toLowerCase();
+  const index = products.findIndex(p => String(getProductPublicCode(p)).toLowerCase() === needle || String(p.id).toLowerCase() === needle);
+  openShopViewer(index >= 0 ? index : 0);
+}
+function openShopViewer(index = 0) {
+  if (!products.length) return;
+  shopViewerState = { index: Math.max(0, Math.min(index, products.length - 1)), image: 0, startX: 0, startY: 0, wheelLock: false };
+  renderShopViewer();
+}
+function closeShopViewer() { document.getElementById("shop-product-viewer")?.remove(); shopViewerState = null; }
+function currentShopProduct() { return products[shopViewerState?.index || 0] || null; }
+function renderShopViewer() {
+  const product = currentShopProduct();
+  if (!product) return;
+  const images = getProductImages(product);
+  const img = images[shopViewerState.image] || "";
+  let viewer = document.getElementById("shop-product-viewer");
+  if (!viewer) {
+    viewer = document.createElement("div");
+    viewer.id = "shop-product-viewer";
+    viewer.className = "shop-viewer";
+    document.body.appendChild(viewer);
+    viewer.addEventListener("touchstart", e => { shopViewerState.startX = e.touches[0].clientX; shopViewerState.startY = e.touches[0].clientY; }, { passive: true });
+    viewer.addEventListener("touchend", handleShopTouchEnd, { passive: true });
+    viewer.addEventListener("wheel", handleShopWheel, { passive: false });
+    document.addEventListener("keydown", handleShopKeydown);
+  }
+  viewer.innerHTML = `
+    <div class="shop-viewer-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}">` : `<div class="shop-viewer-empty">Bez slike</div>`}</div>
+    <div class="shop-viewer-info"><small>${escapeHtml(getProductPublicCode(product))}${product.category ? ` • ${escapeHtml(product.category)}` : ""}${images.length > 1 ? ` • ${shopViewerState.image + 1}/${images.length}` : ""}</small><h2>${escapeHtml(product.name || "Patike")}</h2><strong>${renderProductPrice(product)}</strong><span>${getProductStatusLabel(product.stock_status)}</span></div>
+    <button class="shop-viewer-close" type="button" onclick="closeShopViewer()" aria-label="Zatvori">×</button>
+    ${images.length > 1 ? `<button class="shop-viewer-arrow left" type="button" onclick="changeShopImage(-1)" aria-label="Prethodna slika">‹</button><button class="shop-viewer-arrow right" type="button" onclick="changeShopImage(1)" aria-label="Sledeća slika">›</button>` : ""}
+    <div class="shop-viewer-actions"><button class="shop-action red" onclick="shareShopProduct(event)" aria-label="Podeli">↗</button><button class="shop-action blue" onclick="askShopProduct(event)" aria-label="Pitaj">💬</button><button class="shop-action green" onclick="callShopProfile(event)" aria-label="Pozovi">☎</button></div>
+    ${images.length > 1 ? `<div class="shop-viewer-dots">${images.map((_, i) => `<button class="${i === shopViewerState.image ? 'active' : ''}" onclick="setShopImage(${i})" aria-label="Slika ${i + 1}"></button>`).join("")}</div>` : ""}`;
+}
+function changeShopProduct(delta) { if (!shopViewerState) return; shopViewerState.index = (shopViewerState.index + delta + products.length) % products.length; shopViewerState.image = 0; renderShopViewer(); }
+function changeShopImage(delta) { const product = currentShopProduct(); const images = getProductImages(product); if (images.length < 2) return; shopViewerState.image = (shopViewerState.image + delta + images.length) % images.length; renderShopViewer(); }
+function setShopImage(i) { shopViewerState.image = Number(i || 0); renderShopViewer(); }
+function handleShopTouchEnd(e) {
+  if (!shopViewerState) return;
+  const dx = (e.changedTouches[0].clientX || 0) - shopViewerState.startX;
+  const dy = (e.changedTouches[0].clientY || 0) - shopViewerState.startY;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < 45) return;
+  if (Math.abs(dx) > Math.abs(dy)) changeShopImage(dx < 0 ? 1 : -1);
+  else changeShopProduct(dy < 0 ? 1 : -1);
+}
+function handleShopWheel(e) { if (!shopViewerState || shopViewerState.wheelLock) return; e.preventDefault(); shopViewerState.wheelLock = true; changeShopProduct(e.deltaY > 0 ? 1 : -1); setTimeout(() => { if (shopViewerState) shopViewerState.wheelLock = false; }, 520); }
+function handleShopKeydown(e) { if (!shopViewerState) return; if (e.key === "Escape") closeShopViewer(); if (e.key === "ArrowLeft") changeShopImage(-1); if (e.key === "ArrowRight") changeShopImage(1); if (e.key === "ArrowUp") changeShopProduct(-1); if (e.key === "ArrowDown") changeShopProduct(1); }
+function shopWhatsAppMessage(product) { return `Zdravo, zanima me ovaj oglas:%0A%0AOglas: ${encodeURIComponent(getProductPublicCode(product))}%0ANaziv: ${encodeURIComponent(product.name || 'Patike')}%0ACena: ${encodeURIComponent(renderProductPrice(product))}%0ALink: ${encodeURIComponent(getProductPublicLink(product))}`; }
+function askShopProduct(e) { e?.stopPropagation?.(); const product = currentShopProduct(); const rawPhone = currentSalon?._publicPhone || currentSalon?.phone || ""; const phone = String(window.App.normalizePhoneForTel ? window.App.normalizePhoneForTel(rawPhone) : rawPhone).replace(/\D/g, ""); if (!phone) return window.App.showMessage("Vlasnik nije upisao WhatsApp/telefon.", "error"); window.location.href = `https://wa.me/${phone}?text=${shopWhatsAppMessage(product)}`; }
+function callShopProfile(e) { e?.stopPropagation?.(); const phone = currentSalon?._publicPhone || currentSalon?.phone || ""; if (!phone) return window.App.showMessage("Telefon nije upisan.", "error"); window.location.href = `tel:${window.App.normalizePhoneForTel ? window.App.normalizePhoneForTel(phone) : phone}`; }
+async function shareShopProduct(e) { e?.stopPropagation?.(); const product = currentShopProduct(); const url = getProductPublicLink(product); const title = `${product.name || 'Patike'} - ${renderProductPrice(product)}`; if (navigator.share) { try { await navigator.share({ title, text: title, url }); return; } catch(_) {} } window.copyText ? window.copyText(url) : navigator.clipboard?.writeText(url); window.App.showMessage("Link oglasa je kopiran.", "success"); }
+
+
+function renderGaragePrice(item = {}) {
+  const price = Number(item.price || 0);
+  const currency = window.App.normalizeCurrency(item.currency || "EUR");
+  if (!price || price <= 0) return "Cena na upit";
+  return `${window.App.formatMoney ? window.App.formatMoney(price) : price.toLocaleString("sr-RS")} ${currency}`;
+}
+
+function renderGarageStatus(status) {
+  return { available: "Dostupno", reserved: "Rezervisano", sold: "Prodato" }[status] || "Dostupno";
+}
+
+function renderGarageMeta(item = {}) {
+  return [item.brand, item.model, item.year ? String(item.year) : "", item.hours_km].filter(Boolean).join(" • ");
+}
+
+function renderClientGaragePreview() {
+  if (!garageListings.length) return "";
+  return `
+    <details class="card client-hours-panel client-garage-panel" open>
+      <summary>
+        <span>Garaža / oglasi</span>
+        <small>${garageListings.length} ponuda</small>
+      </summary>
+      <div class="garage-public-grid">
+        ${garageListings.slice(0, 6).map(item => renderGaragePublicCard(item)).join("")}
+      </div>
+    </details>
+  `;
+}
+
+function renderGaragePublicCard(item = {}) {
+  const images = item.garage_listing_images || [];
+  const cover = images[0]?.image_url || "";
+  return `
+    <article class="garage-public-card">
+      <button type="button" class="garage-public-cover" onclick="openGarageListing('${escapeJs(item.id)}')">
+        ${cover ? `<img src="${escapeHtml(cover)}" alt="${escapeHtml(item.title)}">` : `<span>Bez slike</span>`}
+        <small>${images.length}/10 slika</small>
+      </button>
+      <div class="garage-public-info">
+        <strong>${escapeHtml(item.title)}</strong>
+        <span>${escapeHtml(renderGarageMeta(item))}</span>
+        <b>${renderGaragePrice(item)}</b>
+        <small>${renderGarageStatus(item.status)}</small>
+        <button class="btn btn-primary btn-small" type="button" onclick="openGarageListing('${escapeJs(item.id)}')">Detalji / pitaj</button>
+      </div>
+    </article>`;
+}
+
+function showGarage() {
+  const box = document.getElementById("client-extra");
+  if (!box) return;
+  if (!garageListings.length) {
+    box.innerHTML = `<div class="card"><h2>Garaža / oglasi</h2><p class="muted">Ovaj profil trenutno nema javno prikazane oglase.</p></div>`;
+    return;
+  }
+  box.innerHTML = `
+    <details class="card client-hours-panel client-garage-panel" open>
+      <summary><span>Garaža / oglasi</span><small>Sakrij listu</small></summary>
+      <div class="garage-public-grid">${garageListings.map(item => renderGaragePublicCard(item)).join("")}</div>
+    </details>`;
+  box.scrollIntoView({ behavior: "smooth" });
+}
+
+function openGarageListing(listingId) {
+  const item = garageListings.find(row => String(row.id) === String(listingId));
+  if (!item) return;
+  const images = item.garage_listing_images || [];
+  const phone = currentSalon?._publicPhone || currentSalon?.phone || "";
+  const message = encodeURIComponent(`Poštovani, interesuje me ponuda: ${item.title}. Da li je još dostupna?`);
+  const whatsapp = phone ? `https://wa.me/${String(phone).replace(/\D/g, "")}?text=${message}` : "";
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop garage-detail-modal";
+  modal.innerHTML = `
+    <div class="modal-card garage-detail-card">
+      <div class="garage-detail-head">
+        <div>
+          <h2>${escapeHtml(item.title)}</h2>
+          <p class="muted">${escapeHtml(renderGarageMeta(item))}</p>
+        </div>
+        <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
+      </div>
+      <div class="garage-detail-gallery">
+        ${images.length ? images.map(img => `<img src="${escapeHtml(img.image_url)}" alt="${escapeHtml(item.title)}">`).join("") : `<div class="garage-cover-placeholder">Bez slika</div>`}
+      </div>
+      <div class="garage-detail-info">
+        <strong>${renderGaragePrice(item)}</strong>
+        <span>${renderGarageStatus(item.status)}</span>
+        ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ""}
+      </div>
+      <div class="modal-actions">
+        ${whatsapp ? `<a class="btn btn-primary" href="${whatsapp}" target="_blank" rel="noopener">Pitaj preko WhatsApp-a</a>` : ""}
+        <button class="btn btn-dark" type="button" onclick="showBookingForm(); this.closest('.modal-backdrop').remove();">Pošalji zahtev</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function renderClientGalleryPreview() {
+  if (!galleryImages.length) return "";
+  return `
+    <details class="card client-hours-panel client-gallery-panel" open>
+      <summary>
+        <span>Galerija radova</span>
+        <small>${galleryImages.length}/10</small>
+      </summary>
+      <div class="public-gallery-grid">
+        ${galleryImages.map(image => `
+          <button type="button" class="public-gallery-item" onclick="openPublicGalleryImage('${escapeJs(image.image_url)}', '${escapeJs(image.caption || '')}')">
+            <img src="${escapeHtml(image.image_url)}" alt="${escapeHtml(image.caption || 'Galerija radova')}">
+            ${image.caption ? `<span>${escapeHtml(image.caption)}</span>` : ""}
+          </button>
+        `).join("")}
+      </div>
+    </details>
+  `;
+}
+
+function openPublicGalleryImage(url, caption = "") {
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop gallery-lightbox";
+  modal.innerHTML = `
+    <div class="modal-card gallery-lightbox-card">
+      <img src="${escapeHtml(url)}" alt="${escapeHtml(caption || 'Galerija radova')}">
+      ${caption ? `<p>${escapeHtml(caption)}</p>` : ""}
+      <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function installCurrentSalonApp() {
+  if (!currentSalon?.slug) return;
+  window.App.installSalonApp(currentSalon.slug, {
+    name: currentSalon._publicName || currentSalon.salon_name || "CityStyle profil",
+    iconUrl: currentSalon._publicLogo || "",
+    themeColor: currentSalon.theme_color
+  });
+}
+
+function renderClientServicesPreview() {
+  const profileLabels = window.App.getBusinessProfileLabels(currentSalon?.business_type);
+  if (!services.length) {
+    return `
+      <details class="card client-hours-panel client-services-panel">
+        <summary>
+          <span>${escapeHtml(profileLabels.services)}</span>
+          <small>${C("noServicesSmall", "Nema dostupnih usluga")}</small>
+        </summary>
+        <div class="client-services-panel-body">
+          <p class="muted">${C("noServicesText", "Trenutno nema dostupnih usluga za online zahtev.")}</p>
+        </div>
+      </details>
+    `;
+  }
+
+  return `
+    <details class="card client-hours-panel client-services-panel">
+      <summary>
+        <span>${escapeHtml(profileLabels.services)}</span>
+        <small>${C("showList", "Prikaži listu")}</small>
+      </summary>
+      <div class="client-services-panel-body">
+        <p class="muted">${C("chooseServiceText", "Izaberite uslugu za koju želite da pošaljete zahtev.")}</p>
+        <div class="service-list">
+          ${services.map(service => `
+            <button class="service-select-card" type="button" onclick="selectServiceById('${service.id}')">
+              <div><strong>${escapeHtml(service.name)}</strong><span>${service.category ? escapeHtml(service.category) + " • " : ""}${Number(service.duration_minutes || 0)} min</span>${service.description ? `<p class="muted service-public-description">${escapeHtml(service.description)}</p>` : ""}</div>
+              <b>${window.App.formatServicePrice(service)}</b>
+            </button>
+          `).join("")}
+        </div>
+      </div>
+    </details>
+  `;
+}
+
+function renderProductPrice(product = {}) {
+  const currency = window.App.normalizeCurrency(product.currency || "RSD");
+  const price = Number(product.price || 0);
+  if (!price || price <= 0) return C("priceByAgreement", "Cena po dogovoru");
+  return `${window.App.formatMoney ? window.App.formatMoney(price) : price.toLocaleString("sr-RS")} ${currency}`;
+}
+
+function getProductStatusLabel(status) {
+  return {
+    available: "Na stanju",
+    preorder: "Po porudžbini",
+    out: "Trenutno nema",
+    hidden: "Sakriveno"
+  }[status] || "Na upit";
+}
+
+function renderClientProductsPreview() {
+  if (!products.length) return "";
+  return `
+    <details class="card client-hours-panel client-products-panel">
+      <summary>
+        <span>${C("productsCatalog", "Proizvodi / cenovnik")}</span>
+        <small>${C("showList", "Prikaži listu")}</small>
+      </summary>
+      <div class="client-services-panel-body">
+        <p class="muted">Pregled proizvoda, artikala ili cenovnika koje ovaj biznis nudi.</p>
+        <div class="product-public-grid">
+          ${products.map(product => `
+            <div class="product-public-card">
+              <div>
+                <strong>${escapeHtml(product.name)}</strong>
+                ${product.category ? `<span>${escapeHtml(product.category)}</span>` : ""}
+                ${product.description ? `<p>${escapeHtml(product.description)}</p>` : ""}
+              </div>
+              <div class="product-public-meta">
+                <b>${renderProductPrice(product)}</b>
+                <small>${getProductStatusLabel(product.stock_status)}</small>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    </details>
+  `;
+}
+
+function showProducts() {
+  const box = document.getElementById("client-extra");
+  if (!box) return;
+
+  if (!products.length) {
+    box.innerHTML = `<div class="card"><h2>${C("productsCatalog", "Proizvodi / cenovnik")}</h2><p class="muted">Ovaj profil trenutno nema javno prikazane proizvode.</p></div>`;
+    return;
+  }
+
+  box.innerHTML = `
+    <details class="card client-hours-panel client-products-panel" open>
+      <summary>
+        <span>${C("productsCatalog", "Proizvodi / cenovnik")}</span>
+        <small>${C("hideList", "Sakrij listu")}</small>
+      </summary>
+      <div class="client-services-panel-body">
+        <div class="product-public-grid">
+          ${products.map(product => `
+            <div class="product-public-card">
+              <div>
+                <strong>${escapeHtml(product.name)}</strong>
+                ${product.category ? `<span>${escapeHtml(product.category)}</span>` : ""}
+                ${product.description ? `<p>${escapeHtml(product.description)}</p>` : ""}
+              </div>
+              <div class="product-public-meta">
+                <b>${renderProductPrice(product)}</b>
+                <small>${getProductStatusLabel(product.stock_status)}</small>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    </details>
+  `;
+  box.scrollIntoView({ behavior: "smooth" });
+}
+
+function renderClientWorkingHours(hours) {
+  const dayNames = {
+    1: C("monday", "Ponedeljak"),
+    2: C("tuesday", "Utorak"),
+    3: C("wednesday", "Sreda"),
+    4: C("thursday", "Četvrtak"),
+    5: C("friday", "Petak"),
+    6: C("saturday", "Subota"),
+    0: C("sunday", "Nedelja")
+  };
+
+  const order = [1, 2, 3, 4, 5, 6, 0];
+  const rows = order.map(day => {
+    const h = (hours || []).find(row => Number(row.day_of_week) === day);
+    if (!h || h.is_closed) {
+      return `<div class="service-row hours-list-row"><div><strong>${dayNames[day]}</strong><span>${C("closed", "Zatvoreno")}</span></div><b>—</b></div>`;
+    }
+    return `<div class="service-row hours-list-row"><div><strong>${dayNames[day]}</strong><span>${C("workingHours", "Radno vreme")}</span></div><b>${String(h.open_time).slice(0,5)}–${String(h.close_time).slice(0,5)}</b></div>`;
+  }).join("");
+
+  return `
+    <details class="card client-hours-panel">
+      <summary>
+        <span>${C("workingHours", "Radno vreme")}</span>
+        <small>${C("showSchedule", "Prikaži raspored")}</small>
+      </summary>
+      <div class="service-list hours-list">${rows}</div>
+    </details>
+  `;
+}
+
+function showServices() {
+  const profileLabels = window.App.getBusinessProfileLabels(currentSalon?.business_type);
+  const box = document.getElementById("client-extra");
+  if (!box) return;
+
+  if (!services.length) {
+    box.innerHTML = `<div class="card"><h2>${escapeHtml(profileLabels.services)}</h2><p class="muted">${C("noServicesText", "Trenutno nema dostupnih usluga za online zahtev.")}</p></div>`;
+    return;
+  }
+
+  box.innerHTML = `
+    <details class="card client-hours-panel client-services-panel" open>
+      <summary>
+        <span>${escapeHtml(profileLabels.services)}</span>
+        <small>${C("hideList", "Sakrij listu")}</small>
+      </summary>
+      <div class="client-services-panel-body">
+        <div class="service-list">
+          ${services.map(service => `
+            <button class="service-select-card" type="button" onclick="selectServiceById('${service.id}')">
+              <div><strong>${escapeHtml(service.name)}</strong><span>${service.category ? escapeHtml(service.category) + " • " : ""}${Number(service.duration_minutes || 0)} min</span>${service.description ? `<p class="muted service-public-description">${escapeHtml(service.description)}</p>` : ""}</div>
+              <b>${window.App.formatServicePrice(service)}</b>
+            </button>
+          `).join("")}
+        </div>
+      </div>
+    </details>
+  `;
+  box.scrollIntoView({ behavior: "smooth" });
+}
+
+async function selectServiceById(serviceId) {
+  selectedService = services.find(s => String(s.id) === String(serviceId)) || null;
+  if (!selectedService) {
+    window.App.showMessage(C("serviceNotFound", "Usluga nije pronađena."), "error");
+    return;
+  }
+  showBookingForm();
+}
+
+function showBookingForm() {
+  const box = document.getElementById("booking-box");
+  if (!box) return;
+
+  if (!services.length) {
+    box.innerHTML = `<div class="card"><h2>${C("bookingUnavailable", "Zakazivanje nije dostupno")}</h2><p class="muted">${C("noServicesText", "Trenutno nema dostupnih usluga za online zahtev.")}</p></div>`;
+    return;
+  }
+
+  const today = window.BookingLogic?.getLocalDateString ? window.BookingLogic.getLocalDateString() : new Date().toISOString().split("T")[0];
+  const profileLabels = window.App.getBusinessProfileLabels(currentSalon?.business_type);
+  selectedDate = today;
+  selectedTime = null;
+
+  box.innerHTML = `
+    <div class="card booking-card booking-paper-card">
+      <h2>${escapeHtml(profileLabels.formTitle)}</h2>
+      <p class="muted">${escapeHtml(profileLabels.formIntro)}</p>
+
+      <label>${C("serviceAndPrice", "Usluga i cena")}</label>
+      <select id="booking-service" class="booking-service-dropdown">
+        <option value="">${C("chooseService", "Izaberite uslugu")}</option>
+        ${services.map(service => `
+          <option value="${service.id}" ${selectedService?.id === service.id ? "selected" : ""}>
+            ${escapeHtml(service.name)} — ${window.App.formatServicePrice(service)} — ${Number(service.duration_minutes || 0)} min
+          </option>
+        `).join("")}
+      </select>
+      <div id="selected-service-summary" class="selected-service-summary muted">${C("chooseServiceFirst", "Prvo izaberite uslugu.")}</div>
+
+      <div class="booking-two-cols">
+        <div>
+          <label>${C("date", "Datum")}</label>
+          <input id="booking-date" type="date" min="${today}" value="${today}">
+        </div>
+        <div>
+          <label>${C("selectedTime", "Izabrani termin")}</label>
+          <input id="selected-time-view" type="text" value="${C("noTimeSelected", "Još nije izabran")}" disabled>
+        </div>
+      </div>
+
+      <label>${C("availableTimes", "Slobodni termini")}</label>
+      <div id="time-slots" class="time-grid"><p class="muted">${C("chooseServiceAndDate", "Izaberite uslugu i datum.")}</p></div>
+
+      <div class="booking-two-cols">
+        <div>
+          <label>${C("fullName", "Ime i prezime")}</label>
+          <input id="client-name" type="text" placeholder="Ana Petrović">
+        </div>
+        <div>
+          <label>${C("phoneCountry", "Država za WhatsApp broj")}</label>
+          <select id="client-phone-country" class="phone-country-select">
+            <option value="381" selected>🇷🇸 Srbija +381</option>
+            <option value="387">🇧🇦 Bosna i Hercegovina +387</option>
+            <option value="385">🇭🇷 Hrvatska +385</option>
+            <option value="382">🇲🇪 Crna Gora +382</option>
+            <option value="386">🇸🇮 Slovenija +386</option>
+            <option value="389">🇲🇰 Severna Makedonija +389</option>
+            <option value="49">🇩🇪 Nemačka +49</option>
+            <option value="43">🇦🇹 Austrija +43</option>
+          </select>
+        </div>
+      </div>
+
+      <label>${C("phoneWhatsapp", "Broj telefona / WhatsApp")}</label>
+      <input id="client-phone" type="tel" inputmode="tel" placeholder="64 123 4567">
+      <p class="field-help">${C("phoneHelp", "Izaberite državu i unesite lokalni broj. Možete uneti broj sa nulom ili bez nule. Aplikacija će ga sačuvati u ispravnom WhatsApp formatu prema izabranoj državi. Ako unesete broj sa +, koristi se direktno.")}</p>
+
+      <label>${escapeHtml(profileLabels.requestKindLabel)}</label>
+      <input id="client-request-kind" type="text" placeholder="${escapeHtml(profileLabels.requestKindPlaceholder)}">
+
+      ${(window.App.normalizeBusinessType(currentSalon?.business_type) === "repair" || window.App.normalizeBusinessType(currentSalon?.business_type) === "craft") ? `
+        <label>Adresa / lokacija</label>
+        <input id="client-address" type="text" placeholder="Mesto, ulica ili lokacija problema">
+        <label>Hitnost</label>
+        <select id="client-urgency">
+          <option value="Normalno">Normalno</option>
+          <option value="Hitno">Hitno</option>
+          <option value="Nije hitno">Nije hitno</option>
+        </select>
+      ` : ""}
+
+      <label>${escapeHtml(profileLabels.noteLabel)}</label>
+      <textarea id="client-note" rows="4" placeholder="${escapeHtml(profileLabels.notePlaceholder)}"></textarea>
+
+      <button class="btn btn-primary booking-submit-btn" type="button" onclick="submitAppointment()">${escapeHtml(profileLabels.action)}</button>
+    </div>
+  `;
+
+  document.getElementById("booking-service").addEventListener("change", handleBookingChange);
+  document.getElementById("booking-date").addEventListener("change", handleBookingChange);
+  setupPhoneCountryAutoZero();
+
+  if (selectedService) handleBookingChange();
+  box.scrollIntoView({ behavior: "smooth" });
+}
+
+async function handleBookingChange() {
+  const serviceId = document.getElementById("booking-service").value;
+  selectedDate = document.getElementById("booking-date").value;
+  selectedTime = null;
+  selectedService = services.find(s => String(s.id) === String(serviceId)) || null;
+
+  const summary = document.getElementById("selected-service-summary");
+  if (!selectedService || !selectedDate) {
+    document.getElementById("time-slots").innerHTML = `<p class="muted">${C("chooseServiceAndDate", "Izaberite uslugu i datum.")}</p>`;
+    if (summary) summary.textContent = C("chooseServiceFirst", "Prvo izaberite uslugu.");
+    return;
+  }
+
+  if (summary) {
+    summary.innerHTML = `<strong>${escapeHtml(selectedService.name)}</strong> • ${window.App.formatServicePrice(selectedService)} • ${Number(selectedService.duration_minutes || 0)} min`;
+  }
+  const timeView = document.getElementById("selected-time-view");
+  if (timeView) timeView.value = C("noTimeSelected", "Još nije izabran");
+
+  await loadAvailableTimes();
+}
+
+async function loadAvailableTimes() {
+  const slotsBox = document.getElementById("time-slots");
+  slotsBox.innerHTML = `<p class="muted">${C("loadingTimes", "Učitavanje termina...")}</p>`;
+
+  const slots = await window.BookingLogic.getAvailableSlots(
+    currentSalon.id,
+    Number(selectedService.duration_minutes || 30),
+    selectedDate
+  );
+
+  if (!slots.length) {
+    const today = window.BookingLogic?.getLocalDateString ? window.BookingLogic.getLocalDateString() : new Date().toISOString().split("T")[0];
+    const msg = selectedDate === today
+      ? C("noTimesToday", "Nema više slobodnih termina za danas. Izaberite naredni datum.")
+      : C("noTimesDate", "Nema slobodnih termina za izabrani datum.");
+    slotsBox.innerHTML = `<p class="muted">${msg}</p>`;
+    return;
+  }
+
+  slotsBox.innerHTML = slots.map(time => `
+    <button type="button" class="time-slot" onclick="selectTime('${time}', this)">${time}</button>
+  `).join("");
+}
+
+function selectTime(time, btn) {
+  selectedTime = time;
+  document.querySelectorAll(".time-slot").forEach(el => el.classList.remove("selected"));
+  btn.classList.add("selected");
+  const timeView = document.getElementById("selected-time-view");
+  if (timeView) timeView.value = time;
+}
+
+
+function setupPhoneCountryAutoZero() {
+  const countrySelect = document.getElementById("client-phone-country");
+  const phoneInput = document.getElementById("client-phone");
+
+  if (!countrySelect || !phoneInput) return;
+
+  const placeholderMap = {
+    "381": "064 123 4567 ili 64 123 4567",
+    "387": "061 123 456 ili 61 123 456",
+    "385": "091 123 4567 ili 91 123 4567",
+    "382": "067 123 456 ili 67 123 456",
+    "386": "040 123 456 ili 40 123 456",
+    "389": "070 123 456 ili 70 123 456",
+    "49": "151 12345678",
+    "43": "660 1234567"
+  };
+
+  function updatePlaceholder() {
+    const countryCode = countrySelect.value || "381";
+    phoneInput.placeholder = placeholderMap[countryCode] || "064 123 4567 ili 64 123 4567";
+  }
+
+  // Namerno ne brišemo nulu dok korisnik kuca.
+  // Korisnik može uneti 064... ili 64..., a submit funkcija čuva ispravan WhatsApp format.
+  updatePlaceholder();
+  countrySelect.addEventListener("change", updatePlaceholder);
+}
+
+function normalizeClientPhoneForStorage(phone, countryCode = "381") {
+  const raw = String(phone || "").trim();
+  if (!raw) return "";
+
+  // Ako korisnik već unese međunarodni format, koristi ga direktno.
+  if (raw.startsWith("+")) {
+    const international = raw.replace(/\D/g, "");
+    return international.length >= 8 ? `+${international}` : "";
+  }
+
+  let digits = raw.replace(/\D/g, "");
+  if (!digits) return "";
+
+  if (digits.startsWith("00")) {
+    digits = digits.slice(2);
+    return digits.length >= 8 ? `+${digits}` : "";
+  }
+
+  const cc = String(countryCode || "381").replace(/\D/g, "") || "381";
+  if (digits.startsWith("0")) digits = digits.slice(1);
+
+  const full = `${cc}${digits}`;
+  return full.length >= 8 ? `+${full}` : "";
+}
+
+async function submitAppointment() {
+  const name = document.getElementById("client-name")?.value.trim();
+  const phoneRaw = document.getElementById("client-phone")?.value.trim();
+  const phoneCountry = document.getElementById("client-phone-country")?.value || "381";
+  const phone = normalizeClientPhoneForStorage(phoneRaw, phoneCountry);
+  const note = document.getElementById("client-note")?.value.trim();
+  const requestKind = document.getElementById("client-request-kind")?.value.trim();
+  const clientAddress = document.getElementById("client-address")?.value.trim();
+  const urgency = document.getElementById("client-urgency")?.value || "";
+  const extraNoteParts = [];
+  if (requestKind) extraNoteParts.push(`Vrsta: ${requestKind}`);
+  if (clientAddress) extraNoteParts.push(`Lokacija: ${clientAddress}`);
+  if (urgency) extraNoteParts.push(`Hitnost: ${urgency}`);
+  if (note) extraNoteParts.push(note);
+  const finalNote = extraNoteParts.join("\n");
+
+  if (!currentSalon || !selectedService || !selectedDate || !selectedTime) {
+    window.App.showMessage(C("chooseAllError", "Izaberite uslugu, datum i termin."), "error");
+    return;
+  }
+  if (!name) {
+    window.App.showMessage(C("enterNameError", "Unesite ime i prezime."), "error");
+    return;
+  }
+
+  if (!phone) {
+    window.App.showMessage(C("phoneError", "Izaberite državu i unesite ispravan broj telefona."), "error");
+    return;
+  }
+
+  const currentSlots = await window.BookingLogic.getAvailableSlots(
+    currentSalon.id,
+    Number(selectedService.duration_minutes || 30),
+    selectedDate
+  );
+  if (!currentSlots.includes(selectedTime)) {
+    window.App.showMessage(C("takenError", "Termin je u međuvremenu zauzet. Izaberite drugi."), "error");
+    await loadAvailableTimes();
+    return;
+  }
+
+  const { data: insertedAppointment, error } = await window.db.from("appointments").insert({
+    salon_id: currentSalon.id,
+    service_id: selectedService.id,
+    client_name: name,
+    client_phone: phone,
+    note: finalNote || null,
+    appointment_date: selectedDate,
+    appointment_time: selectedTime,
+    status: "new",
+    service_name_snapshot: selectedService.name,
+    price_snapshot: Number(selectedService.price || 0),
+    price_to_snapshot: selectedService.price_to ? Number(selectedService.price_to) : null,
+    currency_snapshot: window.App.normalizeCurrency(selectedService.currency || "RSD"),
+    duration_snapshot: Number(selectedService.duration_minutes || 30)
+  }).select("*").single();
+
+  if (error) {
+    console.error(error);
+    window.App.showMessage(C("sendError", "Greška pri slanju termina."), "error");
+    return;
+  }
+
+  if (insertedAppointment?.id) {
+    window.App.notifyOwnerAboutNewAppointment(insertedAppointment.id);
+  }
+
+  document.getElementById("booking-box").innerHTML = `
+    <div class="card center">
+      <h2>${C("requestSentTitle", "Zahtev je poslat ✅")}</h2>
+      <p class="muted">${C("requestSentText", "Vlasnik profila će vas kontaktirati radi potvrde.")}</p>
+      <p><strong>${escapeHtml(selectedService.name)}</strong></p>
+      <p>${window.App.formatDate(selectedDate)} u ${selectedTime}</p>
+    </div>
+  `;
+  window.App.showMessage(C("requestSentToast", "Zahtev je poslat."), "success");
+}
+
+
+Object.assign(window, { openShopViewer, closeShopViewer, changeShopImage, setShopImage, shareShopProduct, askShopProduct, callShopProfile, openShopProductByCode });

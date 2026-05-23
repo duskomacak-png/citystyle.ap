@@ -1,67 +1,59 @@
-async function loadImageForCanvas(file){
-  if(window.createImageBitmap){
-    try{return await createImageBitmap(file, { imageOrientation:'from-image' });}catch(e){}
+// assets/js/storage.js
+
+async function uploadImage(file, salonId, type = "home") {
+  if (!file) {
+    window.App.showMessage("Nije izabrana slika.", "error");
+    return null;
   }
-  return await new Promise((resolve,reject)=>{
-    const img=new Image();
-    img.onload=()=>resolve(img);
-    img.onerror=()=>reject(new Error('Slika ne može da se učita'));
-    img.src=URL.createObjectURL(file);
-  });
-}
-function fitRect(sw,sh,dw,dh,mode='contain'){
-  const s = mode==='cover' ? Math.max(dw/sw, dh/sh) : Math.min(dw/sw, dh/sh);
-  const w=sw*s, h=sh*s;
-  return {x:(dw-w)/2, y:(dh-h)/2, w, h};
-}
-async function canvasToBlob(canvas, type='image/webp', quality=.82){
-  return await new Promise(resolve=>canvas.toBlob(resolve,type,quality));
-}
-async function prepareImageForUpload(file, pathPrefix='uploads'){
-  if(!file || !file.type || !file.type.startsWith('image/')) return {blob:file, ext:(file.name.split('.').pop()||'jpg').toLowerCase(), contentType:file?.type||'application/octet-stream'};
-  const img=await loadImageForCanvas(file);
-  const isProduct=String(pathPrefix||'').includes('products/');
-  const isLogo=String(pathPrefix||'').includes('logos/');
-  let canvas=document.createElement('canvas');
-  let ctx=canvas.getContext('2d');
-  if(isProduct){
-    canvas.width=1080; canvas.height=1920;
-    ctx.fillStyle='#f3f4f6'; ctx.fillRect(0,0,canvas.width,canvas.height);
-    const cover=fitRect(img.width,img.height,canvas.width,canvas.height,'cover');
-    ctx.save();
-    ctx.filter='blur(28px)';
-    ctx.globalAlpha=.55;
-    ctx.drawImage(img, cover.x-40, cover.y-40, cover.w+80, cover.h+80);
-    ctx.restore();
-    ctx.fillStyle='rgba(245,245,245,.62)'; ctx.fillRect(0,0,canvas.width,canvas.height);
-    const padX=34, padY=210;
-    const contain=fitRect(img.width,img.height,canvas.width-padX*2,canvas.height-padY*2,'contain');
-    ctx.drawImage(img, contain.x+padX, contain.y+padY, contain.w, contain.h);
-  }else if(isLogo){
-    canvas.width=640; canvas.height=640;
-    ctx.fillStyle='#111827'; ctx.fillRect(0,0,canvas.width,canvas.height);
-    const r=fitRect(img.width,img.height,560,560,'contain');
-    ctx.drawImage(img,r.x+40,r.y+40,r.w,r.h);
-  }else{
-    const max=1600;
-    const scale=Math.min(1,max/Math.max(img.width,img.height));
-    canvas.width=Math.max(1,Math.round(img.width*scale));
-    canvas.height=Math.max(1,Math.round(img.height*scale));
-    ctx.drawImage(img,0,0,canvas.width,canvas.height);
+  if (!salonId) {
+    window.App.showMessage("Nedostaje salon ID.", "error");
+    return null;
   }
-  const blob=await canvasToBlob(canvas,'image/webp',isProduct ? .84 : .82);
-  if(!blob) return {blob:file, ext:(file.name.split('.').pop()||'jpg').toLowerCase(), contentType:file.type};
-  return {blob, ext:'webp', contentType:'image/webp'};
-}
-async function uploadAsset(file, pathPrefix='uploads'){
-  if(!file) throw new Error('Nema fajla');
-  if(!window.db) throw new Error('Supabase nije učitan');
-  const prepared=await prepareImageForUpload(file,pathPrefix);
-  const name=`${pathPrefix}/${Date.now()}-${Math.random().toString(16).slice(2)}.${prepared.ext}`;
-  const {error}=await db.storage.from('salon-assets').upload(name,prepared.blob,{cacheControl:'31536000',upsert:false,contentType:prepared.contentType});
-  if(error) throw error;
-  const {data}=db.storage.from('salon-assets').getPublicUrl(name);
+
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  if (!allowedTypes.includes(file.type)) {
+    window.App.showMessage("Dozvoljene su samo JPG, PNG ili WEBP slike.", "error");
+    return null;
+  }
+
+  const maxSize = 5 * 1024 * 1024;
+  if (file.size > maxSize) {
+    window.App.showMessage("Slika je prevelika. Maksimalno 5 MB.", "error");
+    return null;
+  }
+
+  const fileExt = file.name.split(".").pop().toLowerCase();
+  const safeType = String(type || "home").toLowerCase().replace(/[^a-z0-9_-]/g, "");
+  const fileName = `${salonId}/${safeType}_${Date.now()}.${fileExt}`;
+
+  const { error } = await window.db.storage
+    .from("salon-assets")
+    .upload(fileName, file, { cacheControl: "3600", upsert: true });
+
+  if (error) {
+    console.error(error);
+    window.App.showMessage("Greška pri uploadu slike.", "error");
+    return null;
+  }
+
+  const { data } = window.db.storage.from("salon-assets").getPublicUrl(fileName);
   return data.publicUrl;
 }
-window.prepareImageForUpload=prepareImageForUpload;
-window.uploadAsset = uploadAsset;
+
+async function deleteImage(imageUrl) {
+  if (!imageUrl) return false;
+  const marker = "/storage/v1/object/public/salon-assets/";
+  const index = imageUrl.indexOf(marker);
+  if (index === -1) return false;
+  const path = imageUrl.slice(index + marker.length);
+
+  const { error } = await window.db.storage.from("salon-assets").remove([path]);
+  if (error) {
+    console.error(error);
+    window.App.showMessage("Greška pri brisanju slike.", "error");
+    return false;
+  }
+  return true;
+}
+
+window.StorageHelper = { uploadImage, deleteImage };

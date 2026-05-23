@@ -1,17 +1,41 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="sr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>CityStyle vlasnik</title>
-  <meta name="theme-color" content="#08080b">
-  <link rel="manifest" href="../manifest.json?v=fresh4">
-  <link rel="stylesheet" href="../assets/css/style.css?v=fresh4">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biznis panel - CityStyle</title>
+  <meta name="theme-color" content="#0b0b0f">
+  <link rel="manifest" href="../manifest.json?v=business62salonshoes">
+  <link rel="apple-touch-icon" href="../assets/icons/icon-192.png">
+  <link rel="stylesheet" href="../assets/css/style.css?v=business62salonshoes">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../assets/js/config.js?v=fresh4"></script>
-  <script src="../assets/js/main.js?v=fresh4"></script>
-  <script src="../assets/js/storage.js?v=fresh4"></script>
-  <script src="../assets/js/salon.js?v=fresh4" defer></script>
+  <script src="../assets/js/config.js?v=business62salonshoes"></script>
+  <script src="../assets/js/main.js?v=business62salonshoes"></script>
+  <script src="../assets/js/auth.js?v=business62salonshoes"></script>
+  <script src="../assets/js/storage.js?v=business62salonshoes"></script>
+  <script src="../assets/js/salon.js?v=business62salonshoes" defer></script>
 </head>
-<body><main id="ownerApp" class="app-shell"></main></body>
+<body>
+  <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>
+  <main class="salon-panel">
+    <header class="panel-header">
+      <div><h1 id="salon-name">Biznis panel</h1><p id="salon-status-text">Učitavanje profila...</p></div>
+      <div class="panel-header-actions">
+        <button id="salon-install-btn" class="btn btn-dark hidden" type="button">Preuzmi panel vlasnika</button>
+        <button id="salon-logout-btn" class="btn btn-dark" type="button">Odjavi se</button>
+      </div>
+    </header>
+    <nav class="panel-tabs" id="salon-tabs">
+      <button type="button" data-section="appointments" class="active">Zahtevi / termini</button>
+      <button type="button" data-section="services">Usluge / ponuda</button>
+      <button type="button" data-section="products">Proizvodi / katalog</button>
+      <button type="button" data-section="analytics">Statistika / QR</button>
+      <button type="button" data-section="garage">Garaža</button>
+      <button type="button" data-section="gallery">Galerija radova</button>
+      <button type="button" data-section="hours">Radno vreme</button>
+      <button type="button" data-section="settings">Podešavanje profila</button>
+    </nav>
+    <section id="salon-content"><div class="loading-box">Učitavanje biznis panela...</div></section>
+  </main>
+</body>
 </html>
