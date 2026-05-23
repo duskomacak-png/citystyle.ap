@@ -2294,3 +2294,184 @@ select:focus{
     background:#ffffff !important;
   }
 }
+
+
+/* v93 SAFE: premium shop clean theme
+   Goal: make the shop feel paid/polished without touching any business logic.
+   Scope: visual refinement for public shoe shop page and mobile fullscreen viewer. */
+.shoe-viewer-headline{display:block}
+.shoe-viewer-code{display:block}
+
+/* public shop page polish */
+.shoe-shop-page{
+  background:
+    radial-gradient(circle at top right, rgba(255,255,255,.04), transparent 28rem),
+    radial-gradient(circle at top left, rgba(239,68,68,.08), transparent 30rem),
+    linear-gradient(180deg, #0b0d10 0%, #0f1318 100%) !important;
+}
+.shoe-cover{
+  border:1px solid rgba(255,255,255,.07) !important;
+  background:#0f1216 !important;
+  box-shadow:0 22px 56px rgba(0,0,0,.34) !important;
+}
+.shoe-info-row{
+  background:rgba(255,255,255,.045) !important;
+  border:1px solid rgba(255,255,255,.07) !important;
+  box-shadow:0 12px 28px rgba(0,0,0,.20) !important;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+.shoe-meta span,
+.shoe-meta .shoe-meta-link{
+  background:rgba(255,255,255,.06) !important;
+  border:1px solid rgba(255,255,255,.08) !important;
+}
+.shoe-card{
+  border:1px solid rgba(255,255,255,.08) !important;
+  background:linear-gradient(180deg,#12161b 0%, #101418 100%) !important;
+  box-shadow:0 14px 30px rgba(0,0,0,.20) !important;
+}
+.shoe-card-media{
+  background:#eef0f3 !important;
+}
+.shoe-card-info small{color:#9fa6b2 !important}
+.shoe-card-info strong{font-size:18px !important}
+.shoe-card-info b{font-size:22px !important}
+
+@media(max-width:899px){
+  .shoe-viewer{
+    background:linear-gradient(180deg,#0a0c0f 0%, #0f1217 48%, #12161c 100%) !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+    overscroll-behavior:contain;
+  }
+  .shoe-viewer:before{
+    background:linear-gradient(to bottom, rgba(7,9,12,.72), rgba(7,9,12,0)) !important;
+    height:118px !important;
+  }
+  .shoe-viewer:after{
+    background:linear-gradient(to top, rgba(7,9,12,.70), rgba(7,9,12,0)) !important;
+    height:88px !important;
+  }
+  .shoe-viewer-media-bg{
+    opacity:.17 !important;
+    filter:blur(30px) saturate(1.04) brightness(.34) !important;
+    transform:scale(1.18) !important;
+  }
+  .shoe-viewer-top{
+    left:14px !important;
+    top:12px !important;
+    right:76px !important;
+    z-index:6 !important;
+    text-shadow:0 2px 12px rgba(0,0,0,.54) !important;
+  }
+  .shoe-viewer-code{
+    margin:0 0 3px !important;
+    font-size:11px !important;
+    line-height:1.15 !important;
+    font-weight:800 !important;
+    letter-spacing:.2px !important;
+    color:rgba(255,255,255,.68) !important;
+  }
+  .shoe-viewer-headline{
+    display:flex !important;
+    align-items:flex-end !important;
+    justify-content:space-between !important;
+    gap:10px !important;
+  }
+  .shoe-viewer-headline h2{
+    margin:0 !important;
+    flex:1 1 auto;
+    min-width:0 !important;
+    font-size:clamp(20px,7vw,30px) !important;
+    line-height:1.02 !important;
+    font-weight:900 !important;
+  }
+  .shoe-viewer-headline b{
+    margin:0 !important;
+    flex:0 0 auto;
+    white-space:nowrap !important;
+    font-size:clamp(18px,6vw,28px) !important;
+    line-height:1.02 !important;
+    color:#ffffff !important;
+  }
+  .shoe-viewer-close{
+    top:12px !important;
+    right:14px !important;
+    width:46px !important;
+    height:46px !important;
+    border-radius:999px !important;
+    background:rgba(255,255,255,.06) !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    box-shadow:0 10px 24px rgba(0,0,0,.24) !important;
+    backdrop-filter:blur(10px) !important;
+    -webkit-backdrop-filter:blur(10px) !important;
+    font-size:34px !important;
+    color:#ffffff !important;
+    padding:0 !important;
+    display:grid !important;
+    place-items:center !important;
+  }
+  .shoe-viewer-actions{
+    left:auto !important;
+    right:14px !important;
+    top:68px !important;
+    bottom:auto !important;
+    display:flex !important;
+    flex-direction:column !important;
+    gap:10px !important;
+    z-index:6 !important;
+  }
+  .shoe-action,
+  .shoe-action.red,
+  .shoe-action.blue,
+  .shoe-action.green{
+    width:40px !important;
+    height:40px !important;
+    border-radius:999px !important;
+    background:rgba(255,255,255,.06) !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    box-shadow:0 10px 20px rgba(0,0,0,.22) !important;
+    backdrop-filter:blur(10px) !important;
+    -webkit-backdrop-filter:blur(10px) !important;
+  }
+  .shoe-action svg{width:18px !important;height:18px !important;}
+  .shoe-viewer .shoe-viewer-media{
+    padding:90px 12px 74px !important;
+    background:transparent !important;
+  }
+  .shoe-viewer-main-img{
+    max-width:calc(100vw - 24px) !important;
+    max-height:calc(100vh - 180px) !important;
+    border-radius:24px !important;
+    background:#eff1f4 !important;
+    box-shadow:0 24px 64px rgba(0,0,0,.28) !important;
+  }
+  .shoe-dots{
+    left:50% !important;
+    right:auto !important;
+    bottom:calc(14px + env(safe-area-inset-bottom,0px)) !important;
+    transform:translateX(-50%) !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:8px !important;
+    padding:10px 14px !important;
+    border-radius:999px !important;
+    background:rgba(255,255,255,.06) !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+    box-shadow:0 10px 20px rgba(0,0,0,.18) !important;
+    backdrop-filter:blur(10px) !important;
+    -webkit-backdrop-filter:blur(10px) !important;
+    z-index:6 !important;
+  }
+  .shoe-dots button{
+    width:8px !important;
+    height:8px !important;
+    border-radius:999px !important;
+    background:rgba(255,255,255,.30) !important;
+  }
+  .shoe-dots button.active{
+    width:28px !important;
+    background:#ffffff !important;
+  }
+}
