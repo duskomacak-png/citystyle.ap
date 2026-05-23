@@ -905,6 +905,39 @@ function buildProductWhatsApp(product = {}) {
   return `https://wa.me/${phone}?text=${encodeURIComponent(buildProductQuestionMessage(product))}`;
 }
 
+function buildProductWhatsAppAppUrl(product = {}) {
+  const phone = getPublicContactPhone();
+  if (!phone) return "";
+  return `whatsapp://send?phone=${phone}&text=${encodeURIComponent(buildProductQuestionMessage(product))}`;
+}
+
+function openProductWhatsApp(product = {}) {
+  const appUrl = buildProductWhatsAppAppUrl(product);
+  const webUrl = buildProductWhatsApp(product);
+  if (!webUrl) {
+    window.App?.showMessage?.("Kontakt telefon / WhatsApp nije podešen za ovaj profil.", "error");
+    return;
+  }
+
+  const isAndroid = /Android/i.test(navigator.userAgent || "");
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+
+  if (isAndroid && appUrl) {
+    window.location.href = appUrl;
+    window.setTimeout(() => {
+      if (!document.hidden) window.location.href = webUrl;
+    }, 950);
+    return;
+  }
+
+  if (isMobile) {
+    window.location.href = webUrl;
+    return;
+  }
+
+  window.open(webUrl, "_blank", "noopener");
+}
+
 async function recordProductInquiry(product = {}) {
   try {
     if (!window.db || !currentSalon?.id || !product?.id) return;
@@ -946,13 +979,8 @@ function askAboutProduct(productId) {
     window.App?.showMessage?.("Kontakt telefon / WhatsApp nije podešen za ovaj profil.", "error");
     return;
   }
-  const popup = window.open("about:blank", "_blank");
   recordProductInquiry(product).finally(() => {
-    if (popup) {
-      popup.location.href = whatsappUrl;
-    } else {
-      window.location.href = whatsappUrl;
-    }
+    openProductWhatsApp(product);
   });
 }
 

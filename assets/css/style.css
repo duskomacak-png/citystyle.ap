@@ -3617,3 +3617,257 @@ select:focus{
   bottom:calc(12px + env(safe-area-inset-bottom, 0px)) !important;
   flex-direction:row !important;
 }
+
+
+/* v39 FINAL product feed reset: fullscreen cover image + direct action placement */
+.product-feed-modal{
+  position:fixed !important;
+  inset:0 !important;
+  width:100vw !important;
+  height:100dvh !important;
+  min-height:100dvh !important;
+  background:#000 !important;
+  overflow:hidden !important;
+  z-index:9999 !important;
+}
+.product-feed-modal .product-feed-shell{
+  width:100vw !important;
+  height:100dvh !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  scroll-snap-type:y mandatory !important;
+  background:#000 !important;
+}
+.product-feed-modal .product-feed-slide{
+  position:relative !important;
+  width:100vw !important;
+  height:100dvh !important;
+  min-height:100dvh !important;
+  max-height:100dvh !important;
+  scroll-snap-align:start !important;
+  scroll-snap-stop:always !important;
+  overflow:hidden !important;
+  background:#000 !important;
+}
+.product-feed-modal .product-feed-media{
+  position:absolute !important;
+  inset:0 !important;
+  width:100vw !important;
+  height:100dvh !important;
+  max-width:none !important;
+  max-height:none !important;
+  background:#000 !important;
+  overflow:hidden !important;
+  z-index:1 !important;
+  display:block !important;
+  transform:none !important;
+  filter:none !important;
+  box-shadow:none !important;
+  cursor:zoom-in !important;
+}
+.product-feed-modal .product-feed-media img.product-feed-current-image,
+.product-feed-modal img.product-feed-current-image{
+  position:absolute !important;
+  inset:0 !important;
+  width:100vw !important;
+  height:100dvh !important;
+  min-width:100vw !important;
+  min-height:100dvh !important;
+  max-width:none !important;
+  max-height:none !important;
+  object-fit:cover !important;
+  object-position:center center !important;
+  display:block !important;
+  background:#000 !important;
+  opacity:1 !important;
+  transform:none !important;
+  filter:none !important;
+  box-shadow:none !important;
+  border:0 !important;
+}
+.product-feed-modal .product-feed-slide::before,
+.product-feed-modal .product-feed-slide::after,
+.product-feed-modal .product-feed-media::before,
+.product-feed-modal .product-feed-media::after{
+  content:none !important;
+  display:none !important;
+  background:none !important;
+  opacity:0 !important;
+}
+.product-feed-modal .product-feed-topbar{
+  position:absolute !important;
+  top:0 !important;
+  left:0 !important;
+  right:0 !important;
+  height:0 !important;
+  background:transparent !important;
+  pointer-events:none !important;
+  z-index:2 !important;
+}
+.product-feed-modal .product-feed-info{
+  position:absolute !important;
+  top:12px !important;
+  left:12px !important;
+  right:72px !important;
+  bottom:auto !important;
+  height:auto !important;
+  min-height:0 !important;
+  max-width:none !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  z-index:50 !important;
+  pointer-events:none !important;
+}
+.product-feed-modal .product-feed-info small,
+.product-feed-modal .product-feed-info h2,
+.product-feed-modal .product-feed-price-row strong{
+  color:#fff !important;
+  text-shadow:0 2px 12px rgba(0,0,0,.9) !important;
+}
+.product-feed-modal .product-feed-info small{
+  display:block !important;
+  font-size:12px !important;
+  line-height:1.1 !important;
+  margin:0 0 4px !important;
+  opacity:.95 !important;
+}
+.product-feed-modal .product-feed-info h2{
+  font-size:clamp(22px,7vw,34px) !important;
+  line-height:1.02 !important;
+  margin:0 0 7px !important;
+  max-height:70px !important;
+  overflow:hidden !important;
+}
+.product-feed-modal .product-feed-price-row{
+  display:flex !important;
+  align-items:center !important;
+  gap:10px !important;
+  justify-content:flex-start !important;
+  flex-wrap:wrap !important;
+  margin:0 !important;
+}
+.product-feed-modal .product-feed-price-row strong{
+  font-size:clamp(21px,6.8vw,34px) !important;
+  line-height:1 !important;
+}
+.product-feed-modal .product-feed-price-row span{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:7px 13px !important;
+  border-radius:999px !important;
+  color:#fff !important;
+  background:rgba(220,38,38,.94) !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+  text-shadow:none !important;
+}
+.product-feed-modal .product-feed-info p{display:none !important;}
+.product-feed-modal .product-feed-close-action{
+  position:absolute !important;
+  top:12px !important;
+  right:12px !important;
+  left:auto !important;
+  bottom:auto !important;
+  width:42px !important;
+  height:42px !important;
+  min-width:42px !important;
+  min-height:42px !important;
+  padding:0 !important;
+  margin:0 !important;
+  z-index:80 !important;
+  pointer-events:auto !important;
+  touch-action:manipulation !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+.product-feed-modal .product-feed-bottom-actions{
+  position:absolute !important;
+  left:12px !important;
+  right:auto !important;
+  top:auto !important;
+  bottom:calc(12px + env(safe-area-inset-bottom,0px)) !important;
+  width:auto !important;
+  max-width:none !important;
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:9px !important;
+  padding:0 !important;
+  z-index:80 !important;
+  pointer-events:auto !important;
+  transform:none !important;
+}
+.product-feed-modal .product-feed-bottom-actions .feed-action-btn,
+.product-feed-modal .product-feed-close-action.feed-action-btn{
+  width:42px !important;
+  height:42px !important;
+  min-width:42px !important;
+  min-height:42px !important;
+  padding:0 !important;
+  margin:0 !important;
+  display:grid !important;
+  place-items:center !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  pointer-events:auto !important;
+  touch-action:manipulation !important;
+}
+.product-feed-modal .product-feed-bottom-actions .feed-action-icon,
+.product-feed-modal .product-feed-close-action .feed-action-icon{
+  width:42px !important;
+  height:42px !important;
+  min-width:42px !important;
+  min-height:42px !important;
+  border-radius:999px !important;
+  display:grid !important;
+  place-items:center !important;
+  border:1px solid rgba(255,255,255,.22) !important;
+  box-shadow:0 8px 18px rgba(0,0,0,.35) !important;
+  filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
+.product-feed-modal .product-feed-close-action .feed-action-icon{background:rgba(17,24,39,.88) !important;}
+.product-feed-modal .feed-action-btn--share .feed-action-icon{background:#ef4444 !important;}
+.product-feed-modal .feed-action-btn--ask .feed-action-icon{background:#38bdf8 !important;}
+.product-feed-modal .feed-action-btn--call .feed-action-icon{background:#16a34a !important;}
+.product-feed-modal .product-feed-bottom-actions .feed-action-icon svg,
+.product-feed-modal .product-feed-close-action .feed-action-icon svg{
+  width:20px !important;
+  height:20px !important;
+}
+.product-feed-modal .feed-action-label,
+.product-feed-modal .product-feed-topbar span,
+.product-feed-modal .product-gallery-counter,
+.product-feed-modal .product-gallery-swipe-hint{
+  display:none !important;
+}
+.product-feed-modal .product-gallery-dots{
+  position:absolute !important;
+  left:auto !important;
+  right:12px !important;
+  bottom:calc(24px + env(safe-area-inset-bottom,0px)) !important;
+  z-index:70 !important;
+}
+.product-feed-modal.product-image-zoomed .product-feed-media{
+  z-index:70 !important;
+  cursor:zoom-out !important;
+  background:#000 !important;
+}
+.product-feed-modal.product-image-zoomed .product-feed-media img.product-feed-current-image,
+.product-feed-modal.product-image-zoomed img.product-feed-current-image{
+  object-fit:contain !important;
+  object-position:center center !important;
+  background:#000 !important;
+}
+.product-feed-modal.product-image-zoomed .product-feed-topbar,
+.product-feed-modal.product-image-zoomed .product-feed-info,
+.product-feed-modal.product-image-zoomed .product-feed-bottom-actions,
+.product-feed-modal.product-image-zoomed .product-gallery-dots{display:none !important;}
+.product-feed-modal.product-image-zoomed .product-feed-close-action{display:grid !important;z-index:90 !important;}
