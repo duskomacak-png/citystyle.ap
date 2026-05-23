@@ -2325,3 +2325,53 @@ select:focus{
     z-index:6 !important;
   }
 }
+
+
+/* v88 SAFE: compact mobile top bar for more image space
+   - keep product code smaller at the very top
+   - put product name and price in one row on mobile
+   - free vertical space so the image can sit higher */
+.shoe-viewer-headline{display:block}
+.shoe-viewer-code{display:block}
+@media(max-width:899px){
+  .shoe-viewer-top{
+    left:12px !important;
+    top:10px !important;
+    right:84px !important;
+  }
+  .shoe-viewer-code{
+    font-size:12px !important;
+    line-height:1.1 !important;
+    letter-spacing:.1px;
+    opacity:.88 !important;
+    margin-bottom:4px !important;
+    display:block !important;
+  }
+  .shoe-viewer-headline{
+    display:flex !important;
+    align-items:flex-end !important;
+    justify-content:space-between !important;
+    gap:10px !important;
+  }
+  .shoe-viewer-headline h2{
+    margin:0 !important;
+    font-size:clamp(18px,6.6vw,30px) !important;
+    line-height:1.02 !important;
+    flex:1 1 auto;
+    min-width:0;
+  }
+  .shoe-viewer-headline b{
+    margin:0 !important;
+    flex:0 0 auto;
+    white-space:nowrap;
+    font-size:clamp(18px,6vw,28px) !important;
+    line-height:1 !important;
+  }
+  .shoe-viewer .shoe-viewer-media{
+    padding-top:62px !important;
+  }
+  .shoe-viewer-main-img,
+  .shoe-viewer .shoe-viewer-media img{
+    max-height:calc(100vh - 150px) !important;
+  }
+}
