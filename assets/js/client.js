@@ -1,6 +1,7 @@
 let currentProfile=null,currentSettings={},currentKind='salon',services=[],products=[],productImages={},selectedService=null,selectedTime=null,viewerState=null;
 const app=document.getElementById('app');
 window.addEventListener('DOMContentLoaded', initClient);
+window.addEventListener('keydown', handleViewerKey);
 async function initClient(){
   const slug=City.qs('salon') || localStorage.getItem('citystyle_saved_salon');
   if(!slug){renderLanding();return;}
@@ -46,16 +47,22 @@ function showProducts(){
   c.innerHTML=`<div class="product-grid shop-feed-grid">${products.map((p,i)=>`<button class="product-card" onclick="openViewer(${i})"><div class="product-card-img-wrap">${productMainImage(p)?`<img src="${City.esc(productMainImage(p))}" alt="">`:`<div class="empty-img">Bez slike</div>`}</div><div class="product-card-body"><small class="muted">${City.esc(productCode(p))}${p.category?' • '+City.esc(p.category):''}</small><h3>${City.esc(p.name||'Proizvod')}</h3><div class="price">${City.esc(productPrice(p))}</div></div></button>`).join('')}</div>`;
 }
 function openProductByCode(code){const idx=products.findIndex(p=>String(productCode(p)).toLowerCase()===String(code).toLowerCase()||String(p.id)===String(code)); if(idx>=0) openViewer(idx); else showProducts();}
-function openViewer(index){viewerState={index,image:0,startX:0,startY:0}; renderViewer();}
+function openViewer(index){viewerState={index,image:0,startX:0,startY:0,lastWheel:0,mouseX:0,mouseY:0}; renderViewer();}
 function renderViewer(){
   const p=products[viewerState.index]; if(!p)return; const imgs=productAllImages(p); const img=imgs[viewerState.image]||'';
   const el=document.createElement('div'); el.className='viewer'; el.id='productViewer';
-  el.innerHTML=`<div class="viewer-slide active">${img?`<img class="viewer-img" src="${City.esc(img)}" alt="${City.esc(p.name||'')}">`:`<div class="viewer-img" style="display:grid;place-items:center">Bez slike</div>`}</div><div class="viewer-info"><small>${City.esc(productCode(p))}${p.category?' • '+City.esc(p.category):''}${imgs.length>1?' • '+(viewerState.image+1)+'/'+imgs.length:''}</small><h2>${City.esc(p.name||'Proizvod')}</h2><div class="viewer-price">${City.esc(productPrice(p))}</div></div><button class="viewer-close" onclick="closeViewer()">×</button><div class="viewer-actions"><button class="icon-btn red" onclick="shareCurrentProduct(event)" aria-label="Podeli">↗</button><button class="icon-btn blue" onclick="askCurrentProduct(event)" aria-label="Pitaj">💬</button><button class="icon-btn green" onclick="callProfile(event)" aria-label="Pozovi">☎</button></div>${imgs.length>1?`<div class="viewer-dots">${imgs.map((_,i)=>`<button class="viewer-dot ${i===viewerState.image?'active':''}" onclick="setViewerImage(event,${i})"></button>`).join('')}</div>`:''}`;
+  el.innerHTML=`<div class="viewer-slide active">${img?`<img class="viewer-img" src="${City.esc(img)}" alt="${City.esc(p.name||'')}">`:`<div class="viewer-img" style="display:grid;place-items:center">Bez slike</div>`}</div><div class="viewer-info"><small>${City.esc(productCode(p))}${p.category?' • '+City.esc(p.category):''}${imgs.length>1?' • '+(viewerState.image+1)+'/'+imgs.length:''}</small><h2>${City.esc(p.name||'Proizvod')}</h2><div class="viewer-price">${City.esc(productPrice(p))}</div></div><button class="viewer-close" onclick="closeViewer()">×</button><div class="viewer-actions"><button class="icon-btn red" onclick="shareCurrentProduct(event)" aria-label="Podeli"><span>↗</span><b>Podeli</b></button><button class="icon-btn blue" onclick="askCurrentProduct(event)" aria-label="Pitaj"><span>💬</span><b>Pitaj</b></button><button class="icon-btn green" onclick="callProfile(event)" aria-label="Pozovi"><span>☎</span><b>Pozovi</b></button></div>${imgs.length>1?`<div class="viewer-dots">${imgs.map((_,i)=>`<button class="viewer-dot ${i===viewerState.image?'active':''}" onclick="setViewerImage(event,${i})"></button>`).join('')}</div>`:''}`;
   el.addEventListener('touchstart',e=>{viewerState.startX=e.touches[0].clientX;viewerState.startY=e.touches[0].clientY;},{passive:true});
   el.addEventListener('touchend',handleViewerSwipe,{passive:true});
+  el.addEventListener('wheel', handleViewerWheel, {passive:false});
+  el.addEventListener('mousedown', e=>{viewerState.mouseX=e.clientX;viewerState.mouseY=e.clientY;});
+  el.addEventListener('mouseup', handleViewerMouse);
   $('#productViewer')?.remove(); document.body.appendChild(el);
 }
-function handleViewerSwipe(e){if(e.target.closest('button'))return; const dx=e.changedTouches[0].clientX-viewerState.startX; const dy=e.changedTouches[0].clientY-viewerState.startY; if(Math.max(Math.abs(dx),Math.abs(dy))<45)return; if(Math.abs(dx)>Math.abs(dy)){changeImage(dx<0?1:-1)}else{changeProduct(dy<0?1:-1)}}
+function handleViewerSwipe(e){if(!viewerState||e.target.closest('button,a'))return; const dx=e.changedTouches[0].clientX-viewerState.startX; const dy=e.changedTouches[0].clientY-viewerState.startY; if(Math.max(Math.abs(dx),Math.abs(dy))<45)return; if(Math.abs(dx)>Math.abs(dy)){changeImage(dx<0?1:-1)}else{changeProduct(dy<0?1:-1)}}
+function handleViewerMouse(e){if(!viewerState||e.target.closest('button,a'))return; const dx=e.clientX-viewerState.mouseX; const dy=e.clientY-viewerState.mouseY; if(Math.max(Math.abs(dx),Math.abs(dy))<55)return; if(Math.abs(dx)>Math.abs(dy)){changeImage(dx<0?1:-1)}else{changeProduct(dy<0?1:-1)}}
+function handleViewerWheel(e){if(!viewerState)return; if(Math.abs(e.deltaY)<25)return; e.preventDefault(); const now=Date.now(); if(now-(viewerState.lastWheel||0)<520)return; viewerState.lastWheel=now; changeProduct(e.deltaY>0?1:-1)}
+function handleViewerKey(e){if(!viewerState)return; if(e.key==='Escape')closeViewer(); if(e.key==='ArrowRight')changeImage(1); if(e.key==='ArrowLeft')changeImage(-1); if(e.key==='ArrowDown')changeProduct(1); if(e.key==='ArrowUp')changeProduct(-1);}
 function changeImage(dir){const p=products[viewerState.index], imgs=productAllImages(p); if(imgs.length<2)return; viewerState.image=(viewerState.image+dir+imgs.length)%imgs.length; renderViewer();}
 function changeProduct(dir){viewerState.index=(viewerState.index+dir+products.length)%products.length; viewerState.image=0; renderViewer();}
 function setViewerImage(e,i){e.stopPropagation(); viewerState.image=i; renderViewer();}

@@ -1,4 +1,4 @@
-const BUILD = 'fresh-salons-shoes-v7';
+const BUILD = 'fresh-salons-shoes-v8';
 const $ = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 function esc(v){return String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}

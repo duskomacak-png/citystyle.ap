@@ -49,7 +49,7 @@ async function prepareImageForUpload(file, pathPrefix='uploads'){
     canvas.height=Math.max(1,Math.round(img.height*scale));
     ctx.drawImage(img,0,0,canvas.width,canvas.height);
   }
-  const blob=await canvasToBlob(canvas,'image/webp',isProduct?.84:.82);
+  const blob=await canvasToBlob(canvas,'image/webp',isProduct ? .84 : .82);
   if(!blob) return {blob:file, ext:(file.name.split('.').pop()||'jpg').toLowerCase(), contentType:file.type};
   return {blob, ext:'webp', contentType:'image/webp'};
 }
