@@ -26,8 +26,13 @@ async function loadBaseData(){
 }
 function renderProfile(){
   const logo=City.profileLogo(currentProfile,currentSettings); const name=City.profileName(currentProfile); const text=City.profileText(currentProfile,currentSettings);
-  app.innerHTML=`<section class="hero"><div>${logo?`<img class="brand-logo" src="${City.esc(logo)}" alt="">`:`<div class="brand-logo">${City.esc(name[0]||'C')}</div>`}</div><h1>${City.esc(name)}</h1>${text?`<p class="muted">${City.esc(text)}</p>`:''}<div class="actions">${currentKind==='shop'?`<button class="btn primary" onclick="showProducts()">Proizvodi / katalog</button>`:`<button class="btn primary" onclick="showServices()">Zakaži termin</button>`}<button class="btn ghost" onclick="installInfo()">Preuzmi app profila</button></div></section><section id="content"></section>`;
-  if(currentKind==='shop') showProducts(); else showServices();
+  if(currentKind==='shop'){
+    app.innerHTML=`<section class="shop-client-page"><div class="shop-client-head">${logo?`<img class="shop-logo" src="${City.esc(logo)}" alt="">`:''}<div><h1>${City.esc(name)}</h1>${text?`<p>${City.esc(text)}</p>`:''}</div></div><section id="content"></section></section>`;
+    showProducts();
+    return;
+  }
+  app.innerHTML=`<section class="hero"><div>${logo?`<img class="brand-logo" src="${City.esc(logo)}" alt="">`:`<div class="brand-logo">${City.esc(name[0]||'C')}</div>`}</div><h1>${City.esc(name)}</h1>${text?`<p class="muted">${City.esc(text)}</p>`:''}<div class="actions"><button class="btn primary" onclick="showServices()">Zakaži termin</button><button class="btn ghost" onclick="installInfo()">Preuzmi app profila</button></div></section><section id="content"></section>`;
+  showServices();
 }
 function installInfo(){toast('Na telefonu: Chrome/Safari meni → Add to Home screen / Dodaj na početni ekran')}
 function productMainImage(p){return p.image_url || (productImages[p.id]||[])[0]?.image_url || ''}
@@ -37,7 +42,7 @@ function productPrice(p){return City.formatPrice(p.price, p.currency || 'RSD')}
 function showProducts(){
   const c=$('#content'); if(!c)return;
   if(!products.length){c.innerHTML='<div class="card"><h2>Još nema proizvoda</h2><p class="muted">Vlasnik još nije dodao katalog.</p></div>';return;}
-  c.innerHTML=`<div class="topbar"><h2>Proizvodi / katalog</h2><span class="pill">${products.length}</span></div><div class="product-grid">${products.map((p,i)=>`<button class="product-card" onclick="openViewer(${i})"><div>${productMainImage(p)?`<img src="${City.esc(productMainImage(p))}" alt="">`:`<div class="empty-img">Bez slike</div>`}</div><div class="product-card-body"><small class="muted">${City.esc(productCode(p))}${p.category?' • '+City.esc(p.category):''}</small><h3>${City.esc(p.name||'Proizvod')}</h3><div class="price">${City.esc(productPrice(p))}</div></div></button>`).join('')}</div>`;
+  c.innerHTML=`<div class="product-grid shop-feed-grid">${products.map((p,i)=>`<button class="product-card" onclick="openViewer(${i})"><div class="product-card-img-wrap">${productMainImage(p)?`<img src="${City.esc(productMainImage(p))}" alt="">`:`<div class="empty-img">Bez slike</div>`}</div><div class="product-card-body"><small class="muted">${City.esc(productCode(p))}${p.category?' • '+City.esc(p.category):''}</small><h3>${City.esc(p.name||'Proizvod')}</h3><div class="price">${City.esc(productPrice(p))}</div></div></button>`).join('')}</div>`;
 }
 function openProductByCode(code){const idx=products.findIndex(p=>String(productCode(p)).toLowerCase()===String(code).toLowerCase()||String(p.id)===String(code)); if(idx>=0) openViewer(idx); else showProducts();}
 function openViewer(index){viewerState={index,image:0,startX:0,startY:0}; renderViewer();}
