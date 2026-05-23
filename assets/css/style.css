@@ -1610,3 +1610,18 @@ select:focus{
   .cs-minimal-phone-wrap{width:340px;}
   .cs-minimal-phone{width:320px;}
 }
+
+
+/* v68 SAFE: mobile profile logo must show complete image, not cropped */
+.shoe-info-row{overflow:visible;}
+.shoe-logo{
+  object-fit:contain!important;
+  object-position:center!important;
+  padding:4px;
+  box-sizing:border-box;
+}
+@media(max-width:720px){
+  .shoe-info-row{align-items:center;gap:14px;}
+  .shoe-logo{width:70px;height:70px;min-width:70px;}
+  .shoe-info-copy{min-width:0;}
+}
