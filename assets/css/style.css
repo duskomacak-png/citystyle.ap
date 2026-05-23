@@ -2133,3 +2133,9 @@ select:focus{
 @media(min-width:900px){
   .shoe-viewer-main-img{display:block}
 }
+
+
+/* v84 SAFE: auto TikTok feed uses existing shoe-viewer; grid remains fallback behind viewer. */
+@media(max-width:899px){
+  .shoe-viewer{overscroll-behavior:contain;}
+}

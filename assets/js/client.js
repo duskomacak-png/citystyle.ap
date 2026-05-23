@@ -1275,9 +1275,16 @@ function renderShoeShopHome(settings = {}) {
       </section>
     </section>`;
   const requestedProduct = window.App?.getUrlParam?.("product");
+  const disableAutoFeed = window.App?.getUrlParam?.("grid") === "1" || window.App?.getUrlParam?.("noAutoFeed") === "1";
   if (requestedProduct && products.length) {
     const idx = products.findIndex(p => String(csProductCode(p)).toLowerCase() === String(requestedProduct).toLowerCase() || String(p.id) === String(requestedProduct));
     if (idx >= 0) setTimeout(() => openShoeViewer(idx), 150);
+  } else if (products.length && !disableAutoFeed && window.matchMedia?.("(max-width: 899px)")?.matches) {
+    // v84 SAFE: mobile catalog opens directly in fullscreen TikTok-style viewer.
+    // The product grid stays behind as fallback; close button returns to the normal shop page.
+    setTimeout(() => {
+      if (!document.getElementById("shoeViewer")) openShoeViewer(0);
+    }, 220);
   }
 }
 
