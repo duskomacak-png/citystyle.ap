@@ -856,11 +856,35 @@ function callPublicProfile() {
   window.location.href = `tel:+${phone}`;
 }
 
+function buildProductOrderMessage(product = {}) {
+  const images = getProductImages(product);
+  const firstImage = images[0] || product.image_url || "";
+  const productUrl = buildProductShareUrl(product);
+  const status = getProductStatusLabel(product.stock_status);
+  const salonName = currentSalon?.name || currentSalon?.business_name || "profil";
+
+  const lines = [
+    "Zdravo, kako mogu da poručim ovaj proizvod?",
+    "",
+    `Proizvod: ${product.name || "Proizvod"}`,
+    `Cena: ${renderProductPrice(product)}`,
+    `Status: ${status}`,
+    `Profil: ${salonName}`
+  ];
+
+  if (firstImage) {
+    lines.push("", `Slika proizvoda: ${firstImage}`);
+  }
+
+  lines.push("", `Link proizvoda: ${productUrl}`);
+
+  return lines.join("\n");
+}
+
 function buildProductWhatsApp(product = {}) {
   const phone = getPublicContactPhone();
   if (!phone) return "";
-  const message = encodeURIComponent(`Poštovani, interesuje me proizvod: ${product.name}. Cena: ${renderProductPrice(product)}. Da li je dostupno?`);
-  return `https://wa.me/${phone}?text=${message}`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(buildProductOrderMessage(product))}`;
 }
 
 function openWhatsAppMessage(message) {
@@ -882,7 +906,7 @@ function askAboutProduct(productId) {
     askForProductGeneral();
     return;
   }
-  openWhatsAppMessage(`Poštovani, interesuje me proizvod: ${product.name}. Cena: ${renderProductPrice(product)}. Da li je dostupno?`);
+  openWhatsAppMessage(buildProductOrderMessage(product));
 }
 
 function buildProductShareUrl(product = {}) {
