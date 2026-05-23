@@ -2133,3 +2133,38 @@ select:focus{
 @media(min-width:900px){
   .shoe-viewer-main-img{display:block}
 }
+
+
+/* v91 SAFE: mobile viewer light gray background
+   - set fullscreen mobile product viewer background to solid light gray
+   - remove transparency from main viewer layer so nothing behind shows
+   - keep existing TikTok-feel image presentation and interactions intact */
+@media(max-width:899px){
+  .shoe-viewer{
+    background:linear-gradient(180deg,#f0f2f5 0%, #e4e7ec 55%, #d8dde4 100%) !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+  .shoe-viewer .shoe-viewer-media{
+    background:transparent !important;
+  }
+  .shoe-viewer:before{
+    background:linear-gradient(to bottom, rgba(180,186,196,.42), rgba(180,186,196,0)) !important;
+  }
+  .shoe-viewer:after{
+    background:linear-gradient(to top, rgba(164,171,182,.34), rgba(164,171,182,0)) !important;
+  }
+  .shoe-action,
+  .shoe-action.red,
+  .shoe-action.blue,
+  .shoe-action.green,
+  .shoe-dots{
+    background:rgba(27,33,45,.10) !important;
+    border:1px solid rgba(27,33,45,.16) !important;
+    box-shadow:0 10px 26px rgba(0,0,0,.12) !important;
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+  }
+  .shoe-dots button{background:rgba(27,33,45,.26) !important;}
+  .shoe-dots button.active{background:#ffffff !important;}
+}
