@@ -601,8 +601,8 @@ async function installSalonApp(slug, options = {}) {
   if (slug) saveCurrentSalon(slug);
   updateManifestForSalon(slug || getSavedSalonSlug(), options);
   await installApp(
-    "Telefon možda već ima CityStyle app. Za dodatnu prečicu otvorite meni browsera i izaberite Dodaj na početni ekran.",
-    "App ovog profila je dodata na telefon."
+    "Ako se ne pojavi instalacija, otvorite meni browsera i izaberite Dodaj na početni ekran. Prečica će otvoriti baš ovaj profil, sa imenom i logom firme gde browser to podržava.",
+    "Prečica ovog profila je dodata na telefon."
   );
 }
 
@@ -618,7 +618,7 @@ function updateManifestForOwner() {
     name: "CityStyle - Panel vlasnika",
     short_name: "CityStyle",
     description: "Prečica za direktan ulaz u panel vlasnika biznisa.",
-    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=business11copyfix`,
+    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=business65profilepwa`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -684,8 +684,9 @@ function updateManifestForSalon(slug, options = {}) {
   const appName = rawName || "CityStyle profil";
   const shortName = appName.length > 12 ? appName.slice(0, 12).trim() : appName;
   const theme = normalizeSalonTheme(options.themeColor || "classic-red");
-  const iconUrl = options.iconUrl || makeInitialsIconDataUrl(appName, "#b91c1c");
-  const icon512 = options.icon512Url || iconUrl || makeInitialsIconDataUrl(appName, "#b91c1c");
+  const cleanIcon = String(options.iconUrl || "").trim();
+  const iconUrl = cleanIcon || makeInitialsIconDataUrl(appName, "#b91c1c");
+  const icon512 = String(options.icon512Url || "").trim() || iconUrl || makeInitialsIconDataUrl(appName, "#b91c1c");
   const encodedSlug = encodeURIComponent(slug);
   const manifestId = `${getAppBaseUrl()}?salon=${encodedSlug}`;
   const baseManifest = {
@@ -693,7 +694,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=business11copyfix`,
+    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=business65profilepwa`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -739,9 +740,9 @@ function showInstallHelp(noPromptMessage = "Na iPhone-u: Share → Add to Home S
   modal.className = "modal-backdrop install-help-modal";
   modal.innerHTML = `
     <div class="modal-card install-help-card">
-      <h3>Dodavanje prečice profila</h3>
+      <h3>Preuzimanje profila kao app</h3>
       <p>${escapeHtml(noPromptMessage)}</p>
-      <p class="muted">Ako browser ne ponudi instalaciju, to je ograničenje telefona/browsera kada je CityStyle već instaliran. Link ovog profila možete kopirati i ručno dodati kao prečicu.</p>
+      <p class="muted">Ako browser ne ponudi instalaciju, otvorite meni browsera i izaberite Dodaj na početni ekran. Na Androidu/Chrome-u prečica najčešće koristi logo firme; iOS ponekad koristi ikonicu stranice.</p>
       <div class="card-actions center">
         <button class="btn btn-primary" type="button" onclick="copyText('${escapeJs(currentUrl)}', this)">Kopiraj link profila</button>
         <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
@@ -849,7 +850,7 @@ async function registerPushForSalon(salonId) {
       return false;
     }
 
-    const registration = await navigator.serviceWorker.register("/sw.js?v=business11copyfix", { scope: "/" });
+    const registration = await navigator.serviceWorker.register("/sw.js?v=business65profilepwa", { scope: "/" });
     await navigator.serviceWorker.ready;
 
     let subscription = await registration.pushManager.getSubscription();
