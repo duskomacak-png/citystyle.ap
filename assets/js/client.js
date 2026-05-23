@@ -1127,19 +1127,27 @@ function setupProductFeedSwipe(modal) {
   let isMovingSlide = false;
   let wheelLocked = false;
 
+  function setActiveSlide(nextIndex) {
+    const safeIndex = Math.max(0, Math.min(slides.length - 1, Number(nextIndex || 0)));
+    currentSlideIndex = safeIndex;
+    slides.forEach((slide, idx) => slide.classList.toggle("active", idx === safeIndex));
+  }
+
   function goToSlide(nextIndex) {
     const safeIndex = Math.max(0, Math.min(slides.length - 1, Number(nextIndex || 0)));
-    if (safeIndex === currentSlideIndex && Math.abs(shell.scrollTop - (slides[safeIndex]?.offsetTop || 0)) < 4) return;
-    currentSlideIndex = safeIndex;
+    setActiveSlide(safeIndex);
+    if (Math.abs(shell.scrollTop - (slides[safeIndex]?.offsetTop || 0)) < 4) return;
     isMovingSlide = true;
     shell.scrollTo({ top: slides[safeIndex].offsetTop, behavior: "smooth" });
-    window.setTimeout(() => { isMovingSlide = false; }, 420);
+    window.setTimeout(() => { isMovingSlide = false; setActiveSlide(safeIndex); }, 420);
   }
+
+  setActiveSlide(0);
 
   shell.addEventListener("scroll", () => {
     if (isMovingSlide) return;
     const approxIndex = Math.round(shell.scrollTop / Math.max(1, shell.clientHeight));
-    currentSlideIndex = Math.max(0, Math.min(slides.length - 1, approxIndex));
+    setActiveSlide(approxIndex);
   }, { passive: true });
 
   shell.addEventListener("wheel", event => {
