@@ -34,3 +34,13 @@
 .viewer:before{height:150px!important;background:linear-gradient(to bottom,rgba(0,0,0,.55),rgba(0,0,0,0))!important;}
 .viewer:after{height:96px!important;background:linear-gradient(to top,rgba(0,0,0,.78),rgba(0,0,0,0))!important;}
 @media(max-width:720px){.shop-client-page{padding:10px 8px 18px}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.product-card img,.product-card .empty-img{aspect-ratio:3/4}}
+
+
+/* v57 profile visibility fix: show logo, phone, location */
+.shop-client-copy{flex:1 1 auto;min-width:0;}
+.shop-client-meta,.hero-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+.meta-pill{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);font-size:13px;font-weight:700;color:#e4e4e7;}
+.shop-logo-fallback{display:grid;place-items:center;font-size:26px;font-weight:900;color:#fff;}
+.owner-logo-preview{margin:6px 0 8px;}
+.owner-logo-preview img{width:88px;height:88px;border-radius:18px;object-fit:cover;background:#1d1d25;border:1px solid rgba(255,255,255,.12);display:block;}
+@media(max-width:720px){.shop-client-head{align-items:flex-start}.shop-logo,.shop-logo-fallback{width:64px;height:64px;border-radius:18px}.meta-pill{font-size:12px;padding:7px 10px}}

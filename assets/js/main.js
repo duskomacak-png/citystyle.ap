@@ -1,4 +1,4 @@
-const BUILD = 'fresh-salons-shoes-v6';
+const BUILD = 'fresh-salons-shoes-v7';
 const $ = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 function esc(v){return String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
@@ -35,7 +35,8 @@ function profilePhone(profile, settings={}){return settings.phone || settings.wh
 function profileName(p){return p?.salon_name || p?.name || p?.business_name || 'CityStyle profil'}
 function profileLogo(p,s={}){return s.logo_url || p.logo_url || ''}
 function profileText(p,s={}){return s.welcome_text || p.description || p.about || ''}
+function profileAddress(profile, settings={}){return settings.address || profile.address || [profile.city, profile.country].filter(Boolean).join(', ') || ''}
 function directLink(slug, code){return `${location.origin}${location.pathname}?salon=${encodeURIComponent(slug)}&product=${encodeURIComponent(code)}`}
 async function copyText(text){try{await navigator.clipboard.writeText(text);toast('Kopirano');}catch(e){prompt('Kopiraj link:',text)}}
-window.City = {esc,qs,toast,normalizePhone,normalizePriceInput,formatPrice,profileType,getProfile,getSettings,profilePhone,profileName,profileLogo,profileText,directLink,copyText,BUILD};
+window.City = {esc,qs,toast,normalizePhone,normalizePriceInput,formatPrice,profileType,getProfile,getSettings,profilePhone,profileName,profileLogo,profileText,profileAddress,directLink,copyText,BUILD};
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v='+BUILD).catch(()=>{}));}

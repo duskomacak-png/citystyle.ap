@@ -26,12 +26,13 @@ async function loadBaseData(){
 }
 function renderProfile(){
   const logo=City.profileLogo(currentProfile,currentSettings); const name=City.profileName(currentProfile); const text=City.profileText(currentProfile,currentSettings);
+  const phone=City.profilePhone(currentProfile,currentSettings); const address=City.profileAddress(currentProfile,currentSettings);
   if(currentKind==='shop'){
-    app.innerHTML=`<section class="shop-client-page"><div class="shop-client-head">${logo?`<img class="shop-logo" src="${City.esc(logo)}" alt="">`:''}<div><h1>${City.esc(name)}</h1>${text?`<p>${City.esc(text)}</p>`:''}</div></div><section id="content"></section></section>`;
+    app.innerHTML=`<section class="shop-client-page"><div class="shop-client-head">${logo?`<img class="shop-logo" src="${City.esc(logo)}" alt="Logo profila">`:`<div class="shop-logo shop-logo-fallback">${City.esc(name[0]||'S')}</div>`}<div class="shop-client-copy"><h1>${City.esc(name)}</h1>${text?`<p>${City.esc(text)}</p>`:''}<div class="shop-client-meta">${phone?`<span class="meta-pill">📞 ${City.esc(phone)}</span>`:''}${address?`<span class="meta-pill">📍 ${City.esc(address)}</span>`:''}</div></div></div><section id="content"></section></section>`;
     showProducts();
     return;
   }
-  app.innerHTML=`<section class="hero"><div>${logo?`<img class="brand-logo" src="${City.esc(logo)}" alt="">`:`<div class="brand-logo">${City.esc(name[0]||'C')}</div>`}</div><h1>${City.esc(name)}</h1>${text?`<p class="muted">${City.esc(text)}</p>`:''}<div class="actions"><button class="btn primary" onclick="showServices()">Zakaži termin</button><button class="btn ghost" onclick="installInfo()">Preuzmi app profila</button></div></section><section id="content"></section>`;
+  app.innerHTML=`<section class="hero"><div>${logo?`<img class="brand-logo" src="${City.esc(logo)}" alt="">`:`<div class="brand-logo">${City.esc(name[0]||'C')}</div>`}</div><h1>${City.esc(name)}</h1>${text?`<p class="muted">${City.esc(text)}</p>`:''}${phone||address?`<div class="hero-meta">${phone?`<span class="meta-pill">📞 ${City.esc(phone)}</span>`:''}${address?`<span class="meta-pill">📍 ${City.esc(address)}</span>`:''}</div>`:''}<div class="actions"><button class="btn primary" onclick="showServices()">Zakaži termin</button><button class="btn ghost" onclick="installInfo()">Preuzmi app profila</button></div></section><section id="content"></section>`;
   showServices();
 }
 function installInfo(){toast('Na telefonu: Chrome/Safari meni → Add to Home screen / Dodaj na početni ekran')}
