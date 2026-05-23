@@ -2080,3 +2080,56 @@ select:focus{
     background:#ffffff !important;
   }
 }
+
+
+/* v83 SAFE: TikTok-style fullscreen feeling for mobile product viewer
+   - keep product image fully visible
+   - add blurred fullscreen backdrop from the same image behind it
+   - no logic changes beyond targeting the main image for double-tap zoom */
+.shoe-viewer-media-bg{display:none}
+@media(max-width:899px){
+  .shoe-viewer .shoe-viewer-media{
+    overflow:hidden !important;
+  }
+  .shoe-viewer-media-bg{
+    display:block !important;
+    position:absolute;
+    inset:-10%;
+    z-index:0;
+    pointer-events:none;
+    opacity:.62;
+    filter:blur(24px) saturate(1.08) brightness(.72);
+    transform:scale(1.14);
+  }
+  .shoe-viewer-media-bg img{
+    width:100% !important;
+    height:100% !important;
+    object-fit:cover !important;
+    object-position:center center !important;
+    display:block !important;
+  }
+  .shoe-viewer-main-img{
+    position:relative;
+    z-index:1;
+    width:auto !important;
+    height:auto !important;
+    max-width:calc(100vw - 24px) !important;
+    max-height:calc(100vh - 250px) !important;
+    object-fit:contain !important;
+    object-position:center center !important;
+    display:block !important;
+    border-radius:26px !important;
+    box-shadow:0 20px 60px rgba(0,0,0,.34);
+    background:#f3f3f5 !important;
+  }
+  .shoe-viewer .shoe-viewer-media img:not(.shoe-viewer-main-img){
+    background:transparent !important;
+    border-radius:0 !important;
+  }
+  .shoe-viewer .shoe-viewer-media{
+    padding:86px 10px 140px !important;
+  }
+}
+@media(min-width:900px){
+  .shoe-viewer-main-img{display:block}
+}

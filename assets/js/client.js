@@ -1402,7 +1402,7 @@ function renderShoeViewer() {
   }
   viewer.classList.toggle("shoe-viewer-zoomed", !!csViewerState.zoomed);
   viewer.innerHTML = `
-    <div class="shoe-viewer-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}" crossorigin="anonymous" onload="csSmartCropShoeImage(this)">` : `<span>Bez slike</span>`}</div>
+    <div class="shoe-viewer-media">${img ? `<div class="shoe-viewer-media-bg" aria-hidden="true"><img src="${escapeHtml(img)}" alt="" crossorigin="anonymous"></div><img class="shoe-viewer-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}" crossorigin="anonymous" onload="csSmartCropShoeImage(this)">` : `<span>Bez slike</span>`}</div>
     <div class="shoe-viewer-top"><small>${escapeHtml(csProductCode(product))}${product.category ? " • " + escapeHtml(product.category) : ""}${imgs.length > 1 ? ` • ${csViewerState.image + 1}/${imgs.length}` : ""}</small><h2>${escapeHtml(product.name || "Patike")}</h2><b>${escapeHtml(csProductPrice(product))}</b></div>
     <button class="shoe-viewer-close" type="button" onclick="closeShoeViewer()">×</button>
     ${imgs.length > 1 ? `<button class="shoe-arrow shoe-arrow-left" type="button" onclick="event.stopPropagation(); shoeChangeImage(-1)">‹</button><button class="shoe-arrow shoe-arrow-right" type="button" onclick="event.stopPropagation(); shoeChangeImage(1)">›</button>` : ""}
@@ -1414,7 +1414,7 @@ function renderShoeViewer() {
     const dx = t.clientX - csViewerState.startX;
     const dy = t.clientY - csViewerState.startY;
     const moved = Math.abs(dx) > 14 || Math.abs(dy) > 14;
-    const tappedImage = !!e.target?.closest?.(".shoe-viewer-media img");
+    const tappedImage = !!e.target?.closest?.(".shoe-viewer-main-img");
     if (!moved && tappedImage && window.matchMedia?.("(max-width: 899px)")?.matches) {
       const now = Date.now();
       const dist = Math.hypot((t.clientX || 0) - (csViewerState.lastTapX || 0), (t.clientY || 0) - (csViewerState.lastTapY || 0));
