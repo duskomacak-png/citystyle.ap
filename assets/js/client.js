@@ -1272,7 +1272,11 @@ function csProductImages(product = {}) {
 function csProductPrice(product = {}) { return renderProductPrice(product); }
 function csProductUrl(product = {}) {
   const code = csProductCode(product);
-  return `${window.location.origin}${window.App?.getAppPath ? window.App.getAppPath('') : '/'}?salon=${encodeURIComponent(currentSalon.slug)}&product=${encodeURIComponent(code)}`;
+  const slug = currentSalon?.slug || "";
+  const base = window.App?.getSalonPublicLink
+    ? window.App.getSalonPublicLink(slug)
+    : `${window.location.origin}/?salon=${encodeURIComponent(slug)}`;
+  return `${base}&product=${encodeURIComponent(code)}`;
 }
 
 async function loadProducts() {
