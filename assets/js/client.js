@@ -1179,6 +1179,8 @@ function csProductImages(product = {}) {
   return arr;
 }
 function csProductPrice(product = {}) { return renderProductPrice(product); }
+function csProductStatus(product = {}) { return getProductStatusLabel(product.stock_status); }
+function csProductPublicDescription(product = {}) { return String(product.description || "").trim(); }
 function csProductUrl(product = {}) {
   const code = csProductCode(product);
   const slug = currentSalon?.slug || "";
@@ -1284,9 +1286,14 @@ function renderShoeShopHome(settings = {}) {
 function renderShoeProductCard(product, index) {
   const imgs = csProductImages(product);
   const img = imgs[0] || "";
+  const status = csProductStatus(product);
   return `<button class="shoe-card" type="button" onclick="openShoeViewer(${index})">
     <div class="shoe-card-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}">` : `<span>Bez slike</span>`}</div>
-    <div class="shoe-card-info"><small>${escapeHtml(csProductCode(product))}${product.category ? " • " + escapeHtml(product.category) : ""}</small><strong>${escapeHtml(product.name || "Patike")}</strong><b>${escapeHtml(csProductPrice(product))}</b></div>
+    <div class="shoe-card-info">
+      <small>${escapeHtml(csProductCode(product))}${product.category ? " • " + escapeHtml(product.category) : ""}</small>
+      <strong>${escapeHtml(product.name || "Patike")}</strong>
+      <div class="shoe-card-bottom"><b>${escapeHtml(csProductPrice(product))}</b><span>${escapeHtml(status)}</span></div>
+    </div>
   </button>`;
 }
 
@@ -1425,18 +1432,21 @@ function renderShoeViewer() {
     document.body.appendChild(viewer);
   }
   viewer.classList.toggle("shoe-viewer-zoomed", !!csViewerState.zoomed);
+  const productDescription = csProductPublicDescription(product);
   viewer.innerHTML = `
     <div class="shoe-viewer-media">${img ? `<div class="shoe-viewer-media-bg" aria-hidden="true"><img src="${escapeHtml(img)}" alt="" crossorigin="anonymous"></div><img class="shoe-viewer-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}" crossorigin="anonymous" onload="csSmartCropShoeImage(this)">` : `<span>Bez slike</span>`}</div>
     <div class="shoe-viewer-top">
       <div class="shoe-viewer-meta-row">
         <small class="shoe-viewer-chip shoe-viewer-chip-code">${escapeHtml(csProductCode(product))}</small>
         ${product.category ? `<small class="shoe-viewer-chip">${escapeHtml(product.category)}</small>` : ""}
-        ${imgs.length > 1 ? `<small class="shoe-viewer-chip">${csViewerState.image + 1}/${imgs.length}</small>` : ""}
+        <small class="shoe-viewer-chip">${escapeHtml(csProductStatus(product))}</small>
+        ${imgs.length > 1 ? `<small class="shoe-viewer-chip">Slika ${csViewerState.image + 1}/${imgs.length}</small>` : ""}
       </div>
       <div class="shoe-viewer-headline">
         <h2><span>${escapeHtml(product.name || "Patike")}</span></h2>
         <b><span>${escapeHtml(csProductPrice(product))}</span></b>
       </div>
+      ${productDescription ? `<p class="shoe-viewer-description">${escapeHtml(productDescription)}</p>` : ""}
     </div>
     <button class="shoe-viewer-close" type="button" onclick="closeShoeViewer()">×</button>
     ${imgs.length > 1 ? `<button class="shoe-arrow shoe-arrow-left" type="button" onclick="event.stopPropagation(); shoeChangeImage(-1)">‹</button><button class="shoe-arrow shoe-arrow-right" type="button" onclick="event.stopPropagation(); shoeChangeImage(1)">›</button>` : ""}
@@ -1516,7 +1526,25 @@ function shoeChangeImage(delta) {
 }
 function shoeSetImage(i) { csViewerState.image = i; csViewerState.zoomed = false; csResetShoePan(); renderShoeViewer(); }
 async function shareShoeProduct(e) { e?.stopPropagation?.(); const p=currentShoeProduct(); const url=csProductUrl(p); const text=`${p.name || 'Patike'} - ${csProductPrice(p)}`; if(navigator.share){try{await navigator.share({title:p.name||'Oglas',text,url});return;}catch(_){}} navigator.clipboard?.writeText(url); window.App.showMessage("Link oglasa je kopiran.", "success"); }
-function askShoeProduct(e) { e?.stopPropagation?.(); const p=currentShoeProduct(); const phone=csWhatsAppPhone(currentSalon._publicPhone || ""); if(!phone) return window.App.showMessage("Vlasnik nije upisao WhatsApp/telefon.", "error"); const msg=encodeURIComponent(`Zdravo, zanima me ovaj oglas:\n\nOglas: ${csProductCode(p)}\nNaziv: ${p.name || 'Patike'}\nCena: ${csProductPrice(p)}\nLink: ${csProductUrl(p)}`); window.location.href=`https://wa.me/${phone}?text=${msg}`; }
+function askShoeProduct(e) {
+  e?.stopPropagation?.();
+  const p = currentShoeProduct();
+  const phone = csWhatsAppPhone(currentSalon._publicPhone || "");
+  if (!phone) return window.App.showMessage("Vlasnik nije upisao WhatsApp/telefon.", "error");
+  const lines = [
+    "Zdravo, zanima me ovaj oglas:",
+    "",
+    `Oglas: ${csProductCode(p)}`,
+    `Naziv: ${p.name || 'Patike'}`,
+    p.category ? `Brend / kategorija: ${p.category}` : "",
+    `Cena: ${csProductPrice(p)}`,
+    `Status: ${csProductStatus(p)}`,
+    csProductPublicDescription(p) ? `Opis: ${csProductPublicDescription(p)}` : "",
+    `Link: ${csProductUrl(p)}`
+  ].filter(Boolean);
+  const msg = encodeURIComponent(lines.join("\n"));
+  window.location.href = `https://wa.me/${phone}?text=${msg}`;
+}
 function callShoeShop(e) { e?.stopPropagation?.(); const phone=csSafePhone(currentSalon._publicPhone || ""); if(!phone) return window.App.showMessage("Telefon nije upisan.", "error"); window.location.href=`tel:${phone}`; }
 
 Object.assign(window, { openShoeViewer, closeShoeViewer, shoeChangeProduct, shoeChangeImage, shoeSetImage, shareShoeProduct, askShoeProduct, callShoeShop, csSmartCropShoeImage, csToggleShoeZoom, csApplyShoePanZoom });
