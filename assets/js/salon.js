@@ -276,7 +276,7 @@ function garagePackageLabel() {
   }[pkg] || "Biznis";
 }
 
-function renderSalonDashboard() {
+function renderSalonDashboardLegacyDisabled() {
   const labels = {
     appointments: S("tabAppointments", "Zahtevi / termini"),
     services: S("tabServices", "Usluge / ponuda"),
@@ -312,7 +312,7 @@ function setActiveTab(section) {
   document.querySelectorAll("#salon-tabs button").forEach(btn => btn.classList.toggle("active", btn.dataset.section === section));
 }
 
-async function showSection(section) {
+async function showSectionLegacyDisabled(section) {
   if (!currentSalonId) return renderSalonLogin();
   setActiveTab(section);
   if (section === "appointments") return renderAppointments();
@@ -750,38 +750,19 @@ function openClientMessage(id, type = "confirmed") {
 function normalizePhoneForTel(phone) {
   const raw = String(phone || "").trim();
   if (!raw) return "";
-
-  const digits = raw.replace(/\D/g, "");
-
-  if (raw.startsWith("+")) return `+${digits}`;
-  if (raw.startsWith("00")) return `+${digits.slice(2)}`;
-  if (digits.startsWith("0")) return `+381${digits.slice(1)}`;
-  if (/^(381|387|385|382|389|386|49|43)\d{6,}$/.test(digits)) return `+${digits}`;
-
-  return digits || "";
+  let digits = raw.replace(/\D/g, "");
+  if (!digits) return "";
+  if (raw.startsWith("00")) digits = digits.slice(2);
+  if (digits.startsWith("381") && digits.length >= 10) return `+${digits}`;
+  if (digits.startsWith("0") && digits.length >= 8) return `+381${digits.slice(1)}`;
+  // Srbija-only: broj bez nule tretiramo kao mobilni/lokalni srpski broj.
+  if (/^[1-9]\d{6,}$/.test(digits)) return `+381${digits}`;
+  return "";
 }
 
 function normalizePhoneForWhatsApp(phone) {
-  const raw = String(phone || "").trim();
-  if (!raw) return "";
-
-  const digits = raw.replace(/\D/g, "");
-  if (!digits) return "";
-
-  // +381, +387, +385...
-  if (raw.startsWith("+")) return digits;
-
-  // 00381, 00387, 00385...
-  if (raw.startsWith("00")) return digits.slice(2);
-
-  // Lokalni srpski format 06... tretiramo kao +381.
-  // Za BiH/Hrvatsku treba uneti +387 / +385 da WhatsApp ode na pravi broj.
-  if (digits.startsWith("0") && digits.length >= 8) return `381${digits.slice(1)}`;
-
-  // Ako je broj već unet bez plusa, ali s pozivnim brojem države.
-  if (/^(381|387|385|382|389|386|49|43)\d{6,}$/.test(digits)) return digits;
-
-  return "";
+  const tel = normalizePhoneForTel(phone);
+  return tel ? tel.replace(/\D/g, "") : "";
 }
 
 function changeAppointmentFilter() {
@@ -902,7 +883,6 @@ async function showAddServiceForm(serviceId = null) {
       <label>Valuta</label>
       <select id="service-currency">
         <option value="RSD" ${!service || (service.currency || "RSD") === "RSD" ? "selected" : ""}>Dinari (RSD)</option>
-        <option value="EUR" ${service && service.currency === "EUR" ? "selected" : ""}>Evri (EUR)</option>
       </select>
       <p class="muted form-help">Ako usluga ima raspon cene, unesite npr. 500 u “Cena od” i 800 u “Cena do”. Ako je cena po dogovoru, unesite 0.</p>
       <label>Trajanje u minutima</label><input id="service-duration" type="number" min="5" step="5" value="${service ? Number(service.duration_minutes || 0) : ""}" placeholder="45">
@@ -922,7 +902,7 @@ async function saveService() {
   const price = Number(document.getElementById("service-price")?.value || 0);
   const priceToRaw = document.getElementById("service-price-to")?.value;
   const priceTo = priceToRaw === "" || priceToRaw === undefined ? null : Number(priceToRaw);
-  const currency = window.App.normalizeCurrency(document.getElementById("service-currency")?.value || "RSD");
+  const currency = "RSD";
   const duration = Number(document.getElementById("service-duration")?.value || 0);
   if (!name || price < 0 || (priceTo !== null && priceTo < 0) || duration <= 0) return window.App.showMessage("Unesite naziv usluge, cenu, valutu i trajanje.", "error");
   if (priceTo !== null && priceTo > 0 && priceTo < price) return window.App.showMessage("Cena do ne može biti manja od cene od.", "error");
@@ -982,7 +962,7 @@ async function deleteService(id) {
   await loadServices();
 }
 
-async function renderProducts() {
+async function renderProductsLegacyDisabled() {
   const content = document.getElementById("salon-content");
   content.innerHTML = `
     <div class="section-head">
@@ -1016,7 +996,7 @@ function productStatusLabel(status) {
   }[status] || "Na upit";
 }
 
-async function loadProducts() {
+async function loadProductsLegacyDisabled() {
   const list = document.getElementById("products-list");
   if (!list) return;
   const { data: products, error } = await window.db
@@ -1065,7 +1045,7 @@ async function loadProducts() {
   `).join("");
 }
 
-async function showAddProductForm(productId = null) {
+async function showAddProductFormLegacyDisabled(productId = null) {
   if (stopAdminOwnerPreviewEdit()) return;
   const box = document.getElementById("product-form-box");
   let product = null;
@@ -1092,7 +1072,7 @@ async function showAddProductForm(productId = null) {
           <label>Valuta</label>
           <select id="product-currency">
             <option value="RSD" ${!product || (product.currency || "RSD") === "RSD" ? "selected" : ""}>Dinari (RSD)</option>
-            <option value="EUR" ${product && product.currency === "EUR" ? "selected" : ""}>Evri (EUR)</option>
+            
           </select>
         </div>
       </div>
@@ -1114,14 +1094,14 @@ async function showAddProductForm(productId = null) {
 function hideProductForm() { const box = document.getElementById("product-form-box"); if (box) box.innerHTML = ""; }
 async function editProduct(id) { await showAddProductForm(id); }
 
-async function saveProduct() {
+async function saveProductLegacyDisabled() {
   if (stopAdminOwnerPreviewEdit()) return;
   const id = document.getElementById("product-edit-id")?.value || "";
   const name = document.getElementById("product-name")?.value.trim();
   const category = document.getElementById("product-category")?.value.trim() || null;
   const description = document.getElementById("product-description")?.value.trim() || null;
   const price = Number(document.getElementById("product-price")?.value || 0);
-  const currency = window.App.normalizeCurrency(document.getElementById("product-currency")?.value || "RSD");
+  const currency = "RSD";
   const stock_status = document.getElementById("product-stock-status")?.value || "available";
   const sort_order = Number(document.getElementById("product-sort-order")?.value || 100);
 
@@ -1305,7 +1285,6 @@ async function showGarageForm(listingId = "") {
         <label>Cena<input id="garage-price" type="number" step="0.01" value="${salonEscapeHtml(item?.price || '')}" placeholder="8900"></label>
         <label>Valuta
           <select id="garage-currency">
-            <option value="EUR" ${window.App.normalizeCurrency(item?.currency || 'EUR')==='EUR'?'selected':''}>EUR</option>
             <option value="RSD" ${window.App.normalizeCurrency(item?.currency || 'EUR')==='RSD'?'selected':''}>RSD</option>
           </select>
         </label>
@@ -1602,7 +1581,7 @@ async function saveWorkingHours() {
   await loadWorkingHours();
 }
 
-async function renderSalonSettings() {
+async function renderSalonSettingsLegacyDisabled() {
   const salonLink = window.App.getSalonPublicLink(currentSalon.slug);
   const previewLink = `${salonLink}${salonLink.includes("?") ? "&" : "?"}ownerPreview=1`;
   const qrUrl = window.App.getQrImageUrl(salonLink, 260);
@@ -1635,7 +1614,7 @@ async function renderSalonSettings() {
       <label>Opis / poruka korisnicima</label>
       <textarea id="welcome-text" rows="4" placeholder="Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev."></textarea>
       <label>Telefon koji korisnici vide</label>
-      <input id="salon-phone" type="text" placeholder="+381 64 123 4567">
+      <input id="salon-phone" type="text" placeholder="064 123 4567">
       <p class="field-help">Unesite broj sa pozivnim brojem države ako želite WhatsApp ili direktan poziv.</p>
       <label>Adresa / lokacija</label>
       <input id="salon-address" type="text" placeholder="Adresa ili mesto poslovanja">
@@ -1650,7 +1629,7 @@ async function renderSalonSettings() {
   bindSettingsPreview();
 }
 
-async function loadCurrentSettings() {
+async function loadCurrentSettingsLegacyDisabled() {
   const { data: settings } = await window.db.from("salon_settings").select("*").eq("salon_id", currentSalonId).maybeSingle();
   if (settings) {
     document.getElementById("welcome-title").value = settings.welcome_title || "";
@@ -1686,7 +1665,7 @@ function updateSettingsPreview() {
   `;
 }
 
-async function saveSettings() {
+async function saveSettingsLegacyDisabled() {
   if (stopAdminOwnerPreviewEdit()) return;
   const payload = {
     salon_id: currentSalonId,
@@ -1845,7 +1824,7 @@ async function showAddProductForm(productId = null) {
     <label>Naziv proizvoda</label><input id="product-name" type="text" value="${product ? salonEscapeHtml(product.name) : ""}" placeholder="Nike Air Max">
     <label>Brend / kategorija</label><input id="product-category" type="text" value="${product ? salonEscapeHtml(product.category || "") : ""}" placeholder="Nike, Adidas, Jordan...">
     <label>Opis / brojevi / stanje</label><textarea id="product-description" rows="3" placeholder="Brojevi, stanje, napomena...">${product ? salonEscapeHtml(product.description || "") : ""}</textarea>
-    <div class="grid two"><div><label>Cena</label><input id="product-price" type="text" inputmode="numeric" value="${product ? salonEscapeHtml(product.price || "") : ""}" placeholder="12.400"></div><div><label>Valuta</label><select id="product-currency"><option value="RSD" ${!product || (product.currency || "RSD") === "RSD" ? "selected" : ""}>RSD</option><option value="EUR" ${product && product.currency === "EUR" ? "selected" : ""}>EUR</option></select></div></div>
+    <div class="grid two"><div><label>Cena</label><input id="product-price" type="text" inputmode="numeric" value="${product ? salonEscapeHtml(product.price || "") : ""}" placeholder="12.400"></div><div><label>Valuta</label><select id="product-currency"><option value="RSD" selected>RSD</option></select></div></div>
     <label>Status</label><select id="product-stock-status"><option value="available" ${!product || product.stock_status === "available" ? "selected" : ""}>Na stanju</option><option value="preorder" ${product && product.stock_status === "preorder" ? "selected" : ""}>Po porudžbini</option><option value="out" ${product && product.stock_status === "out" ? "selected" : ""}>Trenutno nema</option></select>
     <label>Redosled</label><input id="product-sort-order" type="number" value="${product ? Number(product.sort_order || 100) : 100}">
     <label>Glavna slika proizvoda</label>${product?.image_url ? `<img class="owner-product-preview" src="${salonEscapeHtml(product.image_url)}" alt="Slika proizvoda"><p class="field-help">Ako ne izaberete novu sliku, ostaje postojeća.</p>` : ""}<input id="product-main-image" type="file" accept="image/png,image/jpeg,image/webp">
@@ -1861,7 +1840,7 @@ async function saveProduct() {
   const category = document.getElementById("product-category")?.value.trim() || null;
   const description = document.getElementById("product-description")?.value.trim() || null;
   const price = normalizeOwnerPrice(document.getElementById("product-price")?.value || 0);
-  const currency = window.App.normalizeCurrency(document.getElementById("product-currency")?.value || "RSD");
+  const currency = "RSD";
   const stock_status = document.getElementById("product-stock-status")?.value || "available";
   const sort_order = Number(document.getElementById("product-sort-order")?.value || 100);
   let existing = null;
@@ -1898,7 +1877,7 @@ async function renderSalonSettings() {
     <div class="card center"><h3>QR kod profila</h3><p class="muted">Ovaj QR kod vodi korisnike direktno na javnu stranicu profila.</p><img class="qr-img" src="${qrUrl}" alt="QR kod profila"><div class="link-box"><small>Link za klijente:</small><input readonly value="${salonLink}"></div><div class="card-actions" style="justify-content:center"><button class="btn btn-primary" type="button" onclick="copyMySalonLink()">Kopiraj link</button><a class="btn btn-dark" href="${previewLink}">Pogledaj javnu stranicu</a></div></div>
     <div class="card"><h3>Logo profila</h3><p class="muted">Logo se prikazuje uz naziv i kontakt prodavnice/salona.</p><input type="file" id="logo-upload" accept="image/png,image/jpeg,image/webp"><button class="btn btn-primary" type="button" onclick="uploadLogo()">Postavi / promeni logo</button><div id="current-logo" class="image-preview-box"></div></div>
     ${shop ? `<div class="card"><h3>Početna slika prodavnice</h3><p class="muted">Ova velika slika se prikazuje iznad oglasa. Možete ubaciti svoju ili generisanu sliku.</p><input type="file" id="cover-upload" accept="image/png,image/jpeg,image/webp"><button class="btn btn-primary" type="button" onclick="uploadCoverImage()">Postavi / promeni početnu sliku</button><div id="current-cover" class="image-preview-box"></div></div>` : ""}
-    <div class="card settings-text-card"><h3>Podaci profila</h3><label>Naziv profila koji korisnici vide</label><input id="welcome-title" type="text" placeholder="${salonEscapeHtml(currentSalon?.salon_name || 'Naziv biznisa')}"><label>${shop ? "Kratak opis ispod loga" : "Opis / poruka korisnicima"}</label><textarea id="welcome-text" rows="4" placeholder="${shop ? "Nova kolekcija patika, dostupni brojevi i porudžbine preko WhatsApp-a." : "Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev."}"></textarea><label>Telefon / WhatsApp</label><input id="salon-phone" type="text" placeholder="+381 64 123 4567"><label>Adresa / lokacija</label><input id="salon-address" type="text" placeholder="Adresa ili mesto poslovanja"><div class="settings-preview" id="settings-public-preview"></div><div class="card-actions settings-main-actions"><button class="btn btn-primary" type="button" onclick="saveSettings()">${S("save", "Sačuvaj")} podešavanja</button><button class="btn btn-dark" type="button" onclick="saveSettingsAndPreview()">${S("save", "Sačuvaj")} i pogledaj javnu stranicu</button></div></div>`;
+    <div class="card settings-text-card"><h3>Podaci profila</h3><label>Naziv profila koji korisnici vide</label><input id="welcome-title" type="text" placeholder="${salonEscapeHtml(currentSalon?.salon_name || 'Naziv biznisa')}"><label>${shop ? "Kratak opis ispod loga" : "Opis / poruka korisnicima"}</label><textarea id="welcome-text" rows="4" placeholder="${shop ? "Nova kolekcija patika, dostupni brojevi i porudžbine preko WhatsApp-a." : "Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev."}"></textarea><label>Telefon / WhatsApp</label><input id="salon-phone" type="text" placeholder="064 123 4567"><label>Adresa / lokacija</label><input id="salon-address" type="text" placeholder="Adresa ili mesto poslovanja"><div class="settings-preview" id="settings-public-preview"></div><div class="card-actions settings-main-actions"><button class="btn btn-primary" type="button" onclick="saveSettings()">${S("save", "Sačuvaj")} podešavanja</button><button class="btn btn-dark" type="button" onclick="saveSettingsAndPreview()">${S("save", "Sačuvaj")} i pogledaj javnu stranicu</button></div></div>`;
   await loadCurrentSettings(); bindSettingsPreview();
 }
 

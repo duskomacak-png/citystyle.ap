@@ -913,20 +913,13 @@ function showBookingForm() {
           <label>${C("phoneCountry", "Država za WhatsApp broj")}</label>
           <select id="client-phone-country" class="phone-country-select">
             <option value="381" selected>🇷🇸 Srbija +381</option>
-            <option value="387">🇧🇦 Bosna i Hercegovina +387</option>
-            <option value="385">🇭🇷 Hrvatska +385</option>
-            <option value="382">🇲🇪 Crna Gora +382</option>
-            <option value="386">🇸🇮 Slovenija +386</option>
-            <option value="389">🇲🇰 Severna Makedonija +389</option>
-            <option value="49">🇩🇪 Nemačka +49</option>
-            <option value="43">🇦🇹 Austrija +43</option>
           </select>
         </div>
       </div>
 
       <label>${C("phoneWhatsapp", "Broj telefona / WhatsApp")}</label>
       <input id="client-phone" type="tel" inputmode="tel" placeholder="64 123 4567">
-      <p class="field-help">${C("phoneHelp", "Izaberite državu i unesite lokalni broj. Možete uneti broj sa nulom ili bez nule. Aplikacija će ga sačuvati u ispravnom WhatsApp formatu prema izabranoj državi. Ako unesete broj sa +, koristi se direktno.")}</p>
+      <p class="field-help">${C("phoneHelp", "Aplikacija je podešena za Srbiju. Unesite broj kao 064 123 4567 ili +381 64 123 4567.")}</p>
 
       ${!isSalonProfile ? `
         <label>${escapeHtml(profileLabels.requestKindLabel)}</label>
@@ -1047,26 +1040,13 @@ function setupPhoneCountryAutoZero() {
 function normalizeClientPhoneForStorage(phone, countryCode = "381") {
   const raw = String(phone || "").trim();
   if (!raw) return "";
-
-  // Ako korisnik već unese međunarodni format, koristi ga direktno.
-  if (raw.startsWith("+")) {
-    const international = raw.replace(/\D/g, "");
-    return international.length >= 8 ? `+${international}` : "";
-  }
-
   let digits = raw.replace(/\D/g, "");
   if (!digits) return "";
-
-  if (digits.startsWith("00")) {
-    digits = digits.slice(2);
-    return digits.length >= 8 ? `+${digits}` : "";
-  }
-
-  const cc = String(countryCode || "381").replace(/\D/g, "") || "381";
-  if (digits.startsWith("0")) digits = digits.slice(1);
-
-  const full = `${cc}${digits}`;
-  return full.length >= 8 ? `+${full}` : "";
+  if (raw.startsWith("00")) digits = digits.slice(2);
+  if (digits.startsWith("381") && digits.length >= 10) return `+${digits}`;
+  if (digits.startsWith("0") && digits.length >= 8) return `+381${digits.slice(1)}`;
+  if (/^[1-9]\d{6,}$/.test(digits)) return `+381${digits}`;
+  return "";
 }
 
 async function submitAppointment() {
