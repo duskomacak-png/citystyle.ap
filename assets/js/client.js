@@ -868,6 +868,8 @@ function showBookingForm() {
   }
 
   const today = window.BookingLogic?.getLocalDateString ? window.BookingLogic.getLocalDateString() : new Date().toISOString().split("T")[0];
+  const businessType = window.App.normalizeBusinessType(currentSalon?.business_type);
+  const isSalonProfile = businessType === "salon";
   const profileLabels = window.App.getBusinessProfileLabels(currentSalon?.business_type);
   selectedDate = today;
   selectedTime = null;
@@ -926,10 +928,12 @@ function showBookingForm() {
       <input id="client-phone" type="tel" inputmode="tel" placeholder="64 123 4567">
       <p class="field-help">${C("phoneHelp", "Izaberite državu i unesite lokalni broj. Možete uneti broj sa nulom ili bez nule. Aplikacija će ga sačuvati u ispravnom WhatsApp formatu prema izabranoj državi. Ako unesete broj sa +, koristi se direktno.")}</p>
 
-      <label>${escapeHtml(profileLabels.requestKindLabel)}</label>
-      <input id="client-request-kind" type="text" placeholder="${escapeHtml(profileLabels.requestKindPlaceholder)}">
+      ${!isSalonProfile ? `
+        <label>${escapeHtml(profileLabels.requestKindLabel)}</label>
+        <input id="client-request-kind" type="text" placeholder="${escapeHtml(profileLabels.requestKindPlaceholder)}">
+      ` : ""}
 
-      ${(window.App.normalizeBusinessType(currentSalon?.business_type) === "repair" || window.App.normalizeBusinessType(currentSalon?.business_type) === "craft") ? `
+      ${(businessType === "repair" || businessType === "craft") ? `
         <label>Adresa / lokacija</label>
         <input id="client-address" type="text" placeholder="Mesto, ulica ili lokacija problema">
         <label>Hitnost</label>
@@ -940,8 +944,10 @@ function showBookingForm() {
         </select>
       ` : ""}
 
-      <label>${escapeHtml(profileLabels.noteLabel)}</label>
-      <textarea id="client-note" rows="4" placeholder="${escapeHtml(profileLabels.notePlaceholder)}"></textarea>
+      ${!isSalonProfile ? `
+        <label>${escapeHtml(profileLabels.noteLabel)}</label>
+        <textarea id="client-note" rows="4" placeholder="${escapeHtml(profileLabels.notePlaceholder)}"></textarea>
+      ` : ""}
 
       <button class="btn btn-primary booking-submit-btn" type="button" onclick="submitAppointment()">${escapeHtml(profileLabels.action)}</button>
     </div>
