@@ -902,6 +902,7 @@ function showAddSalonForm() {
   });
   if (packageSelect && helper) packageSelect.addEventListener("change", updateBusinessHelper);
   updateBusinessHelper();
+  setupAdminCompanyCodeLiveValidation("new-business-code");
 }
 
 async function handleAddBusinessProfile(event) {
@@ -909,7 +910,7 @@ async function handleAddBusinessProfile(event) {
 
   const cleanName = getAdminFormValue("new-business-name");
   const cleanEmail = getAdminFormValue("new-business-email").toLowerCase();
-  const cleanCode = getAdminFormValue("new-business-code");
+  const cleanCode = normalizeOwnerCode(getAdminFormValue("new-business-code"));
   const city = getAdminFormValue("new-business-city") || null;
   const phone = getAdminFormValue("new-business-phone") || null;
   const ownerPhoneRaw = getAdminFormValue("new-business-owner-phone") || phone || null;
@@ -920,6 +921,18 @@ async function handleAddBusinessProfile(event) {
 
   if (!cleanName || !cleanEmail || !cleanCode) {
     window.App.showMessage("Popuni naziv, email vlasnika i kod firme.", "error");
+    return;
+  }
+
+  const duplicateCodeSalon = adminFindDuplicateCompanyCode(cleanCode);
+  if (duplicateCodeSalon) {
+    const codeInput = document.getElementById("new-business-code");
+    if (codeInput) {
+      codeInput.classList.remove("admin-code-valid");
+      codeInput.classList.add("admin-code-invalid");
+      codeInput.focus();
+    }
+    window.App.showMessage(`Kod ${cleanCode} već koristi profil: ${duplicateCodeSalon.salon_name || "bez naziva"}. Unesi drugi kod.`, "error");
     return;
   }
 
@@ -958,7 +971,18 @@ async function handleAddBusinessProfile(event) {
 
   if (error) {
     console.error(error);
-    window.App.showMessage("Greška pri dodavanju profila: " + error.message, "error");
+    const message = String(error.message || "");
+    if (message.toLowerCase().includes("company_code") || message.toLowerCase().includes("unique")) {
+      window.App.showMessage("Ovaj kod već postoji u bazi. Unesi drugi kod za profil.", "error");
+      const codeInput = document.getElementById("new-business-code");
+      if (codeInput) {
+        codeInput.classList.remove("admin-code-valid");
+        codeInput.classList.add("admin-code-invalid");
+        codeInput.focus();
+      }
+    } else {
+      window.App.showMessage("Greška pri dodavanju profila: " + error.message, "error");
+    }
     if (submitBtn) {
       submitBtn.disabled = false;
       submitBtn.textContent = "Sačuvaj biznis profil";
@@ -1151,6 +1175,65 @@ function normalizeOwnerCode(code) {
     .replace(/[^A-Z0-9-]/g, "")
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function adminFindDuplicateCompanyCode(code, ignoreSalonId = null) {
+  const cleanCode = normalizeOwnerCode(code);
+  if (!cleanCode) return null;
+  return (adminSalonsCache || []).find(item =>
+    String(item.id) !== String(ignoreSalonId || "") &&
+    normalizeOwnerCode(item.company_code) === cleanCode &&
+    item.status !== "deleted" &&
+    !item.is_deleted
+  ) || null;
+}
+
+function setupAdminCompanyCodeLiveValidation(inputId, ignoreSalonId = null) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  let status = document.getElementById(`${inputId}-status`);
+  if (!status) {
+    status = document.createElement("small");
+    status.id = `${inputId}-status`;
+    status.className = "admin-code-status";
+    input.insertAdjacentElement("afterend", status);
+  }
+
+  const update = () => {
+    const cleanCode = normalizeOwnerCode(input.value);
+    if (input.value !== cleanCode) input.value = cleanCode;
+    input.classList.remove("admin-code-valid", "admin-code-invalid");
+
+    if (!cleanCode) {
+      input.classList.add("admin-code-invalid");
+      status.textContent = "Kod je obavezan i mora biti jedinstven.";
+      status.className = "admin-code-status admin-code-status-bad";
+      return;
+    }
+
+    if (cleanCode.length < 4) {
+      input.classList.add("admin-code-invalid");
+      status.textContent = "Kod je prekratak.";
+      status.className = "admin-code-status admin-code-status-bad";
+      return;
+    }
+
+    const duplicate = adminFindDuplicateCompanyCode(cleanCode, ignoreSalonId);
+    if (duplicate) {
+      input.classList.add("admin-code-invalid");
+      status.textContent = `Kod već koristi: ${duplicate.salon_name || "drugi profil"}.`;
+      status.className = "admin-code-status admin-code-status-bad";
+      return;
+    }
+
+    input.classList.add("admin-code-valid");
+    status.textContent = "Kod je slobodan i može da se koristi.";
+    status.className = "admin-code-status admin-code-status-ok";
+  };
+
+  input.addEventListener("input", update);
+  input.addEventListener("blur", update);
+  update();
 }
 
 async function changeOwnerAccessCode(id) {
