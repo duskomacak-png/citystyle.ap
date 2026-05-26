@@ -1319,6 +1319,10 @@ function csViewerPhoneIcon(){
   return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 16.2v3a1.8 1.8 0 0 1-1.96 1.8C10.74 20.28 3.72 13.26 3 4.96A1.8 1.8 0 0 1 4.8 3h3a1.8 1.8 0 0 1 1.8 1.55c.14 1.02.43 2 .85 2.92a1.8 1.8 0 0 1-.41 2.02l-1.27 1.27a14.4 14.4 0 0 0 4.47 4.47l1.27-1.27a1.8 1.8 0 0 1 2.02-.41c.92.42 1.9.71 2.92.85A1.8 1.8 0 0 1 21 16.2Z"></path></svg>';
 }
 
+function csViewerZoomIcon(){
+  return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M15.5 15.5 21 21"></path><path d="M10.5 7.5v6"></path><path d="M7.5 10.5h6"></path></svg>';
+}
+
 function csSmartCropShoeImage(img){
   // v76: display-only smart trim for product photos with large white margins.
   // If browser/CORS blocks canvas, original image stays unchanged.
@@ -1436,11 +1440,73 @@ function csSetShoeZoomMode(zoomed, scale = 2.65){
   csApplyShoePanZoom();
 }
 
+function csGetCurrentShoeImageSrc(){
+  const p = currentShoeProduct();
+  const imgs = csProductImages(p);
+  return imgs?.[csViewerState?.image || 0] || imgs?.[0] || document.querySelector("#shoeViewer .shoe-viewer-main-img")?.src || "";
+}
+function csOpenRealShoeZoom(startScale = 1.15){
+  const src = csGetCurrentShoeImageSrc();
+  if (!src) return;
+  document.getElementById("csZoomLightbox")?.remove();
+  document.documentElement.classList.add("cs-real-zoom-active");
+  const box = document.createElement("div");
+  box.id = "csZoomLightbox";
+  box.className = "cs-zoom-lightbox";
+  box.innerHTML = `<img class="cs-zoom-lightbox-img" src="${escapeHtml(src)}" alt="Zumirana slika proizvoda"><button class="cs-zoom-lightbox-close" type="button" aria-label="Zatvori zum">×</button><div class="cs-zoom-help">Raširi prste za zum • pomeri sliku • X zatvara</div>`;
+  document.body.appendChild(box);
+  const img = box.querySelector(".cs-zoom-lightbox-img");
+  const close = box.querySelector(".cs-zoom-lightbox-close");
+  const state = { scale: Math.max(1, Math.min(Number(startScale || 1.15), 5)), panX: 0, panY: 0, startX: 0, startY: 0, startPanX: 0, startPanY: 0, pinchDistance: 0, pinchScale: 1, dragging: false };
+  function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+  function apply(){
+    const maxX = Math.max(0, window.innerWidth * (state.scale - 1) * .55);
+    const maxY = Math.max(0, window.innerHeight * (state.scale - 1) * .55);
+    state.panX = clamp(state.panX, -maxX, maxX);
+    state.panY = clamp(state.panY, -maxY, maxY);
+    img.style.transform = `translate3d(${state.panX}px, ${state.panY}px, 0) scale(${state.scale})`;
+  }
+  function closeZoom(){
+    box.remove();
+    document.documentElement.classList.remove("cs-real-zoom-active");
+    csSetShoeZoomMode(false, 1);
+  }
+  close.addEventListener("click", e => { e.stopPropagation(); closeZoom(); });
+  box.addEventListener("click", e => { if(e.target === box) closeZoom(); });
+  box.addEventListener("wheel", e => {
+    e.preventDefault();
+    const old = state.scale;
+    state.scale = clamp(state.scale + (e.deltaY < 0 ? .22 : -.22), 1, 5);
+    if (state.scale <= 1.01) { state.scale = 1; state.panX = 0; state.panY = 0; }
+    else if (old <= 1.01) { state.panX = 0; state.panY = 0; }
+    apply();
+  }, { passive:false });
+  box.addEventListener("mousedown", e => { state.dragging = true; state.startX = e.clientX; state.startY = e.clientY; state.startPanX = state.panX; state.startPanY = state.panY; e.preventDefault(); });
+  window.addEventListener("mousemove", e => { if(!state.dragging || !document.getElementById("csZoomLightbox")) return; state.panX = state.startPanX + e.clientX - state.startX; state.panY = state.startPanY + e.clientY - state.startY; apply(); });
+  window.addEventListener("mouseup", () => { state.dragging = false; });
+  box.addEventListener("touchstart", e => {
+    if(e.touches.length >= 2){ state.pinchDistance = csTouchDistance(e.touches); state.pinchScale = state.scale; e.preventDefault(); return; }
+    const t=e.touches[0]; state.startX=t.clientX; state.startY=t.clientY; state.startPanX=state.panX; state.startPanY=state.panY;
+  }, { passive:false });
+  box.addEventListener("touchmove", e => {
+    if(e.touches.length >= 2){
+      const d = csTouchDistance(e.touches);
+      if(d && state.pinchDistance){ state.scale = clamp(state.pinchScale * (d / state.pinchDistance), 1, 5); if(state.scale <= 1.01){ state.panX=0; state.panY=0; } apply(); }
+      e.preventDefault(); return;
+    }
+    if(state.scale <= 1.01) return;
+    const t=e.touches[0]; state.panX=state.startPanX+t.clientX-state.startX; state.panY=state.startPanY+t.clientY-state.startY; apply(); e.preventDefault();
+  }, { passive:false });
+  box.addEventListener("dblclick", e => { e.preventDefault(); state.scale = state.scale > 1.2 ? 1 : 2.8; state.panX=0; state.panY=0; apply(); });
+  apply();
+}
 function csToggleShoeZoom(){
   if (!csViewerState) return;
-  csSetShoeZoomMode(!csViewerState.zoomed, csViewerState.zoomed ? 1 : 2.85);
+  csOpenRealShoeZoom(1.15);
 }
 function csCloseShoeZoom(){
+  document.getElementById("csZoomLightbox")?.remove();
+  document.documentElement.classList.remove("cs-real-zoom-active");
   csSetShoeZoomMode(false, 1);
 }
 
@@ -1489,10 +1555,7 @@ function renderShoeViewer() {
   viewer.ontouchstart = e => {
     if (!csViewerState) return;
     if (e.touches && e.touches.length >= 2) {
-      csViewerState.isPinching = true;
-      csViewerState.pinchStartDistance = csTouchDistance(e.touches);
-      csViewerState.pinchStartScale = Number(csViewerState.zoomScale || 1);
-      if (!csViewerState.zoomed) csViewerState.pinchStartScale = 1;
+      csOpenRealShoeZoom(1.15);
       e.preventDefault?.();
       return;
     }
@@ -1625,4 +1688,4 @@ function askShoeProduct(e) {
 }
 function callShoeShop(e) { e?.stopPropagation?.(); const phone=csSafePhone(currentSalon._publicPhone || ""); if(!phone) return window.App.showMessage("Telefon nije upisan.", "error"); window.location.href=`tel:${phone}`; }
 
-Object.assign(window, { openShoeViewer, closeShoeViewer, shoeChangeProduct, shoeChangeImage, shoeSetImage, shareShoeProduct, askShoeProduct, callShoeShop, csSmartCropShoeImage, csToggleShoeZoom, csApplyShoePanZoom, csViewerZoomIcon });
+Object.assign(window, { openShoeViewer, closeShoeViewer, shoeChangeProduct, shoeChangeImage, shoeSetImage, shareShoeProduct, askShoeProduct, callShoeShop, csSmartCropShoeImage, csToggleShoeZoom, csApplyShoePanZoom, csOpenRealShoeZoom, csViewerZoomIcon });
