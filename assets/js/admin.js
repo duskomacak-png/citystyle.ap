@@ -373,6 +373,10 @@ document.addEventListener("DOMContentLoaded", () => loadAdminPanel());
 
 async function loadAdminPanel() {
   const content = document.getElementById("admin-content");
+  if (!window.db) {
+    content.innerHTML = `<div class="card login-card"><h2>Admin prijava</h2><p class="muted">Veza sa bazom nije učitana. Osvežite stranicu ili očistite cache za citystyle.app.</p></div>`;
+    return;
+  }
   content.innerHTML = `<div class="loading-box">Provera admin pristupa...</div>`;
 
   const isAdmin = await window.Auth.isPlatformAdmin();
@@ -400,6 +404,10 @@ function renderAdminLogin() {
 }
 
 async function handleAdminLogin() {
+  if (!window.db) {
+    window.App?.showMessage?.("Veza sa bazom nije učitana. Osvežite stranicu i pokušajte ponovo.", "error");
+    return;
+  }
   const email = document.getElementById("admin-email").value.trim().toLowerCase();
   const password = document.getElementById("admin-password").value.trim();
   const user = await window.Auth.adminLogin(email, password);

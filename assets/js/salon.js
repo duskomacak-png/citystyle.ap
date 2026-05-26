@@ -94,6 +94,11 @@ function renderOwnerSubscriptionNotice() {
 document.addEventListener("DOMContentLoaded", () => initSalonPanel());
 
 async function initSalonPanel() {
+  if (!window.db) {
+    renderSalonLogin();
+    window.App?.showMessage?.("Veza sa bazom nije učitana. Osvežite stranicu ili očistite cache za citystyle.app.", "error");
+    return;
+  }
   // Owner panel must not behave like a client-installed salon shortcut.
   // This prevents the owner app shortcut from reopening the public client profile.
   window.App?.clearSavedSalon?.();
@@ -174,6 +179,10 @@ function getDefaultOwnerSection() {
 }
 
 async function handleSalonLogin() {
+  if (!window.db) {
+    window.App?.showMessage?.("Veza sa bazom nije učitana. Osvežite stranicu i pokušajte ponovo.", "error");
+    return;
+  }
   window.App?.clearSavedSalon?.();
   const email = document.getElementById("salon-login-email").value.trim().toLowerCase();
   const code = document.getElementById("salon-login-code").value.trim();

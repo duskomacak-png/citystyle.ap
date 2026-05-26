@@ -1,6 +1,6 @@
 // sw.js
 // Minimal cache reset service worker for CityStyle.app
-const CACHE_NAME = "citystyle-v134-zoom-blackfix";
+const CACHE_NAME = "citystyle-v135-loginfix";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -32,7 +32,7 @@ self.addEventListener("push", (event) => {
       url: data.url || "salon/",
       badgeCount: data.badgeCount || 1
     },
-    tag: data.tag || "citystyle-v134-zoom-blackfix",
+    tag: data.tag || "citystyle-v135-loginfix",
     renotify: true
   };
 
