@@ -3781,3 +3781,74 @@ html.cs-real-zoom-active body{
     text-transform:lowercase !important;
   }
 }
+
+
+/* v1.3.11 SAFE ICON LEFT+LOWER TUNE
+   Goal: nudge the left rail closer to the edge, lower the whole group slightly,
+   and center the X cleanly inside its ring. */
+@media(max-width:899px){
+  .shoe-viewer-close{
+    left:12px !important;
+    top:22px !important;
+    width:40px !important;
+    height:40px !important;
+    font-size:24px !important;
+    line-height:1 !important;
+    display:grid !important;
+    place-items:center !important;
+    padding:0 !important;
+    text-align:center !important;
+  }
+  .shoe-viewer-actions{
+    left:12px !important;
+    top:108px !important;
+    width:44px !important;
+    gap:9px !important;
+  }
+  .shoe-action,.shoe-action.red,.shoe-action.blue,.shoe-action.green,.shoe-action.zoom{
+    width:44px !important;
+    min-height:46px !important;
+    gap:2px !important;
+  }
+  .shoe-action svg{
+    width:40px !important;
+    height:40px !important;
+    padding:9px !important;
+  }
+  .shoe-action span{
+    font-size:9px !important;
+  }
+}
+@media(min-width:900px){
+  .shoe-viewer-close{
+    left:calc(50% - 201px) !important;
+    top:20px !important;
+    width:40px !important;
+    height:40px !important;
+    font-size:24px !important;
+    line-height:1 !important;
+    display:grid !important;
+    place-items:center !important;
+    padding:0 !important;
+    text-align:center !important;
+  }
+  .shoe-viewer-actions{
+    left:calc(50% - 201px) !important;
+    top:106px !important;
+    width:44px !important;
+    gap:9px !important;
+  }
+  .shoe-action,.shoe-action.red,.shoe-action.blue,.shoe-action.green,.shoe-action.zoom{
+    width:44px !important;
+    min-height:46px !important;
+    gap:2px !important;
+  }
+  .shoe-action svg{
+    width:40px !important;
+    height:40px !important;
+    padding:9px !important;
+  }
+  .shoe-action span{
+    font-size:9px !important;
+  }
+}
