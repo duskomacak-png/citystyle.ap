@@ -3999,3 +3999,88 @@ html.cs-real-zoom-active body{
     left:18px !important;
   }
 }
+
+
+/* v1.3.16 SAFE MOBILE-ONLY NO-BLACK FIX
+   IMPORTANT: laptop/desktop viewer stays unchanged.
+   This block applies only on mobile screens. */
+@media(max-width:899px){
+  .shoe-card-media{
+    position:relative !important;
+    overflow:hidden !important;
+  }
+  .shoe-card-media::after{
+    content:"citystyle.app";
+    position:absolute;
+    left:10px;
+    bottom:10px;
+    z-index:2;
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.04em;
+    color:rgba(255,255,255,.82);
+    text-shadow:0 1px 8px rgba(0,0,0,.7);
+    pointer-events:none;
+  }
+
+  .shoe-viewer,
+  #shoeViewer.shoe-viewer{
+    background:#000 !important;
+  }
+  .shoe-viewer .shoe-viewer-media,
+  #shoeViewer.shoe-viewer .shoe-viewer-media{
+    position:absolute !important;
+    inset:0 !important;
+    width:100% !important;
+    height:100% !important;
+    padding:0 !important;
+    margin:0 !important;
+    border-radius:0 !important;
+    background:#000 !important;
+    overflow:hidden !important;
+  }
+  .shoe-viewer .shoe-viewer-media::before,
+  .shoe-viewer .shoe-viewer-media::after,
+  #shoeViewer.shoe-viewer .shoe-viewer-media::before,
+  #shoeViewer.shoe-viewer .shoe-viewer-media::after{
+    display:none !important;
+    content:none !important;
+  }
+  .shoe-viewer-main-img,
+  #shoeViewer .shoe-viewer-main-img{
+    position:absolute !important;
+    inset:0 !important;
+    width:100% !important;
+    height:100% !important;
+    min-width:0 !important;
+    min-height:0 !important;
+    max-width:none !important;
+    max-height:none !important;
+    object-fit:cover !important;
+    object-position:center center !important;
+    background:#000 !important;
+    margin:0 !important;
+    padding:0 !important;
+  }
+  .shoe-viewer-media-bg{
+    display:block !important;
+    opacity:.14 !important;
+    filter:blur(16px) brightness(.58) !important;
+  }
+  .shoe-viewer::before,
+  .shoe-viewer:before{
+    display:none !important;
+    content:none !important;
+  }
+  .shoe-viewer::after{
+    left:18px !important;
+    bottom:54px !important;
+    font-size:24px !important;
+  }
+  .shoe-viewer-powered{
+    left:18px !important;
+    bottom:20px !important;
+    font-size:11px !important;
+    color:rgba(255,255,255,.62) !important;
+  }
+}
