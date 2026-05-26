@@ -3852,3 +3852,81 @@ html.cs-real-zoom-active body{
     font-size:9px !important;
   }
 }
+
+
+/* v1.3.12 SAFE MOBILE STORY CLEAN */
+@media(max-width:899px){
+  .shoe-viewer{position:fixed !important;inset:0 !important;width:100vw !important;height:100dvh !important;background:#000 !important;overflow:hidden !important;}
+  .shoe-viewer .shoe-viewer-media{position:absolute !important;inset:0 !important;width:100% !important;height:100% !important;border-radius:0 !important;background:#000 !important;overflow:hidden !important;}
+  .shoe-viewer-media-bg{display:block !important;opacity:.18 !important;filter:blur(18px) brightness(.55) !important;transform:scale(1.06) !important;}
+  .shoe-viewer-media-bg img{width:100% !important;height:100% !important;object-fit:cover !important;}
+  .shoe-viewer-main-img{position:absolute !important;inset:0 !important;width:100% !important;height:100% !important;object-fit:cover !important;object-position:center center !important;border-radius:0 !important;background:#000 !important;}
+  .shoe-viewer::before{display:none !important;}
+  .shoe-viewer-top{position:fixed !important;top:18px !important;left:18px !important;right:18px !important;z-index:8 !important;display:flex !important;align-items:flex-start !important;justify-content:space-between !important;gap:16px !important;text-shadow:0 2px 14px rgba(0,0,0,.7) !important;}
+  .shoe-viewer-brand{font-size:17px !important;font-weight:500 !important;color:#fff !important;letter-spacing:.01em !important;margin-top:2px !important;}
+  .shoe-viewer-right{margin-left:auto !important;text-align:right !important;display:grid !important;gap:2px !important;}
+  .shoe-viewer-right h2{margin:0 !important;font-size:18px !important;line-height:1.06 !important;font-weight:500 !important;color:#fff !important;}
+  .shoe-viewer-right .shoe-viewer-subtitle{margin:0 !important;font-size:17px !important;line-height:1.14 !important;color:rgba(255,255,255,.96) !important;}
+  .shoe-viewer-close{top:104px !important;left:18px !important;width:44px !important;height:44px !important;}
+  .shoe-viewer-actions{top:176px !important;left:18px !important;}
+  .shoe-viewer::after{content:"Cena: " attr(data-price) !important;position:fixed !important;left:18px !important;right:auto !important;bottom:56px !important;z-index:8 !important;color:#fff !important;font-size:27px !important;font-weight:500 !important;letter-spacing:.02em !important;text-shadow:0 2px 16px rgba(0,0,0,.85) !important;}
+  .shoe-viewer-powered{position:fixed !important;left:18px !important;bottom:22px !important;z-index:8 !important;color:rgba(255,255,255,.68) !important;text-shadow:0 2px 14px rgba(0,0,0,.8) !important;font-size:11px !important;font-weight:700 !important;}
+  .shoe-viewer.shoe-viewer-zoomed .shoe-viewer-top,.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-actions,.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-close,.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-powered,.shoe-viewer.shoe-viewer-zoomed .shoe-dots{opacity:0 !important;pointer-events:none !important;}
+  .shoe-viewer.shoe-viewer-zoomed::after{display:none !important;}
+}
+
+
+/* v1.3.13 SAFE SMALLER ICON RINGS
+   Tiny visual refinement only: slightly reduce the icon circles. */
+@media(max-width:899px){
+  .shoe-viewer-close{
+    width:40px !important;
+    height:40px !important;
+    font-size:28px !important;
+    border-width:1.5px !important;
+  }
+  .shoe-viewer-actions{
+    width:42px !important;
+    gap:8px !important;
+  }
+  .shoe-action,.shoe-action.red,.shoe-action.blue,.shoe-action.green,.shoe-action.zoom{
+    width:42px !important;
+    min-height:44px !important;
+    gap:2px !important;
+  }
+  .shoe-action svg{
+    width:38px !important;
+    height:38px !important;
+    padding:8px !important;
+    border-width:1.5px !important;
+  }
+  .shoe-action span{
+    font-size:9px !important;
+  }
+}
+@media(min-width:900px){
+  .shoe-viewer-close{
+    width:40px !important;
+    height:40px !important;
+    font-size:28px !important;
+    border-width:1.5px !important;
+  }
+  .shoe-viewer-actions{
+    width:42px !important;
+    gap:8px !important;
+  }
+  .shoe-action,.shoe-action.red,.shoe-action.blue,.shoe-action.green,.shoe-action.zoom{
+    width:42px !important;
+    min-height:44px !important;
+    gap:2px !important;
+  }
+  .shoe-action svg{
+    width:38px !important;
+    height:38px !important;
+    padding:8px !important;
+    border-width:1.5px !important;
+  }
+  .shoe-action span{
+    font-size:9px !important;
+  }
+}
