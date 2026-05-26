@@ -24,7 +24,7 @@
         var params = new URLSearchParams(window.location.search || "");
         var slug = params.get("salon");
         if (!slug) {
-          addManifest("manifest.json?v=v156mapsfix");
+          addManifest("manifest.json?v=v157notifybtn");
           return;
         }
         var encodedSlug = encodeURIComponent(slug);
@@ -34,7 +34,7 @@
           name: profileName,
           short_name: profileName.length > 12 ? profileName.slice(0, 12).trim() : profileName,
           description: "Prečica za direktan ulaz u ovaj CityStyle profil.",
-          start_url: "/?salon=" + encodedSlug + "&pwa_profile=" + encodedSlug + "&v=v156mapsfix",
+          start_url: "/?salon=" + encodedSlug + "&pwa_profile=" + encodedSlug + "&v=v157notifybtn",
           scope: "/",
           display: "standalone",
           background_color: "#0b0b0f",
@@ -48,18 +48,18 @@
         var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
         addManifest(URL.createObjectURL(blob));
       } catch (err) {
-        addManifest("manifest.json?v=v156mapsfix");
+        addManifest("manifest.json?v=v157notifybtn");
       }
     })();
   </script>
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-  <link rel="stylesheet" href="assets/css/style.css?v=v156mapsfix">
+  <link rel="stylesheet" href="assets/css/style.css?v=v157notifybtn">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=v156mapsfix"></script>
-  <script src="assets/js/main.js?v=v156mapsfix"></script>
-  <script src="assets/js/auth.js?v=v156mapsfix"></script>
-  <script src="assets/js/booking-logic.js?v=v156mapsfix"></script>
-  <script src="assets/js/client.js?v=v156mapsfix" defer></script>
+  <script src="assets/js/config.js?v=v157notifybtn"></script>
+  <script src="assets/js/main.js?v=v157notifybtn"></script>
+  <script src="assets/js/auth.js?v=v157notifybtn"></script>
+  <script src="assets/js/booking-logic.js?v=v157notifybtn"></script>
+  <script src="assets/js/client.js?v=v157notifybtn" defer></script>
 </head>
 <body>
   <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>

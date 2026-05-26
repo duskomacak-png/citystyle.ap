@@ -4321,3 +4321,28 @@ html.cs-real-zoom-active body{
   z-index:5 !important;
   text-decoration:none !important;
 }
+
+
+/* v1.3.27 SAFE OWNER NOTIFICATIONS BUTTON */
+#salon-notifications-btn{
+  white-space:normal;
+}
+@media(max-width:640px){
+  .panel-header-actions{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+    width:100% !important;
+  }
+  .panel-header{
+    align-items:stretch !important;
+  }
+  #salon-notifications-btn,
+  #salon-install-btn,
+  #salon-logout-btn{
+    width:100% !important;
+    min-height:50px !important;
+    font-size:14px !important;
+    line-height:1.1 !important;
+  }
+}
