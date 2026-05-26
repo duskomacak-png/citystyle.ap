@@ -4228,3 +4228,31 @@ html.cs-real-zoom-active body{
     pointer-events:none !important;
   }
 }
+
+
+/* v1.3.20 SAFE MOBILE OWNER TABS FIT
+   Shop-owner buttons on mobile should be immediately visible without horizontal scrolling. */
+@media(max-width:640px){
+  .panel-tabs{
+    display:grid !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:8px !important;
+    overflow:visible !important;
+    padding:8px 0 14px !important;
+    align-items:stretch !important;
+  }
+  .panel-tabs button{
+    width:100% !important;
+    min-width:0 !important;
+    white-space:normal !important;
+    word-break:break-word !important;
+    text-wrap:balance !important;
+    font-size:12px !important;
+    line-height:1.15 !important;
+    font-weight:800 !important;
+    padding:10px 8px !important;
+    min-height:58px !important;
+    border-radius:12px !important;
+    text-align:center !important;
+  }
+}

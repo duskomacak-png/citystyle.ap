@@ -618,7 +618,7 @@ function updateManifestForOwner() {
     name: "CityStyle - Panel vlasnika",
     short_name: "CityStyle",
     description: "Prečica za direktan ulaz u panel vlasnika biznisa.",
-    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=v149desktopwatermark`,
+    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=v150tabsfit`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -694,7 +694,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=v149desktopwatermark`,
+    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=v150tabsfit`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -850,7 +850,7 @@ async function registerPushForSalon(salonId) {
       return false;
     }
 
-    const registration = await navigator.serviceWorker.register("/sw.js?v=v149desktopwatermark", { scope: "/" });
+    const registration = await navigator.serviceWorker.register("/sw.js?v=v150tabsfit", { scope: "/" });
     await navigator.serviceWorker.ready;
 
     let subscription = await registration.pushManager.getSubscription();
