@@ -24,7 +24,7 @@
         var params = new URLSearchParams(window.location.search || "");
         var slug = params.get("salon");
         if (!slug) {
-          addManifest("manifest.json?v=v135loginfix");
+          addManifest("manifest.json?v=v136nofog");
           return;
         }
         var encodedSlug = encodeURIComponent(slug);
@@ -34,7 +34,7 @@
           name: profileName,
           short_name: profileName.length > 12 ? profileName.slice(0, 12).trim() : profileName,
           description: "Prečica za direktan ulaz u ovaj CityStyle profil.",
-          start_url: "/?salon=" + encodedSlug + "&pwa_profile=" + encodedSlug + "&v=v135loginfix",
+          start_url: "/?salon=" + encodedSlug + "&pwa_profile=" + encodedSlug + "&v=v136nofog",
           scope: "/",
           display: "standalone",
           background_color: "#0b0b0f",
@@ -48,18 +48,18 @@
         var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
         addManifest(URL.createObjectURL(blob));
       } catch (err) {
-        addManifest("manifest.json?v=v135loginfix");
+        addManifest("manifest.json?v=v136nofog");
       }
     })();
   </script>
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-  <link rel="stylesheet" href="assets/css/style.css?v=v135loginfix">
+  <link rel="stylesheet" href="assets/css/style.css?v=v136nofog">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=v135loginfix"></script>
-  <script src="assets/js/main.js?v=v135loginfix"></script>
-  <script src="assets/js/auth.js?v=v135loginfix"></script>
-  <script src="assets/js/booking-logic.js?v=v135loginfix"></script>
-  <script src="assets/js/client.js?v=v135loginfix" defer></script>
+  <script src="assets/js/config.js?v=v136nofog"></script>
+  <script src="assets/js/main.js?v=v136nofog"></script>
+  <script src="assets/js/auth.js?v=v136nofog"></script>
+  <script src="assets/js/booking-logic.js?v=v136nofog"></script>
+  <script src="assets/js/client.js?v=v136nofog" defer></script>
 </head>
 <body>
   <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>

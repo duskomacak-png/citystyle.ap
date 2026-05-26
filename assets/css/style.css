@@ -3290,3 +3290,113 @@ select:focus{
     object-fit:contain !important;
   }
 }
+
+/* v1.3.6 ZOOM NO-FOG FIX
+   Goal: zoom mode must show a clean product photo, not a dark transparent haze.
+   This override isolates the image above every story gradient/overlay and removes filters/blending. */
+html.cs-zoom-active,
+html.cs-zoom-active body{
+  background:#000 !important;
+  overflow:hidden !important;
+}
+html.cs-zoom-active #shoeViewer.shoe-viewer.shoe-viewer-zoomed{
+  background:#000 !important;
+  isolation:isolate !important;
+  overflow:hidden !important;
+}
+html.cs-zoom-active #shoeViewer.shoe-viewer.shoe-viewer-zoomed::before,
+html.cs-zoom-active #shoeViewer.shoe-viewer.shoe-viewer-zoomed::after,
+html.cs-zoom-active #shoeViewer.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-media::before,
+html.cs-zoom-active #shoeViewer.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-media::after,
+html.cs-zoom-active #shoeViewer.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-media-bg{
+  content:none !important;
+  display:none !important;
+  opacity:0 !important;
+  visibility:hidden !important;
+  background:none !important;
+  filter:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  mix-blend-mode:normal !important;
+}
+html.cs-zoom-active #shoeViewer.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-media{
+  position:fixed !important;
+  inset:0 !important;
+  width:100vw !important;
+  height:100vh !important;
+  height:100dvh !important;
+  max-width:none !important;
+  max-height:none !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  background:#000 !important;
+  opacity:1 !important;
+  filter:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  mix-blend-mode:normal !important;
+  z-index:90000 !important;
+  overflow:hidden !important;
+}
+html.cs-zoom-active #shoeViewer.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-main-img{
+  position:absolute !important;
+  inset:0 !important;
+  width:100vw !important;
+  height:100vh !important;
+  height:100dvh !important;
+  max-width:none !important;
+  max-height:none !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+  background:#000 !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  filter:none !important;
+  -webkit-filter:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  mix-blend-mode:normal !important;
+  z-index:90010 !important;
+  pointer-events:auto !important;
+  box-shadow:none !important;
+}
+html.cs-zoom-active #shoeViewer.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-top,
+html.cs-zoom-active #shoeViewer.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-actions,
+html.cs-zoom-active #shoeViewer.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-close,
+html.cs-zoom-active #shoeViewer.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-powered,
+html.cs-zoom-active #shoeViewer.shoe-viewer.shoe-viewer-zoomed .shoe-dots,
+html.cs-zoom-active #shoeViewer.shoe-viewer.shoe-viewer-zoomed .shoe-arrow{
+  display:none !important;
+  opacity:0 !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+html.cs-zoom-active #shoeViewer.shoe-viewer.shoe-viewer-zoomed .shoe-zoom-close{
+  display:grid !important;
+  position:fixed !important;
+  top:calc(14px + env(safe-area-inset-top,0px)) !important;
+  right:14px !important;
+  left:auto !important;
+  width:54px !important;
+  height:54px !important;
+  z-index:90100 !important;
+  place-items:center !important;
+  border-radius:999px !important;
+  border:1px solid rgba(255,255,255,.36) !important;
+  background:rgba(0,0,0,.34) !important;
+  color:#fff !important;
+  font-size:38px !important;
+  line-height:1 !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  box-shadow:0 10px 26px rgba(0,0,0,.26) !important;
+}
