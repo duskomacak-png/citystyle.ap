@@ -1,1 +1,11 @@
-{"name":"CityStyle Demo v1.3.1","short_name":"CityStyle","start_url":"./index.html","display":"standalone","background_color":"#0F0F11","theme_color":"#0F0F11","icons":[{"src":"assets/icons/icon-192.png","sizes":"192x192","type":"image/png"},{"src":"assets/icons/icon-512.png","sizes":"512x512","type":"image/png"}]}
+{
+  "name": "CityStyle.app Demo",
+  "short_name": "citystyle.app",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0F0F11",
+  "theme_color": "#0F0F11",
+  "description": "Digitalni mobilni izlog za lokalne biznise.",
+  "icons": []
+}
