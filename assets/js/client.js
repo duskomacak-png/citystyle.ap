@@ -1304,7 +1304,7 @@ function showProducts() {
 
 function openShoeViewer(index = 0) {
   if (!products.length) return;
-  csViewerState = { index: Math.max(0, Math.min(index, products.length - 1)), image: 0, startX: 0, startY: 0, startPanX: 0, startPanY: 0, panX: 0, panY: 0, didPan: false, lastTap: 0, lastTapX: 0, lastTapY: 0, zoomed: false };
+  csViewerState = { index: Math.max(0, Math.min(index, products.length - 1)), image: 0, startX: 0, startY: 0, startPanX: 0, startPanY: 0, panX: 0, panY: 0, didPan: false, lastTap: 0, lastTapX: 0, lastTapY: 0, zoomed: false, zoomScale: 1, pinchStartDistance: 0, pinchStartScale: 1, isPinching: false };
   renderShoeViewer();
 }
 function closeShoeViewer() { document.getElementById("shoeViewer")?.remove(); csViewerState = null; }
@@ -1386,12 +1386,18 @@ function csClampZoomPan(value, min, max){
 function csApplyShoePanZoom(){
   if (!csViewerState) return;
   const img = document.querySelector("#shoeViewer .shoe-viewer-main-img");
+  const viewer = document.getElementById("shoeViewer");
   if (!img) return;
-  if (!csViewerState.zoomed) {
+  const scale = Number(csViewerState.zoomScale || 1);
+  if (!csViewerState.zoomed || scale <= 1.01) {
+    csViewerState.zoomed = false;
+    csViewerState.zoomScale = 1;
+    if (viewer) viewer.classList.remove("shoe-viewer-zoomed");
     img.style.transform = "";
     return;
   }
-  img.style.transform = `translate(${csViewerState.panX || 0}px, ${csViewerState.panY || 0}px) scale(2.05)`;
+  if (viewer) viewer.classList.add("shoe-viewer-zoomed");
+  img.style.transform = `translate3d(${csViewerState.panX || 0}px, ${csViewerState.panY || 0}px, 0) scale(${scale})`;
 }
 function csResetShoePan(){
   if (!csViewerState) return;
@@ -1400,15 +1406,30 @@ function csResetShoePan(){
   csViewerState.startPanX = 0;
   csViewerState.startPanY = 0;
   csViewerState.didPan = false;
+  csViewerState.isPinching = false;
+  csViewerState.pinchStartDistance = 0;
 }
-
-function csToggleShoeZoom(){
+function csTouchDistance(touches){
+  if (!touches || touches.length < 2) return 0;
+  const a = touches[0], b = touches[1];
+  return Math.hypot((a.clientX || 0) - (b.clientX || 0), (a.clientY || 0) - (b.clientY || 0));
+}
+function csSetShoeZoomMode(zoomed, scale = 2.65){
   if (!csViewerState) return;
-  csViewerState.zoomed = !csViewerState.zoomed;
+  csViewerState.zoomed = !!zoomed;
+  csViewerState.zoomScale = csViewerState.zoomed ? csClampZoomPan(Number(scale || 2.65), 1.08, 4.25) : 1;
   if (!csViewerState.zoomed) csResetShoePan();
   const viewer = document.getElementById("shoeViewer");
   if (viewer) viewer.classList.toggle("shoe-viewer-zoomed", !!csViewerState.zoomed);
   csApplyShoePanZoom();
+}
+
+function csToggleShoeZoom(){
+  if (!csViewerState) return;
+  csSetShoeZoomMode(!csViewerState.zoomed, csViewerState.zoomed ? 1 : 2.85);
+}
+function csCloseShoeZoom(){
+  csSetShoeZoomMode(false, 1);
 }
 
 function renderShoeViewer() {
@@ -1424,6 +1445,7 @@ function renderShoeViewer() {
     document.body.appendChild(viewer);
   }
   viewer.classList.toggle("shoe-viewer-zoomed", !!csViewerState.zoomed);
+  viewer.setAttribute("data-price", csProductPrice(product));
   const productDescription = csProductPublicDescription(product);
   viewer.innerHTML = `
     <div class="shoe-viewer-media">${img ? `<div class="shoe-viewer-media-bg" aria-hidden="true"><img src="${escapeHtml(img)}" alt="" crossorigin="anonymous"></div><img class="shoe-viewer-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}" crossorigin="anonymous" onload="csSmartCropShoeImage(this)">` : `<span>Bez slike</span>`}</div>
@@ -1440,7 +1462,8 @@ function renderShoeViewer() {
       </div>
       ${productDescription ? `<p class="shoe-viewer-description">${escapeHtml(productDescription)}</p>` : ""}
     </div>
-    <button class="shoe-viewer-close" type="button" onclick="closeShoeViewer()">×</button>
+    <button class="shoe-viewer-close" type="button" onclick="closeShoeViewer()" aria-label="Zatvori oglas">×</button>
+    <button class="shoe-zoom-close" type="button" onclick="event.stopPropagation(); csCloseShoeZoom()" aria-label="Zatvori zum">×</button>
     ${imgs.length > 1 ? `<button class="shoe-arrow shoe-arrow-left" type="button" onclick="event.stopPropagation(); shoeChangeImage(-1)">‹</button><button class="shoe-arrow shoe-arrow-right" type="button" onclick="event.stopPropagation(); shoeChangeImage(1)">›</button>` : ""}
     <div class="shoe-viewer-actions" aria-label="Akcije proizvoda">
       <button class="shoe-action red" type="button" onclick="shareShoeProduct(event)" aria-label="Podeli oglas" title="Podeli oglas">${csViewerShareIcon()}<span>Podeli</span></button>
@@ -1452,6 +1475,15 @@ function renderShoeViewer() {
     ${imgs.length > 1 ? `<div class="shoe-dots">${imgs.map((_,i)=>`<button class="${i===csViewerState.image?'active':''}" onclick="event.stopPropagation(); shoeSetImage(${i})" aria-label="Slika ${i + 1}"></button>`).join("")}</div>` : ""}`;
   csApplyShoePanZoom();
   viewer.ontouchstart = e => {
+    if (!csViewerState) return;
+    if (e.touches && e.touches.length >= 2) {
+      csViewerState.isPinching = true;
+      csViewerState.pinchStartDistance = csTouchDistance(e.touches);
+      csViewerState.pinchStartScale = Number(csViewerState.zoomScale || 1);
+      if (!csViewerState.zoomed) csViewerState.pinchStartScale = 1;
+      e.preventDefault?.();
+      return;
+    }
     const t = e.changedTouches[0];
     csViewerState.startX = t.clientX;
     csViewerState.startY = t.clientY;
@@ -1460,23 +1492,46 @@ function renderShoeViewer() {
     csViewerState.didPan = false;
   };
   viewer.ontouchmove = e => {
-    if (!csViewerState?.zoomed || !window.matchMedia?.("(max-width: 899px)")?.matches) return;
+    if (!csViewerState) return;
+    if (e.touches && e.touches.length >= 2) {
+      const dist = csTouchDistance(e.touches);
+      if (dist && csViewerState.pinchStartDistance) {
+        e.preventDefault?.();
+        const nextScale = csClampZoomPan((csViewerState.pinchStartScale || 1) * (dist / csViewerState.pinchStartDistance), 1, 4.25);
+        csViewerState.zoomed = nextScale > 1.05;
+        csViewerState.zoomScale = nextScale;
+        csApplyShoePanZoom();
+      }
+      return;
+    }
+    if (!csViewerState.zoomed) return;
     const t = e.changedTouches[0];
     const dx = t.clientX - csViewerState.startX;
     const dy = t.clientY - csViewerState.startY;
     if (Math.abs(dx) > 4 || Math.abs(dy) > 4) csViewerState.didPan = true;
     e.preventDefault?.();
-    csViewerState.panX = csClampZoomPan((csViewerState.startPanX || 0) + dx, -170, 170);
-    csViewerState.panY = csClampZoomPan((csViewerState.startPanY || 0) + dy, -220, 220);
+    const scale = Number(csViewerState.zoomScale || 2.65);
+    const maxX = Math.max(120, Math.round(window.innerWidth * (scale - 1) * 0.42));
+    const maxY = Math.max(160, Math.round(window.innerHeight * (scale - 1) * 0.38));
+    csViewerState.panX = csClampZoomPan((csViewerState.startPanX || 0) + dx, -maxX, maxX);
+    csViewerState.panY = csClampZoomPan((csViewerState.startPanY || 0) + dy, -maxY, maxY);
     csApplyShoePanZoom();
   };
   viewer.ontouchend = e => {
+    if (!csViewerState) return;
+    if (csViewerState.isPinching) {
+      if (!e.touches || e.touches.length < 2) {
+        csViewerState.isPinching = false;
+        if (Number(csViewerState.zoomScale || 1) <= 1.08) csSetShoeZoomMode(false, 1);
+      }
+      return;
+    }
     const t = e.changedTouches[0];
     const dx = t.clientX - csViewerState.startX;
     const dy = t.clientY - csViewerState.startY;
     const moved = Math.abs(dx) > 14 || Math.abs(dy) > 14 || !!csViewerState.didPan;
     const tappedImage = !!e.target?.closest?.(".shoe-viewer-main-img");
-    if (!moved && tappedImage && window.matchMedia?.("(max-width: 899px)")?.matches) {
+    if (!moved && tappedImage) {
       const now = Date.now();
       const dist = Math.hypot((t.clientX || 0) - (csViewerState.lastTapX || 0), (t.clientY || 0) - (csViewerState.lastTapY || 0));
       if (now - (csViewerState.lastTap || 0) < 330 && dist < 42) {
@@ -1491,10 +1546,21 @@ function renderShoeViewer() {
       return;
     }
     if (csViewerState.zoomed) return;
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 42) shoeChangeImage(dx < 0 ? 1 : -1);
-    else if (Math.abs(dy) > 42) shoeChangeProduct(dy < 0 ? 1 : -1);
+    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 42) shoeChangeProduct(dy < 0 ? 1 : -1);
+    else if (Math.abs(dx) > 42) shoeChangeImage(dx < 0 ? 1 : -1);
   };
-  viewer.onwheel = e => { e.preventDefault(); const now=Date.now(); if(now-csViewerWheelLock<450) return; csViewerWheelLock=now; shoeChangeProduct(e.deltaY > 0 ? 1 : -1); };
+  viewer.onwheel = e => {
+    e.preventDefault();
+    if (e.ctrlKey || e.metaKey || csViewerState?.zoomed) {
+      const current = Number(csViewerState.zoomScale || 1);
+      const next = csClampZoomPan(current + (e.deltaY < 0 ? 0.22 : -0.22), 1, 4.25);
+      csViewerState.zoomed = next > 1.05;
+      csViewerState.zoomScale = next;
+      csApplyShoePanZoom();
+      return;
+    }
+    const now=Date.now(); if(now-csViewerWheelLock<450) return; csViewerWheelLock=now; shoeChangeProduct(e.deltaY > 0 ? 1 : -1);
+  };
   document.onkeydown = e => {
     if (!document.getElementById("shoeViewer")) return;
     if (e.key === "Escape") closeShoeViewer();
@@ -1520,10 +1586,11 @@ function shoeChangeImage(delta) {
   if (!imgs.length) return;
   csViewerState.image = (csViewerState.image + delta + imgs.length) % imgs.length;
   csViewerState.zoomed = false;
+  csViewerState.zoomScale = 1;
   csResetShoePan();
   renderShoeViewer();
 }
-function shoeSetImage(i) { csViewerState.image = i; csViewerState.zoomed = false; csResetShoePan(); renderShoeViewer(); }
+function shoeSetImage(i) { csViewerState.image = i; csViewerState.zoomed = false; csViewerState.zoomScale = 1; csResetShoePan(); renderShoeViewer(); }
 async function shareShoeProduct(e) { e?.stopPropagation?.(); const p=currentShoeProduct(); const url=csProductUrl(p); const text=`${p.name || 'Patike'} - ${csProductPrice(p)}`; if(navigator.share){try{await navigator.share({title:p.name||'Oglas',text,url});return;}catch(_){}} navigator.clipboard?.writeText(url); window.App.showMessage("Link oglasa je kopiran.", "success"); }
 function askShoeProduct(e) {
   e?.stopPropagation?.();

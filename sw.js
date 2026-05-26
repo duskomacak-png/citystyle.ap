@@ -1,6 +1,6 @@
 // sw.js
 // Minimal cache reset service worker for CityStyle.app
-const CACHE_NAME = "citystyle-v132-responsive-phone-preview";
+const CACHE_NAME = "citystyle-v133-story-zoom";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

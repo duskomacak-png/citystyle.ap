@@ -3062,3 +3062,114 @@ select:focus{
     max-height:min(72vh,650px) !important;
   }
 }
+
+/* v1.3.3 STORY PRODUCT VIEWER FIX
+   - mobile: story/reels style product ad, vertical swipe changes ad
+   - image zoom fills screen, pinch/double tap/button zoom, X top-right exits zoom
+   - laptop: centered phone-preview, product image still zoomable */
+.shoe-zoom-close{display:none;}
+.shoe-viewer-main-img{will-change:transform;transition:transform .18s ease;transform-origin:center center;}
+@media(max-width:899px){
+  .shoe-viewer{
+    position:fixed !important;inset:0 !important;width:100vw !important;height:100dvh !important;
+    overflow:hidden !important;background:#050506 !important;z-index:30000 !important;
+    touch-action:none !important;overscroll-behavior:none !important;color:#fff !important;
+  }
+  .shoe-viewer .shoe-viewer-media{
+    position:absolute !important;inset:0 !important;padding:0 !important;border-radius:0 !important;
+    display:block !important;overflow:hidden !important;background:#050506 !important;
+  }
+  .shoe-viewer-media-bg{
+    position:absolute !important;inset:0 !important;display:block !important;opacity:.38 !important;filter:blur(18px) brightness(.46) !important;transform:scale(1.08) !important;
+  }
+  .shoe-viewer-media-bg img{width:100% !important;height:100% !important;object-fit:cover !important;}
+  .shoe-viewer-main-img{
+    position:absolute !important;inset:0 !important;width:100% !important;height:100% !important;
+    max-width:none !important;max-height:none !important;object-fit:cover !important;object-position:center !important;
+    border-radius:0 !important;background:#070707 !important;box-shadow:none !important;z-index:1 !important;
+  }
+  .shoe-viewer::before{
+    content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+    background:linear-gradient(180deg,rgba(0,0,0,.72) 0%,rgba(0,0,0,.18) 24%,rgba(0,0,0,.08) 56%,rgba(0,0,0,.76) 100%);
+  }
+  .shoe-viewer-top{
+    position:fixed !important;z-index:5 !important;top:46px !important;left:42px !important;right:28px !important;
+    width:auto !important;max-height:none !important;overflow:visible !important;background:transparent !important;padding:0 !important;
+    display:grid !important;justify-items:end !important;text-align:right !important;gap:2px !important;
+  }
+  .shoe-viewer-meta-row{display:none !important;}
+  .shoe-viewer-headline{display:grid !important;gap:4px !important;justify-items:end !important;}
+  .shoe-viewer-headline h2{margin:0 !important;font-size:28px !important;line-height:1.05 !important;font-weight:850 !important;letter-spacing:.01em !important;color:#fff !important;text-shadow:0 2px 18px rgba(0,0,0,.65) !important;}
+  .shoe-viewer-headline b{font-size:18px !important;font-weight:500 !important;color:rgba(255,255,255,.86) !important;text-shadow:0 2px 16px rgba(0,0,0,.7) !important;}
+  .shoe-viewer-description{display:none !important;}
+  .shoe-viewer-close{
+    position:fixed !important;left:42px !important;top:132px !important;right:auto !important;z-index:8 !important;
+    width:58px !important;height:58px !important;border-radius:999px !important;display:grid !important;place-items:center !important;
+    background:rgba(0,0,0,.28) !important;border:1px solid rgba(255,255,255,.18) !important;color:#fff !important;
+    font-size:42px !important;line-height:1 !important;box-shadow:0 12px 34px rgba(0,0,0,.28) !important;backdrop-filter:blur(8px) !important;-webkit-backdrop-filter:blur(8px) !important;
+  }
+  .shoe-viewer-actions{
+    position:fixed !important;left:42px !important;top:303px !important;bottom:auto !important;right:auto !important;z-index:8 !important;
+    width:76px !important;display:grid !important;grid-template-columns:1fr !important;gap:24px !important;
+    padding:0 !important;background:transparent !important;border:none !important;box-shadow:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
+  }
+  .shoe-action,.shoe-action.red,.shoe-action.blue,.shoe-action.green,.shoe-action.zoom{
+    width:58px !important;height:auto !important;min-height:78px !important;border:none !important;background:transparent !important;box-shadow:none !important;color:#fff !important;
+    display:grid !important;justify-items:center !important;align-content:start !important;gap:7px !important;padding:0 !important;border-radius:0 !important;text-transform:lowercase !important;
+  }
+  .shoe-action svg{
+    width:58px !important;height:58px !important;padding:15px !important;border-radius:999px !important;box-sizing:border-box !important;
+    background:rgba(0,0,0,.28) !important;border:1px solid rgba(255,255,255,.18) !important;box-shadow:0 12px 34px rgba(0,0,0,.26) !important;
+    backdrop-filter:blur(8px) !important;-webkit-backdrop-filter:blur(8px) !important;
+  }
+  .shoe-action span{font-size:14px !important;font-weight:500 !important;letter-spacing:.06em !important;text-shadow:0 2px 14px rgba(0,0,0,.85) !important;text-transform:lowercase !important;}
+  .shoe-action.red{order:3 !important;}
+  .shoe-action.blue{order:1 !important;}
+  .shoe-action.green{order:2 !important;}
+  .shoe-action.zoom{order:4 !important;}
+  .shoe-dots{position:fixed !important;left:50% !important;bottom:88px !important;transform:translateX(-50%) !important;z-index:8 !important;}
+  .shoe-arrow{display:none !important;}
+  .shoe-viewer-powered{position:fixed !important;left:42px !important;bottom:28px !important;transform:none !important;width:auto !important;z-index:7 !important;text-align:left !important;color:rgba(255,255,255,.55) !important;}
+  .shoe-viewer::after{content:"Cena: " attr(data-price);position:fixed;left:42px;bottom:60px;z-index:7;color:#fff;font-size:26px;font-weight:500;letter-spacing:.08em;text-shadow:0 2px 18px rgba(0,0,0,.8);}
+  .shoe-viewer.shoe-viewer-zoomed::before{background:rgba(0,0,0,.18) !important;}
+  .shoe-viewer.shoe-viewer-zoomed .shoe-viewer-top,
+  .shoe-viewer.shoe-viewer-zoomed .shoe-viewer-actions,
+  .shoe-viewer.shoe-viewer-zoomed .shoe-viewer-close,
+  .shoe-viewer.shoe-viewer-zoomed .shoe-viewer-powered,
+  .shoe-viewer.shoe-viewer-zoomed .shoe-dots{opacity:0 !important;pointer-events:none !important;}
+  .shoe-viewer.shoe-viewer-zoomed::after{display:none !important;}
+  .shoe-viewer.shoe-viewer-zoomed .shoe-viewer-main-img{object-fit:contain !important;background:#000 !important;z-index:4 !important;}
+  .shoe-viewer.shoe-viewer-zoomed .shoe-zoom-close{
+    display:grid !important;position:fixed !important;top:18px !important;right:18px !important;left:auto !important;z-index:12 !important;
+    width:54px !important;height:54px !important;border-radius:999px !important;background:rgba(0,0,0,.52) !important;border:1px solid rgba(255,255,255,.22) !important;color:#fff !important;
+    font-size:38px !important;line-height:1 !important;place-items:center !important;backdrop-filter:blur(10px) !important;-webkit-backdrop-filter:blur(10px) !important;
+  }
+}
+@media(min-width:900px){
+  .shoe-viewer{background:rgba(0,0,0,.86) !important;touch-action:none !important;}
+  .shoe-viewer .shoe-viewer-media{width:min(460px,calc(100vw - 32px)) !important;top:16px !important;bottom:16px !important;padding:0 !important;border-radius:36px !important;background:#050506 !important;}
+  .shoe-viewer-main-img{position:absolute !important;inset:0 !important;width:100% !important;height:100% !important;max-width:none !important;max-height:none !important;object-fit:cover !important;border-radius:36px !important;background:#050506 !important;}
+  .shoe-viewer::before{content:"";position:absolute;left:50%;top:16px;bottom:16px;width:min(460px,calc(100vw - 32px));transform:translateX(-50%);z-index:2;pointer-events:none;border-radius:36px;background:linear-gradient(180deg,rgba(0,0,0,.72),rgba(0,0,0,.12) 42%,rgba(0,0,0,.78));}
+  .shoe-viewer-top{top:46px !important;left:50% !important;width:min(376px,calc(100vw - 112px)) !important;transform:translateX(-50%) !important;text-align:right !important;justify-items:end !important;z-index:5 !important;}
+  .shoe-viewer-meta-row{display:none !important;}
+  .shoe-viewer-headline{display:grid !important;justify-items:end !important;gap:5px !important;}
+  .shoe-viewer-headline h2{font-size:28px !important;margin:0 !important;color:#fff !important;text-shadow:0 2px 18px rgba(0,0,0,.7) !important;}
+  .shoe-viewer-headline b{font-size:18px !important;font-weight:500 !important;color:rgba(255,255,255,.86) !important;}
+  .shoe-viewer-description{display:none !important;}
+  .shoe-viewer-close{left:calc(50% - 186px) !important;top:132px !important;right:auto !important;width:58px !important;height:58px !important;border-radius:999px !important;font-size:42px !important;background:rgba(0,0,0,.28) !important;border:1px solid rgba(255,255,255,.18) !important;z-index:8 !important;}
+  .shoe-viewer-actions{left:calc(50% - 186px) !important;top:303px !important;bottom:auto !important;right:auto !important;width:76px !important;transform:none !important;display:grid !important;grid-template-columns:1fr !important;gap:24px !important;padding:0 !important;background:transparent !important;border:none !important;box-shadow:none !important;z-index:8 !important;}
+  .shoe-action,.shoe-action.red,.shoe-action.blue,.shoe-action.green,.shoe-action.zoom{width:58px !important;min-height:78px !important;height:auto !important;background:transparent !important;border:none !important;box-shadow:none !important;display:grid !important;justify-items:center !important;gap:7px !important;color:#fff !important;}
+  .shoe-action svg{width:58px !important;height:58px !important;padding:15px !important;border-radius:999px !important;box-sizing:border-box !important;background:rgba(0,0,0,.28) !important;border:1px solid rgba(255,255,255,.18) !important;}
+  .shoe-action span{font-size:14px !important;font-weight:500 !important;text-transform:lowercase !important;}
+  .shoe-action.red{order:3 !important;}.shoe-action.blue{order:1 !important;}.shoe-action.green{order:2 !important;}.shoe-action.zoom{order:4 !important;}
+  .shoe-arrow{display:none !important;}
+  .shoe-dots{bottom:92px !important;z-index:8 !important;}
+  .shoe-viewer-powered{left:calc(50% - 186px) !important;bottom:28px !important;transform:none !important;text-align:left !important;z-index:7 !important;}
+  .shoe-viewer::after{content:"Cena: " attr(data-price);position:fixed;left:calc(50% - 186px);bottom:60px;z-index:7;color:#fff;font-size:26px;font-weight:500;letter-spacing:.08em;text-shadow:0 2px 18px rgba(0,0,0,.8);}
+  .shoe-viewer.shoe-viewer-zoomed .shoe-viewer-media{width:min(920px,calc(100vw - 32px)) !important;border-radius:0 !important;}
+  .shoe-viewer.shoe-viewer-zoomed .shoe-viewer-main-img{object-fit:contain !important;background:#000 !important;border-radius:0 !important;z-index:4 !important;}
+  .shoe-viewer.shoe-viewer-zoomed::before{display:none !important;}
+  .shoe-viewer.shoe-viewer-zoomed .shoe-viewer-top,.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-actions,.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-close,.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-powered,.shoe-viewer.shoe-viewer-zoomed .shoe-dots{opacity:0 !important;pointer-events:none !important;}
+  .shoe-viewer.shoe-viewer-zoomed::after{display:none !important;}
+  .shoe-viewer.shoe-viewer-zoomed .shoe-zoom-close{display:grid !important;position:fixed !important;top:22px !important;right:22px !important;z-index:12 !important;width:54px !important;height:54px !important;border-radius:999px !important;background:rgba(0,0,0,.52) !important;border:1px solid rgba(255,255,255,.22) !important;color:#fff !important;font-size:38px !important;place-items:center !important;}
+}
