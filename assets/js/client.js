@@ -925,12 +925,12 @@ function showBookingForm() {
       <input id="client-phone" type="tel" inputmode="tel" placeholder="64 123 4567">
       <p class="field-help">${C("phoneHelp", "Aplikacija je podešena za Srbiju. Unesite broj kao 064 123 4567 ili +381 64 123 4567.")}</p>
 
-      ${!isSalonProfile ? `
+      ${false ? `
         <label>${escapeHtml(profileLabels.requestKindLabel)}</label>
         <input id="client-request-kind" type="text" placeholder="${escapeHtml(profileLabels.requestKindPlaceholder)}">
       ` : ""}
 
-      ${(businessType === "repair" || businessType === "craft") ? `
+      ${false ? `
         <label>Adresa / lokacija</label>
         <input id="client-address" type="text" placeholder="Mesto, ulica ili lokacija problema">
         <label>Hitnost</label>
@@ -941,7 +941,7 @@ function showBookingForm() {
         </select>
       ` : ""}
 
-      ${!isSalonProfile ? `
+      ${false ? `
         <label>${escapeHtml(profileLabels.noteLabel)}</label>
         <textarea id="client-note" rows="4" placeholder="${escapeHtml(profileLabels.notePlaceholder)}"></textarea>
       ` : ""}
@@ -1058,9 +1058,11 @@ async function submitAppointment() {
   const phoneRaw = document.getElementById("client-phone")?.value.trim();
   const phoneCountry = document.getElementById("client-phone-country")?.value || "381";
   const phone = normalizeClientPhoneForStorage(phoneRaw, phoneCountry);
-  const note = document.getElementById("client-note")?.value.trim();
-  const requestKind = document.getElementById("client-request-kind")?.value.trim();
-  const clientAddress = document.getElementById("client-address")?.value.trim();
+  // Salon MVP: no extra "vrsta zahteva" or "napomena" fields for clients.
+  // Other future business types can still use these optional fields if present.
+  const note = document.getElementById("client-note")?.value.trim() || "";
+  const requestKind = document.getElementById("client-request-kind")?.value.trim() || "";
+  const clientAddress = document.getElementById("client-address")?.value.trim() || "";
   const urgency = document.getElementById("client-urgency")?.value || "";
   const extraNoteParts = [];
   if (requestKind) extraNoteParts.push(`Vrsta: ${requestKind}`);
