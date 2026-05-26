@@ -3655,3 +3655,129 @@ html.cs-real-zoom-active body{
     bottom:18px !important;
   }
 }
+
+
+/* v1.3.10 SAFE MICRO ICON RAIL
+   Smaller, tighter icon rail. Remove any residual translucent strip behind the left action rail. */
+@media(max-width:899px){
+  .shoe-viewer-actions{
+    left:16px !important;
+    top:92px !important;
+    width:46px !important;
+    gap:10px !important;
+    padding:0 !important;
+    margin:0 !important;
+    background:none !important;
+    background-color:transparent !important;
+    border:none !important;
+    border-radius:0 !important;
+    box-shadow:none !important;
+    filter:none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+    overflow:visible !important;
+  }
+  .shoe-viewer-close{
+    left:16px !important;
+    top:16px !important;
+    width:42px !important;
+    height:42px !important;
+    font-size:30px !important;
+    background:transparent !important;
+    border:1.6px solid rgba(255,255,255,.46) !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+  .shoe-action,.shoe-action.red,.shoe-action.blue,.shoe-action.green,.shoe-action.zoom{
+    width:46px !important;
+    min-height:48px !important;
+    gap:3px !important;
+    padding:0 !important;
+    background:none !important;
+    background-color:transparent !important;
+    border:none !important;
+    border-radius:0 !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+  .shoe-action svg{
+    width:42px !important;
+    height:42px !important;
+    padding:10px !important;
+    background:transparent !important;
+    background-color:transparent !important;
+    border:1.6px solid rgba(255,255,255,.46) !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+  .shoe-action span{
+    font-size:10px !important;
+    line-height:1 !important;
+    letter-spacing:0 !important;
+    text-transform:lowercase !important;
+  }
+}
+@media(min-width:900px){
+  .shoe-viewer-actions{
+    left:calc(50% - 197px) !important;
+    top:88px !important;
+    width:46px !important;
+    gap:10px !important;
+    padding:0 !important;
+    margin:0 !important;
+    background:none !important;
+    background-color:transparent !important;
+    border:none !important;
+    border-radius:0 !important;
+    box-shadow:none !important;
+    filter:none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+    overflow:visible !important;
+  }
+  .shoe-viewer-close{
+    left:calc(50% - 197px) !important;
+    top:16px !important;
+    width:42px !important;
+    height:42px !important;
+    font-size:30px !important;
+    background:transparent !important;
+    border:1.6px solid rgba(255,255,255,.46) !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+  .shoe-action,.shoe-action.red,.shoe-action.blue,.shoe-action.green,.shoe-action.zoom{
+    width:46px !important;
+    min-height:48px !important;
+    gap:3px !important;
+    padding:0 !important;
+    background:none !important;
+    background-color:transparent !important;
+    border:none !important;
+    border-radius:0 !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+  .shoe-action svg{
+    width:42px !important;
+    height:42px !important;
+    padding:10px !important;
+    background:transparent !important;
+    background-color:transparent !important;
+    border:1.6px solid rgba(255,255,255,.46) !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+  .shoe-action span{
+    font-size:10px !important;
+    line-height:1 !important;
+    letter-spacing:0 !important;
+    text-transform:lowercase !important;
+  }
+}
