@@ -1389,15 +1389,27 @@ function csApplyShoePanZoom(){
   const viewer = document.getElementById("shoeViewer");
   if (!img) return;
   const scale = Number(csViewerState.zoomScale || 1);
+  img.style.opacity = "1";
+  img.style.visibility = "visible";
+  img.style.transformOrigin = "center center";
   if (!csViewerState.zoomed || scale <= 1.01) {
     csViewerState.zoomed = false;
     csViewerState.zoomScale = 1;
     if (viewer) viewer.classList.remove("shoe-viewer-zoomed");
     img.style.transform = "";
+    img.style.willChange = "auto";
+    document.documentElement.classList.remove("cs-zoom-active");
     return;
   }
-  if (viewer) viewer.classList.add("shoe-viewer-zoomed");
-  img.style.transform = `translate3d(${csViewerState.panX || 0}px, ${csViewerState.panY || 0}px, 0) scale(${scale})`;
+  if (viewer) {
+    viewer.classList.add("shoe-viewer-zoomed");
+    viewer.style.backgroundColor = "#000";
+  }
+  document.documentElement.classList.add("cs-zoom-active");
+  img.style.willChange = "transform";
+  const panX = Number(csViewerState.panX || 0);
+  const panY = Number(csViewerState.panY || 0);
+  img.style.transform = `translate3d(${panX}px, ${panY}px, 0) scale(${scale})`;
 }
 function csResetShoePan(){
   if (!csViewerState) return;
@@ -1448,7 +1460,7 @@ function renderShoeViewer() {
   viewer.setAttribute("data-price", csProductPrice(product));
   const productDescription = csProductPublicDescription(product);
   viewer.innerHTML = `
-    <div class="shoe-viewer-media">${img ? `<div class="shoe-viewer-media-bg" aria-hidden="true"><img src="${escapeHtml(img)}" alt="" crossorigin="anonymous"></div><img class="shoe-viewer-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}" crossorigin="anonymous" onload="csSmartCropShoeImage(this)">` : `<span>Bez slike</span>`}</div>
+    <div class="shoe-viewer-media">${img ? `<div class="shoe-viewer-media-bg" aria-hidden="true"><img src="${escapeHtml(img)}" alt=""></div><img class="shoe-viewer-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}" onload="csSmartCropShoeImage(this)">` : `<span>Bez slike</span>`}</div>
     <div class="shoe-viewer-top">
       <div class="shoe-viewer-meta-row">
         <small class="shoe-viewer-chip shoe-viewer-chip-code">${escapeHtml(csProductCode(product))}</small>

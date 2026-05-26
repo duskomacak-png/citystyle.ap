@@ -3173,3 +3173,120 @@ select:focus{
   .shoe-viewer.shoe-viewer-zoomed::after{display:none !important;}
   .shoe-viewer.shoe-viewer-zoomed .shoe-zoom-close{display:grid !important;position:fixed !important;top:22px !important;right:22px !important;z-index:12 !important;width:54px !important;height:54px !important;border-radius:999px !important;background:rgba(0,0,0,.52) !important;border:1px solid rgba(255,255,255,.22) !important;color:#fff !important;font-size:38px !important;place-items:center !important;}
 }
+
+
+/* v1.3.4 CRITICAL ZOOM BLACKSCREEN FIX
+   Problem: on some Android/WebView browsers the zoomed story image inherited old media/bg layers
+   and rendered as a black screen. This override makes zoom a real fullscreen image layer. */
+.shoe-viewer.shoe-viewer-zoomed{
+  background:#000 !important;
+  overflow:hidden !important;
+  touch-action:none !important;
+}
+.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-media{
+  position:fixed !important;
+  inset:0 !important;
+  left:0 !important;
+  top:0 !important;
+  right:0 !important;
+  bottom:0 !important;
+  width:100vw !important;
+  height:100vh !important;
+  height:100dvh !important;
+  max-width:none !important;
+  max-height:none !important;
+  padding:0 !important;
+  margin:0 !important;
+  display:block !important;
+  background:#000 !important;
+  border-radius:0 !important;
+  overflow:hidden !important;
+  z-index:20 !important;
+  transform:none !important;
+}
+.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-media-bg,
+.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-media-bg img{
+  display:none !important;
+  opacity:0 !important;
+  visibility:hidden !important;
+}
+.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-main-img{
+  position:absolute !important;
+  inset:0 !important;
+  left:0 !important;
+  top:0 !important;
+  width:100vw !important;
+  height:100vh !important;
+  height:100dvh !important;
+  max-width:none !important;
+  max-height:none !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  display:block !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+  background:transparent !important;
+  border-radius:0 !important;
+  z-index:21 !important;
+  transform-origin:center center !important;
+  will-change:transform !important;
+  backface-visibility:hidden !important;
+  -webkit-backface-visibility:hidden !important;
+  user-select:none !important;
+  -webkit-user-select:none !important;
+  pointer-events:auto !important;
+}
+.shoe-viewer.shoe-viewer-zoomed .shoe-zoom-close{
+  display:grid !important;
+  position:fixed !important;
+  top:calc(14px + env(safe-area-inset-top,0px)) !important;
+  right:14px !important;
+  left:auto !important;
+  z-index:40 !important;
+  width:52px !important;
+  height:52px !important;
+  border-radius:999px !important;
+  place-items:center !important;
+  background:rgba(0,0,0,.58) !important;
+  border:1px solid rgba(255,255,255,.24) !important;
+  color:#fff !important;
+  font-size:38px !important;
+  line-height:1 !important;
+  box-shadow:0 14px 34px rgba(0,0,0,.4) !important;
+  backdrop-filter:blur(10px) !important;
+  -webkit-backdrop-filter:blur(10px) !important;
+}
+.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-top,
+.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-actions,
+.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-close,
+.shoe-viewer.shoe-viewer-zoomed .shoe-viewer-powered,
+.shoe-viewer.shoe-viewer-zoomed .shoe-dots,
+.shoe-viewer.shoe-viewer-zoomed .shoe-arrow{
+  opacity:0 !important;
+  pointer-events:none !important;
+  visibility:hidden !important;
+}
+.shoe-viewer.shoe-viewer-zoomed::before,
+.shoe-viewer.shoe-viewer-zoomed::after{
+  display:none !important;
+  opacity:0 !important;
+}
+@media(min-width:900px){
+  .shoe-viewer.shoe-viewer-zoomed .shoe-viewer-media{
+    width:100vw !important;
+    height:100vh !important;
+    max-width:none !important;
+    border-radius:0 !important;
+  }
+  .shoe-viewer.shoe-viewer-zoomed .shoe-viewer-main-img{
+    width:100vw !important;
+    height:100vh !important;
+    max-width:none !important;
+    max-height:none !important;
+    object-fit:contain !important;
+  }
+}
