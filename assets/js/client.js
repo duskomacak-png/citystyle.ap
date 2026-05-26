@@ -11,6 +11,10 @@ let selectedTime = null;
 let ownerPreviewMode = false;
 let adminPreviewMode = false;
 const C = (key, fallback = "") => window.App?.t ? window.App.t(key, fallback) : (fallback || key);
+const CITYSTYLE_POWERED = "powered by citystyle.app";
+function renderCityStylePowered(className = "") {
+  return `<div class="citystyle-powered ${className}">${CITYSTYLE_POWERED}</div>`;
+}
 
 
 function clientHasGaragePackage() {
@@ -1238,6 +1242,7 @@ async function renderSalonHome() {
       </div>
       <div id="client-extra">${renderClientServicesPreview()}${renderClientProductsPreview()}${renderClientGaragePreview()}${renderClientGalleryPreview()}${renderClientWorkingHours(workingHours || [])}</div>
       <div id="booking-box"></div>
+      ${renderCityStylePowered("client-powered")}
     </section>`;
 }
 
@@ -1261,6 +1266,7 @@ function renderShoeShopHome(settings = {}) {
       <section class="shoe-products-section">
         ${products.length ? `<div class="shoe-grid">${products.map((product, index) => renderShoeProductCard(product, index)).join("")}</div>` : `<div class="card"><h2>Još nema oglasa</h2><p class="muted">Vlasnik još nije dodao patike u katalog.</p></div>`}
       </section>
+      ${renderCityStylePowered("shoe-powered")}
     </section>`;
   const requestedProduct = window.App?.getUrlParam?.("product");
   if (requestedProduct && products.length) {
@@ -1436,8 +1442,14 @@ function renderShoeViewer() {
     </div>
     <button class="shoe-viewer-close" type="button" onclick="closeShoeViewer()">×</button>
     ${imgs.length > 1 ? `<button class="shoe-arrow shoe-arrow-left" type="button" onclick="event.stopPropagation(); shoeChangeImage(-1)">‹</button><button class="shoe-arrow shoe-arrow-right" type="button" onclick="event.stopPropagation(); shoeChangeImage(1)">›</button>` : ""}
-    <div class="shoe-viewer-actions"><button class="shoe-action red" type="button" onclick="shareShoeProduct(event)" aria-label="Podeli oglas" title="Podeli oglas">${csViewerShareIcon()}</button><button class="shoe-action blue" type="button" onclick="askShoeProduct(event)" aria-label="Pošalji poruku" title="Pošalji poruku">${csViewerMessageIcon()}</button><button class="shoe-action green" type="button" onclick="callShoeShop(event)" aria-label="Pozovi prodavnicu" title="Pozovi prodavnicu">${csViewerPhoneIcon()}</button></div>
-    ${imgs.length > 1 ? `<div class="shoe-dots">${imgs.map((_,i)=>`<button class="${i===csViewerState.image?'active':''}" onclick="event.stopPropagation(); shoeSetImage(${i})"></button>`).join("")}</div>` : ""}`;
+    <div class="shoe-viewer-actions" aria-label="Akcije proizvoda">
+      <button class="shoe-action red" type="button" onclick="shareShoeProduct(event)" aria-label="Podeli oglas" title="Podeli oglas">${csViewerShareIcon()}<span>Podeli</span></button>
+      <button class="shoe-action blue" type="button" onclick="askShoeProduct(event)" aria-label="Pošalji poruku" title="Pošalji poruku">${csViewerMessageIcon()}<span>Poruka</span></button>
+      <button class="shoe-action green" type="button" onclick="callShoeShop(event)" aria-label="Pozovi prodavnicu" title="Pozovi prodavnicu">${csViewerPhoneIcon()}<span>Pozovi</span></button>
+      <button class="shoe-action zoom" type="button" onclick="event.stopPropagation(); csToggleShoeZoom()" aria-label="Zumiraj sliku" title="Zumiraj sliku">${csViewerZoomIcon()}<span>Zum</span></button>
+    </div>
+    <div class="shoe-viewer-powered">${CITYSTYLE_POWERED}</div>
+    ${imgs.length > 1 ? `<div class="shoe-dots">${imgs.map((_,i)=>`<button class="${i===csViewerState.image?'active':''}" onclick="event.stopPropagation(); shoeSetImage(${i})" aria-label="Slika ${i + 1}"></button>`).join("")}</div>` : ""}`;
   csApplyShoePanZoom();
   viewer.ontouchstart = e => {
     const t = e.changedTouches[0];
@@ -1490,6 +1502,7 @@ function renderShoeViewer() {
     if (e.key === "ArrowRight") shoeChangeImage(1);
     if (e.key === "ArrowUp") shoeChangeProduct(-1);
     if (e.key === "ArrowDown") shoeChangeProduct(1);
+    if (String(e.key || "").toLowerCase() === "z") csToggleShoeZoom();
   };
 }
 function shoeChangeProduct(delta) {
@@ -1533,4 +1546,4 @@ function askShoeProduct(e) {
 }
 function callShoeShop(e) { e?.stopPropagation?.(); const phone=csSafePhone(currentSalon._publicPhone || ""); if(!phone) return window.App.showMessage("Telefon nije upisan.", "error"); window.location.href=`tel:${phone}`; }
 
-Object.assign(window, { openShoeViewer, closeShoeViewer, shoeChangeProduct, shoeChangeImage, shoeSetImage, shareShoeProduct, askShoeProduct, callShoeShop, csSmartCropShoeImage, csToggleShoeZoom, csApplyShoePanZoom });
+Object.assign(window, { openShoeViewer, closeShoeViewer, shoeChangeProduct, shoeChangeImage, shoeSetImage, shareShoeProduct, askShoeProduct, callShoeShop, csSmartCropShoeImage, csToggleShoeZoom, csApplyShoePanZoom, csViewerZoomIcon });

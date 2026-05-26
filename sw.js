@@ -1,31 +1,62 @@
-const CACHE_NAME = 'citystyle-v1-3-3';
-const ASSETS = ['./', './index.html', './style.css?v=133', './script.js?v=133', './manifest.json'];
+// sw.js
+// Minimal cache reset service worker for CityStyle.app
+const CACHE_NAME = "citystyle-v132-responsive-phone-preview";
 
-self.addEventListener('install', event => {
+self.addEventListener("install", (event) => {
   self.skipWaiting();
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).catch(() => null));
 });
 
-self.addEventListener('activate', event => {
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
+  );
+  self.clients.claim();
+});
+
+self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") return;
+  event.respondWith(fetch(event.request));
+});
+
+
+self.addEventListener("push", (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (err) { data = {}; }
+
+  const title = data.title || "Novi zahtev / termin";
+  const options = {
+    body: data.body || "Stigao je novi zahtev korisnika.",
+    icon: "/assets/icons/icon-192.png",
+    badge: "/assets/icons/icon-192.png",
+    data: {
+      url: data.url || "salon/",
+      badgeCount: data.badgeCount || 1
+    },
+    tag: data.tag || "citystyle-new-appointment",
+    renotify: true
+  };
+
   event.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
-    await self.clients.claim();
+    try {
+      if (self.registration.setAppBadge) {
+        await self.registration.setAppBadge(options.data.badgeCount || 1);
+      }
+    } catch (err) {}
+    await self.registration.showNotification(title, options);
   })());
 });
 
-self.addEventListener('fetch', event => {
-  const req = event.request;
-  if (req.method !== 'GET') return;
-  event.respondWith((async () => {
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const targetUrl = event.notification?.data?.url || "/salon/";
+  event.waitUntil((async () => {
     try {
-      const fresh = await fetch(req, { cache: 'no-store' });
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(req, fresh.clone()).catch(() => null);
-      return fresh;
-    } catch (err) {
-      const cached = await caches.match(req);
-      return cached || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' }});
+      if (self.registration.clearAppBadge) await self.registration.clearAppBadge();
+    } catch (err) {}
+    const allClients = await clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const client of allClients) {
+      if (client.url.includes(targetUrl) && "focus" in client) return client.focus();
     }
+    return clients.openWindow(targetUrl);
   })());
 });

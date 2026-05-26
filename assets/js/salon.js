@@ -169,6 +169,10 @@ function renderSalonLogin() {
   `;
 }
 
+function getDefaultOwnerSection() {
+  return ownerIsShopProfile() ? "products" : "services";
+}
+
 async function handleSalonLogin() {
   window.App?.clearSavedSalon?.();
   const email = document.getElementById("salon-login-email").value.trim().toLowerCase();
@@ -180,7 +184,7 @@ async function handleSalonLogin() {
   window.App?.setAppLanguage?.(salon.app_language || "sr");
   window.App?.applySalonTheme?.(salon.theme_color);
   renderSalonDashboard();
-  await showSection("appointments");
+  await showSection(getDefaultOwnerSection());
 }
 
 async function loadSalonForAdminPreview(salonId) {
@@ -202,7 +206,7 @@ async function loadSalonForAdminPreview(salonId) {
   window.App?.setAppLanguage?.(data.app_language || "sr");
   window.App?.applySalonTheme?.(data.theme_color);
   renderSalonDashboard();
-  await showSection("appointments");
+  await showSection(getDefaultOwnerSection());
 }
 
 async function loadSalonFromSession(salonId) {
@@ -229,7 +233,7 @@ async function loadSalonFromSession(salonId) {
   window.App?.setAppLanguage?.(data.app_language || "sr");
   window.App?.applySalonTheme?.(data.theme_color);
   renderSalonDashboard();
-  await showSection("appointments");
+  await showSection(getDefaultOwnerSection());
 }
 
 function renderBlockedSalon(salon) {
