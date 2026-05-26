@@ -158,6 +158,7 @@ function renderSalonLogin() {
   window.App?.setAppLanguage?.("sr");
   document.getElementById("salon-name").textContent = "Panel vlasnika biznisa";
   document.getElementById("salon-status-text").textContent = "Unesite email adresu biznisa i kod firme koji vam je dodelio administrator.";
+  setOwnerPanelLoggedInUI(false);
   document.getElementById("salon-tabs").classList.add("hidden");
   document.getElementById("salon-logout-btn").classList.add("hidden");
   document.getElementById("salon-install-btn")?.classList.add("hidden");
@@ -1737,21 +1738,41 @@ function ownerIsShopProfile() {
   return /catalog|katalog|prodav|shop|store|patik|shoe|sneaker/.test(raw);
 }
 
+
+function setOwnerPanelLoggedInUI(isLoggedIn) {
+  const tabs = document.getElementById("salon-tabs");
+  const logoutBtn = document.getElementById("salon-logout-btn");
+  const installBtn = document.getElementById("salon-install-btn");
+  if (tabs) tabs.classList.toggle("hidden", !isLoggedIn);
+  if (logoutBtn) logoutBtn.classList.toggle("hidden", !isLoggedIn || adminOwnerPreviewMode);
+  if (installBtn) installBtn.classList.toggle("hidden", !isLoggedIn || adminOwnerPreviewMode);
+}
+function removeOwnerLoginCards() {
+  document.querySelectorAll(".login-card").forEach(card => {
+    const content = (card.textContent || "").toLowerCase();
+    if (content.includes("ulaz za vlasnika") || content.includes("panel vlasnika") || content.includes("email vlasnika") || content.includes("kod firme")) {
+      card.remove();
+    }
+  });
+}
+
 function renderSalonDashboard() {
+  removeOwnerLoginCards();
+  setOwnerPanelLoggedInUI(true);
   const shop = ownerIsShopProfile();
   const labels = shop ? {
     products: "Proizvodi / oglasi",
     analytics: "Statistika / QR",
     settings: "Profil / početna slika"
   } : {
-    appointments: S("tabAppointments", "Zahtevi / termini"),
-    services: S("tabServices", "Usluge / ponuda"),
-    products: S("tabProducts", "Proizvodi / katalog"),
+    appointments: "Zahtevi / termini",
+    services: "Usluge / ponuda",
+    products: "Proizvodi / katalog",
     analytics: "Statistika / QR",
     garage: "Garaža",
     gallery: "Galerija radova",
-    hours: S("tabHours", "Radno vreme"),
-    settings: S("tabSettings", "Podešavanje profila")
+    hours: "Radno vreme",
+    settings: "Profil / podešavanje"
   };
   document.querySelectorAll("#salon-tabs button").forEach(btn => {
     const allowed = !!labels[btn.dataset.section] && (!shop || ["products","analytics","settings"].includes(btn.dataset.section));

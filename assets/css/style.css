@@ -4256,3 +4256,54 @@ html.cs-real-zoom-active body{
     text-align:center !important;
   }
 }
+
+
+/* v1.3.21 SAFE OWNER LOGIN/TABS GUARD
+   The mobile 3-column tab layout must not override hidden state before owner login. */
+.panel-tabs.hidden,
+.panel-tabs.hidden button{
+  display:none !important;
+}
+@media(max-width:640px){
+  .panel-tabs.hidden{
+    display:none !important;
+  }
+}
+
+
+/* v1.3.22 SAFE SALON MOBILE TABS GRID
+   Apply the same clean mobile button grid to salon/service profiles too.
+   Visible buttons are arranged in rows, without horizontal scrolling. */
+@media(max-width:640px){
+  #salon-tabs.panel-tabs:not(.hidden){
+    display:grid !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:8px !important;
+    overflow:visible !important;
+    padding:8px 0 16px !important;
+    align-items:stretch !important;
+  }
+  #salon-tabs.panel-tabs:not(.hidden) button:not(.hidden){
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    width:100% !important;
+    min-width:0 !important;
+    min-height:56px !important;
+    padding:9px 6px !important;
+    border-radius:13px !important;
+    white-space:normal !important;
+    word-break:normal !important;
+    overflow-wrap:anywhere !important;
+    text-wrap:balance !important;
+    text-align:center !important;
+    font-size:11.5px !important;
+    line-height:1.12 !important;
+    font-weight:850 !important;
+    letter-spacing:-.02em !important;
+  }
+  #salon-tabs.panel-tabs.hidden,
+  #salon-tabs.panel-tabs.hidden button{
+    display:none !important;
+  }
+}
