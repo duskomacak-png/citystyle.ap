@@ -3538,3 +3538,120 @@ html.cs-real-zoom-active body{
   .shoe-viewer::after{ left:calc(50% - 202px) !important; bottom:54px !important; font-size:24px !important; }
   .shoe-viewer-powered{ left:calc(50% - 202px) !important; bottom:22px !important; }
 }
+
+
+/* v1.3.9 SAFE STORY ICON MINI + NO FOG RAIL
+   Goal: make the action rail smaller and cleaner, and remove the fog/mist strip behind icons.
+   No JS/Supabase/login logic changes. */
+@media(max-width:899px){
+  .shoe-viewer::before{
+    display:none !important;
+    background:none !important;
+  }
+  .shoe-viewer-close{
+    left:18px !important;
+    top:18px !important;
+    width:48px !important;
+    height:48px !important;
+    font-size:34px !important;
+    background:transparent !important;
+    border:2px solid rgba(255,255,255,.50) !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+  .shoe-viewer-actions{
+    left:18px !important;
+    top:98px !important;
+    width:54px !important;
+    gap:14px !important;
+  }
+  .shoe-action,.shoe-action.red,.shoe-action.blue,.shoe-action.green,.shoe-action.zoom{
+    width:54px !important;
+    min-height:58px !important;
+    gap:5px !important;
+  }
+  .shoe-action svg{
+    width:48px !important;
+    height:48px !important;
+    padding:12px !important;
+    background:transparent !important;
+    border:2px solid rgba(255,255,255,.48) !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+  .shoe-action span{
+    font-size:11px !important;
+    font-weight:500 !important;
+    color:#fff !important;
+    text-shadow:0 1px 8px rgba(0,0,0,.55) !important;
+  }
+  .shoe-viewer::after{
+    left:18px !important;
+    bottom:56px !important;
+    font-size:22px !important;
+  }
+  .shoe-viewer-powered{
+    left:18px !important;
+    bottom:22px !important;
+  }
+}
+@media(min-width:900px){
+  .shoe-viewer::before{
+    display:none !important;
+    background:none !important;
+  }
+  .shoe-viewer-close{
+    left:calc(50% - 199px) !important;
+    top:22px !important;
+    width:48px !important;
+    height:48px !important;
+    font-size:34px !important;
+    background:transparent !important;
+    border:2px solid rgba(255,255,255,.50) !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+  .shoe-viewer-actions{
+    left:calc(50% - 199px) !important;
+    top:96px !important;
+    width:54px !important;
+    gap:14px !important;
+  }
+  .shoe-action,.shoe-action.red,.shoe-action.blue,.shoe-action.green,.shoe-action.zoom{
+    width:54px !important;
+    min-height:58px !important;
+    gap:5px !important;
+  }
+  .shoe-action svg{
+    width:48px !important;
+    height:48px !important;
+    padding:12px !important;
+    background:transparent !important;
+    border:2px solid rgba(255,255,255,.48) !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+  .shoe-action span{
+    font-size:11px !important;
+    font-weight:500 !important;
+    color:#fff !important;
+    text-shadow:0 1px 8px rgba(0,0,0,.55) !important;
+  }
+  .shoe-viewer-top{
+    top:24px !important;
+    width:min(380px,calc(100vw - 128px)) !important;
+  }
+  .shoe-viewer::after{
+    left:calc(50% - 199px) !important;
+    bottom:52px !important;
+    font-size:22px !important;
+  }
+  .shoe-viewer-powered{
+    left:calc(50% - 199px) !important;
+    bottom:18px !important;
+  }
+}
