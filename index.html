@@ -3,58 +3,76 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>CityStyle Premium White-Label Demo v1.3.1</title>
-  <meta name="description" content="Premium white-label QR izlog za lokalne biznise — statički demo." />
   <meta name="theme-color" content="#0F0F11" />
+  <title>CityStyle.app MVP v1.3.2</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="assets/icons/icon-192.png" />
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="stylesheet" href="style.css?v=132" />
 </head>
 <body>
-  <div class="stage">
-    <aside class="sidebar">
-      <div class="sidebar-brand">
-        <div class="cs-mark">CS</div>
-        <div><span>Premium demo v1.3.1</span><h1>CityStyle white-label</h1></div>
-      </div>
-      <p>Izaberi firmu. Desno je tačan kupac-prikaz: QR ulaz → feed → detalj → kontakt.</p>
-      <div id="businessSwitcher" class="switcher"></div>
-      <button id="openOwner" class="side-btn">Owner panel preview</button>
-      <button id="openAdmin" class="side-btn accent-border">Admin: domen + paket</button>
-    </aside>
+  <div class="desktop-stage">
+    <main class="app-shell" id="appShell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">QR digitalni izlog</p>
+          <h1 id="businessName">Urban Step</h1>
+        </div>
+        <button class="icon-btn" id="shareBusinessBtn" type="button" aria-label="Podeli profil">↗</button>
+      </header>
 
-    <main class="phone">
-      <section class="screen" id="screen">
-        <header class="topbar">
-          <div class="logo" id="logo">US</div>
-          <div class="brand-text"><h2 id="name">Urban Sole</h2><p id="type">Sneaker Shop</p><span id="openStatus">Otvoreno danas</span></div>
-          <button class="round-btn" id="moreBtn" aria-label="Opcije"><span></span><span></span><span></span></button>
-        </header>
-        <div class="powered-row"><span>powered by citystyle.app</span><button id="installBtn">Dodaj Urban Sole na telefon</button></div>
-        <nav id="modeTabs" class="mode-tabs hidden"><button data-mode="service">Usluge</button><button data-mode="product">Proizvodi</button></nav>
-        <nav id="catTabs" class="cat-tabs"></nav>
-        <section id="feed" class="feed"></section>
+      <section class="hero-card" id="heroCard">
+        <div class="hero-glow"></div>
+        <p class="badge" id="businessTypeBadge">Prodavnica patika</p>
+        <h2 id="heroTitle">Premium mobilni izlog bez kupčevog login-a.</h2>
+        <p id="heroText">Pregledaj ponudu, otvori detalj, pošalji upit ili pozovi.</p>
       </section>
+
+      <nav class="segment-tabs" aria-label="Tip prikaza">
+        <button class="tab active" id="tabProducts" type="button">Proizvodi</button>
+        <button class="tab" id="tabServices" type="button">Usluge</button>
+      </nav>
+
+      <section class="feed" id="feed" aria-live="polite"></section>
+
+      <footer class="footer-brand">powered by citystyle.app</footer>
     </main>
   </div>
 
-  <section id="detail" class="detail" aria-hidden="true">
-    <div class="detail-phone">
-      <header class="detail-top"><button id="closeDetail" class="circle-btn">‹</button><div><h3 id="detailBiz"></h3><p id="detailBizType"></p></div><button id="detailMore" class="circle-btn">⋯</button></header>
-      <div id="gallery" class="gallery"></div><div id="galleryDots" class="gallery-dots"></div>
-      <div class="detail-body">
-        <div class="badge-line"><span id="detailKind" class="pill"></span><button class="heart">♡</button></div>
-        <h1 id="detailTitle"></h1><p id="detailDesc"></p><div id="detailPrice" class="detail-price"></div>
-        <div class="info-dot" id="detailInfo"></div><div id="detailVariants" class="size-grid"></div>
+  <section class="detail-overlay hidden" id="detailOverlay" aria-hidden="true">
+    <div class="detail-panel" role="dialog" aria-modal="true" aria-label="Detalj ponude">
+      <div class="detail-scroll" id="detailScroll">
+        <div class="detail-topbar">
+          <button class="round-btn" id="closeDetailBtn" type="button" aria-label="Zatvori">×</button>
+          <button class="round-btn" id="shareItemBtn" type="button" aria-label="Podeli">↗</button>
+        </div>
+
+        <div class="detail-gallery" id="detailGallery">
+          <button class="gallery-arrow left" id="prevImgBtn" type="button" aria-label="Prethodna slika">‹</button>
+          <div class="gallery-frame" id="galleryFrame">
+            <img id="detailImage" alt="Slika ponude" />
+          </div>
+          <button class="gallery-arrow right" id="nextImgBtn" type="button" aria-label="Sledeća slika">›</button>
+          <button class="zoom-btn" id="zoomBtn" type="button">Zum</button>
+          <div class="dots" id="dots"></div>
+        </div>
+
+        <article class="detail-content">
+          <p class="detail-kicker" id="detailKicker">Proizvod</p>
+          <h2 id="detailTitle">Naziv</h2>
+          <p class="detail-price" id="detailPrice">Cena</p>
+          <div class="info-grid" id="detailInfo"></div>
+          <p class="detail-description" id="detailDescription"></p>
+        </article>
+
+        <footer class="detail-powered">powered by citystyle.app</footer>
       </div>
-      <div class="action-dock"><button id="primaryCTA" class="primary-action"></button><div class="quick"><button id="callBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8 9.6a16 16 0 0 0 6.4 6.4l1.2-1.2a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2z"/></svg><span>Pozovi</span></button><button id="msgBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/><path d="M8 9h8M8 13h5"/></svg><span>Poruka</span></button><button id="mapBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg><span>Lokacija</span></button><button id="shareBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 16V3M7 8l5-5 5 5"/></svg><span>Podeli</span></button></div></div>
+
+      <div class="sticky-cta">
+        <button class="cta primary" id="primaryCtaBtn" type="button">Pošalji upit</button>
+        <button class="cta secondary" id="callBtn" type="button">Pozovi</button>
+      </div>
     </div>
   </section>
 
-  <section id="menuSheet" class="sheet" aria-hidden="true"><div class="sheet-card"><div class="sheet-head"><h3 id="menuTitle">Opcije</h3><button data-close="menuSheet">×</button></div><div id="menuItems" class="sheet-list"></div></div></section>
-  <section id="ownerModal" class="modal" aria-hidden="true"><div class="modal-card wide"><button class="modal-close" data-close="ownerModal">×</button><p class="eyebrow">Owner panel preview</p><h2 id="ownerTitle">Urban Sole</h2><div class="owner-grid"><div class="owner-box"><b>Stavke</b><span id="ownerCount">4/10</span></div><div class="owner-box"><b>Status</b><span>active</span></div><div class="owner-box"><b>Plan</b><span>Manual MVP</span></div></div><h3>Inbox za upite <small>v1.2+ preview</small></h3><div class="request"><b>Novo</b><span>Želim da proverim dostupnost / termin za istaknutu stavku.</span></div><div class="request"><b>Kontaktirano</b><span>Kupac je pitao za cenu i slanje fotografije.</span></div><h3>Brze akcije</h3><div class="owner-actions"><button>Dodaj stavku</button><button>Uredi profil</button><button>Upravljanje slikama</button></div></div></section>
-  <section id="adminModal" class="modal" aria-hidden="true"><div class="modal-card admin"><button class="modal-close" data-close="adminModal">×</button><p class="eyebrow">Super-Admin preview</p><h2>Dodaj firmu</h2><div class="step-row"><span class="on">1 Domen</span><span>2 Paket</span><span>3 Podaci</span><span>4 QR</span></div><h3>Izaberi domen</h3><div id="domainCards" class="cards"></div><h3>Izaberi paket</h3><div id="packageCards" class="cards"></div><div id="adminSummary" class="summary"></div></div></section>
-
-  <script src="assets/js/script.js"></script>
+  <script src="script.js?v=132"></script>
 </body>
 </html>
