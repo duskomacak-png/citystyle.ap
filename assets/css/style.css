@@ -3480,3 +3480,61 @@ html.cs-real-zoom-active body{
   white-space:nowrap !important;
 }
 @media(max-width:600px){.cs-zoom-help{display:none !important}.cs-zoom-lightbox-close{width:52px !important;height:52px !important;right:12px !important;}}
+
+
+/* v1.3.8 SAFE ICON RAIL ALIGN FIX
+   Goal: keep the same dark premium story viewer, but place close/action icons cleanly,
+   fully visible, and inside the phone preview without clipping. */
+@media(max-width:899px){
+  .shoe-viewer-close{
+    left:18px !important; top:18px !important; right:auto !important;
+    width:54px !important; height:54px !important; font-size:38px !important;
+  }
+  .shoe-viewer-actions{
+    left:18px !important; top:106px !important; right:auto !important; bottom:auto !important;
+    width:62px !important; gap:16px !important;
+  }
+  .shoe-action,.shoe-action.red,.shoe-action.blue,.shoe-action.green,.shoe-action.zoom{
+    width:62px !important; min-height:66px !important; gap:6px !important;
+  }
+  .shoe-action svg{
+    width:50px !important; height:50px !important; padding:13px !important;
+  }
+  .shoe-action span{
+    font-size:12px !important; line-height:1 !important; letter-spacing:.02em !important;
+  }
+  .shoe-dots{ bottom:96px !important; }
+  .shoe-viewer::after{ left:18px !important; bottom:58px !important; font-size:24px !important; }
+  .shoe-viewer-powered{ left:18px !important; bottom:24px !important; }
+}
+
+@media(min-width:900px){
+  .shoe-viewer-close{
+    left:calc(50% - 202px) !important; top:30px !important; right:auto !important;
+    width:52px !important; height:52px !important; font-size:36px !important;
+    display:grid !important; place-items:center !important;
+  }
+  .shoe-viewer-actions{
+    left:calc(50% - 202px) !important; top:112px !important; right:auto !important; bottom:auto !important;
+    width:64px !important; gap:16px !important; display:grid !important;
+  }
+  .shoe-action,.shoe-action.red,.shoe-action.blue,.shoe-action.green,.shoe-action.zoom{
+    width:64px !important; min-height:66px !important; gap:6px !important;
+    align-content:start !important; justify-items:center !important;
+  }
+  .shoe-action svg{
+    width:50px !important; height:50px !important; padding:13px !important;
+  }
+  .shoe-action span{
+    font-size:12px !important; line-height:1 !important; letter-spacing:.02em !important;
+  }
+  .shoe-viewer-top{
+    top:32px !important; left:50% !important; width:min(372px,calc(100vw - 120px)) !important;
+    transform:translateX(-50%) !important;
+  }
+  .shoe-viewer-headline h2{ font-size:26px !important; }
+  .shoe-viewer-headline b{ font-size:17px !important; }
+  .shoe-dots{ bottom:86px !important; }
+  .shoe-viewer::after{ left:calc(50% - 202px) !important; bottom:54px !important; font-size:24px !important; }
+  .shoe-viewer-powered{ left:calc(50% - 202px) !important; bottom:22px !important; }
+}

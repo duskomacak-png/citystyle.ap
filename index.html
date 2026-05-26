@@ -24,7 +24,7 @@
         var params = new URLSearchParams(window.location.search || "");
         var slug = params.get("salon");
         if (!slug) {
-          addManifest("manifest.json?v=v137realzoom");
+          addManifest("manifest.json?v=v138iconsfix");
           return;
         }
         var encodedSlug = encodeURIComponent(slug);
@@ -34,7 +34,7 @@
           name: profileName,
           short_name: profileName.length > 12 ? profileName.slice(0, 12).trim() : profileName,
           description: "Prečica za direktan ulaz u ovaj CityStyle profil.",
-          start_url: "/?salon=" + encodedSlug + "&pwa_profile=" + encodedSlug + "&v=v137realzoom",
+          start_url: "/?salon=" + encodedSlug + "&pwa_profile=" + encodedSlug + "&v=v138iconsfix",
           scope: "/",
           display: "standalone",
           background_color: "#0b0b0f",
@@ -48,18 +48,18 @@
         var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
         addManifest(URL.createObjectURL(blob));
       } catch (err) {
-        addManifest("manifest.json?v=v137realzoom");
+        addManifest("manifest.json?v=v138iconsfix");
       }
     })();
   </script>
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-  <link rel="stylesheet" href="assets/css/style.css?v=v137realzoom">
+  <link rel="stylesheet" href="assets/css/style.css?v=v138iconsfix">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=v137realzoom"></script>
-  <script src="assets/js/main.js?v=v137realzoom"></script>
-  <script src="assets/js/auth.js?v=v137realzoom"></script>
-  <script src="assets/js/booking-logic.js?v=v137realzoom"></script>
-  <script src="assets/js/client.js?v=v137realzoom" defer></script>
+  <script src="assets/js/config.js?v=v138iconsfix"></script>
+  <script src="assets/js/main.js?v=v138iconsfix"></script>
+  <script src="assets/js/auth.js?v=v138iconsfix"></script>
+  <script src="assets/js/booking-logic.js?v=v138iconsfix"></script>
+  <script src="assets/js/client.js?v=v138iconsfix" defer></script>
 </head>
 <body>
   <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>
