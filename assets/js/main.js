@@ -618,7 +618,7 @@ function updateManifestForOwner() {
     name: "CityStyle - Panel vlasnika",
     short_name: "CityStyle",
     description: "Prečica za direktan ulaz u panel vlasnika biznisa.",
-    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=v158notifycard`,
+    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=v159pushfix`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -694,7 +694,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=v158notifycard`,
+    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=v159pushfix`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -813,6 +813,38 @@ async function clearAppBadgeCount() {
   await setAppBadgeCount(0);
 }
 
+async function savePushSubscriptionToDb(payload) {
+  const table = window.db.from("push_subscriptions");
+
+  // First try the clean path: one active row per endpoint.
+  let result = await table.upsert(payload, { onConflict: "endpoint" });
+  if (!result.error) return result;
+
+  console.warn("Push upsert failed, trying fallback insert/update:", result.error);
+
+  // Fallback for projects where endpoint does not have a unique index yet.
+  result = await window.db.from("push_subscriptions").insert(payload);
+  if (!result.error) return result;
+
+  // Fallback for duplicate endpoint rows.
+  if (/duplicate|unique/i.test(result.error.message || "")) {
+    result = await window.db
+      .from("push_subscriptions")
+      .update({
+        salon_id: payload.salon_id,
+        p256dh: payload.p256dh,
+        auth: payload.auth,
+        expiration_time: payload.expiration_time,
+        user_agent: payload.user_agent,
+        is_active: true,
+        updated_at: payload.updated_at
+      })
+      .eq("endpoint", payload.endpoint);
+  }
+
+  return result;
+}
+
 async function registerPushForSalon(salonId) {
   try {
     if (!salonId) {
@@ -825,17 +857,22 @@ async function registerPushForSalon(salonId) {
       return false;
     }
 
-    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+    if (!("serviceWorker" in navigator)) {
+      showMessage("Service Worker nije podržan u ovom browseru.", "error");
+      return false;
+    }
+
+    if (!("PushManager" in window) || !("Notification" in window)) {
       showMessage("Ovaj browser ne podržava web push obaveštenja.", "error");
       return false;
     }
 
     if (Notification.permission === "denied") {
-      showMessage("Obaveštenja su blokirana u podešavanjima browsera.", "error");
+      showMessage("Obaveštenja su blokirana. U browser podešavanjima dozvolite notifications za citystyle.app.", "error");
       return false;
     }
 
-    const vapidPublicKey = window.APP_CONFIG?.pushVapidPublicKey;
+    const vapidPublicKey = String(window.APP_CONFIG?.pushVapidPublicKey || "").trim();
     if (!vapidPublicKey) {
       showMessage("Push ključ nije podešen u aplikaciji.", "error");
       return false;
@@ -850,15 +887,46 @@ async function registerPushForSalon(salonId) {
       return false;
     }
 
-    const registration = await navigator.serviceWorker.register("/sw.js?v=v158notifycard", { scope: "/" });
-    await navigator.serviceWorker.ready;
+    // Register and wait for the ACTIVE service worker. Using the returned registration
+    // while it is still installing can break push subscribe on some phones.
+    await navigator.serviceWorker.register("/sw.js?v=v159pushfix", { scope: "/" });
+    const registration = await navigator.serviceWorker.ready;
 
-    let subscription = await registration.pushManager.getSubscription();
-    if (!subscription) {
+    if (!registration?.pushManager) {
+      showMessage("Push servis nije spreman. Zatvorite i ponovo otvorite app pa pokušajte opet.", "error");
+      return false;
+    }
+
+    // Fresh subscription is safer after many test versions / VAPID changes.
+    // Old subscriptions can silently point to a previous key and then push fails.
+    let existingSubscription = await registration.pushManager.getSubscription();
+    if (existingSubscription) {
+      try {
+        await existingSubscription.unsubscribe();
+      } catch (err) {
+        console.warn("Old push unsubscribe failed, continuing:", err);
+      }
+    }
+
+    let subscription;
+    try {
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
       });
+    } catch (err) {
+      console.error("Push subscribe failed:", err);
+      const msg = String(err?.message || err || "");
+      if (/permission|denied/i.test(msg)) {
+        showMessage("Browser nije dozvolio obaveštenja. Proverite dozvole za citystyle.app.", "error");
+      } else if (/applicationServerKey|vapid|key/i.test(msg)) {
+        showMessage("Push ključ ne odgovara. Proveri VAPID public/private key par.", "error");
+      } else if (/service worker|registration|active/i.test(msg)) {
+        showMessage("Push servis nije aktivan. Osvežite stranicu ili ponovo instalirajte PWA.", "error");
+      } else {
+        showMessage(`Push servis ne može da se aktivira: ${msg || "nepoznata greška"}`, "error");
+      }
+      return false;
     }
 
     const json = subscription.toJSON();
@@ -867,26 +935,45 @@ async function registerPushForSalon(salonId) {
       return false;
     }
 
-    const { error } = await window.db
-      .from("push_subscriptions")
-      .upsert({
-        salon_id: salonId,
-        endpoint: json.endpoint,
-        p256dh: json.keys.p256dh,
-        auth: json.keys.auth,
-        expiration_time: json.expirationTime || null,
-        user_agent: navigator.userAgent,
-        is_active: true,
-        updated_at: new Date().toISOString()
-      }, { onConflict: "endpoint" });
+    const payload = {
+      salon_id: salonId,
+      endpoint: json.endpoint,
+      p256dh: json.keys.p256dh,
+      auth: json.keys.auth,
+      expiration_time: json.expirationTime || null,
+      user_agent: navigator.userAgent,
+      is_active: true,
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await savePushSubscriptionToDb(payload);
 
     if (error) {
       console.error("Push subscription save error:", error);
-      showMessage(`Obaveštenja nisu sačuvana u bazi: ${error.message || "greška"}`, "error");
+      if (/row-level security|rls/i.test(error.message || "")) {
+        showMessage("Push nije sačuvan: Supabase RLS blokira push_subscriptions.", "error");
+      } else if (/relation|does not exist|schema/i.test(error.message || "")) {
+        showMessage("Push tabela ne postoji: pokreni SQL za push_subscriptions.", "error");
+      } else {
+        showMessage(`Obaveštenja nisu sačuvana u bazi: ${error.message || "greška"}`, "error");
+      }
       return false;
     }
 
     showMessage("Obaveštenja su uključena za ovaj profil.", "success");
+
+    // Local visible proof that browser notification permission and SW work.
+    try {
+      await registration.showNotification("CityStyle obaveštenja uključena", {
+        body: "Ako vidite ovo, telefon/laptop prima obaveštenja za ovaj profil.",
+        icon: "/assets/icons/icon-192.png",
+        badge: "/assets/icons/icon-192.png",
+        tag: "citystyle-push-test"
+      });
+    } catch (err) {
+      console.warn("Test notification failed:", err);
+    }
+
     return true;
   } catch (err) {
     console.error("registerPushForSalon error:", err);
