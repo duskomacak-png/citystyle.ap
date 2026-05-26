@@ -1177,8 +1177,10 @@ function csProductViewerMetaPrimary(product = {}) {
 function csProductViewerMetaSecondary(product = {}) {
   const raw = String(product.description || "").trim();
   if (raw) return raw.split(/\n+/)[0].trim();
-  const fallback = csProductStatus(product);
-  return fallback === "Na upit" ? "" : fallback;
+  return "";
+}
+function csProductViewerAvailability(product = {}) {
+  return csProductStatus(product);
 }
 function csProductUrl(product = {}) {
   const code = csProductCode(product);
@@ -1535,6 +1537,7 @@ function renderShoeViewer() {
   viewer.setAttribute("data-price", csProductPrice(product));
   const viewerMetaPrimary = csProductViewerMetaPrimary(product);
   const viewerMetaSecondary = csProductViewerMetaSecondary(product);
+  const viewerAvailability = csProductViewerAvailability(product);
   viewer.innerHTML = `
     <div class="shoe-viewer-media">${img ? `<div class="shoe-viewer-media-bg" aria-hidden="true"><img src="${escapeHtml(img)}" alt=""></div><img class="shoe-viewer-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}" onload="csSmartCropShoeImage(this)">` : `<span>Bez slike</span>`}</div>
     <div class="shoe-viewer-top">
@@ -1542,6 +1545,7 @@ function renderShoeViewer() {
         <h2><span>${escapeHtml(product.name || "Patike")}</span></h2>
         ${viewerMetaPrimary ? `<p class="shoe-viewer-subtitle">${escapeHtml(viewerMetaPrimary)}</p>` : ``}
         ${viewerMetaSecondary ? `<p class="shoe-viewer-subcopy">${escapeHtml(viewerMetaSecondary)}</p>` : ``}
+        ${viewerAvailability ? `<p class="shoe-viewer-availability">${escapeHtml(viewerAvailability)}</p>` : ``}
       </div>
     </div>
     <button class="shoe-viewer-close" type="button" onclick="closeShoeViewer()" aria-label="Zatvori oglas">×</button>

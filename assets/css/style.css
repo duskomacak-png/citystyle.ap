@@ -4170,3 +4170,27 @@ html.cs-real-zoom-active body{
     color:rgba(255,255,255,.62) !important;
   }
 }
+
+
+/* v1.3.18 SAFE BUYER AVAILABILITY FIELD
+   Availability/status is now mandatory in opened buyer ad view:
+   Na stanju / Po porudžbini / Trenutno nema / Na upit. */
+@media(max-width:899px){
+  .shoe-viewer-right .shoe-viewer-availability{
+    margin-top:5px !important;
+    display:inline-flex !important;
+    justify-self:end !important;
+    align-items:center !important;
+    width:auto !important;
+    border:1px solid rgba(255,255,255,.32) !important;
+    border-radius:999px !important;
+    padding:4px 9px !important;
+    background:rgba(0,0,0,.16) !important;
+    color:rgba(255,255,255,.95) !important;
+    font-size:11px !important;
+    line-height:1 !important;
+    font-weight:800 !important;
+    letter-spacing:.01em !important;
+    text-shadow:0 1px 8px rgba(0,0,0,.65) !important;
+  }
+}
