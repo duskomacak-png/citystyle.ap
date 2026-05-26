@@ -1171,19 +1171,14 @@ function csProductImages(product = {}) {
 function csProductPrice(product = {}) { return renderProductPrice(product); }
 function csProductStatus(product = {}) { return getProductStatusLabel(product.stock_status); }
 function csProductPublicDescription(product = {}) { return String(product.description || "").trim(); }
-function csViewerBrandName() {
-  return String(currentSalon?.salon_name || currentSalon?.name || "CityStyle").trim() || "CityStyle";
+function csProductViewerMetaPrimary(product = {}) {
+  return String(product.category || "").trim();
 }
-function csProductSecondaryLine(product = {}) {
+function csProductViewerMetaSecondary(product = {}) {
   const raw = String(product.description || "").trim();
-  if (raw) {
-    const firstLine = raw.split(/\n+/)[0].trim();
-    if (!firstLine) return "";
-    if (/^brojevi?/i.test(firstLine)) return firstLine;
-    return `Brojevi ${firstLine}`;
-  }
-  if (product.category) return String(product.category).trim();
-  return csProductStatus(product);
+  if (raw) return raw.split(/\n+/)[0].trim();
+  const fallback = csProductStatus(product);
+  return fallback === "Na upit" ? "" : fallback;
 }
 function csProductUrl(product = {}) {
   const code = csProductCode(product);
@@ -1538,16 +1533,15 @@ function renderShoeViewer() {
   }
   viewer.classList.toggle("shoe-viewer-zoomed", !!csViewerState.zoomed);
   viewer.setAttribute("data-price", csProductPrice(product));
-  const productDescription = csProductPublicDescription(product);
-  const viewerTopLine = csViewerBrandName();
-  const viewerRightLine = csProductSecondaryLine(product);
+  const viewerMetaPrimary = csProductViewerMetaPrimary(product);
+  const viewerMetaSecondary = csProductViewerMetaSecondary(product);
   viewer.innerHTML = `
     <div class="shoe-viewer-media">${img ? `<div class="shoe-viewer-media-bg" aria-hidden="true"><img src="${escapeHtml(img)}" alt=""></div><img class="shoe-viewer-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}" onload="csSmartCropShoeImage(this)">` : `<span>Bez slike</span>`}</div>
     <div class="shoe-viewer-top">
-      <div class="shoe-viewer-brand">${escapeHtml(viewerTopLine)}</div>
       <div class="shoe-viewer-right">
         <h2><span>${escapeHtml(product.name || "Patike")}</span></h2>
-        ${viewerRightLine ? `<p class="shoe-viewer-subtitle">${escapeHtml(viewerRightLine)}</p>` : ``}
+        ${viewerMetaPrimary ? `<p class="shoe-viewer-subtitle">${escapeHtml(viewerMetaPrimary)}</p>` : ``}
+        ${viewerMetaSecondary ? `<p class="shoe-viewer-subcopy">${escapeHtml(viewerMetaSecondary)}</p>` : ``}
       </div>
     </div>
     <button class="shoe-viewer-close" type="button" onclick="closeShoeViewer()" aria-label="Zatvori oglas">×</button>

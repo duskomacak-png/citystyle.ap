@@ -4084,3 +4084,89 @@ html.cs-real-zoom-active body{
     color:rgba(255,255,255,.62) !important;
   }
 }
+
+
+/* v1.3.17 SAFE MOBILE BUYER VIEW CLEANUP */
+@media(max-width:899px){
+  .shoe-viewer-brand{display:none !important;}
+  .shoe-viewer-top{
+    position:fixed !important;
+    top:18px !important;
+    right:18px !important;
+    left:110px !important;
+    width:auto !important;
+    display:grid !important;
+    justify-items:end !important;
+    align-content:start !important;
+    gap:4px !important;
+    text-align:right !important;
+    z-index:8 !important;
+    text-shadow:0 2px 14px rgba(0,0,0,.72) !important;
+  }
+  .shoe-viewer-right{
+    width:100% !important;
+    margin:0 !important;
+    display:grid !important;
+    justify-items:end !important;
+    gap:3px !important;
+    text-align:right !important;
+  }
+  .shoe-viewer-right h2{
+    margin:0 !important;
+    font-size:clamp(30px,8.5vw,46px) !important;
+    line-height:.98 !important;
+    font-weight:850 !important;
+    letter-spacing:.01em !important;
+    color:#fff !important;
+  }
+  .shoe-viewer-right .shoe-viewer-subtitle{
+    margin:0 !important;
+    font-size:14px !important;
+    line-height:1.15 !important;
+    font-weight:700 !important;
+    color:rgba(255,255,255,.96) !important;
+  }
+  .shoe-viewer-right .shoe-viewer-subcopy{
+    margin:0 !important;
+    font-size:12px !important;
+    line-height:1.2 !important;
+    font-weight:600 !important;
+    color:rgba(255,255,255,.92) !important;
+    max-width:100% !important;
+  }
+  .shoe-viewer .shoe-viewer-media::before,
+  .shoe-viewer .shoe-viewer-media::after,
+  #shoeViewer.shoe-viewer .shoe-viewer-media::before,
+  #shoeViewer.shoe-viewer .shoe-viewer-media::after{
+    display:none !important;
+    content:none !important;
+  }
+  .shoe-viewer::after{
+    content:"Cena: " attr(data-price) !important;
+    position:fixed !important;
+    left:18px !important;
+    bottom:54px !important;
+    right:auto !important;
+    width:auto !important;
+    height:auto !important;
+    min-height:0 !important;
+    padding:0 !important;
+    margin:0 !important;
+    background:none !important;
+    border:none !important;
+    box-shadow:none !important;
+    z-index:8 !important;
+    color:#fff !important;
+    font-size:24px !important;
+    font-weight:500 !important;
+    letter-spacing:.02em !important;
+    text-shadow:0 2px 16px rgba(0,0,0,.85) !important;
+    pointer-events:none !important;
+  }
+  .shoe-viewer-powered{
+    left:18px !important;
+    bottom:20px !important;
+    font-size:11px !important;
+    color:rgba(255,255,255,.62) !important;
+  }
+}

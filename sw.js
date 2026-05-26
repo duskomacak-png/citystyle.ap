@@ -1,6 +1,6 @@
 // sw.js
 // Minimal cache reset service worker for CityStyle.app
-const CACHE_NAME = "citystyle-v146-mobileonly";
+const CACHE_NAME = "citystyle-v147-buyerclean";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -32,7 +32,7 @@ self.addEventListener("push", (event) => {
       url: data.url || "salon/",
       badgeCount: data.badgeCount || 1
     },
-    tag: data.tag || "citystyle-v146-mobileonly",
+    tag: data.tag || "citystyle-v147-buyerclean",
     renotify: true
   };
 
