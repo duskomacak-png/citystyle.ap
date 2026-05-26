@@ -504,7 +504,7 @@ async function renderSalonHome() {
           ${(settings?.phone || settings?.address) ? `
             <div class="public-profile-contact">
               ${settings?.phone ? `<a href="tel:${escapeHtml(window.App.normalizePhoneForTel ? window.App.normalizePhoneForTel(settings.phone) : settings.phone)}">📞 ${escapeHtml(settings.phone)}</a>` : ""}
-              ${settings?.address ? `<span>📍 ${escapeHtml(settings.address)}</span>` : ""}
+              ${settings?.address ? renderPublicAddressLink(settings.address) : ""}
             </div>
           ` : ""}
         </div>
@@ -531,6 +531,26 @@ async function renderSalonHome() {
 }
 
 
+
+
+function getGoogleMapsUrl(address = "") {
+  const clean = String(address || "").trim();
+  if (!clean) return "";
+  return `https://maps.google.com/?q=${encodeURIComponent(clean)}`;
+}
+function openCityStyleMaps(address = "") {
+  const url = getGoogleMapsUrl(address);
+  if (!url) return;
+  window.open(url, "_blank", "noopener");
+}
+function renderPublicAddressLink(address = "", className = "shoe-meta-link") {
+  const clean = String(address || "").trim();
+  if (!clean) return "";
+  const url = getGoogleMapsUrl(clean);
+  const safeAddress = escapeHtml(clean);
+  const safeUrl = escapeHtml(url);
+  return `<a class="${className} maps-link" href="${safeUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">📍 ${safeAddress}</a>`;
+}
 
 function renderGaragePrice(item = {}) {
   const price = Number(item.price || 0);
@@ -917,13 +937,14 @@ function showBookingForm() {
           <label>${C("phoneCountry", "Država za WhatsApp broj")}</label>
           <select id="client-phone-country" class="phone-country-select">
             <option value="381" selected>🇷🇸 Srbija +381</option>
+            <option value="387">🇧🇦 Bosna i Hercegovina +387</option>
           </select>
         </div>
       </div>
 
       <label>${C("phoneWhatsapp", "Broj telefona / WhatsApp")}</label>
       <input id="client-phone" type="tel" inputmode="tel" placeholder="64 123 4567">
-      <p class="field-help">${C("phoneHelp", "Aplikacija je podešena za Srbiju. Unesite broj kao 064 123 4567 ili +381 64 123 4567.")}</p>
+      <p class="field-help">${C("phoneHelp", "Izaberite državu i unesite lokalni broj. Može sa nulom ili bez nule, npr. Srbija 064... / Bosna 061...")}</p>
 
       ${false ? `
         <label>${escapeHtml(profileLabels.requestKindLabel)}</label>
@@ -1044,12 +1065,14 @@ function setupPhoneCountryAutoZero() {
 function normalizeClientPhoneForStorage(phone, countryCode = "381") {
   const raw = String(phone || "").trim();
   if (!raw) return "";
+  const country = String(countryCode || "381").replace(/\D/g, "") || "381";
   let digits = raw.replace(/\D/g, "");
   if (!digits) return "";
-  if (raw.startsWith("00")) digits = digits.slice(2);
-  if (digits.startsWith("381") && digits.length >= 10) return `+${digits}`;
-  if (digits.startsWith("0") && digits.length >= 8) return `+381${digits.slice(1)}`;
-  if (/^[1-9]\d{6,}$/.test(digits)) return `+381${digits}`;
+  if (raw.startsWith("+")) return `+${digits}`;
+  if (raw.startsWith("00")) return `+${digits.slice(2)}`;
+  if (digits.startsWith(country) && digits.length >= country.length + 7) return `+${digits}`;
+  if (digits.startsWith("0") && digits.length >= 8) return `+${country}${digits.slice(1)}`;
+  if (/^[1-9]\d{6,}$/.test(digits)) return `+${country}${digits}`;
   return "";
 }
 
@@ -1243,7 +1266,7 @@ async function renderSalonHome() {
         <h1>${escapeHtml(publicName)}</h1>
         <div class="public-profile-text">
           <p class="intro-text">${escapeHtml(settings?.welcome_text || C("welcomeDefault", "Dobrodošli. Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev."))}</p>
-          ${(settings?.phone || settings?.address) ? `<div class="public-profile-contact">${settings?.phone ? `<a href="tel:${escapeHtml(csSafePhone(settings.phone))}">📞 ${escapeHtml(settings.phone)}</a>` : ""}${settings?.address ? `<span>📍 ${escapeHtml(settings.address)}</span>` : ""}</div>` : ""}
+          ${(settings?.phone || settings?.address) ? `<div class="public-profile-contact">${settings?.phone ? `<a href="tel:${escapeHtml(csSafePhone(settings.phone))}">📞 ${escapeHtml(settings.phone)}</a>` : ""}${settings?.address ? renderPublicAddressLink(settings.address) : ""}</div>` : ""}
         </div>
         <div class="client-actions">
           <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(profileLabels.action)}</button>
@@ -1273,7 +1296,7 @@ function renderShoeShopHome(settings = {}) {
       ${cover ? `<div class="shoe-cover"><img src="${escapeHtml(cover)}" alt="${escapeHtml(name)} početna slika"></div>` : `<div class="shoe-cover shoe-cover-empty"><span>${escapeHtml(name)}</span></div>`}
       <div class="shoe-info-row">
         ${logo ? `<img class="shoe-logo" src="${escapeHtml(logo)}" alt="${escapeHtml(name)} logo">` : `<div class="shoe-logo shoe-logo-fallback">${escapeHtml(name.charAt(0).toUpperCase())}</div>`}
-        <div class="shoe-info-copy"><h1>${escapeHtml(name)}</h1>${text ? `<p>${escapeHtml(text)}</p>` : ""}<div class="shoe-meta">${phone ? `<a class="shoe-meta-link" href="tel:${escapeHtml(csSafePhone(phone))}">📞 ${escapeHtml(phone)}</a>` : ""}${address ? `<span>📍 ${escapeHtml(address)}</span>` : ""}</div></div>
+        <div class="shoe-info-copy"><h1>${escapeHtml(name)}</h1>${text ? `<p>${escapeHtml(text)}</p>` : ""}<div class="shoe-meta">${phone ? `<a class="shoe-meta-link" href="tel:${escapeHtml(csSafePhone(phone))}">📞 ${escapeHtml(phone)}</a>` : ""}${address ? renderPublicAddressLink(address) : ""}</div></div>
       </div>
       ${ownerPreviewMode ? "" : `<div class="shoe-install-row"><button class="btn btn-dark shoe-install-btn" type="button" onclick="installCurrentSalonApp()">📱 Preuzmi app prodavnice</button><small>Prečica otvara baš ovaj profil${logo ? " i koristi logo firme gde browser dozvoljava" : ""}.</small></div>`}
       <section class="shoe-products-section">
@@ -1698,4 +1721,4 @@ function askShoeProduct(e) {
 }
 function callShoeShop(e) { e?.stopPropagation?.(); const phone=csSafePhone(currentSalon._publicPhone || ""); if(!phone) return window.App.showMessage("Telefon nije upisan.", "error"); window.location.href=`tel:${phone}`; }
 
-Object.assign(window, { openShoeViewer, closeShoeViewer, shoeChangeProduct, shoeChangeImage, shoeSetImage, shareShoeProduct, askShoeProduct, callShoeShop, csSmartCropShoeImage, csToggleShoeZoom, csApplyShoePanZoom, csOpenRealShoeZoom, csViewerZoomIcon });
+Object.assign(window, { openCityStyleMaps, openShoeViewer, closeShoeViewer, shoeChangeProduct, shoeChangeImage, shoeSetImage, shareShoeProduct, askShoeProduct, callShoeShop, csSmartCropShoeImage, csToggleShoeZoom, csApplyShoePanZoom, csOpenRealShoeZoom, csViewerZoomIcon });
