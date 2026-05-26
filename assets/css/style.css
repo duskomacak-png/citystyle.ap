@@ -4346,3 +4346,27 @@ html.cs-real-zoom-active body{
     line-height:1.1 !important;
   }
 }
+
+
+/* v1.3.28 SAFE ALWAYS-VISIBLE OWNER NOTIFICATION CTA */
+.owner-notification-card{
+  display:grid !important;
+  gap:8px !important;
+}
+.owner-notify-inline-btn,
+.owner-notify-toolbar-btn{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  white-space:normal !important;
+  min-height:38px !important;
+  margin-top:6px !important;
+}
+@media(max-width:640px){
+  .owner-notify-inline-btn,
+  .owner-notify-toolbar-btn{
+    width:100% !important;
+    font-size:13px !important;
+    padding:10px 8px !important;
+  }
+}
