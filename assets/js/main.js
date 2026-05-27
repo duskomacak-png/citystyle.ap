@@ -224,6 +224,21 @@ function isProfilePwaInstalled(profileCode) {
   return !!getInstalledProfilePwaMap()[key];
 }
 
+function hasAnyInstalledKeyForSalon(salonOrSlug) {
+  if (!salonOrSlug) return false;
+  const keys = [];
+  if (typeof salonOrSlug === "object") {
+    keys.push(salonOrSlug.public_profile_code, salonOrSlug.slug, salonOrSlug.id);
+  } else {
+    keys.push(salonOrSlug);
+  }
+  return keys.some(value => isProfilePwaInstalled(value));
+}
+
+function getCurrentLaunchKeys() {
+  return [getUrlParam("profile"), getUrlParam("salon"), getUrlParam("pwa_profile")].filter(Boolean);
+}
+
 function isCurrentProfilePwaLaunch(profileCode = "") {
   const code = normalizePwaProfileKey(profileCode || getUrlParam("profile") || getUrlParam("salon") || getUrlParam("pwa_profile"));
   if (!code) return false;
@@ -233,7 +248,9 @@ function isCurrentProfilePwaLaunch(profileCode = "") {
 function shouldShowProfileInstallButton(salonOrSlug) {
   const code = getSalonProfileCode(salonOrSlug);
   if (!code) return false;
-  if (isCurrentProfilePwaLaunch(code)) return false;
+  if (isStandaloneMode() || getUrlParam("pwa") === "1") return false;
+  if (hasAnyInstalledKeyForSalon(salonOrSlug)) return false;
+  if (getCurrentLaunchKeys().some(key => isProfilePwaInstalled(key))) return false;
   return true;
 }
 
@@ -701,7 +718,7 @@ function updateManifestForOwner() {
     name: "CityStyle - Panel vlasnika",
     short_name: "CityStyle",
     description: "Prečica za direktan ulaz u panel vlasnika biznisa.",
-    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=v160multipwa`,
+    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=v143installedlaunch`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -780,7 +797,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v160multipwa`,
+    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v143installedlaunch`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -982,7 +999,7 @@ async function registerPushForSalon(salonId) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v160multipwa", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v143installedlaunch", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {

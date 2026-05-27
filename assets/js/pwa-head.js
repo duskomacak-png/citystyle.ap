@@ -2,7 +2,7 @@
 // CityStyle v1.3.42 - early manifest identity for platform/profile PWA.
 // Runs before the main app so Android Chrome sees a manifest immediately.
 (function cityStyleEarlyPwaHead() {
-  const VERSION = "v142installedstate";
+  const VERSION = "v143installedlaunch";
   const FALLBACK_ICON_192 = "/assets/icons/icon-192.png";
   const FALLBACK_ICON_512 = "/assets/icons/icon-512.png";
 

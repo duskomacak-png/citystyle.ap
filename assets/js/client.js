@@ -154,6 +154,10 @@ async function loadSalon(slug, saveThisSalon = true) {
   window.App?.setAppLanguage?.(salon.app_language || "sr");
   window.App?.applySalonTheme?.(salon.theme_color);
   if (saveThisSalon) window.App.saveCurrentSalon(salon.slug);
+  if (window.App?.getUrlParam?.("pwa") === "1" || window.App?.isStandaloneMode?.()) {
+    window.App?.markProfilePwaInstalled?.(salon.public_profile_code || salon.slug, salon.salon_name || "CityStyle profil");
+    window.App?.markProfilePwaInstalled?.(salon.slug, salon.salon_name || "CityStyle profil");
+  }
   recordProfileVisitIfNeeded(salon);
 
   await loadServices();
