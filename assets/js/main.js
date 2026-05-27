@@ -619,8 +619,13 @@ let currentInstallContext = {
 
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
+  // Sačuvaj prompt odmah. Ako ga bacimo dok čekamo profil manifest,
+  // Chrome često više ne pošalje novi prompt i instalacija stoji/zaglavi.
   deferredPrompt = event;
-  showInstallButton();
+
+  if (!(window.__CITYSTYLE_WAIT_PROFILE_MANIFEST__ && !window.__CITYSTYLE_PROFILE_MANIFEST_READY__)) {
+    showInstallButton();
+  }
 });
 
 function showInstallButton() {
@@ -655,7 +660,7 @@ async function installSalonApp(profileOrSlug, options = {}) {
   const identity = getSalonPublicIdentity({ slug, public_profile_code: profileCode });
   const encodedIdentity = encodeURIComponent(identity.value || slug || profileCode || "");
   const profileUrl = identity.value
-    ? `${getAppBaseUrl()}?${identity.key}=${encodedIdentity}&v=v132multiinstall`
+    ? `${getAppBaseUrl()}?${identity.key}=${encodedIdentity}&v=v134fastinstall`
     : window.location.href;
 
   currentInstallContext = {
@@ -684,7 +689,7 @@ async function installOwnerApp(options = {}) {
   currentInstallContext = {
     type: "owner",
     name: String(options.name || options.displayName || "CityStyle profil").trim() + " Panel",
-    url: `${getAppPath("salon/")}?${startQuery}&v=v132multiinstall`,
+    url: `${getAppPath("salon/")}?${startQuery}&v=v134fastinstall`,
     identity: profileCode || slug || "owner"
   };
 
@@ -701,6 +706,10 @@ function setDynamicManifest(manifest, iconUrl = "") {
     document.head.appendChild(link);
   }
   link.href = url;
+
+  // Pravi manifest profila/panela je sada postavljen.
+  // Ne brišemo deferredPrompt, jer Chrome često ne šalje drugi prompt.
+  window.__CITYSTYLE_PROFILE_MANIFEST_READY__ = true;
 
   if (iconUrl) {
     const appleIcon = document.querySelector('link[rel="apple-touch-icon"]') || document.createElement("link");
@@ -754,8 +763,10 @@ function updateManifestForOwner(options = {}) {
   const theme = normalizeSalonTheme(options.themeColor || "classic-red");
   const profileCode = String(options.publicProfileCode || options.profileCode || "").trim();
   const slug = String(options.slug || "").trim();
-  const iconUrl = String(options.iconUrl || "").trim() || makeInitialsIconDataUrl(rawName || "Panel", "#b91c1c");
-  const icon512 = String(options.icon512Url || "").trim() || iconUrl;
+  const profileImageIcon = String(options.iconUrl || "").trim();
+  const iconUrl = `${getAppBaseUrl()}assets/icons/icon-192.png`;
+  const icon512 = `${getAppBaseUrl()}assets/icons/icon-512.png`;
+  const appleProfileIcon = profileImageIcon || icon512;
   const identity = profileCode || slug || "owner";
   const encodedIdentity = encodeURIComponent(identity);
   const startQuery = profileCode
@@ -767,7 +778,7 @@ function updateManifestForOwner(options = {}) {
     name: appName,
     short_name: shortName || "Panel",
     description: `Direktan ulaz u vlasnički panel: ${rawName || "CityStyle profil"}.`,
-    start_url: `${getAppPath("salon/")}?${startQuery}&v=v132multiinstall`,
+    start_url: `${getAppPath("salon/")}?${startQuery}&v=v134fastinstall`,
     scope: getAppBaseUrl(),
     display: "standalone",
     display_override: ["standalone", "minimal-ui"],
@@ -780,7 +791,7 @@ function updateManifestForOwner(options = {}) {
     ]
   };
   try {
-    setDynamicManifest(baseManifest, iconUrl);
+    setDynamicManifest(baseManifest, appleProfileIcon);
   } catch (err) {
     console.warn("Owner manifest nije postavljen:", err);
   }
@@ -829,11 +840,12 @@ function updateManifestForSalon(profileOrSlug, options = {}) {
   const appName = rawName || "CityStyle profil";
   const shortName = appName.length > 12 ? appName.slice(0, 12).trim() : appName;
   const theme = normalizeSalonTheme(options.themeColor || "classic-red");
-  const cleanIcon = String(options.iconUrl || options.coverIconUrl || "").trim();
-  const iconUrl = cleanIcon || makeInitialsIconDataUrl(appName, "#b91c1c");
-  const icon512 = String(options.icon512Url || "").trim() || iconUrl;
+  const profileImageIcon = String(options.iconUrl || options.coverIconUrl || "").trim();
+  const iconUrl = `${getAppBaseUrl()}assets/icons/icon-192.png`;
+  const icon512 = `${getAppBaseUrl()}assets/icons/icon-512.png`;
+  const appleProfileIcon = profileImageIcon || icon512;
   const encodedIdentity = encodeURIComponent(identity.value);
-  const startUrl = `${getAppBaseUrl()}?${identity.key}=${encodedIdentity}&pwa_profile=${encodedIdentity}&v=v132multiinstall`;
+  const startUrl = `${getAppBaseUrl()}?${identity.key}=${encodedIdentity}&pwa_profile=${encodedIdentity}&v=v134fastinstall`;
 
   const baseManifest = {
     id: `${getAppBaseUrl()}pwa/customer/${identity.key}/${encodedIdentity}`,
@@ -862,7 +874,7 @@ function updateManifestForSalon(profileOrSlug, options = {}) {
     ]
   };
   try {
-    setDynamicManifest(baseManifest, iconUrl);
+    setDynamicManifest(baseManifest, appleProfileIcon);
     window.__CITYSTYLE_PROFILE_PWA__ = {
       identity,
       name: appName,
@@ -918,6 +930,11 @@ async function installApp(noPromptMessage = "Na iPhone-u: Share → Add to Home 
   if (isStandaloneMode()) {
     showInstallHelp(noPromptMessage);
     return;
+  }
+
+  if (!deferredPrompt) {
+    // Dajemo browseru kratak trenutak posle promene manifest-a.
+    await new Promise(resolve => setTimeout(resolve, 200));
   }
 
   if (!deferredPrompt) {
@@ -1062,7 +1079,7 @@ async function registerPushForSalon(salonId) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v132multiinstall", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v134fastinstall", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
