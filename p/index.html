@@ -3,81 +3,214 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Instaliraj CityStyle profil</title>
+  <title>Instalacija profila - CityStyle</title>
   <meta name="theme-color" content="#0b0b0f">
-  <link rel="manifest" id="pwa-manifest" href="../manifest.json?v=v140multipwa">
-  <link rel="apple-touch-icon" id="pwa-apple-icon" href="../assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="../assets/icons/icon-192.png">
+  <link rel="stylesheet" href="../assets/css/style.css?v=v160multipwa">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/js/config.js?v=v160multipwa"></script>
   <style>
-    :root { color-scheme: dark; --red:#dc2626; --bg:#08080b; --card:#15151b; --text:#fff; --muted:#b7b7c5; }
-    * { box-sizing: border-box; }
-    body { margin:0; min-height:100vh; display:grid; place-items:center; background: radial-gradient(circle at top, rgba(220,38,38,.22), transparent 34%), var(--bg); color:var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Arial, sans-serif; padding:22px; }
-    .box { width:min(560px, 100%); background:rgba(21,21,27,.94); border:1px solid rgba(255,255,255,.10); border-radius:28px; padding:24px; box-shadow:0 24px 80px rgba(0,0,0,.55); }
-    .row { display:flex; gap:14px; align-items:center; }
-    .icon { width:74px; height:74px; border-radius:22px; background:#0f0f14; border:1px solid rgba(255,255,255,.12); object-fit:cover; flex:none; }
-    h1 { margin:0; font-size:clamp(25px, 6vw, 42px); line-height:1.05; }
-    p { color:var(--muted); line-height:1.5; font-size:16px; }
-    .status { margin:18px 0; padding:14px; border-radius:18px; background:rgba(255,255,255,.06); color:#f3f3f7; border:1px solid rgba(255,255,255,.08); }
-    .actions { display:grid; gap:12px; margin-top:18px; }
-    button, a.btn { width:100%; border:0; border-radius:18px; padding:16px 18px; font-weight:800; font-size:16px; text-align:center; text-decoration:none; cursor:pointer; }
-    .primary { color:#fff; background:linear-gradient(135deg, #ef4444, #b91c1c); }
-    .dark { color:#fff; background:#20202a; border:1px solid rgba(255,255,255,.12); }
-    .ghost { color:#fff; background:transparent; border:1px solid rgba(239,68,68,.55); }
-    small { display:block; margin-top:16px; color:#a7a7b5; line-height:1.45; }
-    code { color:#fff; word-break:break-all; }
+    body{min-height:100vh;margin:0;background:#0b0b0f;color:#fff;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:flex;align-items:center;justify-content:center;padding:18px;}
+    .pwa-gateway{width:min(520px,100%);background:rgba(20,20,26,.94);border:1px solid rgba(255,255,255,.12);box-shadow:0 24px 80px rgba(0,0,0,.45);border-radius:28px;padding:24px;text-align:center;}
+    .pwa-logo{width:96px;height:96px;border-radius:24px;object-fit:cover;margin:0 auto 16px;display:block;background:#b91c1c;box-shadow:0 18px 40px rgba(0,0,0,.38);}
+    .pwa-logo-fallback{display:flex;align-items:center;justify-content:center;font-weight:900;font-size:36px;letter-spacing:.02em;}
+    .pwa-gateway h1{font-size:28px;line-height:1.16;margin:0 0 8px;}
+    .pwa-gateway p{color:#d1d5db;line-height:1.55;margin:8px 0;}
+    .pwa-actions{display:grid;gap:12px;margin-top:20px;}
+    .pwa-btn{border:0;border-radius:18px;padding:16px 18px;font-weight:900;font-size:16px;cursor:pointer;text-decoration:none;display:block;text-align:center;}
+    .pwa-btn-primary{background:#e11d2e;color:#fff;}
+    .pwa-btn-dark{background:#17171d;color:#fff;border:1px solid rgba(255,255,255,.16);}
+    .pwa-status{min-height:24px;color:#fca5a5;font-weight:700;margin-top:12px;}
+    .pwa-help{font-size:13px;color:#a1a1aa;border-top:1px solid rgba(255,255,255,.1);padding-top:14px;margin-top:18px;}
   </style>
   <script>
-    (function earlyProfileManifest(){
-      try {
-        var params = new URLSearchParams(window.location.search || "");
-        var code = params.get("profile") || params.get("salon") || "citystyle";
-        var encoded = encodeURIComponent(code);
-        var name = code === "citystyle" ? "CityStyle profil" : "CityStyle " + code.slice(-6);
-        var manifest = {
-          id: "/pwa/profile/" + encoded,
-          name: name,
-          short_name: name.slice(0, 18),
-          description: "CityStyle zasebna prečica profila.",
-          start_url: "/p/?profile=" + encoded + "&pwa=1&v=v140multipwa",
-          scope: "/p/",
-          display: "standalone",
-          background_color: "#0b0b0f",
-          theme_color: "#b91c1c",
-          orientation: "portrait",
-          icons: [
-            { src: "/assets/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
-            { src: "/assets/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" }
-          ]
-        };
-        var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
-        var link = document.getElementById("pwa-manifest");
-        if (link) link.href = URL.createObjectURL(blob);
-      } catch (err) {}
-    })();
+    window.__cityStyleDeferredPrompt = null;
+    window.addEventListener("beforeinstallprompt", function(event) {
+      event.preventDefault();
+      window.__cityStyleDeferredPrompt = event;
+      window.dispatchEvent(new CustomEvent("citystyle-install-ready"));
+    });
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../assets/js/config.js?v=v140multipwa"></script>
-  <script src="../assets/js/pwa-profile-install.js?v=v140multipwa" defer></script>
 </head>
 <body>
-  <main class="box">
-    <div class="row">
-      <img id="profile-icon" class="icon" src="../assets/icons/icon-192.png" alt="CityStyle profil">
-      <div>
-        <h1 id="profile-name">Instaliraj profil</h1>
-        <p id="profile-subtitle">Pripremam posebnu prečicu za ovaj salon/prodavnicu...</p>
-      </div>
+  <main class="pwa-gateway">
+    <div id="pwaIcon" class="pwa-logo pwa-logo-fallback">CS</div>
+    <h1 id="pwaTitle">Instaliraj CityStyle profil</h1>
+    <p id="pwaSubtitle">Pripremamo posebnu prečicu za ovaj salon/prodavnicu.</p>
+    <div class="pwa-actions">
+      <button id="installBtn" class="pwa-btn pwa-btn-primary" type="button">Instaliraj ovu prečicu</button>
+      <a id="openProfileBtn" class="pwa-btn pwa-btn-dark" href="../">Otvori profil</a>
+      <button id="copyBtn" class="pwa-btn pwa-btn-dark" type="button">Kopiraj link profila</button>
     </div>
-    <div class="status" id="install-status">Učitavanje manifest podataka...</div>
-    <div class="actions">
-      <button class="primary" type="button" id="install-btn">Instaliraj ovu prečicu</button>
-      <a class="dark btn" id="open-profile-link" href="../">Otvori profil</a>
-      <button class="ghost" type="button" id="copy-link-btn">Kopiraj link profila</button>
-    </div>
-    <small>
-      Ako sistemsko dugme za instalaciju ne izađe, otvori meni browsera sa tri tačke i izaberi <strong>Dodaj na početni ekran</strong>.
-      Kod više profila sa istog domena Android nekad traži da se drugi profil otvori baš u Chrome browseru, ne iz već instalirane prečice.
-    </small>
-    <small>Profil: <code id="profile-code-label"></code></small>
+    <div id="pwaStatus" class="pwa-status"></div>
+    <p class="pwa-help">Ako sistemska instalacija ne iskoči odmah, sačekaj par sekundi ili koristi meni browsera → <strong>Dodaj na početni ekran</strong>. Ova strana koristi stabilnu ikonicu ako logo ne može bezbedno da se pretvori u PWA ikonu.</p>
   </main>
+
+  <script>
+  (function profileInstallGateway(){
+    const VERSION = "v160multipwa";
+    const FALLBACK_192 = "/assets/icons/icon-192.png";
+    const FALLBACK_512 = "/assets/icons/icon-512.png";
+    const params = new URLSearchParams(location.search || "");
+    const rawProfile = params.get("profile") || params.get("salon") || "";
+    const isPanel = params.get("panel") === "1";
+    const nameHint = cleanText(params.get("name") || "CityStyle profil");
+    const state = { profile: rawProfile, slug: "", name: nameHint, logo: "", icon192: FALLBACK_192, icon512: FALLBACK_512, ready: false };
+
+    const titleEl = document.getElementById("pwaTitle");
+    const subtitleEl = document.getElementById("pwaSubtitle");
+    const statusEl = document.getElementById("pwaStatus");
+    const iconEl = document.getElementById("pwaIcon");
+    const installBtn = document.getElementById("installBtn");
+    const openProfileBtn = document.getElementById("openProfileBtn");
+    const copyBtn = document.getElementById("copyBtn");
+
+    function cleanText(value){ return String(value || "").replace(/[<>]/g, "").trim(); }
+    function initials(name){ return (cleanText(name).split(/\s+/).filter(Boolean).slice(0,2).map(w => w[0]?.toUpperCase()).join("") || "CS"); }
+    function setStatus(msg, ok){ statusEl.textContent = msg || ""; statusEl.style.color = ok ? "#86efac" : "#fca5a5"; }
+    function isCode(value){ return /^cs_p_/i.test(String(value || "")); }
+    function profileQuery(){ return isCode(state.profile) ? `profile=${encodeURIComponent(state.profile)}` : `salon=${encodeURIComponent(state.slug || state.profile)}`; }
+    function profileUrl(){ return `${location.origin}/?${profileQuery()}&v=${VERSION}`; }
+
+    function setIconPreview(src, name){
+      if (src) {
+        iconEl.className = "pwa-logo";
+        iconEl.innerHTML = "";
+        const img = document.createElement("img");
+        img.src = src; img.alt = name || "Profil"; img.className = "pwa-logo";
+        iconEl.replaceWith(img); img.id = "pwaIcon";
+        return;
+      }
+      iconEl.className = "pwa-logo pwa-logo-fallback";
+      iconEl.textContent = initials(name);
+    }
+
+    function makeInitialIcon(name, bg = "#b91c1c") {
+      try {
+        const canvas = document.createElement("canvas"); canvas.width = 512; canvas.height = 512;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = bg; ctx.fillRect(0,0,512,512);
+        const grad = ctx.createRadialGradient(160,90,20,256,256,430);
+        grad.addColorStop(0,"rgba(255,255,255,.26)"); grad.addColorStop(1,"rgba(0,0,0,.25)");
+        ctx.fillStyle = grad; ctx.fillRect(0,0,512,512);
+        ctx.fillStyle = "#fff"; ctx.font = "900 178px Arial, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(initials(name),256,270);
+        return canvas.toDataURL("image/png");
+      } catch (err) { return FALLBACK_512; }
+    }
+
+    async function logoToIconDataUrl(url) {
+      if (!url) return "";
+      try {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.referrerPolicy = "no-referrer";
+        const loaded = new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; setTimeout(reject, 3500); });
+        img.src = url;
+        await loaded;
+        const canvas = document.createElement("canvas"); canvas.width = 512; canvas.height = 512;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#0b0b0f"; ctx.fillRect(0,0,512,512);
+        const size = Math.min(img.naturalWidth || 512, img.naturalHeight || 512);
+        const sx = Math.max(0, ((img.naturalWidth || size) - size) / 2);
+        const sy = Math.max(0, ((img.naturalHeight || size) - size) / 2);
+        ctx.drawImage(img, sx, sy, size, size, 0, 0, 512, 512);
+        return canvas.toDataURL("image/png");
+      } catch (err) { return ""; }
+    }
+
+    function setManifest() {
+      const encoded = encodeURIComponent(state.profile || state.slug || "default");
+      const appName = isPanel ? `${state.name} Panel` : state.name;
+      const shortName = appName.length > 18 ? appName.slice(0,18).trim() : appName;
+      const manifest = {
+        id: `/pwa/${isPanel ? "owner" : "profile"}/${encoded}`,
+        name: appName,
+        short_name: shortName || "Profil",
+        description: isPanel ? `Panel vlasnika za ${state.name}.` : `Prečica za direktan ulaz u profil: ${state.name}.`,
+        start_url: `/?${profileQuery()}${isPanel ? "&panel=1" : ""}&pwa=1&v=${VERSION}`,
+        scope: "/",
+        display: "standalone",
+        background_color: "#0b0b0f",
+        theme_color: "#b91c1c",
+        orientation: "portrait",
+        icons: [
+          { src: state.icon192 || FALLBACK_192, sizes: "192x192", type: "image/png", purpose: "any maskable" },
+          { src: state.icon512 || state.icon192 || FALLBACK_512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+        ]
+      };
+      const blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+      let link = document.querySelector('link[rel="manifest"]');
+      if (!link) { link = document.createElement("link"); link.rel = "manifest"; document.head.appendChild(link); }
+      link.href = URL.createObjectURL(blob);
+      document.title = appName;
+      titleEl.textContent = `Instaliraj: ${appName}`;
+      subtitleEl.textContent = "Ova prečica treba da otvara baš ovaj profil, sa posebnim imenom i ikonicom gde browser dozvoli.";
+      openProfileBtn.href = profileUrl();
+    }
+
+    async function loadProfile() {
+      state.name = nameHint || "CityStyle profil";
+      setIconPreview("", state.name);
+      state.icon192 = makeInitialIcon(state.name);
+      state.icon512 = state.icon192;
+      setManifest();
+
+      if (!rawProfile || !window.db) return;
+      try {
+        const selector = isCode(rawProfile) ? `public_profile_code.eq.${rawProfile}` : `slug.eq.${rawProfile},public_profile_code.eq.${rawProfile}`;
+        const { data: salon } = await window.db.from("salons").select("*").or(selector).eq("status","active").eq("is_deleted",false).maybeSingle();
+        if (!salon) return;
+        state.slug = salon.slug || rawProfile;
+        state.profile = salon.public_profile_code || rawProfile || salon.slug;
+        const { data: settings } = await window.db.from("salon_settings").select("*").eq("salon_id", salon.id).maybeSingle();
+        const { data: homeImages } = await window.db.from("home_images").select("image_url,sort_order").eq("salon_id", salon.id).order("sort_order", { ascending:true }).limit(1);
+        state.name = cleanText(settings?.welcome_title || salon.salon_name || nameHint || "CityStyle profil");
+        state.logo = cleanText(settings?.logo_url || settings?.cover_image_url || settings?.home_image_url || homeImages?.[0]?.image_url || "");
+        setIconPreview(state.logo, state.name);
+        const dataIcon = await logoToIconDataUrl(state.logo);
+        state.icon192 = dataIcon || makeInitialIcon(state.name);
+        state.icon512 = state.icon192;
+        setManifest();
+        setStatus(window.__cityStyleDeferredPrompt ? "Spremno za instalaciju." : "Ako dugme ne otvori sistemsku instalaciju, koristi meni browsera → Dodaj na početni ekran.", !!window.__cityStyleDeferredPrompt);
+      } catch (err) {
+        console.warn("Profil nije učitan za PWA gateway:", err);
+      }
+    }
+
+    async function ensureServiceWorker() {
+      if (!("serviceWorker" in navigator)) return;
+      try {
+        const reg = await navigator.serviceWorker.register("/sw.js?v=" + VERSION, { scope: "/" });
+        await navigator.serviceWorker.ready;
+        return reg;
+      } catch (err) { console.warn("SW nije spreman:", err); }
+    }
+
+    installBtn.addEventListener("click", async function(){
+      setStatus("Proveravam instalaciju...", true);
+      await ensureServiceWorker();
+      if (!window.__cityStyleDeferredPrompt) {
+        setStatus("Chrome trenutno nije poslao sistemsku instalaciju. Otvori meni browsera (tri tačke) → Dodaj na početni ekran.", false);
+        return;
+      }
+      const promptEvent = window.__cityStyleDeferredPrompt;
+      window.__cityStyleDeferredPrompt = null;
+      promptEvent.prompt();
+      const choice = await promptEvent.userChoice;
+      if (choice?.outcome === "accepted") setStatus("Prečica je dodata na početni ekran.", true);
+      else setStatus("Instalacija je otkazana.", false);
+    });
+
+    copyBtn.addEventListener("click", async function(){
+      try { await navigator.clipboard.writeText(profileUrl()); setStatus("Link profila je kopiran.", true); }
+      catch (err) { setStatus(profileUrl(), true); }
+    });
+
+    window.addEventListener("citystyle-install-ready", () => setStatus("Spremno za instalaciju.", true));
+    ensureServiceWorker();
+    loadProfile();
+  })();
+  </script>
 </body>
 </html>

@@ -156,42 +156,26 @@ function escapeJs(value) {
     .replaceAll("'", "\\'");
 }
 
-async function checkSalonAccess(slug) {
-  if (!slug) return { data: null, error: "Nedostaje salon slug." };
+function cleanSupabaseOrValue(value = "") {
+  return String(value || "").trim().replace(/[(),]/g, "");
+}
+
+async function checkSalonAccess(slugOrCode) {
+  const identifier = cleanSupabaseOrValue(slugOrCode);
+  if (!identifier) return { data: null, error: "Nedostaje salon slug/profil kod." };
   if (!window.db) return { data: null, error: "Supabase nije učitan." };
 
+  // Supports old public links (?salon=slug) and new stable public profile codes (?profile=cs_p_...).
+  // Keep the query surgical: only the selector changed, all existing status/delete checks remain.
   const { data, error } = await window.db
     .from("salons")
     .select("*")
-    .eq("slug", slug)
+    .or(`slug.eq.${identifier},public_profile_code.eq.${identifier}`)
     .eq("status", "active")
     .eq("is_deleted", false)
     .maybeSingle();
 
   return { data, error };
-}
-
-async function resolveSalonIdentifier(identifier) {
-  const value = String(identifier || "").trim();
-  if (!value) return { data: null, error: "Nedostaje profil." };
-  if (!window.db) return { data: null, error: "Supabase nije učitan." };
-
-  // First try the new public_profile_code. This lets QR/PWA links work without exposing slug.
-  try {
-    const { data, error } = await window.db
-      .from("salons")
-      .select("*")
-      .eq("public_profile_code", value)
-      .eq("status", "active")
-      .eq("is_deleted", false)
-      .maybeSingle();
-    if (data && !error) return { data, error: null };
-  } catch (err) {
-    console.warn("public_profile_code lookup nije uspeo, pokušavam slug fallback:", err);
-  }
-
-  // Fallback for old links and admin preview links.
-  return checkSalonAccess(value);
 }
 
 function saveCurrentSalon(slug) {
@@ -241,36 +225,27 @@ function getSalonPublicLink(slug) {
   return `${getAppBaseUrl()}?salon=${encodeURIComponent(slug)}`;
 }
 
-function getProfilePublicLink(profileCodeOrSlug) {
-  return `${getAppBaseUrl()}?profile=${encodeURIComponent(profileCodeOrSlug)}`;
-}
-
-function getProfileInstallGatewayUrl(profileCodeOrSlug, slug = "") {
-  const code = encodeURIComponent(profileCodeOrSlug || slug || "profile");
-  const safeSlug = String(slug || "").trim();
-  const slugPart = safeSlug ? `&slug=${encodeURIComponent(safeSlug)}` : "";
-  return `${getAppBaseUrl()}p/?profile=${code}${slugPart}&install=1&v=v140multipwa`;
-}
-
-function openProfileInstallGateway(profileCodeOrSlug, slug = "") {
-  const url = getProfileInstallGatewayUrl(profileCodeOrSlug, slug);
-  const isAndroid = /Android/i.test(navigator.userAgent || "");
-
-  // If the user clicked from an already installed CityStyle shortcut, Android can keep the user trapped
-  // inside the first installed WebAPK. This intent tries to open the exact same URL in Chrome browser,
-  // where Chrome is allowed to show the install prompt for a different profile identity.
-  if (isStandaloneMode() && isAndroid) {
-    try {
-      const parsed = new URL(url);
-      const intentUrl = `intent://${parsed.host}${parsed.pathname}${parsed.search}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(url)};end`;
-      window.location.href = intentUrl;
-      return;
-    } catch (err) {
-      console.warn("Chrome intent nije napravljen, koristim normalan link:", err);
-    }
+function getSalonProfileCode(salonOrSlug) {
+  if (!salonOrSlug) return "";
+  if (typeof salonOrSlug === "object") {
+    return String(salonOrSlug.public_profile_code || salonOrSlug.slug || "").trim();
   }
+  return String(salonOrSlug || "").trim();
+}
 
-  window.location.href = url;
+function getSalonProfileLink(salonOrSlug) {
+  const code = getSalonProfileCode(salonOrSlug);
+  return `${getAppBaseUrl()}?profile=${encodeURIComponent(code)}`;
+}
+
+function getProfileInstallGatewayUrl(salonOrSlug, options = {}) {
+  const code = getSalonProfileCode(salonOrSlug);
+  const params = new URLSearchParams();
+  params.set("profile", code);
+  params.set("install", "1");
+  if (options.name) params.set("name", String(options.name).slice(0, 80));
+  if (options.panel) params.set("panel", "1");
+  return `${getAppPath("p/")}?${params.toString()}`;
 }
 
 function getSalonSourceLink(slug, source = "") {
@@ -652,11 +627,25 @@ function showInstallButton() {
   document.body.appendChild(btn);
 }
 
-async function installSalonApp(slug, options = {}) {
-  const profileCode = String(options.profileCode || options.publicProfileCode || slug || getSavedSalonSlug() || "").trim();
-  if (slug) saveCurrentSalon(slug);
-  updateManifestForSalon(slug || getSavedSalonSlug(), options);
-  openProfileInstallGateway(profileCode, slug || "");
+async function installSalonApp(salonOrSlug, options = {}) {
+  const code = getSalonProfileCode(salonOrSlug);
+  const slugToSave = typeof salonOrSlug === "object" ? (salonOrSlug.slug || code) : (options.slug || code);
+  if (slugToSave) saveCurrentSalon(slugToSave);
+
+  // Profile/customer install must start from a dedicated gateway.
+  // This gives Chrome a fresh manifest identity before it decides whether install is allowed.
+  const url = getProfileInstallGatewayUrl(salonOrSlug, options);
+
+  // If the user is already inside an installed PWA, try to push them back to the browser,
+  // because Android often blocks a second install prompt from inside the first installed shortcut.
+  if (isStandaloneMode() && /Android/i.test(navigator.userAgent || "")) {
+    const noScheme = url.replace(/^https?:\/\//, "");
+    window.location.href = `intent://${noScheme}#Intent;scheme=https;package=com.android.chrome;end`;
+    setTimeout(() => { window.location.href = url; }, 900);
+    return;
+  }
+
+  window.location.href = url;
 }
 
 async function installOwnerApp() {
@@ -671,7 +660,7 @@ function updateManifestForOwner() {
     name: "CityStyle - Panel vlasnika",
     short_name: "CityStyle",
     description: "Prečica za direktan ulaz u panel vlasnika biznisa.",
-    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=v140multipwa`,
+    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=v160multipwa`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -740,14 +729,17 @@ function updateManifestForSalon(slug, options = {}) {
   const cleanIcon = String(options.iconUrl || "").trim();
   const iconUrl = cleanIcon || makeInitialsIconDataUrl(appName, "#b91c1c");
   const icon512 = String(options.icon512Url || "").trim() || iconUrl || makeInitialsIconDataUrl(appName, "#b91c1c");
+  const profileCode = String(options.profileCode || options.publicProfileCode || slug || "").trim();
   const encodedSlug = encodeURIComponent(slug);
-  const manifestId = `${getAppBaseUrl()}?salon=${encodedSlug}`;
+  const encodedProfile = encodeURIComponent(profileCode || slug);
+  const manifestId = `${getAppBaseUrl()}pwa/profile/${encodedProfile}`;
+  const startParam = profileCode ? `profile=${encodedProfile}` : `salon=${encodedSlug}`;
   const baseManifest = {
     id: manifestId,
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=v140multipwa`,
+    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v160multipwa`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -942,7 +934,7 @@ async function registerPushForSalon(salonId) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v140multipwa", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v160multipwa", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
@@ -1075,16 +1067,15 @@ window.App = {
     normalizePhoneForTel,
   normalizeCurrency,
   checkSalonAccess,
-  resolveSalonIdentifier,
   saveCurrentSalon,
   getSavedSalonSlug,
   clearSavedSalon,
   getAppBaseUrl,
   getAppPath,
   getSalonPublicLink,
-  getProfilePublicLink,
+  getSalonProfileCode,
+  getSalonProfileLink,
   getProfileInstallGatewayUrl,
-  openProfileInstallGateway,
   getSalonSourceLink,
   getQrImageUrl,
   installApp,
