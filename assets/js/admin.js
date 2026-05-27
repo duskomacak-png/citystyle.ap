@@ -211,8 +211,8 @@ function renderThemeBadge(value) {
   return `<span class="theme-badge theme-preview-${theme.value}"><i></i>${theme.icon} ${adminEscapeHtml(theme.label)}</span>`;
 }
 
-function getAdminClientPreviewLink(slug) {
-  const base = window.App.getSalonPublicLink(slug);
+function getAdminClientPreviewLink(salon) {
+  const base = window.App.getSalonPublicLink(salon);
   return `${base}${base.includes("?") ? "&" : "?"}adminPreview=1&from=admin`;
 }
 
@@ -231,6 +231,7 @@ function getAdminSearchText(salon) {
     salon.owner_phone,
     salon.phone,
     salon.company_code,
+    salon.public_profile_code,
     salon.slug,
     salon.city,
     salon.business_type,
@@ -774,7 +775,7 @@ function renderExpiringSoonRow(salon) {
 
 function renderSalonCard(salon) {
   const expired = isPaymentExpired(salon.paid_until);
-  const salonLink = window.App.getSalonPublicLink(salon.slug);
+  const salonLink = window.App.getSalonPublicLink(salon);
   const statusClass = salon.status === "active" ? "active" : "blocked";
 
   return `
@@ -800,10 +801,10 @@ function renderSalonCard(salon) {
       ${expired ? `<div class="warning-box">Uplata je istekla. Profil ostaje aktivan dok ga administrator ručno ne blokira.</div>` : ""}
       <div class="link-box"><small>Link profila:</small><input readonly value="${salonLink}"></div>
       <div class="card-actions">
-        <button class="btn btn-dark" type="button" onclick="copySalonLink('${salon.slug}')">Kopiraj link</button>
-        <a class="btn btn-primary" href="${getAdminClientPreviewLink(salon.slug)}">Vidi kao korisnik</a>
+        <button class="btn btn-dark" type="button" onclick="copySalonLinkById('${salon.id}')">Kopiraj link</button>
+        <a class="btn btn-primary" href="${getAdminClientPreviewLink(salon)}">Vidi kao korisnik</a>
         <a class="btn btn-dark" href="${getAdminOwnerPreviewLink(salon.id)}">Vidi kao vlasnik</a>
-        <button class="btn btn-dark" type="button" onclick="showQrForSalon('${salon.slug}', '${adminEscapeJs(salon.salon_name)}')">QR kod</button>
+        <button class="btn btn-dark" type="button" onclick="showQrForSalonById('${salon.id}')">QR kod</button>
         <button class="btn btn-dark" type="button" onclick="showThemePicker('${salon.id}', '${adminEscapeJs(salon.theme_color || "classic-red")}', '${adminEscapeJs(salon.salon_name)}')">🎨 Boja</button>
         <button class="btn btn-dark" type="button" onclick="showLanguagePicker('${salon.id}', '${adminEscapeJs(salon.app_language || "sr")}', '${adminEscapeJs(salon.salon_name)}')">🌐 Jezik</button>
         <button class="btn btn-dark" type="button" onclick="sendRenewalEmail('${salon.id}')">📧 Email obaveštenje</button>
@@ -1327,11 +1328,47 @@ async function deleteSalon(id) {
   await loadSalonsList();
 }
 
+function findSalonByIdForLink(salonId) {
+  return (adminSalonsCache || []).find(item => String(item.id) === String(salonId)) || null;
+}
+
+function copySalonLinkById(salonId) {
+  const salon = findSalonByIdForLink(salonId);
+  if (!salon) return window.App.showMessage("Profil nije pronađen.", "error");
+  const link = window.App.getSalonPublicLink(salon);
+  navigator.clipboard.writeText(link).then(() => {
+    window.App.showMessage("Link profila je kopiran.", "success");
+  }).catch(() => prompt("Kopiraj link:", link));
+}
+
 function copySalonLink(slug) {
   const link = window.App.getSalonPublicLink(slug);
   navigator.clipboard.writeText(link).then(() => {
     window.App.showMessage("Link profila je kopiran.", "success");
   }).catch(() => prompt("Kopiraj link:", link));
+}
+
+function showQrForSalonById(salonId) {
+  const salon = findSalonByIdForLink(salonId);
+  if (!salon) return window.App.showMessage("Profil nije pronađen.", "error");
+  showQrForSalonObject(salon);
+}
+
+function showQrForSalonObject(salon) {
+  const link = window.App.getSalonPublicLink(salon);
+  const qrUrl = window.App.getQrImageUrl(link, 280);
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop";
+  modal.innerHTML = `
+    <div class="modal-card">
+      <h2>QR kod profila</h2>
+      <p class="muted">${adminEscapeHtml(salon.salon_name || "Profil")}</p>
+      <img class="qr-img" src="${qrUrl}" alt="QR kod za profil">
+      <div class="link-box"><input readonly value="${link}"></div>
+      <button class="btn btn-primary" type="button" onclick="copySalonLinkById('${adminEscapeJs(salon.id)}')">Kopiraj link</button>
+      <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
+    </div>`;
+  document.body.appendChild(modal);
 }
 
 function showQrForSalon(slug, salonName) {
@@ -1350,7 +1387,6 @@ function showQrForSalon(slug, salonName) {
     </div>`;
   document.body.appendChild(modal);
 }
-
 
 function showThemePicker(salonId, currentTheme, salonName) {
   const activeTheme = getAdminThemeOption(currentTheme).value;

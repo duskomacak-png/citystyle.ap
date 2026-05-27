@@ -138,7 +138,13 @@ function bindSalonTabs() {
 function bindSalonInstall() {
   document.getElementById("salon-install-btn")?.addEventListener("click", async () => {
     window.App?.clearSavedSalon?.();
-    await window.App?.installOwnerApp?.();
+    await window.App?.installOwnerApp?.({
+      name: currentSalon?.salon_name || "CityStyle profil",
+      slug: currentSalon?.slug || "",
+      publicProfileCode: currentSalon?.public_profile_code || "",
+      iconUrl: currentSettings?.logo_url || currentSettings?.cover_image_url || "",
+      themeColor: currentSalon?.theme_color
+    });
   });
 }
 
@@ -215,6 +221,12 @@ async function loadSalonForAdminPreview(salonId) {
   currentSalonId = data.id;
   window.App?.setAppLanguage?.(data.app_language || "sr");
   window.App?.applySalonTheme?.(data.theme_color);
+  window.App?.updateManifestForOwner?.({
+    name: data.salon_name || "CityStyle profil",
+    slug: data.slug || "",
+    publicProfileCode: data.public_profile_code || "",
+    themeColor: data.theme_color
+  });
   renderSalonDashboard();
   await showSection(getDefaultOwnerSection());
 }
@@ -242,6 +254,12 @@ async function loadSalonFromSession(salonId) {
   currentSalonId = data.id;
   window.App?.setAppLanguage?.(data.app_language || "sr");
   window.App?.applySalonTheme?.(data.theme_color);
+  window.App?.updateManifestForOwner?.({
+    name: data.salon_name || "CityStyle profil",
+    slug: data.slug || "",
+    publicProfileCode: data.public_profile_code || "",
+    themeColor: data.theme_color
+  });
   renderSalonDashboard();
   await showSection(getDefaultOwnerSection());
 }
@@ -351,9 +369,9 @@ async function enableOwnerNotifications() {
 }
 
 function getOwnerSourceLink(source = "") {
-  if (!currentSalon?.slug) return "";
-  if (window.App?.getSalonSourceLink) return window.App.getSalonSourceLink(currentSalon.slug, source);
-  const base = window.App.getSalonPublicLink(currentSalon.slug);
+  if (!currentSalon?.slug && !currentSalon?.public_profile_code) return "";
+  if (window.App?.getSalonSourceLink) return window.App.getSalonSourceLink(currentSalon, source);
+  const base = window.App.getSalonPublicLink(currentSalon);
   return source ? `${base}&src=${encodeURIComponent(source)}` : base;
 }
 
@@ -1596,7 +1614,7 @@ async function saveWorkingHours() {
 }
 
 async function renderSalonSettingsLegacyDisabled() {
-  const salonLink = window.App.getSalonPublicLink(currentSalon.slug);
+  const salonLink = window.App.getSalonPublicLink(currentSalon);
   const previewLink = `${salonLink}${salonLink.includes("?") ? "&" : "?"}ownerPreview=1`;
   const qrUrl = window.App.getQrImageUrl(salonLink, 260);
   document.getElementById("salon-content").innerHTML = `
@@ -1605,7 +1623,7 @@ async function renderSalonSettingsLegacyDisabled() {
         <h2>${S("profileSettings", "Podešavanje profila")}</h2>
         <p class="muted">Uredite podatke koje korisnici vide na javnoj stranici profila.</p>
       </div>
-      <a class="btn btn-primary" href="${adminOwnerPreviewMode ? `${window.App.getSalonPublicLink(currentSalon.slug)}&adminPreview=1&from=admin` : previewLink}">Pogledaj javnu stranicu</a>
+      <a class="btn btn-primary" href="${adminOwnerPreviewMode ? `${window.App.getSalonPublicLink(currentSalon)}&adminPreview=1&from=admin` : previewLink}">Pogledaj javnu stranicu</a>
     </div>
     ${adminOwnerPreviewMode ? `<div class="warning-box">Admin pregled vlasničkog panela je samo za proveru izgleda. Dugmad za izmene su zaključana.</div>` : ""}
     <div class="card center">
@@ -1698,7 +1716,7 @@ async function saveSettingsAndPreview() {
   if (stopAdminOwnerPreviewEdit()) return;
   await saveSettings();
   if (!currentSalon?.slug) return;
-  const salonLink = window.App.getSalonPublicLink(currentSalon.slug);
+  const salonLink = window.App.getSalonPublicLink(currentSalon);
   const previewLink = `${salonLink}${salonLink.includes("?") ? "&" : "?"}ownerPreview=1`;
   window.location.href = previewLink;
 }
@@ -1718,7 +1736,7 @@ async function uploadLogo() {
 
 function copyMySalonLink() {
   if (!currentSalon?.slug) return;
-  const link = window.App.getSalonPublicLink(currentSalon.slug);
+  const link = window.App.getSalonPublicLink(currentSalon);
   navigator.clipboard.writeText(link).then(() => {
     window.App.showMessage("Link profila je kopiran.", "success");
   }).catch(() => prompt("Kopiraj link profila:", link));
@@ -1897,16 +1915,19 @@ async function showProductImages(productId) {
 }
 async function uploadProductExtraImages(productId) { const files = Array.from(document.getElementById("product-extra-images")?.files || []).slice(0,10); for (const file of files) { const url = await window.StorageHelper.uploadImage(file, currentSalonId, "product_extra"); if (url) await window.db.from("product_images").insert({ product_id: productId, image_url: url, sort_order: 100 }); } document.querySelector('.legal-modal-backdrop')?.remove(); await showProductImages(productId); }
 async function deleteProductExtraImage(imageId, productId, imageUrl) { await window.StorageHelper.deleteImage(imageUrl); await window.db.from("product_images").delete().eq("id", imageId); document.querySelector('.legal-modal-backdrop')?.remove(); await showProductImages(productId); }
-function copyProductLink(productId) { const code = productId; const link = `${window.App.getSalonPublicLink(currentSalon.slug)}&product=${encodeURIComponent(code)}`; navigator.clipboard.writeText(link).then(()=>window.App.showMessage("Link oglasa je kopiran.", "success")).catch(()=>prompt("Kopiraj link oglasa:", link)); }
-function previewProductAsClient(productId) { window.location.href = `${window.App.getSalonPublicLink(currentSalon.slug)}&product=${encodeURIComponent(productId)}&ownerPreview=1`; }
+function copyProductLink(productId) { const code = productId; const link = `${window.App.getSalonPublicLink(currentSalon)}&product=${encodeURIComponent(code)}`; navigator.clipboard.writeText(link).then(()=>window.App.showMessage("Link oglasa je kopiran.", "success")).catch(()=>prompt("Kopiraj link oglasa:", link)); }
+function previewProductAsClient(productId) { {
+  const base = window.App.getSalonPublicLink(currentSalon);
+  window.location.href = `${base}${base.includes("?") ? "&" : "?"}product=${encodeURIComponent(productId)}&ownerPreview=1`;
+} }
 
 async function renderSalonSettings() {
-  const salonLink = window.App.getSalonPublicLink(currentSalon.slug);
+  const salonLink = window.App.getSalonPublicLink(currentSalon);
   const previewLink = `${salonLink}${salonLink.includes("?") ? "&" : "?"}ownerPreview=1`;
   const qrUrl = window.App.getQrImageUrl(salonLink, 260);
   const shop = ownerIsShopProfile();
   document.getElementById("salon-content").innerHTML = `
-    <div class="section-head"><div><h2>${shop ? "Profil prodavnice" : S("profileSettings", "Podešavanje profila")}</h2><p class="muted">Uredite podatke koje korisnici vide na javnoj stranici profila.</p></div><a class="btn btn-primary" href="${adminOwnerPreviewMode ? `${window.App.getSalonPublicLink(currentSalon.slug)}&adminPreview=1&from=admin` : previewLink}">Pogledaj javnu stranicu</a></div>
+    <div class="section-head"><div><h2>${shop ? "Profil prodavnice" : S("profileSettings", "Podešavanje profila")}</h2><p class="muted">Uredite podatke koje korisnici vide na javnoj stranici profila.</p></div><a class="btn btn-primary" href="${adminOwnerPreviewMode ? `${window.App.getSalonPublicLink(currentSalon)}&adminPreview=1&from=admin` : previewLink}">Pogledaj javnu stranicu</a></div>
     ${adminOwnerPreviewMode ? `<div class="warning-box">Admin pregled vlasničkog panela je samo za proveru izgleda. Dugmad za izmene su zaključana.</div>` : ""}
     <div class="card center"><h3>QR kod profila</h3><p class="muted">Ovaj QR kod vodi korisnike direktno na javnu stranicu profila.</p><img class="qr-img" src="${qrUrl}" alt="QR kod profila"><div class="link-box"><small>Link za klijente:</small><input readonly value="${salonLink}"></div><div class="card-actions" style="justify-content:center"><button class="btn btn-primary" type="button" onclick="copyMySalonLink()">Kopiraj link</button><a class="btn btn-dark" href="${previewLink}">Pogledaj javnu stranicu</a></div></div>
     ${shop ? "" : `<div class="card"><h3>Logo profila</h3><p class="muted">Logo se prikazuje uz naziv i kontakt salona.</p><input type="file" id="logo-upload" accept="image/png,image/jpeg,image/webp"><button class="btn btn-primary" type="button" onclick="uploadLogo()">Postavi / promeni logo</button><div id="current-logo" class="image-preview-box"></div></div>`}

@@ -171,10 +171,42 @@ async function checkSalonAccess(slug) {
   return { data, error };
 }
 
-function saveCurrentSalon(slug) {
-  if (!slug) return;
+async function checkProfileAccess(publicProfileCode) {
+  const code = String(publicProfileCode || "").trim();
+  if (!code) return { data: null, error: "Nedostaje javni kod profila." };
+  if (!window.db) return { data: null, error: "Supabase nije učitan." };
+
+  const { data, error } = await window.db
+    .from("salons")
+    .select("*")
+    .eq("public_profile_code", code)
+    .eq("status", "active")
+    .eq("is_deleted", false)
+    .maybeSingle();
+
+  return { data, error };
+}
+
+function getSalonPublicIdentity(profileOrSlug = "") {
+  if (profileOrSlug && typeof profileOrSlug === "object") {
+    const code = String(profileOrSlug.public_profile_code || profileOrSlug.profile_code || "").trim();
+    if (code) return { key: "profile", value: code };
+    const slug = String(profileOrSlug.slug || "").trim();
+    if (slug) return { key: "salon", value: slug };
+    return { key: "salon", value: "" };
+  }
+
+  const value = String(profileOrSlug || "").trim();
+  if (value.startsWith("cs_p_")) return { key: "profile", value };
+  return { key: "salon", value };
+}
+
+function saveCurrentSalon(profileOrSlug) {
+  const identity = getSalonPublicIdentity(profileOrSlug);
+  if (!identity.value) return;
   saveLocal(window.APP_CONFIG.salonStorageKey, {
-    slug,
+    slug: profileOrSlug?.slug || (identity.key === "salon" ? identity.value : ""),
+    public_profile_code: profileOrSlug?.public_profile_code || (identity.key === "profile" ? identity.value : ""),
     savedAt: new Date().toISOString()
   });
 }
@@ -182,6 +214,11 @@ function saveCurrentSalon(slug) {
 function getSavedSalonSlug() {
   const saved = getLocal(window.APP_CONFIG.salonStorageKey);
   return saved?.slug || null;
+}
+
+function getSavedProfileCode() {
+  const saved = getLocal(window.APP_CONFIG.salonStorageKey);
+  return saved?.public_profile_code || null;
 }
 
 function clearSavedSalon() {
@@ -214,15 +251,17 @@ function getAppPath(path = "") {
   return `${getAppBaseUrl()}${cleanPath}`;
 }
 
-function getSalonPublicLink(slug) {
-  return `${getAppBaseUrl()}?salon=${encodeURIComponent(slug)}`;
+function getSalonPublicLink(profileOrSlug) {
+  const identity = getSalonPublicIdentity(profileOrSlug);
+  if (!identity.value) return getAppBaseUrl();
+  return `${getAppBaseUrl()}?${identity.key}=${encodeURIComponent(identity.value)}`;
 }
 
-function getSalonSourceLink(slug, source = "") {
-  const base = getSalonPublicLink(slug);
+function getSalonSourceLink(profileOrSlug, source = "") {
+  const base = getSalonPublicLink(profileOrSlug);
   const cleanSource = String(source || "").trim().toLowerCase();
   if (!cleanSource) return base;
-  return `${base}&src=${encodeURIComponent(cleanSource)}`;
+  return `${base}${base.includes("?") ? "&" : "?"}src=${encodeURIComponent(cleanSource)}`;
 }
 
 function getQrImageUrl(link, size = 280) {
@@ -597,48 +636,97 @@ function showInstallButton() {
   document.body.appendChild(btn);
 }
 
-async function installSalonApp(slug, options = {}) {
-  if (slug) saveCurrentSalon(slug);
-  updateManifestForSalon(slug || getSavedSalonSlug(), options);
+async function installSalonApp(profileOrSlug, options = {}) {
+  if (profileOrSlug) saveCurrentSalon({
+    slug: typeof profileOrSlug === "object" ? profileOrSlug.slug : String(profileOrSlug || ""),
+    public_profile_code: options.publicProfileCode || options.profileCode || profileOrSlug?.public_profile_code || ""
+  });
+  updateManifestForSalon(profileOrSlug || getSavedProfileCode() || getSavedSalonSlug(), options);
   await installApp(
-    "Ako se ne pojavi instalacija, otvorite meni browsera i izaberite Dodaj na početni ekran. Prečica će otvoriti baš ovaj profil, sa imenom i logom firme gde browser to podržava.",
+    "Ako se ne pojavi instalacija, otvorite meni browsera i izaberite Dodaj na početni ekran. Prečica će otvoriti baš ovaj profil, sa imenom i slikom profila gde browser to podržava.",
     "Prečica ovog profila je dodata na telefon."
   );
 }
 
-async function installOwnerApp() {
+async function installOwnerApp(options = {}) {
   clearSavedSalon();
-  updateManifestForOwner();
+  updateManifestForOwner(options);
   await installApp("Na iPhone-u: otvorite ovaj panel u Safari browseru, pritisnite Share i izaberite Add to Home Screen. Panel vlasnika ostaje zapamćen.", "Panel vlasnika je dodat na telefon.");
 }
 
-function updateManifestForOwner() {
+function setDynamicManifest(manifest, iconUrl = "") {
+  const blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+  const url = URL.createObjectURL(blob);
+  let link = document.querySelector('link[rel="manifest"]');
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "manifest";
+    document.head.appendChild(link);
+  }
+  link.href = url;
+
+  if (iconUrl) {
+    const appleIcon = document.querySelector('link[rel="apple-touch-icon"]') || document.createElement("link");
+    appleIcon.rel = "apple-touch-icon";
+    appleIcon.href = iconUrl;
+    if (!appleIcon.parentNode) document.head.appendChild(appleIcon);
+  }
+
+  if (manifest?.name) {
+    document.title = manifest.name;
+    const appTitle = document.querySelector('meta[name="application-name"]') || document.createElement("meta");
+    appTitle.name = "application-name";
+    appTitle.content = manifest.name;
+    if (!appTitle.parentNode) document.head.appendChild(appTitle);
+
+    const appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]') || document.createElement("meta");
+    appleTitle.name = "apple-mobile-web-app-title";
+    appleTitle.content = manifest.name;
+    if (!appleTitle.parentNode) document.head.appendChild(appleTitle);
+  }
+
+  if (manifest?.theme_color) {
+    const themeMeta = document.querySelector('meta[name="theme-color"]') || document.createElement("meta");
+    themeMeta.name = "theme-color";
+    themeMeta.content = manifest.theme_color;
+    if (!themeMeta.parentNode) document.head.appendChild(themeMeta);
+  }
+}
+
+function updateManifestForOwner(options = {}) {
+  const rawName = String(options.name || options.displayName || options.businessName || "").trim();
+  const appName = rawName ? `${rawName} Panel` : "CityStyle - Panel vlasnika";
+  const shortName = appName.length > 12 ? appName.slice(0, 12).trim() : appName;
+  const theme = normalizeSalonTheme(options.themeColor || "classic-red");
+  const profileCode = String(options.publicProfileCode || options.profileCode || "").trim();
+  const slug = String(options.slug || "").trim();
+  const iconUrl = String(options.iconUrl || "").trim() || makeInitialsIconDataUrl(rawName || "Panel", "#b91c1c");
+  const icon512 = String(options.icon512Url || "").trim() || iconUrl;
+  const identity = profileCode || slug || "owner";
+  const encodedIdentity = encodeURIComponent(identity);
+  const startQuery = profileCode
+    ? `owner_profile=${encodeURIComponent(profileCode)}`
+    : (slug ? `owner_salon=${encodeURIComponent(slug)}` : "pwa_owner=1");
+
   const baseManifest = {
-    id: `${getAppBaseUrl()}salon/`,
-    name: "CityStyle - Panel vlasnika",
-    short_name: "CityStyle",
-    description: "Prečica za direktan ulaz u panel vlasnika biznisa.",
-    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=v159pushfix`,
+    id: `${getAppBaseUrl()}pwa/owner/${encodedIdentity}`,
+    name: appName,
+    short_name: shortName || "Panel",
+    description: `Direktan ulaz u vlasnički panel: ${rawName || "CityStyle profil"}.`,
+    start_url: `${getAppPath("salon/")}?${startQuery}&v=v130publicpwa`,
     scope: getAppBaseUrl(),
     display: "standalone",
+    display_override: ["standalone", "minimal-ui"],
     background_color: "#0b0b0f",
-    theme_color: "#b91c1c",
+    theme_color: theme,
     orientation: "portrait",
     icons: [
-      { src: `${getAppBaseUrl()}assets/icons/icon-192.png`, sizes: "192x192", type: "image/png", purpose: "any maskable" },
-      { src: `${getAppBaseUrl()}assets/icons/icon-512.png`, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+      { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "any maskable" },
+      { src: icon512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
     ]
   };
   try {
-    const blob = new Blob([JSON.stringify(baseManifest)], { type: "application/manifest+json" });
-    const url = URL.createObjectURL(blob);
-    let link = document.querySelector('link[rel="manifest"]');
-    if (!link) {
-      link = document.createElement("link");
-      link.rel = "manifest";
-      document.head.appendChild(link);
-    }
-    link.href = url;
+    setDynamicManifest(baseManifest, iconUrl);
   } catch (err) {
     console.warn("Owner manifest nije postavljen:", err);
   }
@@ -673,61 +761,60 @@ function makeInitialsIconDataUrl(name = "CityStyle", bg = "#b91c1c") {
     ctx.fillText(initials, 256, 268);
     return canvas.toDataURL("image/png");
   } catch (err) {
-    console.warn("Initials icon nije napravljen:", err);
-    return `${getAppBaseUrl()}assets/icons/icon-192.png`;
+    return `${getAppBaseUrl()}assets/icons/icon-512.png`;
   }
 }
 
-function updateManifestForSalon(slug, options = {}) {
-  if (!slug) return;
+function updateManifestForSalon(profileOrSlug, options = {}) {
+  const identity = getSalonPublicIdentity({
+    slug: typeof profileOrSlug === "object" ? profileOrSlug.slug : String(profileOrSlug || ""),
+    public_profile_code: options.publicProfileCode || options.profileCode || profileOrSlug?.public_profile_code || ""
+  });
+  if (!identity.value) return;
   const rawName = String(options.name || options.displayName || "").trim();
   const appName = rawName || "CityStyle profil";
   const shortName = appName.length > 12 ? appName.slice(0, 12).trim() : appName;
   const theme = normalizeSalonTheme(options.themeColor || "classic-red");
-  const cleanIcon = String(options.iconUrl || "").trim();
+  const cleanIcon = String(options.iconUrl || options.coverIconUrl || "").trim();
   const iconUrl = cleanIcon || makeInitialsIconDataUrl(appName, "#b91c1c");
-  const icon512 = String(options.icon512Url || "").trim() || iconUrl || makeInitialsIconDataUrl(appName, "#b91c1c");
-  const encodedSlug = encodeURIComponent(slug);
-  const manifestId = `${getAppBaseUrl()}?salon=${encodedSlug}`;
+  const icon512 = String(options.icon512Url || "").trim() || iconUrl;
+  const encodedIdentity = encodeURIComponent(identity.value);
+  const startUrl = `${getAppBaseUrl()}?${identity.key}=${encodedIdentity}&pwa_profile=${encodedIdentity}&v=v130publicpwa`;
+
   const baseManifest = {
-    id: manifestId,
+    id: `${getAppBaseUrl()}pwa/customer/${identity.key}/${encodedIdentity}`,
     name: appName,
     short_name: shortName || "Profil",
-    description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=v159pushfix`,
+    description: `Direktan ulaz u CityStyle profil: ${appName}.`,
+    start_url: startUrl,
     scope: getAppBaseUrl(),
     display: "standalone",
+    display_override: ["standalone", "minimal-ui"],
     background_color: "#0b0b0f",
     theme_color: theme,
     orientation: "portrait",
+    categories: ["business", "shopping", "lifestyle"],
     icons: [
       { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "any maskable" },
       { src: icon512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+    ],
+    shortcuts: [
+      {
+        name: appName,
+        short_name: shortName || "Profil",
+        url: startUrl,
+        icons: [{ src: iconUrl, sizes: "192x192", type: "image/png" }]
+      }
     ]
   };
   try {
-    const blob = new Blob([JSON.stringify(baseManifest)], { type: "application/manifest+json" });
-    const url = URL.createObjectURL(blob);
-    let link = document.querySelector('link[rel="manifest"]');
-    if (!link) {
-      link = document.createElement("link");
-      link.rel = "manifest";
-      document.head.appendChild(link);
-    }
-    link.href = url;
-    const appleIcon = document.querySelector('link[rel="apple-touch-icon"]') || document.createElement("link");
-    appleIcon.rel = "apple-touch-icon";
-    appleIcon.href = iconUrl;
-    if (!appleIcon.parentNode) document.head.appendChild(appleIcon);
-    document.title = appName;
-    const themeMeta = document.querySelector('meta[name="theme-color"]') || document.createElement("meta");
-    themeMeta.name = "theme-color";
-    themeMeta.content = theme;
-    if (!themeMeta.parentNode) document.head.appendChild(themeMeta);
-    const appTitle = document.querySelector('meta[name="application-name"]') || document.createElement("meta");
-    appTitle.name = "application-name";
-    appTitle.content = appName;
-    if (!appTitle.parentNode) document.head.appendChild(appTitle);
+    setDynamicManifest(baseManifest, iconUrl);
+    window.__CITYSTYLE_PROFILE_PWA__ = {
+      identity,
+      name: appName,
+      start_url: startUrl,
+      icon: iconUrl
+    };
   } catch (err) {
     console.warn("Dynamic manifest nije postavljen:", err);
   }
@@ -889,7 +976,7 @@ async function registerPushForSalon(salonId) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v159pushfix", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v130publicpwa", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
@@ -1022,8 +1109,11 @@ window.App = {
     normalizePhoneForTel,
   normalizeCurrency,
   checkSalonAccess,
+  checkProfileAccess,
+  getSalonPublicIdentity,
   saveCurrentSalon,
   getSavedSalonSlug,
+  getSavedProfileCode,
   clearSavedSalon,
   getAppBaseUrl,
   getAppPath,

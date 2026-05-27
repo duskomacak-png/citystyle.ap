@@ -23,18 +23,21 @@
       try {
         var params = new URLSearchParams(window.location.search || "");
         var slug = params.get("salon");
-        if (!slug) {
-          addManifest("manifest.json?v=v159pushfix");
+        var profile = params.get("profile");
+        if (!slug && !profile) {
+          addManifest("manifest.json?v=v130publicpwa");
           return;
         }
-        var encodedSlug = encodeURIComponent(slug);
-        var profileName = safeSlugName(slug);
+        var identityKey = profile ? "profile" : "salon";
+        var identityValue = profile || slug;
+        var encodedSlug = encodeURIComponent(identityValue);
+        var profileName = safeSlugName(slug || profile);
         var manifest = {
-          id: "/?salon=" + encodedSlug,
+          id: "/pwa/customer/" + identityKey + "/" + encodedSlug,
           name: profileName,
           short_name: profileName.length > 12 ? profileName.slice(0, 12).trim() : profileName,
           description: "Prečica za direktan ulaz u ovaj CityStyle profil.",
-          start_url: "/?salon=" + encodedSlug + "&pwa_profile=" + encodedSlug + "&v=v159pushfix",
+          start_url: "/?" + identityKey + "=" + encodedSlug + "&pwa_profile=" + encodedSlug + "&v=v130publicpwa",
           scope: "/",
           display: "standalone",
           background_color: "#0b0b0f",
@@ -48,18 +51,18 @@
         var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
         addManifest(URL.createObjectURL(blob));
       } catch (err) {
-        addManifest("manifest.json?v=v159pushfix");
+        addManifest("manifest.json?v=v130publicpwa");
       }
     })();
   </script>
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-  <link rel="stylesheet" href="assets/css/style.css?v=v159pushfix">
+  <link rel="stylesheet" href="assets/css/style.css?v=v130publicpwa">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=v159pushfix"></script>
-  <script src="assets/js/main.js?v=v159pushfix"></script>
-  <script src="assets/js/auth.js?v=v159pushfix"></script>
-  <script src="assets/js/booking-logic.js?v=v159pushfix"></script>
-  <script src="assets/js/client.js?v=v159pushfix" defer></script>
+  <script src="assets/js/config.js?v=v130publicpwa"></script>
+  <script src="assets/js/main.js?v=v130publicpwa"></script>
+  <script src="assets/js/auth.js?v=v130publicpwa"></script>
+  <script src="assets/js/booking-logic.js?v=v130publicpwa"></script>
+  <script src="assets/js/client.js?v=v130publicpwa" defer></script>
 </head>
 <body>
   <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>
