@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CityStyle profil</title>
+  <meta name="description" content="CityStyle profil — direktan ulaz u salon ili prodavnicu.">
+  <meta name="theme-color" content="#0b0b0f">
+  <meta name="application-name" content="CityStyle profil">
+  <meta name="apple-mobile-web-app-title" content="CityStyle profil">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+  <script>
+    window.__CITYSTYLE_PWA_GATEWAY__ = true;
+    window.__CITYSTYLE_DEFERRED_INSTALL_PROMPT__ = null;
+
+    window.addEventListener("beforeinstallprompt", function(event){
+      event.preventDefault();
+      window.__CITYSTYLE_DEFERRED_INSTALL_PROMPT__ = event;
+      console.log("CityStyle: install prompt sačuvan za profil.");
+    });
+
+    (async function prepareProfileManifest(){
+      var VERSION = "v136profilepwa";
+      var SUPABASE_URL = "https://uxoovyytydnuibiwnpgx.supabase.co";
+      var SUPABASE_ANON_KEY = "sb_publishable_FFMUyqNXSuVP0mMsUa5PbQ_ur3iwb0L";
+      var params = new URLSearchParams(window.location.search || "");
+      var profileCode = String(params.get("profile") || "").trim();
+      var salonSlug = String(params.get("salon") || "").trim();
+      var isOwner = params.has("panel") || params.has("owner") || params.has("owner_profile") || params.has("owner_salon");
+      var identityKey = profileCode ? "profile" : (salonSlug ? "salon" : "profile");
+      var identityValue = profileCode || salonSlug || "default";
+      var fallback192 = new URL("/assets/icons/icon-192.png", window.location.origin).href;
+      var fallback512 = new URL("/assets/icons/icon-512.png", window.location.origin).href;
+
+      function safeText(value, fallback){
+        return String(value || fallback || "CityStyle profil").replace(/[<>]/g, "").trim().slice(0, 80) || fallback || "CityStyle profil";
+      }
+      function shortName(name){
+        var clean = safeText(name, "Profil");
+        return clean.length > 18 ? clean.slice(0, 18).trim() : clean;
+      }
+      function setMetaName(name, theme){
+        document.title = name;
+        var appName = document.querySelector('meta[name="application-name"]');
+        if (appName) appName.content = name;
+        var appleName = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+        if (appleName) appleName.content = name;
+        var themeMeta = document.querySelector('meta[name="theme-color"]');
+        if (themeMeta && theme) themeMeta.content = theme;
+      }
+      function setManifest(manifest){
+        var old = document.querySelector('link[rel="manifest"]');
+        if (old) old.remove();
+        var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+        var link = document.createElement("link");
+        link.rel = "manifest";
+        link.href = URL.createObjectURL(blob);
+        document.head.appendChild(link);
+        window.__CITYSTYLE_PROFILE_MANIFEST_READY__ = true;
+      }
+      function initialsFromName(name){
+        var parts = safeText(name, "CS").split(/\s+/).filter(Boolean);
+        return (parts.slice(0,2).map(function(p){ return p.charAt(0).toUpperCase(); }).join("") || "CS").slice(0,2);
+      }
+      function initialsIcon(name, bg){
+        try {
+          var canvas = document.createElement("canvas");
+          canvas.width = 512; canvas.height = 512;
+          var ctx = canvas.getContext("2d");
+          ctx.fillStyle = /^#[0-9a-f]{6}$/i.test(bg || "") ? bg : "#b91c1c";
+          ctx.fillRect(0, 0, 512, 512);
+          var grad = ctx.createRadialGradient(165, 110, 35, 256, 256, 430);
+          grad.addColorStop(0, "rgba(255,255,255,0.28)");
+          grad.addColorStop(1, "rgba(0,0,0,0.28)");
+          ctx.fillStyle = grad; ctx.fillRect(0, 0, 512, 512);
+          ctx.fillStyle = "#fff";
+          ctx.font = "bold 190px Arial, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(initialsFromName(name), 256, 270);
+          return canvas.toDataURL("image/png");
+        } catch(err) { return fallback512; }
+      }
+      async function logoToPngIcon(logoUrl, bg){
+        if (!logoUrl) return "";
+        return await new Promise(function(resolve){
+          var done = false;
+          var img = new Image();
+          var timer = setTimeout(function(){ if (!done) { done = true; resolve(""); } }, 1600);
+          img.crossOrigin = "anonymous";
+          img.onload = function(){
+            if (done) return;
+            try {
+              var canvas = document.createElement("canvas");
+              canvas.width = 512; canvas.height = 512;
+              var ctx = canvas.getContext("2d");
+              ctx.fillStyle = /^#[0-9a-f]{6}$/i.test(bg || "") ? bg : "#0b0b0f";
+              ctx.fillRect(0, 0, 512, 512);
+              var size = 360;
+              var ratio = Math.min(size / img.width, size / img.height);
+              var w = Math.max(1, img.width * ratio);
+              var h = Math.max(1, img.height * ratio);
+              ctx.fillStyle = "rgba(255,255,255,0.94)";
+              ctx.beginPath();
+              ctx.roundRect(76, 76, 360, 360, 74);
+              ctx.fill();
+              ctx.drawImage(img, 256 - w/2, 256 - h/2, w, h);
+              var png = canvas.toDataURL("image/png");
+              clearTimeout(timer); done = true; resolve(png);
+            } catch(e) { clearTimeout(timer); done = true; resolve(""); }
+          };
+          img.onerror = function(){ if (!done) { clearTimeout(timer); done = true; resolve(""); } };
+          img.src = logoUrl;
+        });
+      }
+      function makeManifest(name, theme, icon512){
+        var encoded = encodeURIComponent(identityValue);
+        var query = identityKey + "=" + encoded + "&v=" + VERSION;
+        var start = "/p/?" + query;
+        var appId = "/p/app/" + identityKey + "/" + encoded;
+        var finalName = safeText(isOwner ? name + " Panel" : name, isOwner ? "CityStyle Panel" : "CityStyle profil");
+        setMetaName(finalName, theme || "#b91c1c");
+        return {
+          id: appId,
+          name: finalName,
+          short_name: shortName(finalName),
+          description: "Direktan ulaz u CityStyle profil: " + finalName,
+          start_url: start,
+          scope: "/p/",
+          display: "standalone",
+          display_override: ["standalone", "minimal-ui"],
+          background_color: "#0b0b0f",
+          theme_color: theme || "#b91c1c",
+          orientation: "portrait",
+          icons: [
+            { src: icon512 || initialsIcon(finalName, theme), sizes: "512x512", type: "image/png", purpose: "any maskable" },
+            { src: fallback192, sizes: "192x192", type: "image/png", purpose: "any maskable" },
+            { src: fallback512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+          ]
+        };
+      }
+      async function fetchJson(url){
+        var res = await fetch(url, {
+          headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY }
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return await res.json();
+      }
+      async function fetchProfile(){
+        var salonQuery = profileCode
+          ? "public_profile_code=eq." + encodeURIComponent(profileCode)
+          : "slug=eq." + encodeURIComponent(salonSlug);
+        var salonUrl = SUPABASE_URL + "/rest/v1/salons?select=id,salon_name,slug,public_profile_code,theme_color,status,is_deleted&" + salonQuery + "&status=eq.active&is_deleted=eq.false&limit=1";
+        var salons = await fetchJson(salonUrl);
+        var salon = salons && salons[0];
+        if (!salon || !salon.id) return null;
+        var settingsUrl = SUPABASE_URL + "/rest/v1/salon_settings?select=welcome_title,logo_url,cover_image_url&salon_id=eq." + encodeURIComponent(salon.id) + "&limit=1";
+        var settingsList = [];
+        try { settingsList = await fetchJson(settingsUrl); } catch(e) { settingsList = []; }
+        var settings = settingsList && settingsList[0] || {};
+        return { salon: salon, settings: settings };
+      }
+
+      try {
+        var timeout = new Promise(function(resolve){ setTimeout(function(){ resolve(null); }, 2200); });
+        var result = await Promise.race([fetchProfile(), timeout]);
+        var name = result ? (result.settings.welcome_title || result.salon.salon_name || "CityStyle profil") : "CityStyle profil";
+        var theme = result ? (result.salon.theme_color || "#b91c1c") : "#b91c1c";
+        var logo = result ? (result.settings.logo_url || result.settings.cover_image_url || "") : "";
+        var generatedLogoIcon = await logoToPngIcon(logo, theme);
+        setManifest(makeManifest(name, theme, generatedLogoIcon || initialsIcon(name, theme)));
+      } catch(err) {
+        console.warn("CityStyle profil manifest fallback:", err);
+        setManifest(makeManifest("CityStyle profil", "#b91c1c", ""));
+      }
+
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function(){
+          navigator.serviceWorker.register("/sw.js?v=" + VERSION, { scope: "/p/" }).catch(function(err){
+            console.warn("CityStyle /p/ service worker nije registrovan:", err);
+          });
+        });
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="/assets/css/style.css?v=v136profilepwa">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/assets/js/config.js?v=v136profilepwa"></script>
+  <script src="/assets/js/main.js?v=v136profilepwa"></script>
+  <script src="/assets/js/auth.js?v=v136profilepwa"></script>
+  <script src="/assets/js/booking-logic.js?v=v136profilepwa"></script>
+  <script src="/assets/js/client.js?v=v136profilepwa" defer></script>
+</head>
+<body>
+  <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>
+  <main id="app" class="container">
+    <section class="landing-page platform-text-page">
+      <div class="loading-box">Učitavanje CityStyle profila...</div>
+    </section>
+  </main>
+</body>
+</html>

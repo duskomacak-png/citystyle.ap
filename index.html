@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0b0b0f">
   <script>
     (function prepareCityStyleManifestEarly(){
-      var VERSION = "v134multiinstall";
+      var VERSION = "v136profilepwa";
 
       function addManifest(href){
         var old = document.querySelector('link[rel="manifest"]');
@@ -33,15 +33,15 @@
         var queryKey = kind === "profile" ? "profile" : "salon";
         var startUrl = kind === "platform"
           ? new URL("./?platform=1&v=" + VERSION, base).href
-          : new URL("./?" + queryKey + "=" + encodeURIComponent(safeIdentity) + "&pwa_profile=" + encodeURIComponent(safeIdentity) + "&v=" + VERSION, base).href;
+          : new URL("./p/?" + queryKey + "=" + encodeURIComponent(safeIdentity) + "&pwa_profile=" + encodeURIComponent(safeIdentity) + "&v=" + VERSION, base).href;
         var name = kind === "platform" ? "CityStyle.app" : "CityStyle profil";
         return {
-          id: kind === "platform" ? new URL("./?platform=1", base).href : new URL("./pwa/customer/" + queryKey + "/" + encodeURIComponent(safeIdentity), base).href,
+          id: kind === "platform" ? new URL("./?platform=1", base).href : new URL("./p/app/" + queryKey + "/" + encodeURIComponent(safeIdentity), base).href,
           name: name,
           short_name: kind === "platform" ? "CityStyle" : "Profil",
           description: kind === "platform" ? "CityStyle.app" : "Direktan ulaz u ovaj CityStyle profil.",
           start_url: startUrl,
-          scope: base,
+          scope: kind === "platform" ? base : new URL("./p/", base).href,
           display: "standalone",
           display_override: ["standalone", "minimal-ui"],
           background_color: "#0b0b0f",
@@ -73,13 +73,13 @@
     })();
   </script>
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-  <link rel="stylesheet" href="assets/css/style.css?v=v134multiinstall">
+  <link rel="stylesheet" href="assets/css/style.css?v=v136profilepwa">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=v134multiinstall"></script>
-  <script src="assets/js/main.js?v=v134multiinstall"></script>
-  <script src="assets/js/auth.js?v=v134multiinstall"></script>
-  <script src="assets/js/booking-logic.js?v=v134multiinstall"></script>
-  <script src="assets/js/client.js?v=v134multiinstall" defer></script>
+  <script src="assets/js/config.js?v=v136profilepwa"></script>
+  <script src="assets/js/main.js?v=v136profilepwa"></script>
+  <script src="assets/js/auth.js?v=v136profilepwa"></script>
+  <script src="assets/js/booking-logic.js?v=v136profilepwa"></script>
+  <script src="assets/js/client.js?v=v136profilepwa" defer></script>
 </head>
 <body>
   <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>

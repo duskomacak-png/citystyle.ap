@@ -622,6 +622,7 @@ window.addEventListener("beforeinstallprompt", (event) => {
   // Sačuvaj prompt odmah. Ako ga bacimo dok čekamo profil manifest,
   // Chrome često više ne pošalje novi prompt i instalacija stoji/zaglavi.
   deferredPrompt = event;
+  window.__CITYSTYLE_DEFERRED_INSTALL_PROMPT__ = event;
 
   // Prompt čuvamo odmah. Profil stranice imaju rani stabilan manifest,
   // a pravi naziv se dopuni čim Supabase učita profil.
@@ -656,20 +657,28 @@ async function installSalonApp(profileOrSlug, options = {}) {
     public_profile_code: profileCode
   });
 
-  updateManifestForSalon(profileOrSlug || getSavedProfileCode() || getSavedSalonSlug(), options);
-
   const identity = getSalonPublicIdentity({ slug, public_profile_code: profileCode });
   const encodedIdentity = encodeURIComponent(identity.value || slug || profileCode || "");
-  const profileUrl = identity.value
-    ? `${getAppBaseUrl()}?${identity.key}=${encodedIdentity}&v=v134multiinstall`
+  const installPath = identity.value
+    ? `${getAppPath("p/")}?${identity.key}=${encodedIdentity}&install=1&v=v136profilepwa`
     : window.location.href;
 
   currentInstallContext = {
     type: "customer",
     name: String(options.name || options.displayName || profileOrSlug?.salon_name || "CityStyle profil").trim(),
-    url: profileUrl,
+    url: installPath,
     identity: identity.value || slug || profileCode || ""
   };
+
+  // Customer profile installs now go through /p/ so Android Chrome sees a separate
+  // profile PWA scope/identity instead of mixing salon/prodavnica with the root app.
+  // This avoids the "already installed" modal for normal profile install attempts.
+  if (identity.value && !(window.location.pathname || "/").includes("/p/")) {
+    window.location.href = installPath;
+    return;
+  }
+
+  updateManifestForSalon(profileOrSlug || getSavedProfileCode() || getSavedSalonSlug(), options);
 
   await installApp(
     "Ako se ne pojavi instalacija, otvorite meni browsera i izaberite Dodaj na početni ekran. Prečica će otvoriti baš ovaj profil, sa imenom i slikom profila gde browser to podržava.",
@@ -690,7 +699,7 @@ async function installOwnerApp(options = {}) {
   currentInstallContext = {
     type: "owner",
     name: String(options.name || options.displayName || "CityStyle profil").trim() + " Panel",
-    url: `${getAppPath("salon/")}?${startQuery}&v=v134multiinstall`,
+    url: `${getAppPath("salon/")}?${startQuery}&v=v136profilepwa`,
     identity: profileCode || slug || "owner"
   };
 
@@ -785,8 +794,8 @@ function updateManifestForOwner(options = {}) {
     name: appName,
     short_name: shortName || "Panel",
     description: `Direktan ulaz u vlasnički panel: ${rawName || "CityStyle profil"}.`,
-    start_url: `${getAppPath("salon/")}?${startQuery}&v=v134multiinstall`,
-    scope: getAppBaseUrl(),
+    start_url: `${getAppPath("salon/")}?${startQuery}&v=v136profilepwa`,
+    scope: getAppPath("salon/"),
     display: "standalone",
     display_override: ["standalone", "minimal-ui"],
     background_color: "#0b0b0f",
@@ -854,15 +863,15 @@ function updateManifestForSalon(profileOrSlug, options = {}) {
   const icon512 = `${getAppBaseUrl()}assets/icons/icon-512.png`;
   const appleProfileIcon = profileImageIcon || icon512;
   const encodedIdentity = encodeURIComponent(identity.value);
-  const startUrl = `${getAppBaseUrl()}?${identity.key}=${encodedIdentity}&pwa_profile=${encodedIdentity}&v=v134multiinstall`;
+  const startUrl = `${getAppPath("p/")}?${identity.key}=${encodedIdentity}&pwa_profile=${encodedIdentity}&v=v136profilepwa`;
 
   const baseManifest = {
-    id: `${getAppBaseUrl()}pwa/customer/${identity.key}/${encodedIdentity}`,
+    id: `${getAppPath("p/")}app/${identity.key}/${encodedIdentity}`,
     name: appName,
     short_name: shortName || "Profil",
     description: `Direktan ulaz u CityStyle profil: ${appName}.`,
     start_url: startUrl,
-    scope: getAppBaseUrl(),
+    scope: getAppPath("p/"),
     display: "standalone",
     display_override: ["standalone", "minimal-ui"],
     background_color: "#0b0b0f",
@@ -967,9 +976,17 @@ async function installApp(noPromptMessage = "Na iPhone-u: Share → Add to Home 
     return;
   }
 
+  if (!deferredPrompt && window.__CITYSTYLE_DEFERRED_INSTALL_PROMPT__) {
+    deferredPrompt = window.__CITYSTYLE_DEFERRED_INSTALL_PROMPT__;
+  }
+
   if (!deferredPrompt) {
     // Dajemo browseru kratak trenutak posle promene manifest-a.
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise(resolve => setTimeout(resolve, 250));
+  }
+
+  if (!deferredPrompt && window.__CITYSTYLE_DEFERRED_INSTALL_PROMPT__) {
+    deferredPrompt = window.__CITYSTYLE_DEFERRED_INSTALL_PROMPT__;
   }
 
   if (!deferredPrompt) {
@@ -992,6 +1009,7 @@ async function installApp(noPromptMessage = "Na iPhone-u: Share → Add to Home 
     showInstallHelp(noPromptMessage);
   } finally {
     deferredPrompt = null;
+    window.__CITYSTYLE_DEFERRED_INSTALL_PROMPT__ = null;
   }
 }
 
@@ -1114,7 +1132,7 @@ async function registerPushForSalon(salonId) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v134multiinstall", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v136profilepwa", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
