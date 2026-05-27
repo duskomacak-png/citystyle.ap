@@ -3,197 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CityStyle profil</title>
-  <meta name="description" content="CityStyle profil — direktan ulaz u salon ili prodavnicu.">
+  <title>CityStyle.app</title>
+  <meta name="description" content="CityStyle.app — saloni i prodavnice patika kroz QR/PWA profil.">
   <meta name="theme-color" content="#0b0b0f">
-  <meta name="application-name" content="CityStyle profil">
-  <meta name="apple-mobile-web-app-title" content="CityStyle profil">
-  <link rel="manifest" id="pwa-manifest" href="/p/manifest.webmanifest?v=v138manifestworker">
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
-  <style>
-    .profile-install-gateway{position:fixed;left:12px;right:12px;bottom:12px;z-index:99999;display:none;max-width:620px;margin:0 auto;background:rgba(12,12,16,.96);border:1px solid rgba(255,255,255,.12);box-shadow:0 18px 48px rgba(0,0,0,.55);border-radius:22px;padding:14px;color:#fff;backdrop-filter:blur(16px)}
-    .profile-install-gateway.is-visible{display:block}.profile-install-gateway-row{display:flex;gap:12px;align-items:center}.profile-install-gateway img{width:52px;height:52px;border-radius:14px;object-fit:cover;background:#18181c;border:1px solid rgba(255,255,255,.14)}
-    .profile-install-gateway strong{display:block;font-size:15px;line-height:1.2}.profile-install-gateway span{display:block;font-size:12px;color:#c9c9cf;margin-top:3px;line-height:1.35}.profile-install-gateway-actions{display:flex;gap:8px;margin-top:12px}.profile-install-gateway button{border:0;border-radius:14px;padding:11px 12px;font-weight:800;cursor:pointer}.profile-install-gateway .primary{flex:1;background:#dc2626;color:#fff}.profile-install-gateway .secondary{background:#1f1f25;color:#fff;border:1px solid rgba(255,255,255,.12)}
-    .profile-install-gateway-note{font-size:11px;color:#9ca3af;margin-top:8px;line-height:1.35}.profile-install-gateway-manual{display:none;margin-top:10px;font-size:12px;color:#e5e7eb;line-height:1.45;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px}.profile-install-gateway.show-manual .profile-install-gateway-manual{display:block}
-    .profile-install-status{margin-top:10px;font-size:12px;color:#fca5a5;line-height:1.35;display:none}.profile-install-status.is-visible{display:block}
-  </style>
-  <script>
-    (function initProfileInstallGateway(){
-      var VERSION = "v138manifestworker";
-      var SUPABASE_URL = "https://uxoovyytydnuibiwnpgx.supabase.co";
-      var SUPABASE_ANON_KEY = "sb_publishable_FFMUyqNXSuVP0mMsUa5PbQ_ur3iwb0L";
-      var params = new URLSearchParams(window.location.search || "");
-      var profileCode = String(params.get("profile") || "").trim();
-      var salonSlug = String(params.get("salon") || "").trim();
-      var isOwner = params.has("panel") || params.has("owner") || params.has("owner_profile") || params.has("owner_salon");
-      var identityKey = profileCode ? "profile" : (salonSlug ? "salon" : "profile");
-      var identityValue = profileCode || salonSlug || "default";
-      var encodedIdentity = encodeURIComponent(identityValue);
-      var fallback192 = new URL("/assets/icons/icon-192.png", window.location.origin).href;
-      var fallback512 = new URL("/assets/icons/icon-512.png", window.location.origin).href;
-      var manifestPath = "/p/manifest.webmanifest?" + identityKey + "=" + encodedIdentity + (isOwner ? "&panel=1" : "") + "&v=" + VERSION;
-      var state = window.__CITYSTYLE_PROFILE_PWA_STATE__ = {
-        prompt: null,
-        name: isOwner ? "CityStyle Panel" : "CityStyle profil",
-        icon: fallback512,
-        identity: identityValue,
-        installed: false,
-        swReady: params.has("swready")
-      };
-
-      function safeText(value, fallback){
-        return String(value || fallback || "CityStyle profil").replace(/[<>]/g, "").trim().slice(0, 80) || fallback || "CityStyle profil";
-      }
-      function setStatus(message){
-        var el = document.getElementById("profile-install-status");
-        if (!el) return;
-        el.textContent = message || "";
-        el.classList.toggle("is-visible", !!message);
-      }
-      function setManifestHref(extraBust){
-        var link = document.getElementById("pwa-manifest") || document.querySelector('link[rel="manifest"]');
-        if (!link) { link = document.createElement("link"); link.rel = "manifest"; link.id = "pwa-manifest"; document.head.appendChild(link); }
-        link.href = manifestPath + (extraBust ? "&b=" + Date.now() : "");
-      }
-      function setHeadName(name, theme, icon){
-        document.title = name;
-        var appName = document.querySelector('meta[name="application-name"]'); if (appName) appName.content = name;
-        var appleName = document.querySelector('meta[name="apple-mobile-web-app-title"]'); if (appleName) appleName.content = name;
-        var themeMeta = document.querySelector('meta[name="theme-color"]'); if (themeMeta && theme) themeMeta.content = theme;
-        var appleIcon = document.querySelector('link[rel="apple-touch-icon"]'); if (appleIcon && icon) appleIcon.href = icon;
-      }
-      function isStandalone(){ return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true; }
-      async function fetchJson(url){
-        var res = await fetch(url, { headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY } });
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        return await res.json();
-      }
-      async function fetchProfile(){
-        var salonQuery = profileCode ? "public_profile_code=eq." + encodeURIComponent(profileCode) : "slug=eq." + encodeURIComponent(salonSlug);
-        var salonUrl = SUPABASE_URL + "/rest/v1/salons?select=*&" + salonQuery + "&status=eq.active&is_deleted=eq.false&limit=1";
-        var salons = await fetchJson(salonUrl);
-        var salon = salons && salons[0];
-        if (!salon || !salon.id) return null;
-        var settings = {};
-        try {
-          var settingsList = await fetchJson(SUPABASE_URL + "/rest/v1/salon_settings?select=*&salon_id=eq." + encodeURIComponent(salon.id) + "&limit=1");
-          settings = settingsList && settingsList[0] || {};
-        } catch(e) { settings = {}; }
-        var icon = settings.logo_url || settings.cover_image_url || settings.home_image_url || "";
-        if (!icon) {
-          try {
-            var imgs = await fetchJson(SUPABASE_URL + "/rest/v1/home_images?select=image_url&salon_id=eq." + encodeURIComponent(salon.id) + "&active=eq.true&order=sort_order.asc,created_at.asc&limit=1");
-            icon = imgs && imgs[0] && imgs[0].image_url || "";
-          } catch(e) { icon = ""; }
-        }
-        return { name: settings.welcome_title || salon.salon_name || "CityStyle profil", theme: salon.theme_color || "#b91c1c", icon: icon };
-      }
-      function renderGateway(forceManual){
-        var box = document.getElementById("profile-install-gateway"); if (!box) return;
-        var shouldShow = params.has("install") || params.has("pwa_profile") || params.has("install_profile");
-        if (!shouldShow || isStandalone() || state.installed) { box.classList.remove("is-visible"); return; }
-        var img = box.querySelector("img"); if (img) img.src = state.icon || fallback192;
-        var name = box.querySelector("strong"); if (name) name.textContent = "Instaliraj: " + (state.name || "CityStyle profil");
-        var text = box.querySelector("span");
-        if (text) text.textContent = state.prompt ? "Browser je spreman za sistemsku instalaciju ove prečice." : "Pripremam profilnu prečicu. Ako Chrome ne pošalje install prozor, koristi meni browsera → Dodaj na početni ekran.";
-        box.classList.toggle("show-manual", !!forceManual || !state.prompt);
-        box.classList.add("is-visible");
-      }
-      function triggerManifestReloadOnce(){
-        if (!params.has("install") || params.has("swready")) return;
-        try {
-          var next = new URL(window.location.href);
-          next.searchParams.set("swready", "1");
-          next.searchParams.set("v", VERSION);
-          setStatus("Pripremam sistemsku instalaciju za ovaj profil... stranica će se osvežiti jednom.");
-          setTimeout(function(){ window.location.replace(next.toString()); }, 650);
-        } catch(e) {}
-      }
-      async function ensureServiceWorkerReady(){
-        if (!("serviceWorker" in navigator)) return false;
-        try {
-          await navigator.serviceWorker.register("/sw.js?v=" + VERSION, { scope: "/p/" });
-          await navigator.serviceWorker.ready;
-          state.swReady = true;
-          setManifestHref(true);
-          return true;
-        } catch(err) { console.warn("CityStyle /p/ service worker nije spreman:", err); return false; }
-      }
-      async function installProfile(){
-        renderGateway(false);
-        setStatus("");
-        if (!state.prompt) {
-          var btn = document.getElementById("profile-install-main-btn");
-          if (btn) btn.textContent = "Pripremam...";
-          var ready = await ensureServiceWorkerReady();
-          if (btn) btn.textContent = "Instaliraj ovu prečicu";
-          if (!params.has("swready") && ready) { triggerManifestReloadOnce(); return false; }
-          renderGateway(true);
-          setStatus("Chrome trenutno nije poslao sistemski install prozor. Ovo dugme ne sme lažno da prijavi instalaciju: otvori meni sa tri tačke u browseru i izaberi Dodaj na početni ekran / Install app. Ako je druga CityStyle prečica već instalirana, Android može odbiti novu sa istog domena.");
-          return false;
-        }
-        try {
-          var promptEvent = state.prompt;
-          state.prompt = null;
-          await promptEvent.prompt();
-          var choice = await promptEvent.userChoice;
-          if (choice && choice.outcome === "accepted") { state.installed = true; renderGateway(false); setStatus(""); }
-          else { renderGateway(true); setStatus("Instalacija je otkazana ili je Chrome odbio ovu prečicu."); }
-          return choice && choice.outcome === "accepted";
-        } catch(err) { console.warn("Install prompt nije uspeo:", err); renderGateway(true); setStatus("Chrome nije dozvolio sistemsku instalaciju za ovaj profil."); return false; }
-      }
-      window.CityStyleProfilePWA = { state: state, renderGateway: renderGateway, install: installProfile };
-      window.addEventListener("beforeinstallprompt", function(event){
-        event.preventDefault();
-        state.prompt = event;
-        window.__CITYSTYLE_DEFERRED_INSTALL_PROMPT__ = event;
-        renderGateway(false);
-        setStatus("");
-        console.log("CityStyle: install prompt sačuvan za /p/ profil.");
-      });
-      window.addEventListener("appinstalled", function(){ state.installed = true; renderGateway(false); setStatus(""); });
-      setManifestHref(false);
-      setHeadName(state.name, "#b91c1c", state.icon);
-      ensureServiceWorkerReady().then(function(ready){ if (ready && params.has("install") && !params.has("swready") && !state.prompt) triggerManifestReloadOnce(); });
-      (async function loadRealProfileUi(){
-        try {
-          var result = await Promise.race([fetchProfile(), new Promise(function(resolve){ setTimeout(function(){ resolve(null); }, 2200); })]);
-          if (!result) return;
-          state.name = safeText(isOwner ? result.name + " Panel" : result.name, isOwner ? "CityStyle Panel" : "CityStyle profil");
-          state.icon = result.icon || fallback512;
-          setHeadName(state.name, result.theme || "#b91c1c", state.icon);
-          renderGateway(false);
-        } catch(err) { console.warn("CityStyle profil UI fallback:", err); }
-      })();
-      document.addEventListener("DOMContentLoaded", function(){ renderGateway(false); });
-    })();
-  </script>
-  <link rel="stylesheet" href="/assets/css/style.css?v=v138manifestworker">
+  <link rel="manifest" id="citystyle-dynamic-manifest" href="../manifest.json?v=v139multipwa">
+  <link rel="apple-touch-icon" href="../assets/icons/icon-192.png">
+  <link rel="stylesheet" href="../assets/css/style.css?v=v139multipwa">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/assets/js/config.js?v=v138manifestworker"></script>
-  <script src="/assets/js/main.js?v=v138manifestworker"></script>
-  <script src="/assets/js/auth.js?v=v138manifestworker"></script>
-  <script src="/assets/js/booking-logic.js?v=v138manifestworker"></script>
-  <script src="/assets/js/client.js?v=v138manifestworker" defer></script>
+  <script src="../assets/js/config.js?v=v139multipwa"></script>
+  <script src="../assets/js/pwa-head.js?v=v139multipwa"></script>
+  <script src="../assets/js/main.js?v=v139multipwa"></script>
+  <script src="../assets/js/auth.js?v=v139multipwa"></script>
+  <script src="../assets/js/booking-logic.js?v=v139multipwa"></script>
+  <script src="../assets/js/client.js?v=v139multipwa" defer></script>
 </head>
 <body>
-  <div id="profile-install-gateway" class="profile-install-gateway" role="dialog" aria-live="polite">
-    <div class="profile-install-gateway-row">
-      <img src="/assets/icons/icon-192.png" alt="Profil ikonica">
-      <div><strong>Instaliraj CityStyle profil</strong><span>Pripremam zasebnu prečicu...</span></div>
-    </div>
-    <div class="profile-install-gateway-actions">
-      <button id="profile-install-main-btn" class="primary" type="button" onclick="window.CityStyleProfilePWA && window.CityStyleProfilePWA.install()">Instaliraj ovu prečicu</button>
-      <button class="secondary" type="button" onclick="this.closest('#profile-install-gateway').classList.remove('is-visible')">Kasnije</button>
-    </div>
-    <div id="profile-install-status" class="profile-install-status"></div>
-    <div class="profile-install-gateway-manual">Ako Chrome ne prikaže sistemsku instalaciju, otvori meni sa tri tačke u browseru i izaberi <b>Dodaj na početni ekran</b> / <b>Install app</b>. Ovo je ograničenje browsera kada više prečica dolazi sa istog domena.</div>
-    <div class="profile-install-gateway-note">Logo se koristi ako ga browser prihvati. Ako ne, koristi se sigurna ikonica da instalacija ne zakoči.</div>
-  </div>
   <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>
   <main id="app" class="container">
     <section class="landing-page platform-text-page">
-      <div class="loading-box">Učitavanje CityStyle profila...</div>
+      <div class="loading-box">Učitavanje CityStyle.app...</div>
     </section>
   </main>
 </body>

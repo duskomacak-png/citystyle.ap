@@ -91,21 +91,14 @@ async function loadClientApp() {
   const app = document.getElementById("app");
 
   try {
-    const urlSlug = window.App?.getUrlParam("salon");
-    const profileCode = window.App?.getUrlParam("profile");
+    const urlProfile = window.App?.getUrlParam("profile");
+    const urlSlug = window.App?.getUrlParam("salon") || urlProfile;
     const forcePlatform = window.App?.getUrlParam("platform") === "1" || window.App?.getUrlParam("home") === "1";
     const wantsAdminPreview = window.App?.getUrlParam("adminPreview") === "1" || window.App?.getUrlParam("preview") === "admin";
     adminPreviewMode = wantsAdminPreview && await window.Auth?.isPlatformAdmin?.();
     ownerPreviewMode = !adminPreviewMode && (window.App?.getUrlParam("ownerPreview") === "1" || window.App?.getUrlParam("preview") === "owner");
 
-    // New hard profile link: ?profile=public_profile_code
-    if (profileCode) {
-      app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
-      await loadSalonByProfile(profileCode, !(ownerPreviewMode || adminPreviewMode));
-      return;
-    }
-
-    // Old compatible QR/link salon page: ?salon=slug
+    // QR/link profile page: ?profile=public_profile_code or old ?salon=slug.
     // If admin/owner opens preview, do NOT save this as client shortcut.
     if (urlSlug) {
       app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
@@ -126,13 +119,7 @@ async function loadClientApp() {
 
     // Root citystyle.app in normal browser is the platform landing page when there is no saved owner login.
     // If the app was installed from a public profile page, open that saved profile directly.
-    const savedProfileCode = window.App?.getSavedProfileCode?.();
     const savedSlug = window.App?.getSavedSalonSlug?.();
-    if (savedProfileCode && isStandalone) {
-      app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
-      await loadSalonByProfile(savedProfileCode, false);
-      return;
-    }
     if (savedSlug && isStandalone) {
       app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
       await loadSalon(savedSlug, false);
@@ -166,37 +153,7 @@ async function loadSalon(slug, saveThisSalon = true) {
   currentSalon = salon;
   window.App?.setAppLanguage?.(salon.app_language || "sr");
   window.App?.applySalonTheme?.(salon.theme_color);
-  if (saveThisSalon) window.App.saveCurrentSalon(salon);
-  recordProfileVisitIfNeeded(salon);
-
-  await loadServices();
-  await loadProducts();
-  await loadGalleryImages();
-  await loadGarageListings();
-  await renderSalonHome();
-}
-
-async function loadSalonByProfile(publicProfileCode, saveThisSalon = true) {
-  const app = document.getElementById("app");
-  app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
-
-  const { data: salon, error } = await window.App.checkProfileAccess(publicProfileCode);
-
-  if (error || !salon) {
-    app.innerHTML = `
-      <div class="card center">
-        <h2>${C("onlineUnavailableTitle", "Online zakazivanje trenutno nije dostupno")}</h2>
-        <p class="muted">${C("onlineUnavailableText", "Online zahtev trenutno nije dostupan za ovaj profil.")}</p>
-        <button class="btn btn-dark" type="button" onclick="renderPlatformLanding()">${C("platformHome", "Početna strana platforme")}</button>
-      </div>
-    `;
-    return;
-  }
-
-  currentSalon = salon;
-  window.App?.setAppLanguage?.(salon.app_language || "sr");
-  window.App?.applySalonTheme?.(salon.theme_color);
-  if (saveThisSalon) window.App.saveCurrentSalon(salon);
+  if (saveThisSalon) window.App.saveCurrentSalon(salon.slug);
   recordProfileVisitIfNeeded(salon);
 
   await loadServices();
@@ -512,10 +469,9 @@ async function renderSalonHome() {
   const publicName = settings?.welcome_title || currentSalon.salon_name || "Profil";
   const profileLabels = window.App.getBusinessProfileLabels(currentSalon.business_type);
   currentSalon._publicName = publicName;
-  currentSalon._publicLogo = settings?.logo_url || "";
-  currentSalon._publicInstallIcon = settings?.logo_url || settings?.cover_image_url || "";
+  currentSalon._publicLogo = settings?.logo_url || settings?.cover_image_url || settings?.home_image_url || galleryImages?.[0]?.image_url || "";
   currentSalon._publicPhone = settings?.phone || currentSalon.phone || "";
-  window.App?.updateManifestForSalon?.(currentSalon, { name: publicName, iconUrl: currentSalon._publicInstallIcon, publicProfileCode: currentSalon.public_profile_code, themeColor: currentSalon.theme_color });
+  window.App?.updateManifestForSalon?.(currentSalon.slug, { name: publicName, profileCode: currentSalon.public_profile_code || "", iconUrl: currentSalon._publicLogo || settings?.logo_url, themeColor: currentSalon.theme_color });
 
   app.innerHTML = `
     <section class="client-page salon-themed-page">
@@ -728,11 +684,12 @@ function openPublicGalleryImage(url, caption = "") {
 }
 
 function installCurrentSalonApp() {
-  if (!currentSalon?.slug) return;
-  window.App.installSalonApp(currentSalon, {
+  if (!currentSalon?.slug && !currentSalon?.public_profile_code) return;
+  const profileCode = currentSalon.public_profile_code || "";
+  window.App.installSalonApp(currentSalon.slug || profileCode, {
+    profileCode,
     name: currentSalon._publicName || currentSalon.salon_name || "CityStyle profil",
-    iconUrl: currentSalon._publicInstallIcon || currentSalon._publicLogo || "",
-    publicProfileCode: currentSalon.public_profile_code,
+    iconUrl: currentSalon._publicLogo || "",
     themeColor: currentSalon.theme_color
   });
 }
@@ -1257,7 +1214,7 @@ function csProductUrl(product = {}) {
   const code = csProductCode(product);
   const slug = currentSalon?.slug || "";
   const base = window.App?.getSalonPublicLink
-    ? window.App.getSalonPublicLink(currentSalon)
+    ? window.App.getSalonPublicLink(slug)
     : `${window.location.origin}/?salon=${encodeURIComponent(slug)}`;
   return `${base}&product=${encodeURIComponent(code)}`;
 }
@@ -1297,9 +1254,9 @@ async function renderSalonHome() {
 
   const publicName = settings?.welcome_title || currentSalon.salon_name || "Profil";
   currentSalon._publicName = publicName;
-  currentSalon._publicLogo = settings?.logo_url || "";
+  currentSalon._publicLogo = settings?.logo_url || settings?.cover_image_url || settings?.home_image_url || galleryImages?.[0]?.image_url || "";
   currentSalon._publicPhone = settings?.phone || currentSalon.phone || "";
-  window.App?.updateManifestForSalon?.(currentSalon.slug, { name: publicName, iconUrl: settings?.logo_url, themeColor: currentSalon.theme_color });
+  window.App?.updateManifestForSalon?.(currentSalon.slug, { name: publicName, profileCode: currentSalon.public_profile_code || "", iconUrl: currentSalon._publicLogo || settings?.logo_url, themeColor: currentSalon.theme_color });
 
   if (csIsShopProfile(currentSalon, products.length)) return renderShoeShopHome(settings || {});
 
@@ -1331,16 +1288,11 @@ async function renderSalonHome() {
 function renderShoeShopHome(settings = {}) {
   const app = document.getElementById("app");
   const name = settings?.welcome_title || currentSalon?.salon_name || "Prodavnica patika";
-  const logo = settings?.logo_url || "";
+  const logo = settings?.logo_url || settings?.cover_image_url || settings?.home_image_url || galleryImages?.[0]?.image_url || "";
   const cover = settings?.cover_image_url || settings?.home_image_url || galleryImages?.[0]?.image_url || logo || "";
   const phone = settings?.phone || currentSalon?.phone || "";
   const address = settings?.address || "";
   const text = settings?.welcome_text || "";
-  currentSalon._publicName = name;
-  currentSalon._publicLogo = logo || "";
-  currentSalon._publicInstallIcon = cover || logo || "";
-  currentSalon._publicPhone = phone || "";
-  window.App?.updateManifestForSalon?.(currentSalon, { name, iconUrl: currentSalon._publicInstallIcon, publicProfileCode: currentSalon.public_profile_code, themeColor: currentSalon.theme_color });
   app.innerHTML = `
     <section class="shoe-shop-page">
       ${adminPreviewMode ? `<div class="owner-preview-bar admin-preview-bar"><div><strong>Admin pregled</strong><span>Ovako kupac vidi prodavnicu.</span></div><a class="btn btn-primary" href="${window.App.getAppPath('admin/')}">Nazad u admin</a></div>` : ownerPreviewMode ? `<div class="owner-preview-bar"><div><strong>Pregled javne stranice</strong><span>Ovako kupac vidi prodavnicu.</span></div><a class="btn btn-primary" href="${window.App.getAppPath('salon/')}">Nazad u panel vlasnika</a></div>` : ""}

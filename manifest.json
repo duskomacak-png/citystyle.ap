@@ -1,9 +1,9 @@
 {
-  "name": "CityStyle.app - QR mini aplikacija za biznis",
+  "name": "CityStyle.app",
   "short_name": "CityStyle",
-  "description": "CityStyle.app je QR mini aplikacija za biznise. Svaki profil može imati svoj poseban PWA identitet kada ga korisnik instalira.",
-  "start_url": "./?platform=1&v=v137installgate",
-  "scope": "./",
+  "description": "CityStyle.app - QR/PWA profili za salone i prodavnice.",
+  "start_url": "/?platform=1&v=v139multipwa",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0b0b0f",
   "theme_color": "#b91c1c",
@@ -22,5 +22,5 @@
       "purpose": "any maskable"
     }
   ],
-  "id": "/?platform=1&app=citystyle-platform"
+  "id": "/?platform=1"
 }

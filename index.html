@@ -6,80 +6,16 @@
   <title>CityStyle.app</title>
   <meta name="description" content="CityStyle.app — saloni i prodavnice patika kroz QR/PWA profil.">
   <meta name="theme-color" content="#0b0b0f">
-  <script>
-    (function prepareCityStyleManifestEarly(){
-      var VERSION = "v138manifestworker";
-
-      function addManifest(href){
-        var old = document.querySelector('link[rel="manifest"]');
-        if (old) old.remove();
-        var link = document.createElement("link");
-        link.rel = "manifest";
-        link.href = href;
-        document.head.appendChild(link);
-      }
-
-      function appBase(){
-        return window.location.origin + window.location.pathname.replace(/[^/]*$/, "");
-      }
-
-      function stableIcon(path){
-        return new URL(path, window.location.origin + "/").href;
-      }
-
-      function makeEarlyManifest(kind, identity){
-        var base = appBase();
-        var safeIdentity = String(identity || "platform").trim() || "platform";
-        var queryKey = kind === "profile" ? "profile" : "salon";
-        var startUrl = kind === "platform"
-          ? new URL("./?platform=1&v=" + VERSION, base).href
-          : new URL("./p/?" + queryKey + "=" + encodeURIComponent(safeIdentity) + "&pwa_profile=" + encodeURIComponent(safeIdentity) + "&v=" + VERSION, base).href;
-        var name = kind === "platform" ? "CityStyle.app" : "CityStyle profil";
-        return {
-          id: kind === "platform" ? new URL("./?platform=1", base).href : new URL("./p/app/" + queryKey + "/" + encodeURIComponent(safeIdentity), base).href,
-          name: name,
-          short_name: kind === "platform" ? "CityStyle" : "Profil",
-          description: kind === "platform" ? "CityStyle.app" : "Direktan ulaz u ovaj CityStyle profil.",
-          start_url: startUrl,
-          scope: kind === "platform" ? base : new URL("./p/", base).href,
-          display: "standalone",
-          display_override: ["standalone", "minimal-ui"],
-          background_color: "#0b0b0f",
-          theme_color: "#b91c1c",
-          orientation: "portrait",
-          icons: [
-            { src: stableIcon("assets/icons/icon-192.png"), sizes: "192x192", type: "image/png", purpose: "any maskable" },
-            { src: stableIcon("assets/icons/icon-512.png"), sizes: "512x512", type: "image/png", purpose: "any maskable" }
-          ]
-        };
-      }
-
-      try {
-        var params = new URLSearchParams(window.location.search || "");
-        var profile = params.get("profile");
-        var slug = params.get("salon");
-        if (profile || slug) {
-          var manifest = makeEarlyManifest(profile ? "profile" : "salon", profile || slug);
-          var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
-          addManifest(URL.createObjectURL(blob));
-          window.__CITYSTYLE_EARLY_PROFILE_MANIFEST__ = true;
-          window.__CITYSTYLE_PROFILE_MANIFEST_READY__ = false;
-          return;
-        }
-        addManifest("manifest.json?v=" + VERSION);
-      } catch (err) {
-        addManifest("manifest.json?v=" + VERSION);
-      }
-    })();
-  </script>
+  <link rel="manifest" id="citystyle-dynamic-manifest" href="manifest.json?v=v139multipwa">
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-  <link rel="stylesheet" href="assets/css/style.css?v=v138manifestworker">
+  <link rel="stylesheet" href="assets/css/style.css?v=v139multipwa">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=v138manifestworker"></script>
-  <script src="assets/js/main.js?v=v138manifestworker"></script>
-  <script src="assets/js/auth.js?v=v138manifestworker"></script>
-  <script src="assets/js/booking-logic.js?v=v138manifestworker"></script>
-  <script src="assets/js/client.js?v=v138manifestworker" defer></script>
+  <script src="assets/js/config.js?v=v139multipwa"></script>
+  <script src="assets/js/pwa-head.js?v=v139multipwa"></script>
+  <script src="assets/js/main.js?v=v139multipwa"></script>
+  <script src="assets/js/auth.js?v=v139multipwa"></script>
+  <script src="assets/js/booking-logic.js?v=v139multipwa"></script>
+  <script src="assets/js/client.js?v=v139multipwa" defer></script>
 </head>
 <body>
   <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>
