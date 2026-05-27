@@ -25,30 +25,30 @@
         var slug = params.get("salon");
         var profile = params.get("profile");
 
-        if (!slug && !profile) {
-          addManifest("manifest.json?v=v134fastinstall");
-          return;
-        }
+        // Uvek postavljamo stabilan manifest odmah.
+        // Chrome/Android često neće ni pripremiti beforeinstallprompt ako profilna
+        // stranica čeka Supabase/dinamički manifest. Dinamički manifest se menja
+        // kasnije, ali rani manifest ima stabilne same-origin PNG ikone i ne blokira install.
+        addManifest("manifest.json?v=v134fastpwafix");
 
-        // Profil stranice ne smeju dobiti rani/generički manifest.
-        // Prvo client.js učita pravi profil iz Supabase baze,
-        // pa updateManifestForSalon() postavlja ime i sliku salona/prodavnice.
-        // Ovo sprečava da Android/Chrome zapamti "CityStyle" ili public_profile_code
-        // umesto stvarnog imena i slike profila.
-        window.__CITYSTYLE_WAIT_PROFILE_MANIFEST__ = true;
+        if (slug || profile) {
+          // Profil još učitava pravo ime iz baze. Prompt se sme sačuvati, ali
+          // korisniku se ne forsira platform install dok client.js ne postavi profil manifest.
+          window.__CITYSTYLE_WAIT_PROFILE_MANIFEST__ = true;
+        }
       } catch (err) {
-        addManifest("manifest.json?v=v134fastinstall");
+        addManifest("manifest.json?v=v134fastpwafix");
       }
     })();
   </script>
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-  <link rel="stylesheet" href="assets/css/style.css?v=v134fastinstall">
+  <link rel="stylesheet" href="assets/css/style.css?v=v134fastpwafix">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=v134fastinstall"></script>
-  <script src="assets/js/main.js?v=v134fastinstall"></script>
-  <script src="assets/js/auth.js?v=v134fastinstall"></script>
-  <script src="assets/js/booking-logic.js?v=v134fastinstall"></script>
-  <script src="assets/js/client.js?v=v134fastinstall" defer></script>
+  <script src="assets/js/config.js?v=v134fastpwafix"></script>
+  <script src="assets/js/main.js?v=v134fastpwafix"></script>
+  <script src="assets/js/auth.js?v=v134fastpwafix"></script>
+  <script src="assets/js/booking-logic.js?v=v134fastpwafix"></script>
+  <script src="assets/js/client.js?v=v134fastpwafix" defer></script>
 </head>
 <body>
   <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>
