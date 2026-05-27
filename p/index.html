@@ -8,19 +8,17 @@
   <meta name="theme-color" content="#0b0b0f">
   <meta name="application-name" content="CityStyle profil">
   <meta name="apple-mobile-web-app-title" content="CityStyle profil">
+  <link rel="manifest" id="pwa-manifest" href="/manifest.json?v=v137installgate">
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+  <style>
+    .profile-install-gateway{position:fixed;left:12px;right:12px;bottom:12px;z-index:99999;display:none;max-width:560px;margin:0 auto;background:rgba(12,12,16,.96);border:1px solid rgba(255,255,255,.12);box-shadow:0 18px 48px rgba(0,0,0,.55);border-radius:22px;padding:14px;color:#fff;backdrop-filter:blur(16px)}
+    .profile-install-gateway.is-visible{display:block}.profile-install-gateway-row{display:flex;gap:12px;align-items:center}.profile-install-gateway img{width:52px;height:52px;border-radius:14px;object-fit:cover;background:#18181c;border:1px solid rgba(255,255,255,.14)}
+    .profile-install-gateway strong{display:block;font-size:15px;line-height:1.2}.profile-install-gateway span{display:block;font-size:12px;color:#c9c9cf;margin-top:3px;line-height:1.35}.profile-install-gateway-actions{display:flex;gap:8px;margin-top:12px}.profile-install-gateway button{border:0;border-radius:14px;padding:11px 12px;font-weight:800;cursor:pointer}.profile-install-gateway .primary{flex:1;background:#dc2626;color:#fff}.profile-install-gateway .secondary{background:#1f1f25;color:#fff;border:1px solid rgba(255,255,255,.12)}
+    .profile-install-gateway-note{font-size:11px;color:#9ca3af;margin-top:8px;line-height:1.35}.profile-install-gateway-manual{display:none;margin-top:10px;font-size:12px;color:#e5e7eb;line-height:1.45}.profile-install-gateway.show-manual .profile-install-gateway-manual{display:block}
+  </style>
   <script>
-    window.__CITYSTYLE_PWA_GATEWAY__ = true;
-    window.__CITYSTYLE_DEFERRED_INSTALL_PROMPT__ = null;
-
-    window.addEventListener("beforeinstallprompt", function(event){
-      event.preventDefault();
-      window.__CITYSTYLE_DEFERRED_INSTALL_PROMPT__ = event;
-      console.log("CityStyle: install prompt sačuvan za profil.");
-    });
-
-    (async function prepareProfileManifest(){
-      var VERSION = "v136profilepwa";
+    (function initProfilePwaHead(){
+      var VERSION = "v137installgate";
       var SUPABASE_URL = "https://uxoovyytydnuibiwnpgx.supabase.co";
       var SUPABASE_ANON_KEY = "sb_publishable_FFMUyqNXSuVP0mMsUa5PbQ_ur3iwb0L";
       var params = new URLSearchParams(window.location.search || "");
@@ -29,99 +27,39 @@
       var isOwner = params.has("panel") || params.has("owner") || params.has("owner_profile") || params.has("owner_salon");
       var identityKey = profileCode ? "profile" : (salonSlug ? "salon" : "profile");
       var identityValue = profileCode || salonSlug || "default";
+      var encodedIdentity = encodeURIComponent(identityValue);
       var fallback192 = new URL("/assets/icons/icon-192.png", window.location.origin).href;
       var fallback512 = new URL("/assets/icons/icon-512.png", window.location.origin).href;
+      var state = window.__CITYSTYLE_PROFILE_PWA_STATE__ = {
+        prompt: null,
+        ready: false,
+        name: isOwner ? "CityStyle Panel" : "CityStyle profil",
+        icon: fallback512,
+        theme: "#b91c1c",
+        identity: identityValue,
+        startUrl: "/p/?" + identityKey + "=" + encodedIdentity + "&v=" + VERSION,
+        manifestUrl: "",
+        installed: false
+      };
 
       function safeText(value, fallback){
         return String(value || fallback || "CityStyle profil").replace(/[<>]/g, "").trim().slice(0, 80) || fallback || "CityStyle profil";
       }
-      function shortName(name){
-        var clean = safeText(name, "Profil");
-        return clean.length > 18 ? clean.slice(0, 18).trim() : clean;
-      }
-      function setMetaName(name, theme){
+      function shortName(name){ var clean = safeText(name, "Profil"); return clean.length > 18 ? clean.slice(0, 18).trim() : clean; }
+      function setHeadName(name, theme, icon){
         document.title = name;
-        var appName = document.querySelector('meta[name="application-name"]');
-        if (appName) appName.content = name;
-        var appleName = document.querySelector('meta[name="apple-mobile-web-app-title"]');
-        if (appleName) appleName.content = name;
-        var themeMeta = document.querySelector('meta[name="theme-color"]');
-        if (themeMeta && theme) themeMeta.content = theme;
+        var appName = document.querySelector('meta[name="application-name"]'); if (appName) appName.content = name;
+        var appleName = document.querySelector('meta[name="apple-mobile-web-app-title"]'); if (appleName) appleName.content = name;
+        var themeMeta = document.querySelector('meta[name="theme-color"]'); if (themeMeta && theme) themeMeta.content = theme;
+        var appleIcon = document.querySelector('link[rel="apple-touch-icon"]'); if (appleIcon && icon) appleIcon.href = icon;
       }
-      function setManifest(manifest){
-        var old = document.querySelector('link[rel="manifest"]');
-        if (old) old.remove();
-        var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
-        var link = document.createElement("link");
-        link.rel = "manifest";
-        link.href = URL.createObjectURL(blob);
-        document.head.appendChild(link);
-        window.__CITYSTYLE_PROFILE_MANIFEST_READY__ = true;
-      }
-      function initialsFromName(name){
-        var parts = safeText(name, "CS").split(/\s+/).filter(Boolean);
-        return (parts.slice(0,2).map(function(p){ return p.charAt(0).toUpperCase(); }).join("") || "CS").slice(0,2);
-      }
-      function initialsIcon(name, bg){
-        try {
-          var canvas = document.createElement("canvas");
-          canvas.width = 512; canvas.height = 512;
-          var ctx = canvas.getContext("2d");
-          ctx.fillStyle = /^#[0-9a-f]{6}$/i.test(bg || "") ? bg : "#b91c1c";
-          ctx.fillRect(0, 0, 512, 512);
-          var grad = ctx.createRadialGradient(165, 110, 35, 256, 256, 430);
-          grad.addColorStop(0, "rgba(255,255,255,0.28)");
-          grad.addColorStop(1, "rgba(0,0,0,0.28)");
-          ctx.fillStyle = grad; ctx.fillRect(0, 0, 512, 512);
-          ctx.fillStyle = "#fff";
-          ctx.font = "bold 190px Arial, sans-serif";
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(initialsFromName(name), 256, 270);
-          return canvas.toDataURL("image/png");
-        } catch(err) { return fallback512; }
-      }
-      async function logoToPngIcon(logoUrl, bg){
-        if (!logoUrl) return "";
-        return await new Promise(function(resolve){
-          var done = false;
-          var img = new Image();
-          var timer = setTimeout(function(){ if (!done) { done = true; resolve(""); } }, 1600);
-          img.crossOrigin = "anonymous";
-          img.onload = function(){
-            if (done) return;
-            try {
-              var canvas = document.createElement("canvas");
-              canvas.width = 512; canvas.height = 512;
-              var ctx = canvas.getContext("2d");
-              ctx.fillStyle = /^#[0-9a-f]{6}$/i.test(bg || "") ? bg : "#0b0b0f";
-              ctx.fillRect(0, 0, 512, 512);
-              var size = 360;
-              var ratio = Math.min(size / img.width, size / img.height);
-              var w = Math.max(1, img.width * ratio);
-              var h = Math.max(1, img.height * ratio);
-              ctx.fillStyle = "rgba(255,255,255,0.94)";
-              ctx.beginPath();
-              ctx.roundRect(76, 76, 360, 360, 74);
-              ctx.fill();
-              ctx.drawImage(img, 256 - w/2, 256 - h/2, w, h);
-              var png = canvas.toDataURL("image/png");
-              clearTimeout(timer); done = true; resolve(png);
-            } catch(e) { clearTimeout(timer); done = true; resolve(""); }
-          };
-          img.onerror = function(){ if (!done) { clearTimeout(timer); done = true; resolve(""); } };
-          img.src = logoUrl;
-        });
-      }
-      function makeManifest(name, theme, icon512){
-        var encoded = encodeURIComponent(identityValue);
-        var query = identityKey + "=" + encoded + "&v=" + VERSION;
-        var start = "/p/?" + query;
-        var appId = "/p/app/" + identityKey + "/" + encoded;
+      function makeManifest(name, theme, icon){
         var finalName = safeText(isOwner ? name + " Panel" : name, isOwner ? "CityStyle Panel" : "CityStyle profil");
-        setMetaName(finalName, theme || "#b91c1c");
+        var start = "/p/?" + identityKey + "=" + encodedIdentity + "&pwa_profile=" + encodedIdentity + "&v=" + VERSION;
+        state.name = finalName; state.theme = theme || "#b91c1c"; state.icon = icon || fallback512; state.startUrl = start;
+        setHeadName(finalName, state.theme, state.icon);
         return {
-          id: appId,
+          id: "/p/app/" + identityKey + "/" + encodedIdentity,
           name: finalName,
           short_name: shortName(finalName),
           description: "Direktan ulaz u CityStyle profil: " + finalName,
@@ -130,68 +68,155 @@
           display: "standalone",
           display_override: ["standalone", "minimal-ui"],
           background_color: "#0b0b0f",
-          theme_color: theme || "#b91c1c",
+          theme_color: state.theme,
           orientation: "portrait",
           icons: [
-            { src: icon512 || initialsIcon(finalName, theme), sizes: "512x512", type: "image/png", purpose: "any maskable" },
+            { src: state.icon, sizes: "512x512", type: "image/png", purpose: "any maskable" },
             { src: fallback192, sizes: "192x192", type: "image/png", purpose: "any maskable" },
             { src: fallback512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
           ]
         };
       }
-      async function fetchJson(url){
-        var res = await fetch(url, {
-          headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY }
+      function setManifest(manifest){
+        try {
+          if (state.manifestUrl) URL.revokeObjectURL(state.manifestUrl);
+          var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+          var url = URL.createObjectURL(blob);
+          state.manifestUrl = url;
+          var link = document.getElementById("pwa-manifest") || document.querySelector('link[rel="manifest"]');
+          if (!link) { link = document.createElement("link"); link.rel = "manifest"; link.id = "pwa-manifest"; document.head.appendChild(link); }
+          link.href = url;
+          state.ready = true;
+          window.__CITYSTYLE_PROFILE_MANIFEST_READY__ = true;
+          renderGateway();
+        } catch (err) { console.warn("Manifest nije postavljen:", err); }
+      }
+      function initialsFromName(name){
+        var parts = safeText(name, "CS").split(/\s+/).filter(Boolean);
+        return (parts.slice(0,2).map(function(p){ return p.charAt(0).toUpperCase(); }).join("") || "CS").slice(0,2);
+      }
+      function initialsIcon(name, bg){
+        try {
+          var canvas = document.createElement("canvas"); canvas.width = 512; canvas.height = 512;
+          var ctx = canvas.getContext("2d");
+          ctx.fillStyle = /^#[0-9a-f]{6}$/i.test(bg || "") ? bg : "#b91c1c"; ctx.fillRect(0, 0, 512, 512);
+          var grad = ctx.createRadialGradient(165, 110, 35, 256, 256, 430); grad.addColorStop(0, "rgba(255,255,255,0.28)"); grad.addColorStop(1, "rgba(0,0,0,0.28)"); ctx.fillStyle = grad; ctx.fillRect(0, 0, 512, 512);
+          ctx.fillStyle = "#fff"; ctx.font = "bold 190px Arial, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(initialsFromName(name), 256, 270);
+          return canvas.toDataURL("image/png");
+        } catch(err) { return fallback512; }
+      }
+      function isLikelySafeImage(url){ return /^https:\/\//i.test(String(url || "")) || /^data:image\//i.test(String(url || "")); }
+      async function testImage(url, timeoutMs){
+        if (!isLikelySafeImage(url)) return "";
+        return await new Promise(function(resolve){
+          var done = false; var img = new Image();
+          var timer = setTimeout(function(){ if (!done) { done = true; resolve(""); } }, timeoutMs || 1200);
+          img.onload = function(){ if (!done) { clearTimeout(timer); done = true; resolve(url); } };
+          img.onerror = function(){ if (!done) { clearTimeout(timer); done = true; resolve(""); } };
+          img.src = url;
         });
+      }
+      async function fetchJson(url){
+        var res = await fetch(url, { headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY } });
         if (!res.ok) throw new Error("HTTP " + res.status);
         return await res.json();
       }
       async function fetchProfile(){
-        var salonQuery = profileCode
-          ? "public_profile_code=eq." + encodeURIComponent(profileCode)
-          : "slug=eq." + encodeURIComponent(salonSlug);
-        var salonUrl = SUPABASE_URL + "/rest/v1/salons?select=id,salon_name,slug,public_profile_code,theme_color,status,is_deleted&" + salonQuery + "&status=eq.active&is_deleted=eq.false&limit=1";
+        var salonQuery = profileCode ? "public_profile_code=eq." + encodeURIComponent(profileCode) : "slug=eq." + encodeURIComponent(salonSlug);
+        var salonUrl = SUPABASE_URL + "/rest/v1/salons?select=*&" + salonQuery + "&status=eq.active&is_deleted=eq.false&limit=1";
         var salons = await fetchJson(salonUrl);
         var salon = salons && salons[0];
         if (!salon || !salon.id) return null;
-        var settingsUrl = SUPABASE_URL + "/rest/v1/salon_settings?select=welcome_title,logo_url,cover_image_url&salon_id=eq." + encodeURIComponent(salon.id) + "&limit=1";
-        var settingsList = [];
-        try { settingsList = await fetchJson(settingsUrl); } catch(e) { settingsList = []; }
-        var settings = settingsList && settingsList[0] || {};
-        return { salon: salon, settings: settings };
+        var settings = {};
+        try {
+          var settingsList = await fetchJson(SUPABASE_URL + "/rest/v1/salon_settings?select=*&salon_id=eq." + encodeURIComponent(salon.id) + "&limit=1");
+          settings = settingsList && settingsList[0] || {};
+        } catch(e) { settings = {}; }
+        var homeImage = "";
+        try {
+          var imgs = await fetchJson(SUPABASE_URL + "/rest/v1/home_images?select=image_url&salon_id=eq." + encodeURIComponent(salon.id) + "&active=eq.true&order=sort_order.asc,created_at.asc&limit=1");
+          homeImage = imgs && imgs[0] && imgs[0].image_url || "";
+        } catch(e) { homeImage = ""; }
+        return { salon: salon, settings: settings, homeImage: homeImage };
       }
+      function isStandalone(){ return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true; }
+      function renderGateway(forceManual){
+        var box = document.getElementById("profile-install-gateway"); if (!box) return;
+        var shouldShow = params.has("install") || params.has("pwa_profile") || params.has("install_profile");
+        if (!shouldShow || isStandalone() || state.installed) { box.classList.remove("is-visible"); return; }
+        var img = box.querySelector("img"); if (img) img.src = state.icon || fallback192;
+        var name = box.querySelector("strong"); if (name) name.textContent = "Instaliraj: " + (state.name || "CityStyle profil");
+        var text = box.querySelector("span"); if (text) text.textContent = state.prompt ? "Browser je spreman za instalaciju ove zasebne prečice." : "Ako se dugme ne pojavi odmah, sačekaj par sekundi ili koristi meni browsera → Dodaj na početni ekran.";
+        box.classList.toggle("show-manual", !!forceManual || !state.prompt);
+        box.classList.add("is-visible");
+      }
+      async function installProfile(){
+        renderGateway(false);
+        if (!state.prompt) { renderGateway(true); return false; }
+        try {
+          var promptEvent = state.prompt;
+          state.prompt = null;
+          await promptEvent.prompt();
+          var choice = await promptEvent.userChoice;
+          if (choice && choice.outcome === "accepted") { state.installed = true; renderGateway(false); }
+          else { renderGateway(true); }
+          return choice && choice.outcome === "accepted";
+        } catch(err) { console.warn("Install prompt nije uspeo:", err); renderGateway(true); return false; }
+      }
+      window.CityStyleProfilePWA = { state: state, renderGateway: renderGateway, install: installProfile };
+      window.addEventListener("beforeinstallprompt", function(event){
+        event.preventDefault();
+        state.prompt = event;
+        window.__CITYSTYLE_DEFERRED_INSTALL_PROMPT__ = event;
+        renderGateway(false);
+        console.log("CityStyle: install prompt sačuvan za /p/ profil.");
+      });
+      window.addEventListener("appinstalled", function(){ state.installed = true; renderGateway(false); });
 
-      try {
-        var timeout = new Promise(function(resolve){ setTimeout(function(){ resolve(null); }, 2200); });
-        var result = await Promise.race([fetchProfile(), timeout]);
-        var name = result ? (result.settings.welcome_title || result.salon.salon_name || "CityStyle profil") : "CityStyle profil";
-        var theme = result ? (result.salon.theme_color || "#b91c1c") : "#b91c1c";
-        var logo = result ? (result.settings.logo_url || result.settings.cover_image_url || "") : "";
-        var generatedLogoIcon = await logoToPngIcon(logo, theme);
-        setManifest(makeManifest(name, theme, generatedLogoIcon || initialsIcon(name, theme)));
-      } catch(err) {
-        console.warn("CityStyle profil manifest fallback:", err);
-        setManifest(makeManifest("CityStyle profil", "#b91c1c", ""));
-      }
+      // Stabilan manifest ODMAH, pre Supabase čekanja. Ovo sprečava "instalira se" zastoj.
+      setManifest(makeManifest(state.name, state.theme, initialsIcon(state.name, state.theme)));
+
+      (async function loadRealProfileManifest(){
+        try {
+          var timeout = new Promise(function(resolve){ setTimeout(function(){ resolve(null); }, 1800); });
+          var result = await Promise.race([fetchProfile(), timeout]);
+          if (!result) return;
+          var name = result.settings.welcome_title || result.salon.salon_name || "CityStyle profil";
+          var theme = result.salon.theme_color || "#b91c1c";
+          var rawIcon = result.settings.logo_url || result.settings.cover_image_url || result.settings.home_image_url || result.homeImage || "";
+          var validIcon = await testImage(rawIcon, 1000);
+          setManifest(makeManifest(name, theme, validIcon || initialsIcon(name, theme)));
+        } catch(err) { console.warn("CityStyle profil manifest fallback:", err); }
+      })();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", function(){
-          navigator.serviceWorker.register("/sw.js?v=" + VERSION, { scope: "/p/" }).catch(function(err){
-            console.warn("CityStyle /p/ service worker nije registrovan:", err);
-          });
+          navigator.serviceWorker.register("/sw.js?v=" + VERSION, { scope: "/p/" }).catch(function(err){ console.warn("CityStyle /p/ service worker nije registrovan:", err); });
         });
       }
     })();
   </script>
-  <link rel="stylesheet" href="/assets/css/style.css?v=v136profilepwa">
+  <link rel="stylesheet" href="/assets/css/style.css?v=v137installgate">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/assets/js/config.js?v=v136profilepwa"></script>
-  <script src="/assets/js/main.js?v=v136profilepwa"></script>
-  <script src="/assets/js/auth.js?v=v136profilepwa"></script>
-  <script src="/assets/js/booking-logic.js?v=v136profilepwa"></script>
-  <script src="/assets/js/client.js?v=v136profilepwa" defer></script>
+  <script src="/assets/js/config.js?v=v137installgate"></script>
+  <script src="/assets/js/main.js?v=v137installgate"></script>
+  <script src="/assets/js/auth.js?v=v137installgate"></script>
+  <script src="/assets/js/booking-logic.js?v=v137installgate"></script>
+  <script src="/assets/js/client.js?v=v137installgate" defer></script>
 </head>
 <body>
+  <div id="profile-install-gateway" class="profile-install-gateway" role="dialog" aria-live="polite">
+    <div class="profile-install-gateway-row">
+      <img src="/assets/icons/icon-192.png" alt="Profil ikonica">
+      <div><strong>Instaliraj CityStyle profil</strong><span>Pripremam zasebnu prečicu...</span></div>
+    </div>
+    <div class="profile-install-gateway-actions">
+      <button class="primary" type="button" onclick="window.CityStyleProfilePWA && window.CityStyleProfilePWA.install()">Instaliraj ovu prečicu</button>
+      <button class="secondary" type="button" onclick="this.closest('#profile-install-gateway').classList.remove('is-visible')">Kasnije</button>
+    </div>
+    <div class="profile-install-gateway-manual">Ako Chrome ne prikaže sistemsku instalaciju, otvori meni sa tri tačke u browseru i izaberi <b>Dodaj na početni ekran</b>. Ako je druga CityStyle prečica već instalirana, Android može ograničiti više PWA sa istog domena.</div>
+    <div class="profile-install-gateway-note">Logo se koristi ako ga browser prihvati. Ako ne, koristi se sigurna ikonica da instalacija ne zakoči.</div>
+  </div>
   <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>
   <main id="app" class="container">
     <section class="landing-page platform-text-page">
