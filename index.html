@@ -8,47 +8,78 @@
   <meta name="theme-color" content="#0b0b0f">
   <script>
     (function prepareCityStyleManifestEarly(){
-      function safeSlugName(slug){
-        return String(slug || "CityStyle profil")
-          .replace(/[-_]+/g, " ")
-          .replace(/\b\w/g, function(c){ return c.toUpperCase(); })
-          .trim() || "CityStyle profil";
-      }
+      var VERSION = "v134multiinstall";
+
       function addManifest(href){
+        var old = document.querySelector('link[rel="manifest"]');
+        if (old) old.remove();
         var link = document.createElement("link");
         link.rel = "manifest";
         link.href = href;
         document.head.appendChild(link);
       }
+
+      function appBase(){
+        return window.location.origin + window.location.pathname.replace(/[^/]*$/, "");
+      }
+
+      function stableIcon(path){
+        return new URL(path, window.location.origin + "/").href;
+      }
+
+      function makeEarlyManifest(kind, identity){
+        var base = appBase();
+        var safeIdentity = String(identity || "platform").trim() || "platform";
+        var queryKey = kind === "profile" ? "profile" : "salon";
+        var startUrl = kind === "platform"
+          ? new URL("./?platform=1&v=" + VERSION, base).href
+          : new URL("./?" + queryKey + "=" + encodeURIComponent(safeIdentity) + "&pwa_profile=" + encodeURIComponent(safeIdentity) + "&v=" + VERSION, base).href;
+        var name = kind === "platform" ? "CityStyle.app" : "CityStyle profil";
+        return {
+          id: kind === "platform" ? new URL("./?platform=1", base).href : new URL("./pwa/customer/" + queryKey + "/" + encodeURIComponent(safeIdentity), base).href,
+          name: name,
+          short_name: kind === "platform" ? "CityStyle" : "Profil",
+          description: kind === "platform" ? "CityStyle.app" : "Direktan ulaz u ovaj CityStyle profil.",
+          start_url: startUrl,
+          scope: base,
+          display: "standalone",
+          display_override: ["standalone", "minimal-ui"],
+          background_color: "#0b0b0f",
+          theme_color: "#b91c1c",
+          orientation: "portrait",
+          icons: [
+            { src: stableIcon("assets/icons/icon-192.png"), sizes: "192x192", type: "image/png", purpose: "any maskable" },
+            { src: stableIcon("assets/icons/icon-512.png"), sizes: "512x512", type: "image/png", purpose: "any maskable" }
+          ]
+        };
+      }
+
       try {
         var params = new URLSearchParams(window.location.search || "");
-        var slug = params.get("salon");
         var profile = params.get("profile");
-
-        // Uvek postavljamo stabilan manifest odmah.
-        // Chrome/Android često neće ni pripremiti beforeinstallprompt ako profilna
-        // stranica čeka Supabase/dinamički manifest. Dinamički manifest se menja
-        // kasnije, ali rani manifest ima stabilne same-origin PNG ikone i ne blokira install.
-        addManifest("manifest.json?v=v134fastpwafix");
-
-        if (slug || profile) {
-          // Profil još učitava pravo ime iz baze. Prompt se sme sačuvati, ali
-          // korisniku se ne forsira platform install dok client.js ne postavi profil manifest.
-          window.__CITYSTYLE_WAIT_PROFILE_MANIFEST__ = true;
+        var slug = params.get("salon");
+        if (profile || slug) {
+          var manifest = makeEarlyManifest(profile ? "profile" : "salon", profile || slug);
+          var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+          addManifest(URL.createObjectURL(blob));
+          window.__CITYSTYLE_EARLY_PROFILE_MANIFEST__ = true;
+          window.__CITYSTYLE_PROFILE_MANIFEST_READY__ = false;
+          return;
         }
+        addManifest("manifest.json?v=" + VERSION);
       } catch (err) {
-        addManifest("manifest.json?v=v134fastpwafix");
+        addManifest("manifest.json?v=" + VERSION);
       }
     })();
   </script>
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-  <link rel="stylesheet" href="assets/css/style.css?v=v134fastpwafix">
+  <link rel="stylesheet" href="assets/css/style.css?v=v134multiinstall">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=v134fastpwafix"></script>
-  <script src="assets/js/main.js?v=v134fastpwafix"></script>
-  <script src="assets/js/auth.js?v=v134fastpwafix"></script>
-  <script src="assets/js/booking-logic.js?v=v134fastpwafix"></script>
-  <script src="assets/js/client.js?v=v134fastpwafix" defer></script>
+  <script src="assets/js/config.js?v=v134multiinstall"></script>
+  <script src="assets/js/main.js?v=v134multiinstall"></script>
+  <script src="assets/js/auth.js?v=v134multiinstall"></script>
+  <script src="assets/js/booking-logic.js?v=v134multiinstall"></script>
+  <script src="assets/js/client.js?v=v134multiinstall" defer></script>
 </head>
 <body>
   <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>

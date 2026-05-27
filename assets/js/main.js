@@ -623,9 +623,9 @@ window.addEventListener("beforeinstallprompt", (event) => {
   // Chrome često više ne pošalje novi prompt i instalacija stoji/zaglavi.
   deferredPrompt = event;
 
-  if (!(window.__CITYSTYLE_WAIT_PROFILE_MANIFEST__ && !window.__CITYSTYLE_PROFILE_MANIFEST_READY__)) {
-    showInstallButton();
-  }
+  // Prompt čuvamo odmah. Profil stranice imaju rani stabilan manifest,
+  // a pravi naziv se dopuni čim Supabase učita profil.
+  showInstallButton();
 });
 
 function showInstallButton() {
@@ -634,11 +634,10 @@ function showInstallButton() {
   const path = window.location.pathname || "/";
   const hasSalonParam = !!getUrlParam("salon");
   const hasProfileParam = !!getUrlParam("profile");
-  const hasOwnerParam = !!getUrlParam("owner_profile") || !!getUrlParam("owner_salon");
 
-  // Do not show the generic platform install button inside public profile pages
-  // or admin/owner panels. Each profile/panel has its own dedicated install button.
-  if (hasSalonParam || hasProfileParam || hasOwnerParam || path.includes("/admin") || path.includes("/salon")) return;
+  // Generičko floating dugme je samo za platformu.
+  // Profil ima svoje dugme: "Preuzmi app ovog profila".
+  if (hasSalonParam || hasProfileParam || path.includes("/admin") || path.includes("/salon")) return;
 
   const btn = document.createElement("button");
   btn.id = "install-app-btn";
@@ -662,7 +661,7 @@ async function installSalonApp(profileOrSlug, options = {}) {
   const identity = getSalonPublicIdentity({ slug, public_profile_code: profileCode });
   const encodedIdentity = encodeURIComponent(identity.value || slug || profileCode || "");
   const profileUrl = identity.value
-    ? `${getAppBaseUrl()}?${identity.key}=${encodedIdentity}&v=v134fastpwafix`
+    ? `${getAppBaseUrl()}?${identity.key}=${encodedIdentity}&v=v134multiinstall`
     : window.location.href;
 
   currentInstallContext = {
@@ -691,14 +690,12 @@ async function installOwnerApp(options = {}) {
   currentInstallContext = {
     type: "owner",
     name: String(options.name || options.displayName || "CityStyle profil").trim() + " Panel",
-    url: `${getAppPath("salon/")}?${startQuery}&v=v134fastpwafix`,
+    url: `${getAppPath("salon/")}?${startQuery}&v=v134multiinstall`,
     identity: profileCode || slug || "owner"
   };
 
   await installApp("Na iPhone-u: otvorite ovaj panel u Safari browseru, pritisnite Share i izaberite Add to Home Screen. Panel vlasnika ostaje zapamćen.", "Panel vlasnika je dodat na telefon.");
 }
-
-let dynamicManifestBlobUrl = null;
 
 function setDynamicManifest(manifest, iconUrl = "") {
   const blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
@@ -710,25 +707,21 @@ function setDynamicManifest(manifest, iconUrl = "") {
     document.head.appendChild(link);
   }
   link.href = url;
-  if (dynamicManifestBlobUrl && dynamicManifestBlobUrl !== url) {
-    setTimeout(() => { try { URL.revokeObjectURL(dynamicManifestBlobUrl); } catch (err) {} }, 10000);
-  }
-  dynamicManifestBlobUrl = url;
 
   // Pravi manifest profila/panela je sada postavljen.
   // Ne brišemo deferredPrompt, jer Chrome često ne šalje drugi prompt.
   window.__CITYSTYLE_PROFILE_MANIFEST_READY__ = true;
 
   if (iconUrl) {
-    const safeIconUrl = String(iconUrl || "").trim();
-    // Profilna slika je dozvoljena samo za Apple/meta ikonu. Manifest ikone ostaju
-    // stabilni PNG fajlovi sa istog domena, da Android install ne zapne na spornoj slici.
-    if (/^(https?:|data:image\/|blob:|\/|\.\/|\.\.\/)/i.test(safeIconUrl)) {
-      const appleIcon = document.querySelector('link[rel="apple-touch-icon"]') || document.createElement("link");
-      appleIcon.rel = "apple-touch-icon";
-      appleIcon.href = safeIconUrl;
-      if (!appleIcon.parentNode) document.head.appendChild(appleIcon);
-    }
+    const appleIcon = document.querySelector('link[rel="apple-touch-icon"]') || document.createElement("link");
+    appleIcon.rel = "apple-touch-icon";
+    appleIcon.href = iconUrl;
+    if (!appleIcon.parentNode) document.head.appendChild(appleIcon);
+
+    const favIcon = document.querySelector('link[rel="icon"]') || document.createElement("link");
+    favIcon.rel = "icon";
+    favIcon.href = iconUrl;
+    if (!favIcon.parentNode) document.head.appendChild(favIcon);
   }
 
   if (manifest?.start_url || manifest?.name || manifest?.id) {
@@ -759,8 +752,6 @@ function setDynamicManifest(manifest, iconUrl = "") {
     themeMeta.content = manifest.theme_color;
     if (!themeMeta.parentNode) document.head.appendChild(themeMeta);
   }
-
-  try { window.dispatchEvent(new CustomEvent("citystyle:manifest-ready", { detail: manifest })); } catch (err) {}
 }
 
 function getManifestIconType(src = "") {
@@ -776,6 +767,7 @@ function updateManifestForOwner(options = {}) {
   const appName = rawName ? `${rawName} Panel` : "CityStyle - Panel vlasnika";
   const shortName = appName.length > 12 ? appName.slice(0, 12).trim() : appName;
   const theme = normalizeSalonTheme(options.themeColor || "classic-red");
+  const initialsIcon = makeInitialsIconDataUrl(appName, theme);
   const profileCode = String(options.publicProfileCode || options.profileCode || "").trim();
   const slug = String(options.slug || "").trim();
   const profileImageIcon = String(options.iconUrl || "").trim();
@@ -793,7 +785,7 @@ function updateManifestForOwner(options = {}) {
     name: appName,
     short_name: shortName || "Panel",
     description: `Direktan ulaz u vlasnički panel: ${rawName || "CityStyle profil"}.`,
-    start_url: `${getAppPath("salon/")}?${startQuery}&v=v134fastpwafix`,
+    start_url: `${getAppPath("salon/")}?${startQuery}&v=v134multiinstall`,
     scope: getAppBaseUrl(),
     display: "standalone",
     display_override: ["standalone", "minimal-ui"],
@@ -801,6 +793,7 @@ function updateManifestForOwner(options = {}) {
     theme_color: theme,
     orientation: "portrait",
     icons: [
+      { src: initialsIcon, sizes: "512x512", type: "image/png", purpose: "any maskable" },
       { src: iconUrl, sizes: "192x192", type: getManifestIconType(iconUrl), purpose: "any maskable" },
       { src: icon512, sizes: "512x512", type: getManifestIconType(icon512), purpose: "any maskable" }
     ]
@@ -855,12 +848,13 @@ function updateManifestForSalon(profileOrSlug, options = {}) {
   const appName = rawName || "CityStyle profil";
   const shortName = appName.length > 12 ? appName.slice(0, 12).trim() : appName;
   const theme = normalizeSalonTheme(options.themeColor || "classic-red");
+  const initialsIcon = makeInitialsIconDataUrl(appName, theme);
   const profileImageIcon = String(options.iconUrl || options.coverIconUrl || "").trim();
   const iconUrl = `${getAppBaseUrl()}assets/icons/icon-192.png`;
   const icon512 = `${getAppBaseUrl()}assets/icons/icon-512.png`;
   const appleProfileIcon = profileImageIcon || icon512;
   const encodedIdentity = encodeURIComponent(identity.value);
-  const startUrl = `${getAppBaseUrl()}?${identity.key}=${encodedIdentity}&pwa_profile=${encodedIdentity}&v=v134fastpwafix`;
+  const startUrl = `${getAppBaseUrl()}?${identity.key}=${encodedIdentity}&pwa_profile=${encodedIdentity}&v=v134multiinstall`;
 
   const baseManifest = {
     id: `${getAppBaseUrl()}pwa/customer/${identity.key}/${encodedIdentity}`,
@@ -876,6 +870,7 @@ function updateManifestForSalon(profileOrSlug, options = {}) {
     orientation: "portrait",
     categories: ["business", "shopping", "lifestyle"],
     icons: [
+      { src: initialsIcon, sizes: "512x512", type: "image/png", purpose: "any maskable" },
       { src: iconUrl, sizes: "192x192", type: getManifestIconType(iconUrl), purpose: "any maskable" },
       { src: icon512, sizes: "512x512", type: getManifestIconType(icon512), purpose: "any maskable" }
     ],
@@ -907,16 +902,41 @@ function getCurrentInstallTargetUrl() {
   return window.location.href;
 }
 
+function isAndroidDevice() {
+  return /Android/i.test(navigator.userAgent || "");
+}
+
+function openInstallTargetInNormalBrowser(url) {
+  const target = String(url || window.location.href);
+  try {
+    if (isAndroidDevice()) {
+      const parsed = new URL(target, window.location.href);
+      const fallback = encodeURIComponent(parsed.href);
+      const intentUrl = `intent://${parsed.host}${parsed.pathname}${parsed.search}#Intent;scheme=${parsed.protocol.replace(":", "")};package=com.android.chrome;S.browser_fallback_url=${fallback};end`;
+      window.location.href = intentUrl;
+      return true;
+    }
+    window.open(target, "_blank", "noopener");
+    return true;
+  } catch (err) {
+    try { window.open(target, "_blank", "noopener"); return true; } catch (e) { return false; }
+  }
+}
+
 function showInstallHelp(noPromptMessage = "Na iPhone-u: Share → Add to Home Screen.") {
   const currentUrl = getCurrentInstallTargetUrl();
   const contextName = String(currentInstallContext?.name || document.title || "CityStyle").trim();
   const isStandalone = isStandaloneMode();
-  const title = isStandalone
-    ? "Otvorite ovaj profil u browseru"
-    : "Instalacija profila";
 
+  if (isStandalone && isAndroidDevice()) {
+    openInstallTargetInNormalBrowser(currentUrl);
+    showMessage("Otvaram ovaj profil u Chrome browseru za zasebnu instalaciju.", "info");
+    return;
+  }
+
+  const title = isStandalone ? "Instaliraj kao novu prečicu" : "Instalacija profila";
   const mainText = isStandalone
-    ? `Trenutno ste već u instaliranoj prečici. Za dodavanje drugog salona/prodavnice otvorite ovaj tačan profil u Chrome/Safari browseru, pa izaberite Dodaj na početni ekran.`
+    ? "Za zasebnu prečicu mora se otvoriti tačan profil u običnom browseru. Ova aplikacija će pokušati da otvori browser; zatim izaberite Dodaj na početni ekran."
     : noPromptMessage;
 
   const modal = document.createElement("div");
@@ -928,11 +948,11 @@ function showInstallHelp(noPromptMessage = "Na iPhone-u: Share → Add to Home S
       <p>${escapeHtml(mainText)}</p>
       <div class="link-box"><input readonly value="${escapeHtml(currentUrl)}"></div>
       <div class="card-actions center">
-        <button class="btn btn-primary" type="button" onclick="window.open('${escapeJs(currentUrl)}', '_blank', 'noopener')">Otvori u browseru</button>
+        <button class="btn btn-primary" type="button" onclick="window.App.openInstallTargetInNormalBrowser('${escapeJs(currentUrl)}')">Otvori u browseru</button>
         <button class="btn btn-dark" type="button" onclick="copyText('${escapeJs(currentUrl)}', this)">Kopiraj link profila</button>
         <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
       </div>
-      <p class="muted small">Napomena: Android/Chrome i iPhone/Safari ponekad blokiraju novu instalaciju ako pokušavate iz već instalirane PWA prečice. Zato je najpouzdanije otvoriti link u običnom browseru.</p>
+      <p class="muted small">Za svaki salon/prodavnicu koristi se poseban PWA identitet. Ako telefon ne prihvati logo kao ikonicu, koristi se stabilna CityStyle ikonica da instalacija ne stane.</p>
     </div>
   `;
   document.body.appendChild(modal);
@@ -1094,7 +1114,7 @@ async function registerPushForSalon(salonId) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v134fastpwafix", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v134multiinstall", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
@@ -1241,6 +1261,7 @@ window.App = {
   installApp,
   installSalonApp,
   installOwnerApp,
+  openInstallTargetInNormalBrowser,
   updateManifestForOwner,
   updateManifestForSalon,
   getInitialsFromName,

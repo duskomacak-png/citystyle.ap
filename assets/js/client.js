@@ -1299,7 +1299,7 @@ async function renderSalonHome() {
   currentSalon._publicName = publicName;
   currentSalon._publicLogo = settings?.logo_url || "";
   currentSalon._publicPhone = settings?.phone || currentSalon.phone || "";
-  window.App?.updateManifestForSalon?.(currentSalon, { name: publicName, iconUrl: settings?.logo_url, publicProfileCode: currentSalon.public_profile_code, themeColor: currentSalon.theme_color });
+  window.App?.updateManifestForSalon?.(currentSalon.slug, { name: publicName, iconUrl: settings?.logo_url, themeColor: currentSalon.theme_color });
 
   if (csIsShopProfile(currentSalon, products.length)) return renderShoeShopHome(settings || {});
 
