@@ -660,7 +660,7 @@ async function installSalonApp(profileOrSlug, options = {}) {
   const identity = getSalonPublicIdentity({ slug, public_profile_code: profileCode });
   const encodedIdentity = encodeURIComponent(identity.value || slug || profileCode || "");
   const installPath = identity.value
-    ? `${getAppPath("p/")}?${identity.key}=${encodedIdentity}&install=1&pwa_profile=1&v=v137installgate`
+    ? `${getAppPath("p/")}?${identity.key}=${encodedIdentity}&install=1&pwa_profile=1&v=v138manifestworker`
     : window.location.href;
 
   currentInstallContext = {
@@ -699,7 +699,7 @@ async function installOwnerApp(options = {}) {
   currentInstallContext = {
     type: "owner",
     name: String(options.name || options.displayName || "CityStyle profil").trim() + " Panel",
-    url: `${getAppPath("salon/")}?${startQuery}&v=v137installgate`,
+    url: `${getAppPath("salon/")}?${startQuery}&v=v138manifestworker`,
     identity: profileCode || slug || "owner"
   };
 
@@ -794,7 +794,7 @@ function updateManifestForOwner(options = {}) {
     name: appName,
     short_name: shortName || "Panel",
     description: `Direktan ulaz u vlasnički panel: ${rawName || "CityStyle profil"}.`,
-    start_url: `${getAppPath("salon/")}?${startQuery}&v=v137installgate`,
+    start_url: `${getAppPath("salon/")}?${startQuery}&v=v138manifestworker`,
     scope: getAppPath("salon/"),
     display: "standalone",
     display_override: ["standalone", "minimal-ui"],
@@ -863,7 +863,7 @@ function updateManifestForSalon(profileOrSlug, options = {}) {
   const icon512 = `${getAppBaseUrl()}assets/icons/icon-512.png`;
   const appleProfileIcon = profileImageIcon || icon512;
   const encodedIdentity = encodeURIComponent(identity.value);
-  const startUrl = `${getAppPath("p/")}?${identity.key}=${encodedIdentity}&pwa_profile=${encodedIdentity}&v=v137installgate`;
+  const startUrl = `${getAppPath("p/")}?${identity.key}=${encodedIdentity}&pwa_profile=${encodedIdentity}&v=v138manifestworker`;
 
   const baseManifest = {
     id: `${getAppPath("p/")}app/${identity.key}/${encodedIdentity}`,
@@ -1140,7 +1140,7 @@ async function registerPushForSalon(salonId) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v137installgate", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v138manifestworker", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
