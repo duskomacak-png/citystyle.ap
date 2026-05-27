@@ -6,16 +6,62 @@
   <title>CityStyle.app</title>
   <meta name="description" content="CityStyle.app — saloni i prodavnice patika kroz QR/PWA profil.">
   <meta name="theme-color" content="#0b0b0f">
-  <link rel="manifest" id="citystyle-dynamic-manifest" href="manifest.json?v=v139multipwa">
+  <script>
+    (function prepareCityStyleManifestEarly(){
+      function safeSlugName(slug){
+        return String(slug || "CityStyle profil")
+          .replace(/[-_]+/g, " ")
+          .replace(/\b\w/g, function(c){ return c.toUpperCase(); })
+          .trim() || "CityStyle profil";
+      }
+      function addManifest(href){
+        var link = document.createElement("link");
+        link.rel = "manifest";
+        link.href = href;
+        document.head.appendChild(link);
+      }
+      try {
+        var params = new URLSearchParams(window.location.search || "");
+        var slug = params.get("salon");
+        var profileCode = params.get("profile");
+        if (!slug && !profileCode) {
+          addManifest("manifest.json?v=v140multipwa");
+          return;
+        }
+        var manifestIdentity = profileCode || slug;
+        var encodedSlug = encodeURIComponent(manifestIdentity);
+        var profileName = safeSlugName(manifestIdentity);
+        var manifest = {
+          id: "/pwa/profile/" + encodedSlug,
+          name: profileName,
+          short_name: profileName.length > 12 ? profileName.slice(0, 12).trim() : profileName,
+          description: "Prečica za direktan ulaz u ovaj CityStyle profil.",
+          start_url: profileCode ? "/?profile=" + encodedSlug + "&pwa_profile=" + encodedSlug + "&v=v140multipwa" : "/?salon=" + encodedSlug + "&pwa_profile=" + encodedSlug + "&v=v140multipwa",
+          scope: "/",
+          display: "standalone",
+          background_color: "#0b0b0f",
+          theme_color: "#b91c1c",
+          orientation: "portrait",
+          icons: [
+            { src: "/assets/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
+            { src: "/assets/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" }
+          ]
+        };
+        var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+        addManifest(URL.createObjectURL(blob));
+      } catch (err) {
+        addManifest("manifest.json?v=v140multipwa");
+      }
+    })();
+  </script>
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-  <link rel="stylesheet" href="assets/css/style.css?v=v139multipwa">
+  <link rel="stylesheet" href="assets/css/style.css?v=v140multipwa">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=v139multipwa"></script>
-  <script src="assets/js/pwa-head.js?v=v139multipwa"></script>
-  <script src="assets/js/main.js?v=v139multipwa"></script>
-  <script src="assets/js/auth.js?v=v139multipwa"></script>
-  <script src="assets/js/booking-logic.js?v=v139multipwa"></script>
-  <script src="assets/js/client.js?v=v139multipwa" defer></script>
+  <script src="assets/js/config.js?v=v140multipwa"></script>
+  <script src="assets/js/main.js?v=v140multipwa"></script>
+  <script src="assets/js/auth.js?v=v140multipwa"></script>
+  <script src="assets/js/booking-logic.js?v=v140multipwa"></script>
+  <script src="assets/js/client.js?v=v140multipwa" defer></script>
 </head>
 <body>
   <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>

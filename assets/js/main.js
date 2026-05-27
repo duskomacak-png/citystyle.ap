@@ -156,36 +156,42 @@ function escapeJs(value) {
     .replaceAll("'", "\\'");
 }
 
-async function checkSalonAccess(identifier) {
-  if (!identifier) return { data: null, error: "Nedostaje identifikator profila." };
+async function checkSalonAccess(slug) {
+  if (!slug) return { data: null, error: "Nedostaje salon slug." };
   if (!window.db) return { data: null, error: "Supabase nije učitan." };
 
-  const value = String(identifier || "").trim();
-  const baseQuery = () => window.db
+  const { data, error } = await window.db
     .from("salons")
     .select("*")
+    .eq("slug", slug)
     .eq("status", "active")
-    .eq("is_deleted", false);
+    .eq("is_deleted", false)
+    .maybeSingle();
 
-  async function tryColumn(column) {
-    try {
-      const { data, error } = await baseQuery().eq(column, value).maybeSingle();
-      if (error) return { data: null, error };
-      return { data: data || null, error: null };
-    } catch (err) {
-      return { data: null, error: err };
-    }
+  return { data, error };
+}
+
+async function resolveSalonIdentifier(identifier) {
+  const value = String(identifier || "").trim();
+  if (!value) return { data: null, error: "Nedostaje profil." };
+  if (!window.db) return { data: null, error: "Supabase nije učitan." };
+
+  // First try the new public_profile_code. This lets QR/PWA links work without exposing slug.
+  try {
+    const { data, error } = await window.db
+      .from("salons")
+      .select("*")
+      .eq("public_profile_code", value)
+      .eq("status", "active")
+      .eq("is_deleted", false)
+      .maybeSingle();
+    if (data && !error) return { data, error: null };
+  } catch (err) {
+    console.warn("public_profile_code lookup nije uspeo, pokušavam slug fallback:", err);
   }
 
-  // New public profile links use public_profile_code, e.g. ?profile=cs_p_...
-  // Old links still use slug, e.g. ?salon=sport-laine. Keep both.
-  let first = value.startsWith("cs_p_") ? await tryColumn("public_profile_code") : await tryColumn("slug");
-  if (first.data) return first;
-
-  let second = value.startsWith("cs_p_") ? await tryColumn("slug") : await tryColumn("public_profile_code");
-  if (second.data) return second;
-
-  return { data: null, error: first.error || second.error || "Profil nije pronađen." };
+  // Fallback for old links and admin preview links.
+  return checkSalonAccess(value);
 }
 
 function saveCurrentSalon(slug) {
@@ -236,17 +242,35 @@ function getSalonPublicLink(slug) {
 }
 
 function getProfilePublicLink(profileCodeOrSlug) {
-  const value = String(profileCodeOrSlug || "").trim();
-  if (!value) return getAppBaseUrl();
-  if (value.startsWith("cs_p_")) return `${getAppBaseUrl()}?profile=${encodeURIComponent(value)}`;
-  return getSalonPublicLink(value);
+  return `${getAppBaseUrl()}?profile=${encodeURIComponent(profileCodeOrSlug)}`;
 }
 
-function getProfileInstallLink(profileCodeOrSlug) {
-  const value = String(profileCodeOrSlug || "").trim();
-  if (!value) return getAppBaseUrl();
-  if (value.startsWith("cs_p_")) return `${getAppBaseUrl()}?profile=${encodeURIComponent(value)}&install=1`;
-  return `${getAppBaseUrl()}?salon=${encodeURIComponent(value)}&install=1`;
+function getProfileInstallGatewayUrl(profileCodeOrSlug, slug = "") {
+  const code = encodeURIComponent(profileCodeOrSlug || slug || "profile");
+  const safeSlug = String(slug || "").trim();
+  const slugPart = safeSlug ? `&slug=${encodeURIComponent(safeSlug)}` : "";
+  return `${getAppBaseUrl()}p/?profile=${code}${slugPart}&install=1&v=v140multipwa`;
+}
+
+function openProfileInstallGateway(profileCodeOrSlug, slug = "") {
+  const url = getProfileInstallGatewayUrl(profileCodeOrSlug, slug);
+  const isAndroid = /Android/i.test(navigator.userAgent || "");
+
+  // If the user clicked from an already installed CityStyle shortcut, Android can keep the user trapped
+  // inside the first installed WebAPK. This intent tries to open the exact same URL in Chrome browser,
+  // where Chrome is allowed to show the install prompt for a different profile identity.
+  if (isStandaloneMode() && isAndroid) {
+    try {
+      const parsed = new URL(url);
+      const intentUrl = `intent://${parsed.host}${parsed.pathname}${parsed.search}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(url)};end`;
+      window.location.href = intentUrl;
+      return;
+    } catch (err) {
+      console.warn("Chrome intent nije napravljen, koristim normalan link:", err);
+    }
+  }
+
+  window.location.href = url;
 }
 
 function getSalonSourceLink(slug, source = "") {
@@ -601,17 +625,12 @@ function t(key, fallback = "") {
 }
 
 // PWA install prompt
-let deferredPrompt = window.__CITYSTYLE_DEFERRED_PROMPT || null;
+let deferredPrompt = null;
 
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
   deferredPrompt = event;
-  window.__CITYSTYLE_DEFERRED_PROMPT = event;
   showInstallButton();
-});
-
-window.addEventListener("citystyle:install-ready", () => {
-  deferredPrompt = window.__CITYSTYLE_DEFERRED_PROMPT || deferredPrompt;
 });
 
 function showInstallButton() {
@@ -634,101 +653,36 @@ function showInstallButton() {
 }
 
 async function installSalonApp(slug, options = {}) {
+  const profileCode = String(options.profileCode || options.publicProfileCode || slug || getSavedSalonSlug() || "").trim();
   if (slug) saveCurrentSalon(slug);
-  const profileCode = String(options.profileCode || "").trim();
-  const identity = profileCode || slug || getSavedSalonSlug();
-  const installUrl = getProfileInstallLink(identity);
-
-  await updateManifestForSalon(slug || identity, options);
-
-  // If user tapped install inside an already installed CityStyle profile,
-  // Android usually keeps same-origin links inside the PWA and will not fire beforeinstallprompt.
-  // Send him to the real browser install URL instead of pretending the button can force Chrome.
-  if (isStandaloneMode() && identity) {
-    const isAndroid = /Android/i.test(navigator.userAgent || "");
-    if (isAndroid && window.location.hostname === "citystyle.app") {
-      const path = profileCode ? `?profile=${encodeURIComponent(identity)}&install=1` : `?salon=${encodeURIComponent(identity)}&install=1`;
-      window.location.href = `intent://citystyle.app/${path}#Intent;scheme=https;package=com.android.chrome;end`;
-      return false;
-    }
-    showInstallHelp(
-      "Trenutno ste u već instaliranoj CityStyle prečici. Za dodavanje drugog salona/prodavnice otvorite ovaj profil u Chrome/Safari browseru, pa izaberite Dodaj na početni ekran.",
-      { installUrl, title: "Otvori drugi profil u browseru" }
-    );
-    return false;
-  }
-
-  return installApp(
-    "Ako se sistemska instalacija ne pojavi odmah, sačekajte par sekundi ili otvorite meni browsera → Dodaj na početni ekran. Prečica otvara baš ovaj profil, sa imenom profila i logom/slikom gde browser dozvoli.",
-    "Prečica ovog profila je dodata na telefon.",
-    { installUrl, title: options.name ? `Instaliraj: ${options.name}` : "Instaliraj ovaj profil" }
-  );
+  updateManifestForSalon(slug || getSavedSalonSlug(), options);
+  openProfileInstallGateway(profileCode, slug || "");
 }
 
-
-async function installOwnerApp(options = {}) {
+async function installOwnerApp() {
   clearSavedSalon();
-  updateManifestForOwner(options);
-  return installApp(
-    "Na Androidu/Chrome-u: ako se prozor za instalaciju ne pojavi, otvorite meni browsera → Dodaj na početni ekran. Na iPhone-u: Safari → Share → Add to Home Screen.",
-    "Panel vlasnika je dodat na telefon.",
-    { installUrl: `${getAppPath("salon/")}?install=owner`, title: options.name ? `Instaliraj panel: ${options.name}` : "Instaliraj panel vlasnika" }
-  );
+  updateManifestForOwner();
+  await installApp("Na iPhone-u: otvorite ovaj panel u Safari browseru, pritisnite Share i izaberite Add to Home Screen. Panel vlasnika ostaje zapamćen.", "Panel vlasnika je dodat na telefon.");
 }
 
-
-
-function salonThemeToHex(value) {
-  const theme = String(value || "").trim().toLowerCase();
-  const map = {
-    "classic-red": "#b91c1c",
-    "ocean-blue": "#2563eb",
-    "luxury-gold": "#b7791f",
-    "emerald-green": "#059669",
-    "royal-purple": "#7c3aed",
-    "soft-pink": "#db2777",
-    "graphite-dark": "#111827",
-    "orange-pro": "#ea580c"
-  };
-  if (/^#[0-9a-f]{6}$/i.test(theme)) return theme;
-  return map[theme] || "#b91c1c";
-}
-
-function updateManifestForOwner(options = {}) {
-  const appName = String(options.name || options.displayName || "CityStyle").trim() || "CityStyle";
-  const fullName = appName.toLowerCase().includes("panel") ? appName : `${appName} Panel`;
-  const profileCode = options.profileCode || options.slug || "owner";
-  const iconUrl = String(options.iconUrl || "").trim() || `${getAppBaseUrl()}assets/icons/icon-192.png`;
+function updateManifestForOwner() {
   const baseManifest = {
-    id: `/pwa/owner/${encodeURIComponent(profileCode)}`,
-    name: fullName,
-    short_name: fullName.length > 18 ? fullName.slice(0, 18).trim() : fullName,
+    id: `${getAppBaseUrl()}salon/`,
+    name: "CityStyle - Panel vlasnika",
+    short_name: "CityStyle",
     description: "Prečica za direktan ulaz u panel vlasnika biznisa.",
-    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=v139multipwa`,
+    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=v140multipwa`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
-    theme_color: salonThemeToHex(options.themeColor || "classic-red"),
+    theme_color: "#b91c1c",
     orientation: "portrait",
     icons: [
-      { src: iconUrl, sizes: "192x192", purpose: "any" },
-      { src: iconUrl, sizes: "512x512", purpose: "any" },
       { src: `${getAppBaseUrl()}assets/icons/icon-192.png`, sizes: "192x192", type: "image/png", purpose: "any maskable" },
       { src: `${getAppBaseUrl()}assets/icons/icon-512.png`, sizes: "512x512", type: "image/png", purpose: "any maskable" }
     ]
   };
   try {
-    if (window.__cityStyleSetProfileManifest) {
-      window.__cityStyleSetProfileManifest({
-        owner: true,
-        name: appName,
-        slug: options.slug || "owner",
-        profileCode,
-        iconUrl,
-        themeColor: options.themeColor || "#b91c1c"
-      });
-      return;
-    }
     const blob = new Blob([JSON.stringify(baseManifest)], { type: "application/manifest+json" });
     const url = URL.createObjectURL(blob);
     let link = document.querySelector('link[rel="manifest"]');
@@ -738,12 +692,10 @@ function updateManifestForOwner(options = {}) {
       document.head.appendChild(link);
     }
     link.href = url;
-    document.title = fullName;
   } catch (err) {
     console.warn("Owner manifest nije postavljen:", err);
   }
 }
-
 
 
 function getInitialsFromName(name = "") {
@@ -779,51 +731,31 @@ function makeInitialsIconDataUrl(name = "CityStyle", bg = "#b91c1c") {
   }
 }
 
-async function updateManifestForSalon(slug, options = {}) {
-  if (!slug && !options.profileCode) return;
+function updateManifestForSalon(slug, options = {}) {
+  if (!slug) return;
   const rawName = String(options.name || options.displayName || "").trim();
   const appName = rawName || "CityStyle profil";
-  const theme = salonThemeToHex(options.themeColor || "classic-red");
-  const profileCode = String(options.profileCode || "").trim();
-  const installIdentity = profileCode || slug;
-  const encodedIdentity = encodeURIComponent(installIdentity);
-  const encodedSlug = encodeURIComponent(slug || installIdentity);
-  const iconUrl = String(options.iconUrl || "").trim() || makeInitialsIconDataUrl(appName, "#b91c1c");
-
-  if (window.__cityStyleSetProfileManifest) {
-    try {
-      await window.__cityStyleSetProfileManifest({
-        name: appName,
-        slug: slug || installIdentity,
-        profileCode: profileCode || "",
-        iconUrl,
-        themeColor: options.themeColor || "#b91c1c"
-      });
-      return;
-    } catch (err) {
-      console.warn("Dynamic profile manifest helper nije uspeo, koristi se fallback:", err);
-    }
-  }
-
-  const startUrl = profileCode
-    ? `${getAppBaseUrl()}?profile=${encodedIdentity}&pwa_profile=${encodedIdentity}&v=v139multipwa`
-    : `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=v139multipwa`;
+  const shortName = appName.length > 12 ? appName.slice(0, 12).trim() : appName;
+  const theme = normalizeSalonTheme(options.themeColor || "classic-red");
+  const cleanIcon = String(options.iconUrl || "").trim();
+  const iconUrl = cleanIcon || makeInitialsIconDataUrl(appName, "#b91c1c");
+  const icon512 = String(options.icon512Url || "").trim() || iconUrl || makeInitialsIconDataUrl(appName, "#b91c1c");
+  const encodedSlug = encodeURIComponent(slug);
+  const manifestId = `${getAppBaseUrl()}?salon=${encodedSlug}`;
   const baseManifest = {
-    id: `/pwa/profile/${encodedIdentity}`,
+    id: manifestId,
     name: appName,
-    short_name: appName.length > 18 ? appName.slice(0, 18).trim() : appName,
+    short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: startUrl,
+    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=v140multipwa`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
     theme_color: theme,
     orientation: "portrait",
     icons: [
-      { src: iconUrl, sizes: "192x192", purpose: "any" },
-      { src: iconUrl, sizes: "512x512", purpose: "any" },
-      { src: `${getAppBaseUrl()}assets/icons/icon-192.png`, sizes: "192x192", type: "image/png", purpose: "any maskable" },
-      { src: `${getAppBaseUrl()}assets/icons/icon-512.png`, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+      { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "any maskable" },
+      { src: icon512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
     ]
   };
   try {
@@ -841,6 +773,10 @@ async function updateManifestForSalon(slug, options = {}) {
     appleIcon.href = iconUrl;
     if (!appleIcon.parentNode) document.head.appendChild(appleIcon);
     document.title = appName;
+    const themeMeta = document.querySelector('meta[name="theme-color"]') || document.createElement("meta");
+    themeMeta.name = "theme-color";
+    themeMeta.content = theme;
+    if (!themeMeta.parentNode) document.head.appendChild(themeMeta);
     const appTitle = document.querySelector('meta[name="application-name"]') || document.createElement("meta");
     appTitle.name = "application-name";
     appTitle.content = appName;
@@ -850,20 +786,18 @@ async function updateManifestForSalon(slug, options = {}) {
   }
 }
 
-
-function showInstallHelp(noPromptMessage = "Na iPhone-u: Share → Add to Home Screen.", options = {}) {
+function showInstallHelp(noPromptMessage = "Na iPhone-u: Share → Add to Home Screen.") {
   document.querySelector(".install-help-modal")?.remove();
-  const currentUrl = options.installUrl || window.location.href;
+  const currentUrl = window.location.href;
   const modal = document.createElement("div");
   modal.className = "modal-backdrop install-help-modal";
   modal.innerHTML = `
     <div class="modal-card install-help-card">
-      <h3>${escapeHtml(options.title || "Instalacija profila")}</h3>
+      <h3>Preuzimanje profila kao app</h3>
       <p>${escapeHtml(noPromptMessage)}</p>
-      <p class="muted">Ako se sistemska instalacija ne pojavi, otvorite ovaj link u Chrome browseru, zatim meni sa tri tačke → Dodaj na početni ekran. Na Androidu više profila sa istog domena ponekad traži da svaki profil otvorite u browseru, ne iz već instalirane prečice.</p>
+      <p class="muted">Ako browser ne ponudi instalaciju, otvorite meni browsera i izaberite Dodaj na početni ekran. Na Androidu/Chrome-u prečica najčešće koristi logo firme; iOS ponekad koristi ikonicu stranice.</p>
       <div class="card-actions center">
-        <a class="btn btn-primary" href="${escapeHtml(currentUrl)}" target="_blank" rel="noopener">Otvori profil za instalaciju</a>
-        <button class="btn btn-dark" type="button" onclick="copyText('${escapeJs(currentUrl)}', this)">Kopiraj link profila</button>
+        <button class="btn btn-primary" type="button" onclick="copyText('${escapeJs(currentUrl)}', this)">Kopiraj link profila</button>
         <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
       </div>
     </div>
@@ -871,36 +805,24 @@ function showInstallHelp(noPromptMessage = "Na iPhone-u: Share → Add to Home S
   document.body.appendChild(modal);
 }
 
-
-async function installApp(noPromptMessage = "Na iPhone-u: Share → Add to Home Screen.", successMessage = "CityStyle je dodat na telefon.", options = {}) {
-  deferredPrompt = window.__CITYSTYLE_DEFERRED_PROMPT || deferredPrompt;
+async function installApp(noPromptMessage = "Na iPhone-u: Share → Add to Home Screen.", successMessage = "CityStyle je dodat na telefon.") {
   if (!deferredPrompt) {
-    showInstallHelp(noPromptMessage, options);
-    return false;
+    showInstallHelp(noPromptMessage);
+    return;
   }
 
-  try {
-    deferredPrompt.prompt();
-    const choice = await deferredPrompt.userChoice;
+  deferredPrompt.prompt();
+  const choice = await deferredPrompt.userChoice;
 
-    if (choice.outcome === "accepted") {
-      showMessage(successMessage, "success");
-      document.getElementById("install-app-btn")?.remove();
-      deferredPrompt = null;
-      window.__CITYSTYLE_DEFERRED_PROMPT = null;
-      return true;
-    }
+  if (choice.outcome === "accepted") {
+    showMessage(successMessage, "success");
+    document.getElementById("install-app-btn")?.remove();
+  } else {
     showMessage("Instalacija je otkazana.", "info");
-  } catch (err) {
-    console.warn("Install prompt nije uspeo:", err);
-    showInstallHelp(noPromptMessage, options);
   }
 
   deferredPrompt = null;
-  window.__CITYSTYLE_DEFERRED_PROMPT = null;
-  return false;
 }
-
 
 window.addEventListener("appinstalled", () => {
   document.getElementById("install-app-btn")?.remove();
@@ -1020,7 +942,7 @@ async function registerPushForSalon(salonId) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v139multipwa", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v140multipwa", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
@@ -1153,6 +1075,7 @@ window.App = {
     normalizePhoneForTel,
   normalizeCurrency,
   checkSalonAccess,
+  resolveSalonIdentifier,
   saveCurrentSalon,
   getSavedSalonSlug,
   clearSavedSalon,
@@ -1160,7 +1083,8 @@ window.App = {
   getAppPath,
   getSalonPublicLink,
   getProfilePublicLink,
-  getProfileInstallLink,
+  getProfileInstallGatewayUrl,
+  openProfileInstallGateway,
   getSalonSourceLink,
   getQrImageUrl,
   installApp,

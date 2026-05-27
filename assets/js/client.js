@@ -91,14 +91,27 @@ async function loadClientApp() {
   const app = document.getElementById("app");
 
   try {
+    const urlSlug = window.App?.getUrlParam("salon");
     const urlProfile = window.App?.getUrlParam("profile");
-    const urlSlug = window.App?.getUrlParam("salon") || urlProfile;
     const forcePlatform = window.App?.getUrlParam("platform") === "1" || window.App?.getUrlParam("home") === "1";
     const wantsAdminPreview = window.App?.getUrlParam("adminPreview") === "1" || window.App?.getUrlParam("preview") === "admin";
     adminPreviewMode = wantsAdminPreview && await window.Auth?.isPlatformAdmin?.();
     ownerPreviewMode = !adminPreviewMode && (window.App?.getUrlParam("ownerPreview") === "1" || window.App?.getUrlParam("preview") === "owner");
 
-    // QR/link profile page: ?profile=public_profile_code or old ?salon=slug.
+    // New public profile code link: ?profile=cs_p_...
+    // It resolves to the real salon row, then continues through the proven slug loader.
+    if (urlProfile) {
+      app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
+      const { data: resolvedSalon, error: profileError } = await window.App.resolveSalonIdentifier(urlProfile);
+      if (profileError || !resolvedSalon?.slug) {
+        app.innerHTML = `<div class="card center"><h2>Profil nije dostupan</h2><p class="muted">Ovaj javni profil trenutno nije aktivan ili link nije ispravan.</p><button class="btn btn-dark" type="button" onclick="renderPlatformLanding()">Početna strana platforme</button></div>`;
+        return;
+      }
+      await loadSalon(resolvedSalon.slug, !(ownerPreviewMode || adminPreviewMode));
+      return;
+    }
+
+    // QR/link salon page: ?salon=slug
     // If admin/owner opens preview, do NOT save this as client shortcut.
     if (urlSlug) {
       app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
@@ -469,9 +482,9 @@ async function renderSalonHome() {
   const publicName = settings?.welcome_title || currentSalon.salon_name || "Profil";
   const profileLabels = window.App.getBusinessProfileLabels(currentSalon.business_type);
   currentSalon._publicName = publicName;
-  currentSalon._publicLogo = settings?.logo_url || settings?.cover_image_url || settings?.home_image_url || galleryImages?.[0]?.image_url || "";
+  currentSalon._publicLogo = settings?.logo_url || "";
   currentSalon._publicPhone = settings?.phone || currentSalon.phone || "";
-  window.App?.updateManifestForSalon?.(currentSalon.slug, { name: publicName, profileCode: currentSalon.public_profile_code || "", iconUrl: currentSalon._publicLogo || settings?.logo_url, themeColor: currentSalon.theme_color });
+  window.App?.updateManifestForSalon?.(currentSalon.slug, { name: publicName, iconUrl: settings?.logo_url, themeColor: currentSalon.theme_color });
 
   app.innerHTML = `
     <section class="client-page salon-themed-page">
@@ -684,10 +697,9 @@ function openPublicGalleryImage(url, caption = "") {
 }
 
 function installCurrentSalonApp() {
-  if (!currentSalon?.slug && !currentSalon?.public_profile_code) return;
-  const profileCode = currentSalon.public_profile_code || "";
-  window.App.installSalonApp(currentSalon.slug || profileCode, {
-    profileCode,
+  if (!currentSalon?.slug) return;
+  window.App.installSalonApp(currentSalon.slug, {
+    profileCode: currentSalon.public_profile_code || currentSalon.slug,
     name: currentSalon._publicName || currentSalon.salon_name || "CityStyle profil",
     iconUrl: currentSalon._publicLogo || "",
     themeColor: currentSalon.theme_color
@@ -1254,9 +1266,9 @@ async function renderSalonHome() {
 
   const publicName = settings?.welcome_title || currentSalon.salon_name || "Profil";
   currentSalon._publicName = publicName;
-  currentSalon._publicLogo = settings?.logo_url || settings?.cover_image_url || settings?.home_image_url || galleryImages?.[0]?.image_url || "";
+  currentSalon._publicLogo = settings?.logo_url || "";
   currentSalon._publicPhone = settings?.phone || currentSalon.phone || "";
-  window.App?.updateManifestForSalon?.(currentSalon.slug, { name: publicName, profileCode: currentSalon.public_profile_code || "", iconUrl: currentSalon._publicLogo || settings?.logo_url, themeColor: currentSalon.theme_color });
+  window.App?.updateManifestForSalon?.(currentSalon.slug, { name: publicName, iconUrl: settings?.logo_url, themeColor: currentSalon.theme_color });
 
   if (csIsShopProfile(currentSalon, products.length)) return renderShoeShopHome(settings || {});
 
@@ -1288,7 +1300,7 @@ async function renderSalonHome() {
 function renderShoeShopHome(settings = {}) {
   const app = document.getElementById("app");
   const name = settings?.welcome_title || currentSalon?.salon_name || "Prodavnica patika";
-  const logo = settings?.logo_url || settings?.cover_image_url || settings?.home_image_url || galleryImages?.[0]?.image_url || "";
+  const logo = settings?.logo_url || "";
   const cover = settings?.cover_image_url || settings?.home_image_url || galleryImages?.[0]?.image_url || logo || "";
   const phone = settings?.phone || currentSalon?.phone || "";
   const address = settings?.address || "";

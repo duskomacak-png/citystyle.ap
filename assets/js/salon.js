@@ -138,22 +138,7 @@ function bindSalonTabs() {
 function bindSalonInstall() {
   document.getElementById("salon-install-btn")?.addEventListener("click", async () => {
     window.App?.clearSavedSalon?.();
-    let settings = null;
-    try {
-      if (currentSalonId && window.db) {
-        const res = await window.db.from("salon_settings").select("logo_url, cover_image_url, home_image_url, welcome_title").eq("salon_id", currentSalonId).maybeSingle();
-        settings = res.data || null;
-      }
-    } catch (err) {
-      console.warn("Owner install settings nisu učitane:", err);
-    }
-    await window.App?.installOwnerApp?.({
-      name: settings?.welcome_title || currentSalon?.salon_name || "CityStyle",
-      slug: currentSalon?.slug || "owner",
-      profileCode: currentSalon?.public_profile_code || currentSalon?.slug || "owner",
-      iconUrl: settings?.logo_url || settings?.cover_image_url || settings?.home_image_url || "",
-      themeColor: currentSalon?.theme_color || "#b91c1c"
-    });
+    await window.App?.installOwnerApp?.();
   });
 }
 
