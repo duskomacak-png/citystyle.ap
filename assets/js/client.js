@@ -513,7 +513,7 @@ async function renderSalonHome() {
   const profileLabels = window.App.getBusinessProfileLabels(currentSalon.business_type);
   currentSalon._publicName = publicName;
   currentSalon._publicLogo = settings?.logo_url || "";
-  currentSalon._publicInstallIcon = settings?.logo_url || "";
+  currentSalon._publicInstallIcon = settings?.logo_url || settings?.cover_image_url || "";
   currentSalon._publicPhone = settings?.phone || currentSalon.phone || "";
   window.App?.updateManifestForSalon?.(currentSalon, { name: publicName, iconUrl: currentSalon._publicInstallIcon, publicProfileCode: currentSalon.public_profile_code, themeColor: currentSalon.theme_color });
 
@@ -1338,7 +1338,7 @@ function renderShoeShopHome(settings = {}) {
   const text = settings?.welcome_text || "";
   currentSalon._publicName = name;
   currentSalon._publicLogo = logo || "";
-  currentSalon._publicInstallIcon = logo || cover || "";
+  currentSalon._publicInstallIcon = cover || logo || "";
   currentSalon._publicPhone = phone || "";
   window.App?.updateManifestForSalon?.(currentSalon, { name, iconUrl: currentSalon._publicInstallIcon, publicProfileCode: currentSalon.public_profile_code, themeColor: currentSalon.theme_color });
   app.innerHTML = `

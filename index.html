@@ -25,7 +25,7 @@
         var slug = params.get("salon");
         var profile = params.get("profile");
         if (!slug && !profile) {
-          addManifest("manifest.json?v=v130publicpwa");
+          addManifest("manifest.json?v=v132multiinstall");
           return;
         }
         var identityKey = profile ? "profile" : "salon";
@@ -37,7 +37,7 @@
           name: profileName,
           short_name: profileName.length > 12 ? profileName.slice(0, 12).trim() : profileName,
           description: "Prečica za direktan ulaz u ovaj CityStyle profil.",
-          start_url: "/?" + identityKey + "=" + encodedSlug + "&pwa_profile=" + encodedSlug + "&v=v130publicpwa",
+          start_url: "/?" + identityKey + "=" + encodedSlug + "&pwa_profile=" + encodedSlug + "&v=v132multiinstall",
           scope: "/",
           display: "standalone",
           background_color: "#0b0b0f",
@@ -51,18 +51,18 @@
         var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
         addManifest(URL.createObjectURL(blob));
       } catch (err) {
-        addManifest("manifest.json?v=v130publicpwa");
+        addManifest("manifest.json?v=v132multiinstall");
       }
     })();
   </script>
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-  <link rel="stylesheet" href="assets/css/style.css?v=v130publicpwa">
+  <link rel="stylesheet" href="assets/css/style.css?v=v132multiinstall">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=v130publicpwa"></script>
-  <script src="assets/js/main.js?v=v130publicpwa"></script>
-  <script src="assets/js/auth.js?v=v130publicpwa"></script>
-  <script src="assets/js/booking-logic.js?v=v130publicpwa"></script>
-  <script src="assets/js/client.js?v=v130publicpwa" defer></script>
+  <script src="assets/js/config.js?v=v132multiinstall"></script>
+  <script src="assets/js/main.js?v=v132multiinstall"></script>
+  <script src="assets/js/auth.js?v=v132multiinstall"></script>
+  <script src="assets/js/booking-logic.js?v=v132multiinstall"></script>
+  <script src="assets/js/client.js?v=v132multiinstall" defer></script>
 </head>
 <body>
   <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>

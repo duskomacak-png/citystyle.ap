@@ -135,14 +135,36 @@ function bindSalonTabs() {
   });
 }
 
+async function getOwnerPwaIconUrl() {
+  try {
+    if (!currentSalonId || !window.db) return "";
+    const { data: settings } = await window.db
+      .from("salon_settings")
+      .select("logo_url, cover_image_url")
+      .eq("salon_id", currentSalonId)
+      .maybeSingle();
+
+    const logo = String(settings?.logo_url || "").trim();
+    const cover = String(settings?.cover_image_url || "").trim();
+
+    // Shop/prodavnica: logo section is hidden, so the PWA icon should be the cover/profile image.
+    // Salon: logo is the profile identity, cover is only fallback.
+    return ownerIsShopProfile() ? (cover || logo) : (logo || cover);
+  } catch (err) {
+    console.warn("Owner PWA icon nije učitan:", err);
+    return "";
+  }
+}
+
 function bindSalonInstall() {
   document.getElementById("salon-install-btn")?.addEventListener("click", async () => {
     window.App?.clearSavedSalon?.();
+    const iconUrl = await getOwnerPwaIconUrl();
     await window.App?.installOwnerApp?.({
       name: currentSalon?.salon_name || "CityStyle profil",
       slug: currentSalon?.slug || "",
       publicProfileCode: currentSalon?.public_profile_code || "",
-      iconUrl: currentSettings?.logo_url || currentSettings?.cover_image_url || "",
+      iconUrl,
       themeColor: currentSalon?.theme_color
     });
   });
