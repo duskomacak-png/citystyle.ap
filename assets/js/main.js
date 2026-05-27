@@ -200,6 +200,47 @@ function isStandaloneMode() {
     window.navigator.standalone === true;
 }
 
+const PROFILE_PWA_INSTALL_KEY = "citystyle_profile_pwa_installed_v1";
+
+function normalizePwaProfileKey(value = "") {
+  return String(value || "").trim().toLowerCase();
+}
+
+function getInstalledProfilePwaMap() {
+  return getLocal(PROFILE_PWA_INSTALL_KEY) || {};
+}
+
+function markProfilePwaInstalled(profileCode, name = "") {
+  const key = normalizePwaProfileKey(profileCode);
+  if (!key) return;
+  const map = getInstalledProfilePwaMap();
+  map[key] = { name: String(name || "").trim(), installedAt: new Date().toISOString() };
+  saveLocal(PROFILE_PWA_INSTALL_KEY, map);
+}
+
+function isProfilePwaInstalled(profileCode) {
+  const key = normalizePwaProfileKey(profileCode);
+  if (!key) return false;
+  return !!getInstalledProfilePwaMap()[key];
+}
+
+function isCurrentProfilePwaLaunch(profileCode = "") {
+  const code = normalizePwaProfileKey(profileCode || getUrlParam("profile") || getUrlParam("salon") || getUrlParam("pwa_profile"));
+  if (!code) return false;
+  return isStandaloneMode() || getUrlParam("pwa") === "1" || isProfilePwaInstalled(code);
+}
+
+function shouldShowProfileInstallButton(salonOrSlug) {
+  const code = getSalonProfileCode(salonOrSlug);
+  if (!code) return false;
+  if (isCurrentProfilePwaLaunch(code)) return false;
+  return true;
+}
+
+function getProfileInstalledLabel() {
+  return "✅ Prečica je već dodata na početni ekran";
+}
+
 function getAppBaseUrl() {
   const origin = window.location.origin;
   const path = window.location.pathname || "/";
@@ -807,6 +848,8 @@ async function installApp(noPromptMessage = "Na iPhone-u: Share → Add to Home 
   const choice = await deferredPrompt.userChoice;
 
   if (choice.outcome === "accepted") {
+    const profileKey = getUrlParam("profile") || getUrlParam("salon") || getUrlParam("pwa_profile");
+    if (profileKey) markProfilePwaInstalled(profileKey, document.title || "");
     showMessage(successMessage, "success");
     document.getElementById("install-app-btn")?.remove();
   } else {
@@ -817,7 +860,12 @@ async function installApp(noPromptMessage = "Na iPhone-u: Share → Add to Home 
 }
 
 window.addEventListener("appinstalled", () => {
+  const profileKey = getUrlParam("profile") || getUrlParam("salon") || getUrlParam("pwa_profile");
+  if (profileKey) markProfilePwaInstalled(profileKey, document.title || "");
   document.getElementById("install-app-btn")?.remove();
+  document.querySelectorAll("[data-profile-install-row]").forEach(el => {
+    el.innerHTML = `<div class="installed-profile-note">${getProfileInstalledLabel()}</div>`;
+  });
   showMessage("CityStyle je dodat na početni ekran.", "success");
 });
 
@@ -1084,5 +1132,10 @@ window.App = {
   updateManifestForOwner,
   updateManifestForSalon,
   getInitialsFromName,
-  isStandaloneMode
+  isStandaloneMode,
+  markProfilePwaInstalled,
+  isProfilePwaInstalled,
+  isCurrentProfilePwaLaunch,
+  shouldShowProfileInstallButton,
+  getProfileInstalledLabel
 };

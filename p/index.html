@@ -6,9 +6,9 @@
   <title>Instalacija profila - CityStyle</title>
   <meta name="theme-color" content="#0b0b0f">
   <link rel="apple-touch-icon" href="../assets/icons/icon-192.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=v160multipwa">
+  <link rel="stylesheet" href="../assets/css/style.css?v=v142installedstate">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../assets/js/config.js?v=v160multipwa"></script>
+  <script src="../assets/js/config.js?v=v142installedstate"></script>
   <style>
     body{min-height:100vh;margin:0;background:#0b0b0f;color:#fff;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:flex;align-items:center;justify-content:center;padding:18px;}
     .pwa-gateway{width:min(520px,100%);background:rgba(20,20,26,.94);border:1px solid rgba(255,255,255,.12);box-shadow:0 24px 80px rgba(0,0,0,.45);border-radius:28px;padding:24px;text-align:center;}
@@ -30,6 +30,18 @@
       window.__cityStyleDeferredPrompt = event;
       window.dispatchEvent(new CustomEvent("citystyle-install-ready"));
     });
+    window.addEventListener("appinstalled", function() {
+      try {
+        const params = new URLSearchParams(location.search || "");
+        const key = String(params.get("profile") || params.get("salon") || "").trim().toLowerCase();
+        if (key) {
+          const storageKey = "citystyle_profile_pwa_installed_v1";
+          const map = JSON.parse(localStorage.getItem(storageKey) || "{}");
+          map[key] = { name: document.title || "CityStyle profil", installedAt: new Date().toISOString() };
+          localStorage.setItem(storageKey, JSON.stringify(map));
+        }
+      } catch (err) {}
+    });
   </script>
 </head>
 <body>
@@ -48,7 +60,7 @@
 
   <script>
   (function profileInstallGateway(){
-    const VERSION = "v160multipwa";
+    const VERSION = "v142installedstate";
     const FALLBACK_192 = "/assets/icons/icon-192.png";
     const FALLBACK_512 = "/assets/icons/icon-512.png";
     const params = new URLSearchParams(location.search || "");
