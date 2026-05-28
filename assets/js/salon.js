@@ -1761,7 +1761,7 @@ async function uploadLogo() {
   if (error) return window.App.showMessage("Logo nije sačuvan.", "error");
   await prepareOwnerPanelManifest();
   await loadCurrentSettings();
-  window.App.showMessage("Logo je uspešno postavljen. Panel prečica će pokušati da koristi ovaj logo kao glavnu ikonicu.", "success");
+  window.App.showMessage("Logo/slika profila je uspešno postavljena. Panel prečica će pokušati da koristi baš ovu sliku kao glavnu ikonicu.", "success");
 }
 
 
@@ -1959,8 +1959,8 @@ async function renderSalonSettings() {
     <div class="section-head"><div><h2>${shop ? "Profil prodavnice" : S("profileSettings", "Podešavanje profila")}</h2><p class="muted">Uredite podatke koje korisnici vide na javnoj stranici profila.</p></div><a class="btn btn-primary" href="${adminOwnerPreviewMode ? `${window.App.getSalonPublicLink(currentSalon.slug)}&adminPreview=1&from=admin` : previewLink}">Pogledaj javnu stranicu</a></div>
     ${adminOwnerPreviewMode ? `<div class="warning-box">Admin pregled vlasničkog panela je samo za proveru izgleda. Dugmad za izmene su zaključana.</div>` : ""}
     <div class="card center"><h3>QR kod profila</h3><p class="muted">Ovaj QR kod vodi korisnike direktno na javnu stranicu profila.</p><img class="qr-img" src="${qrUrl}" alt="QR kod profila"><div class="link-box"><small>Link za klijente:</small><input readonly value="${salonLink}"></div><div class="card-actions" style="justify-content:center"><button class="btn btn-primary" type="button" onclick="copyMySalonLink()">Kopiraj link</button><a class="btn btn-dark" href="${previewLink}">Pogledaj javnu stranicu</a></div></div>
-    ${shop ? "" : `<div class="card"><h3>Logo profila</h3><p class="muted">Logo se prikazuje uz naziv i kontakt salona.</p><input type="file" id="logo-upload" accept="image/png,image/jpeg,image/webp"><button class="btn btn-primary" type="button" onclick="uploadLogo()">Postavi / promeni logo</button><div id="current-logo" class="image-preview-box"></div></div>`}
-    ${shop ? `<div class="card"><h3>Početna slika prodavnice</h3><p class="muted">Ova velika slika se prikazuje iznad oglasa. Za prodavnicu je ovo glavna vizuelna slika profila.</p><input type="file" id="cover-upload" accept="image/png,image/jpeg,image/webp"><button class="btn btn-primary" type="button" onclick="uploadCoverImage()">Postavi / promeni početnu sliku</button><div id="current-cover" class="image-preview-box"></div></div>` : ""}
+    <div class="card"><h3>${shop ? "Logo / slika profila prodavnice" : "Logo / slika profila salona"}</h3><p class="muted">Ova slika se koristi kao glavna slika profila i kao prva opcija za prečicu vlasničkog panela. Najbolje je kvadratna PNG/JPG slika sa jasnim logom.</p><input type="file" id="logo-upload" accept="image/png,image/jpeg,image/webp"><button class="btn btn-primary" type="button" onclick="uploadLogo()">Postavi / promeni logo</button><div id="current-logo" class="image-preview-box"></div></div>
+    ${shop ? `<div class="card"><h3>Početna slika prodavnice</h3><p class="muted">Ova velika slika se prikazuje iznad oglasa. Koristi se za prečicu samo ako nema loga/slike profila.</p><input type="file" id="cover-upload" accept="image/png,image/jpeg,image/webp"><button class="btn btn-primary" type="button" onclick="uploadCoverImage()">Postavi / promeni početnu sliku</button><div id="current-cover" class="image-preview-box"></div></div>` : ""}
     <div class="card settings-text-card"><h3>Podaci profila</h3><label>Naziv profila koji korisnici vide</label><input id="welcome-title" type="text" placeholder="${salonEscapeHtml(currentSalon?.salon_name || 'Naziv biznisa')}"><label>${shop ? "Kratak opis ispod loga" : "Opis / poruka korisnicima"}</label><textarea id="welcome-text" rows="4" placeholder="${shop ? "Nova kolekcija patika, dostupni brojevi i porudžbine preko WhatsApp-a." : "Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev."}"></textarea><label>Telefon / WhatsApp</label><input id="salon-phone" type="text" placeholder="064 123 4567"><label>Adresa / lokacija</label><input id="salon-address" type="text" placeholder="Adresa ili mesto poslovanja"><div class="settings-preview" id="settings-public-preview"></div><div class="card-actions settings-main-actions"><button class="btn btn-primary" type="button" onclick="saveSettings()">${S("save", "Sačuvaj")} podešavanja</button><button class="btn btn-dark" type="button" onclick="saveSettingsAndPreview()">${S("save", "Sačuvaj")} i pogledaj javnu stranicu</button></div></div>`;
   await loadCurrentSettings(); bindSettingsPreview();
 }
@@ -1995,7 +1995,7 @@ async function uploadCoverImage() {
   const { error } = await window.db.from("salon_settings").upsert({ salon_id: currentSalonId, cover_image_url: url }, { onConflict: "salon_id" });
   if (error) return window.App.showMessage("Početna slika nije sačuvana. Pokrenite SQL za cover_image_url.", "error");
   await prepareOwnerPanelManifest();
-  await loadCurrentSettings(); window.App.showMessage("Početna slika je postavljena. Panel prečica će je koristiti samo ako nema logo. Galerijske slike se ne koriste za prečicu.", "success");
+  await loadCurrentSettings(); window.App.showMessage("Početna slika je postavljena. Panel prečica će je koristiti samo ako nema logo/sliku profila. Galerijske slike se ne koriste za prečicu.", "success");
 }
 
 Object.assign(window, { showProductImages, uploadProductExtraImages, deleteProductExtraImage, copyProductLink, previewProductAsClient, uploadCoverImage });
