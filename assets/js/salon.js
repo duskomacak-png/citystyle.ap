@@ -167,7 +167,8 @@ async function getOwnerPanelManifestData() {
     profileCode: profileKey,
     salonId: currentSalonId || "",
     themeColor: currentSalon?.theme_color || "classic-red",
-    iconUrl: ""
+    iconUrl: "",
+    openSection: ownerIsShopProfile() ? "products" : "appointments"
   };
 
   try {
@@ -233,8 +234,26 @@ function renderSalonLogin() {
   `;
 }
 
+function getRequestedOwnerSection() {
+  const requested = String(window.App?.getUrlParam?.("open") || "").trim().toLowerCase();
+  const allowed = ["appointments", "services", "products", "analytics", "garage", "gallery", "hours", "settings"];
+  if (allowed.includes(requested)) return requested;
+  try {
+    const saved = sessionStorage.getItem("citystyle_owner_open_section");
+    if (allowed.includes(saved)) {
+      sessionStorage.removeItem("citystyle_owner_open_section");
+      return saved;
+    }
+  } catch (err) {}
+  return "";
+}
+
 function getDefaultOwnerSection() {
-  return ownerIsShopProfile() ? "products" : "services";
+  const requested = getRequestedOwnerSection();
+  if (requested) return requested;
+  // Salon/frizer owner should land on appointments, especially when opening
+  // from a shortcut/badge after a new booking. Shops still land on products.
+  return ownerIsShopProfile() ? "products" : "appointments";
 }
 
 async function handleSalonLogin() {
@@ -618,6 +637,10 @@ async function renderAppointments() {
     : ownerNotificationsAllowed
       ? `<button class="btn btn-primary btn-small" type="button" onclick="enableOwnerNotifications()">${S("enableNotifications", "Uključi obaveštenja")}</button>`
       : `<span class="status-pill">Obaveštenja samo za termine salona</span>`;
+  const openedFromPush = window.App?.getUrlParam?.("fromPush") === "1";
+  const pushOpenNotice = openedFromPush
+    ? `<div class="owner-subscription-alert"><div><strong>🔔 Otvoreno iz notifikacije</strong><p>Ovde su aktivni termini i podaci osobe koja je zakazala.</p></div></div>`
+    : "";
   content.innerHTML = `
     <div class="section-head paper-section-head">
       <div>
@@ -631,6 +654,7 @@ async function renderAppointments() {
     </div>
 
     ${renderOwnerSubscriptionNotice()}
+    ${pushOpenNotice}
 
     <div class="owner-dashboard-grid">
       <div class="owner-metric-card"><span>Danas</span><strong>${todayCount}</strong><small>aktivnih zahteva</small></div>

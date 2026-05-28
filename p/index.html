@@ -73,7 +73,7 @@
     function profileUrl(){
       if (isPanel) {
         const ownerKey = encodeURIComponent(state.profile || state.slug || rawProfile || "owner");
-        return `${location.origin}/salon/?pwa_owner=1&owner=${ownerKey}&v=${VERSION}`;
+        return `${location.origin}/salon/?pwa_owner=1&owner=${ownerKey}&open=appointments&v=${VERSION}`;
       }
       return `${location.origin}/?${profileQuery()}&v=${VERSION}`;
     }
