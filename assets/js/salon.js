@@ -139,6 +139,20 @@ function bindSalonInstall() {
   document.getElementById("salon-install-btn")?.addEventListener("click", async () => {
     window.App?.clearSavedSalon?.();
     const manifestData = await getOwnerPanelManifestData();
+
+    // Owner panel uses the same dedicated install gateway as public profiles,
+    // but with panel=1. This prevents Chrome from using the early generic
+    // CityStyle manifest that can create a CS fallback icon. The gateway first
+    // loads salon_settings.logo_url/cover/home image, then offers installation.
+    if (window.App?.getProfileInstallGatewayUrl) {
+      const url = window.App.getProfileInstallGatewayUrl({
+        public_profile_code: manifestData.profileCode,
+        slug: manifestData.slug
+      }, { name: manifestData.name, panel: true });
+      window.location.href = url;
+      return;
+    }
+
     await window.App?.installOwnerApp?.(manifestData);
   });
 }

@@ -43,12 +43,12 @@
       <button id="copyBtn" class="pwa-btn pwa-btn-dark" type="button">Kopiraj link profila</button>
     </div>
     <div id="pwaStatus" class="pwa-status"></div>
-    <p class="pwa-help">Ako sistemska instalacija ne iskoči odmah, sačekaj par sekundi ili koristi meni browsera → <strong>Dodaj na početni ekran</strong>. Ova strana koristi stabilnu ikonicu ako logo ne može bezbedno da se pretvori u PWA ikonu.</p>
+    <p class="pwa-help">Ako sistemska instalacija ne iskoči odmah, sačekaj par sekundi ili koristi meni browsera → <strong>Dodaj na početni ekran</strong>. Ova strana prvo koristi logo/sliku profila. Ako browser ne može bezbedno da je pretvori u PWA ikonu, koristi stabilan fallback da instalacija ne zakoči.</p>
   </main>
 
   <script>
   (function profileInstallGateway(){
-    const VERSION = "v160multipwa";
+    const VERSION = "v1350ownericon";
     const FALLBACK_192 = "/assets/icons/icon-192.png";
     const FALLBACK_512 = "/assets/icons/icon-512.png";
     const params = new URLSearchParams(location.search || "");
@@ -70,7 +70,13 @@
     function setStatus(msg, ok){ statusEl.textContent = msg || ""; statusEl.style.color = ok ? "#86efac" : "#fca5a5"; }
     function isCode(value){ return /^cs_p_/i.test(String(value || "")); }
     function profileQuery(){ return isCode(state.profile) ? `profile=${encodeURIComponent(state.profile)}` : `salon=${encodeURIComponent(state.slug || state.profile)}`; }
-    function profileUrl(){ return `${location.origin}/?${profileQuery()}&v=${VERSION}`; }
+    function profileUrl(){
+      if (isPanel) {
+        const ownerKey = encodeURIComponent(state.profile || state.slug || rawProfile || "owner");
+        return `${location.origin}/salon/?pwa_owner=1&owner=${ownerKey}&v=${VERSION}`;
+      }
+      return `${location.origin}/?${profileQuery()}&v=${VERSION}`;
+    }
 
     function setIconPreview(src, name){
       if (src) {
@@ -99,24 +105,47 @@
       } catch (err) { return FALLBACK_512; }
     }
 
-    async function logoToIconDataUrl(url) {
+    async function createPwaIconDataUrl(url, targetSize = 512) {
       if (!url) return "";
       try {
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.referrerPolicy = "no-referrer";
-        const loaded = new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; setTimeout(reject, 3500); });
+        const loaded = new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          setTimeout(reject, 5000);
+        });
         img.src = url;
         await loaded;
-        const canvas = document.createElement("canvas"); canvas.width = 512; canvas.height = 512;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = targetSize;
+        canvas.height = targetSize;
         const ctx = canvas.getContext("2d");
-        ctx.fillStyle = "#0b0b0f"; ctx.fillRect(0,0,512,512);
-        const size = Math.min(img.naturalWidth || 512, img.naturalHeight || 512);
-        const sx = Math.max(0, ((img.naturalWidth || size) - size) / 2);
-        const sy = Math.max(0, ((img.naturalHeight || size) - size) / 2);
-        ctx.drawImage(img, sx, sy, size, size, 0, 0, 512, 512);
+
+        // Solid background + safe padding. This is more reliable for Android maskable icons
+        // than sending an arbitrary uploaded photo/logo directly to the manifest.
+        ctx.fillStyle = "#0b0b0f";
+        ctx.fillRect(0, 0, targetSize, targetSize);
+
+        const iw = img.naturalWidth || targetSize;
+        const ih = img.naturalHeight || targetSize;
+        const padding = Math.round(targetSize * 0.10);
+        const maxW = targetSize - padding * 2;
+        const maxH = targetSize - padding * 2;
+        const scale = Math.min(maxW / iw, maxH / ih);
+        const dw = Math.max(1, Math.round(iw * scale));
+        const dh = Math.max(1, Math.round(ih * scale));
+        const dx = Math.round((targetSize - dw) / 2);
+        const dy = Math.round((targetSize - dh) / 2);
+
+        ctx.drawImage(img, dx, dy, dw, dh);
         return canvas.toDataURL("image/png");
-      } catch (err) { return ""; }
+      } catch (err) {
+        console.warn("Logo nije mogao u PWA ikonicu, koristi se fallback:", err);
+        return "";
+      }
     }
 
     function setManifest() {
@@ -128,7 +157,7 @@
         name: appName,
         short_name: shortName || "Profil",
         description: isPanel ? `Panel vlasnika za ${state.name}.` : `Prečica za direktan ulaz u profil: ${state.name}.`,
-        start_url: `/?${profileQuery()}${isPanel ? "&panel=1" : ""}&pwa=1&v=${VERSION}`,
+        start_url: isPanel ? profileUrl() : `/?${profileQuery()}&pwa=1&v=${VERSION}`,
         scope: "/",
         display: "standalone",
         background_color: "#0b0b0f",
@@ -145,7 +174,8 @@
       link.href = URL.createObjectURL(blob);
       document.title = appName;
       titleEl.textContent = `Instaliraj: ${appName}`;
-      subtitleEl.textContent = "Ova prečica treba da otvara baš ovaj profil, sa posebnim imenom i ikonicom gde browser dozvoli.";
+      subtitleEl.textContent = isPanel ? "Ova prečica treba da otvara baš vlasnički panel, sa imenom i logom profila gde browser dozvoli." : "Ova prečica treba da otvara baš ovaj profil, sa posebnim imenom i ikonicom gde browser dozvoli.";
+      openProfileBtn.textContent = isPanel ? "Otvori panel" : "Otvori profil";
       openProfileBtn.href = profileUrl();
     }
 
@@ -164,13 +194,18 @@
         state.slug = salon.slug || rawProfile;
         state.profile = salon.public_profile_code || rawProfile || salon.slug;
         const { data: settings } = await window.db.from("salon_settings").select("*").eq("salon_id", salon.id).maybeSingle();
-        const { data: homeImages } = await window.db.from("home_images").select("image_url,sort_order").eq("salon_id", salon.id).order("sort_order", { ascending:true }).limit(1);
+        const { data: homeImages } = isPanel
+          ? { data: [] }
+          : await window.db.from("home_images").select("image_url,sort_order").eq("salon_id", salon.id).order("sort_order", { ascending:true }).limit(1);
         state.name = cleanText(settings?.welcome_title || salon.salon_name || nameHint || "CityStyle profil");
-        state.logo = cleanText(settings?.logo_url || settings?.cover_image_url || settings?.home_image_url || homeImages?.[0]?.image_url || "");
+        // Owner panel shortcut is identity-only: logo first, then main profile/cover image.
+        // It must not pull a random gallery/product/service image. Public profile may still use gallery fallback.
+        state.logo = cleanText(settings?.logo_url || settings?.cover_image_url || settings?.home_image_url || (!isPanel ? homeImages?.[0]?.image_url : "") || "");
         setIconPreview(state.logo, state.name);
-        const dataIcon = await logoToIconDataUrl(state.logo);
-        state.icon192 = dataIcon || makeInitialIcon(state.name);
-        state.icon512 = state.icon192;
+        const dataIcon512 = await createPwaIconDataUrl(state.logo, 512);
+        const dataIcon192 = await createPwaIconDataUrl(state.logo, 192);
+        state.icon192 = dataIcon192 || dataIcon512 || makeInitialIcon(state.name);
+        state.icon512 = dataIcon512 || state.icon192;
         setManifest();
         setStatus(window.__cityStyleDeferredPrompt ? "Spremno za instalaciju." : "Ako dugme ne otvori sistemsku instalaciju, koristi meni browsera → Dodaj na početni ekran.", !!window.__cityStyleDeferredPrompt);
       } catch (err) {
