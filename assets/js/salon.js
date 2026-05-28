@@ -164,17 +164,10 @@ async function getOwnerPanelManifestData() {
       .eq("salon_id", currentSalonId)
       .maybeSingle();
 
-    let icon = settings?.logo_url || settings?.cover_image_url || settings?.home_image_url || "";
-
-    if (!icon) {
-      const { data: homeImages } = await window.db
-        .from("home_images")
-        .select("image_url,sort_order")
-        .eq("salon_id", currentSalonId)
-        .order("sort_order", { ascending: true })
-        .limit(1);
-      icon = homeImages?.[0]?.image_url || "";
-    }
+    // Owner panel shortcut must use only the business identity image.
+    // Do NOT fall back to random gallery/home_images photos, because that can put
+    // a product/treatment photo on the owner's app shortcut instead of the salon/shop logo.
+    const icon = settings?.logo_url || settings?.cover_image_url || settings?.home_image_url || "";
 
     data.iconUrl = String(icon || "").trim();
   } catch (err) {
@@ -1768,7 +1761,7 @@ async function uploadLogo() {
   if (error) return window.App.showMessage("Logo nije sačuvan.", "error");
   await prepareOwnerPanelManifest();
   await loadCurrentSettings();
-  window.App.showMessage("Logo je uspešno postavljen. Panel prečica će pokušati da koristi ovaj logo.", "success");
+  window.App.showMessage("Logo je uspešno postavljen. Panel prečica će pokušati da koristi ovaj logo kao glavnu ikonicu.", "success");
 }
 
 
@@ -2002,7 +1995,7 @@ async function uploadCoverImage() {
   const { error } = await window.db.from("salon_settings").upsert({ salon_id: currentSalonId, cover_image_url: url }, { onConflict: "salon_id" });
   if (error) return window.App.showMessage("Početna slika nije sačuvana. Pokrenite SQL za cover_image_url.", "error");
   await prepareOwnerPanelManifest();
-  await loadCurrentSettings(); window.App.showMessage("Početna slika je postavljena. Panel prečica će je koristiti ako nema logo.", "success");
+  await loadCurrentSettings(); window.App.showMessage("Početna slika je postavljena. Panel prečica će je koristiti samo ako nema logo. Galerijske slike se ne koriste za prečicu.", "success");
 }
 
 Object.assign(window, { showProductImages, uploadProductExtraImages, deleteProductExtraImage, copyProductLink, previewProductAsClient, uploadCoverImage });

@@ -666,7 +666,7 @@ function updateManifestForOwner(options = {}) {
   const cleanIcon = String(options.iconUrl || options.logoUrl || "").trim();
   const iconUrl = cleanIcon || makeInitialsIconDataUrl(businessName, "#b91c1c");
   const icon512 = String(options.icon512Url || "").trim() || iconUrl || makeInitialsIconDataUrl(businessName, "#b91c1c");
-  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v1341ownericon`;
+  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v1348owneridentity`;
   const baseManifest = {
     id: `${getAppBaseUrl()}pwa/owner/${encodedKey}`,
     name: appName,
