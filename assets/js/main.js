@@ -200,64 +200,6 @@ function isStandaloneMode() {
     window.navigator.standalone === true;
 }
 
-const PROFILE_PWA_INSTALL_KEY = "citystyle_profile_pwa_installed_v1";
-
-function normalizePwaProfileKey(value = "") {
-  return String(value || "").trim().toLowerCase();
-}
-
-function getInstalledProfilePwaMap() {
-  return getLocal(PROFILE_PWA_INSTALL_KEY) || {};
-}
-
-function markProfilePwaInstalled(profileCode, name = "") {
-  const key = normalizePwaProfileKey(profileCode);
-  if (!key) return;
-  const map = getInstalledProfilePwaMap();
-  map[key] = { name: String(name || "").trim(), installedAt: new Date().toISOString() };
-  saveLocal(PROFILE_PWA_INSTALL_KEY, map);
-}
-
-function isProfilePwaInstalled(profileCode) {
-  const key = normalizePwaProfileKey(profileCode);
-  if (!key) return false;
-  return !!getInstalledProfilePwaMap()[key];
-}
-
-function hasAnyInstalledKeyForSalon(salonOrSlug) {
-  if (!salonOrSlug) return false;
-  const keys = [];
-  if (typeof salonOrSlug === "object") {
-    keys.push(salonOrSlug.public_profile_code, salonOrSlug.slug, salonOrSlug.id);
-  } else {
-    keys.push(salonOrSlug);
-  }
-  return keys.some(value => isProfilePwaInstalled(value));
-}
-
-function getCurrentLaunchKeys() {
-  return [getUrlParam("profile"), getUrlParam("salon"), getUrlParam("pwa_profile")].filter(Boolean);
-}
-
-function isCurrentProfilePwaLaunch(profileCode = "") {
-  const code = normalizePwaProfileKey(profileCode || getUrlParam("profile") || getUrlParam("salon") || getUrlParam("pwa_profile"));
-  if (!code) return false;
-  return isStandaloneMode() || getUrlParam("pwa") === "1" || isProfilePwaInstalled(code);
-}
-
-function shouldShowProfileInstallButton(salonOrSlug) {
-  const code = getSalonProfileCode(salonOrSlug);
-  if (!code) return false;
-  if (isStandaloneMode() || getUrlParam("pwa") === "1") return false;
-  if (hasAnyInstalledKeyForSalon(salonOrSlug)) return false;
-  if (getCurrentLaunchKeys().some(key => isProfilePwaInstalled(key))) return false;
-  return true;
-}
-
-function getProfileInstalledLabel() {
-  return "✅ Prečica je već dodata na početni ekran";
-}
-
 function getAppBaseUrl() {
   const origin = window.location.origin;
   const path = window.location.pathname || "/";
@@ -706,27 +648,39 @@ async function installSalonApp(salonOrSlug, options = {}) {
   window.location.href = url;
 }
 
-async function installOwnerApp() {
+async function installOwnerApp(options = {}) {
   clearSavedSalon();
-  updateManifestForOwner();
-  await installApp("Na iPhone-u: otvorite ovaj panel u Safari browseru, pritisnite Share i izaberite Add to Home Screen. Panel vlasnika ostaje zapamćen.", "Panel vlasnika je dodat na telefon.");
+  updateManifestForOwner(options);
+  const ownerName = String(options.name || options.displayName || "Panel vlasnika").trim();
+  await installApp("Na iPhone-u: otvorite ovaj panel u Safari browseru, pritisnite Share i izaberite Add to Home Screen. Panel vlasnika ostaje zapamćen.", `${ownerName} je dodat na telefon.`);
 }
 
-function updateManifestForOwner() {
+function updateManifestForOwner(options = {}) {
+  const rawName = String(options.name || options.displayName || "").trim();
+  const businessName = rawName || "CityStyle";
+  const appName = String(options.panelName || `${businessName} Panel`).trim();
+  const shortName = appName.length > 18 ? appName.slice(0, 18).trim() : appName;
+  const theme = normalizeSalonTheme(options.themeColor || "classic-red");
+  const profileKey = String(options.profileCode || options.publicProfileCode || options.slug || options.salonId || "owner").trim();
+  const encodedKey = encodeURIComponent(profileKey || "owner");
+  const cleanIcon = String(options.iconUrl || options.logoUrl || "").trim();
+  const iconUrl = cleanIcon || makeInitialsIconDataUrl(businessName, "#b91c1c");
+  const icon512 = String(options.icon512Url || "").trim() || iconUrl || makeInitialsIconDataUrl(businessName, "#b91c1c");
+  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v1341ownericon`;
   const baseManifest = {
-    id: `${getAppBaseUrl()}salon/`,
-    name: "CityStyle - Panel vlasnika",
-    short_name: "CityStyle",
-    description: "Prečica za direktan ulaz u panel vlasnika biznisa.",
-    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=v143installedlaunch`,
+    id: `${getAppBaseUrl()}pwa/owner/${encodedKey}`,
+    name: appName,
+    short_name: shortName || "Panel",
+    description: `Panel vlasnika za ${businessName}.`,
+    start_url: start,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
-    theme_color: "#b91c1c",
+    theme_color: theme,
     orientation: "portrait",
     icons: [
-      { src: `${getAppBaseUrl()}assets/icons/icon-192.png`, sizes: "192x192", type: "image/png", purpose: "any maskable" },
-      { src: `${getAppBaseUrl()}assets/icons/icon-512.png`, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+      { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "any maskable" },
+      { src: icon512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
     ]
   };
   try {
@@ -739,6 +693,19 @@ function updateManifestForOwner() {
       document.head.appendChild(link);
     }
     link.href = url;
+    const appleIcon = document.querySelector('link[rel="apple-touch-icon"]') || document.createElement("link");
+    appleIcon.rel = "apple-touch-icon";
+    appleIcon.href = iconUrl;
+    if (!appleIcon.parentNode) document.head.appendChild(appleIcon);
+    document.title = appName;
+    const themeMeta = document.querySelector('meta[name="theme-color"]') || document.createElement("meta");
+    themeMeta.name = "theme-color";
+    themeMeta.content = theme;
+    if (!themeMeta.parentNode) document.head.appendChild(themeMeta);
+    const appTitle = document.querySelector('meta[name="application-name"]') || document.createElement("meta");
+    appTitle.name = "application-name";
+    appTitle.content = appName;
+    if (!appTitle.parentNode) document.head.appendChild(appTitle);
   } catch (err) {
     console.warn("Owner manifest nije postavljen:", err);
   }
@@ -797,7 +764,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v143installedlaunch`,
+    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v160multipwa`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -865,8 +832,6 @@ async function installApp(noPromptMessage = "Na iPhone-u: Share → Add to Home 
   const choice = await deferredPrompt.userChoice;
 
   if (choice.outcome === "accepted") {
-    const profileKey = getUrlParam("profile") || getUrlParam("salon") || getUrlParam("pwa_profile");
-    if (profileKey) markProfilePwaInstalled(profileKey, document.title || "");
     showMessage(successMessage, "success");
     document.getElementById("install-app-btn")?.remove();
   } else {
@@ -877,12 +842,7 @@ async function installApp(noPromptMessage = "Na iPhone-u: Share → Add to Home 
 }
 
 window.addEventListener("appinstalled", () => {
-  const profileKey = getUrlParam("profile") || getUrlParam("salon") || getUrlParam("pwa_profile");
-  if (profileKey) markProfilePwaInstalled(profileKey, document.title || "");
   document.getElementById("install-app-btn")?.remove();
-  document.querySelectorAll("[data-profile-install-row]").forEach(el => {
-    el.innerHTML = `<div class="installed-profile-note">${getProfileInstalledLabel()}</div>`;
-  });
   showMessage("CityStyle je dodat na početni ekran.", "success");
 });
 
@@ -999,7 +959,7 @@ async function registerPushForSalon(salonId) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v143installedlaunch", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v160multipwa", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
@@ -1149,10 +1109,5 @@ window.App = {
   updateManifestForOwner,
   updateManifestForSalon,
   getInitialsFromName,
-  isStandaloneMode,
-  markProfilePwaInstalled,
-  isProfilePwaInstalled,
-  isCurrentProfilePwaLaunch,
-  shouldShowProfileInstallButton,
-  getProfileInstalledLabel
+  isStandaloneMode
 };

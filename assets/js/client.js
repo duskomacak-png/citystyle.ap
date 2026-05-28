@@ -154,10 +154,6 @@ async function loadSalon(slug, saveThisSalon = true) {
   window.App?.setAppLanguage?.(salon.app_language || "sr");
   window.App?.applySalonTheme?.(salon.theme_color);
   if (saveThisSalon) window.App.saveCurrentSalon(salon.slug);
-  if (window.App?.getUrlParam?.("pwa") === "1" || window.App?.isStandaloneMode?.()) {
-    window.App?.markProfilePwaInstalled?.(salon.public_profile_code || salon.slug, salon.salon_name || "CityStyle profil");
-    window.App?.markProfilePwaInstalled?.(salon.slug, salon.salon_name || "CityStyle profil");
-  }
   recordProfileVisitIfNeeded(salon);
 
   await loadServices();
@@ -454,26 +450,6 @@ async function loadGarageListings() {
   }));
 }
 
-
-function renderProfileInstallAction(extraClass = "") {
-  if (ownerPreviewMode) return "";
-  const canShow = window.App?.shouldShowProfileInstallButton ? window.App.shouldShowProfileInstallButton(currentSalon) : true;
-  if (!canShow) {
-    const label = window.App?.getProfileInstalledLabel ? window.App.getProfileInstalledLabel() : "✅ Prečica je već dodata na početni ekran";
-    return `<div class="installed-profile-note ${escapeHtml(extraClass)}" data-profile-install-row>${escapeHtml(label)}</div>`;
-  }
-  return `<button class="btn btn-dark ${escapeHtml(extraClass)}" data-profile-install-row type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app ovog profila")}</button>`;
-}
-
-function renderShopInstallAction(logo = "") {
-  if (ownerPreviewMode) return "";
-  const canShow = window.App?.shouldShowProfileInstallButton ? window.App.shouldShowProfileInstallButton(currentSalon) : true;
-  if (!canShow) {
-    const label = window.App?.getProfileInstalledLabel ? window.App.getProfileInstalledLabel() : "✅ Prečica je već dodata na početni ekran";
-    return `<div class="shoe-install-row" data-profile-install-row><div class="installed-profile-note">${escapeHtml(label)}</div></div>`;
-  }
-  return `<div class="shoe-install-row" data-profile-install-row><button class="btn btn-dark shoe-install-btn" type="button" onclick="installCurrentSalonApp()">📱 Preuzmi app prodavnice</button><small>Prečica otvara baš ovaj profil${logo ? " i koristi logo firme gde browser dozvoljava" : ""}.</small></div>`;
-}
 async function renderSalonHome() {
   const app = document.getElementById("app");
   app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
@@ -539,7 +515,7 @@ async function renderSalonHome() {
           <button class="btn btn-dark" type="button" onclick="showServices()">${escapeHtml(profileLabels.services)}</button>
           <button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>
           ${garageListings.length ? `<button class="btn btn-dark" type="button" onclick="showGarage()">Garaža / oglasi</button>` : ""}
-          ${renderProfileInstallAction()}
+          ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app ovog profila")}</button>`}
         </div>
       </div>
 
@@ -1300,7 +1276,7 @@ async function renderSalonHome() {
           <button class="btn btn-dark" type="button" onclick="showServices()">${escapeHtml(profileLabels.services)}</button>
           ${products.length ? `<button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>` : ""}
           ${garageListings.length ? `<button class="btn btn-dark" type="button" onclick="showGarage()">Garaža / oglasi</button>` : ""}
-          ${renderProfileInstallAction()}
+          ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app ovog profila")}</button>`}
         </div>
       </div>
       <div id="client-extra">${renderClientServicesPreview()}${renderClientProductsPreview()}${renderClientGaragePreview()}${renderClientGalleryPreview()}${renderClientWorkingHours(workingHours || [])}</div>
@@ -1325,7 +1301,7 @@ function renderShoeShopHome(settings = {}) {
         ${logo ? `<img class="shoe-logo" src="${escapeHtml(logo)}" alt="${escapeHtml(name)} logo">` : `<div class="shoe-logo shoe-logo-fallback">${escapeHtml(name.charAt(0).toUpperCase())}</div>`}
         <div class="shoe-info-copy"><h1>${escapeHtml(name)}</h1>${text ? `<p>${escapeHtml(text)}</p>` : ""}<div class="shoe-meta">${phone ? `<a class="shoe-meta-link" href="tel:${escapeHtml(csSafePhone(phone))}">📞 ${escapeHtml(phone)}</a>` : ""}${address ? renderPublicAddressLink(address) : ""}</div></div>
       </div>
-      ${renderShopInstallAction(logo)}
+      ${ownerPreviewMode ? "" : `<div class="shoe-install-row"><button class="btn btn-dark shoe-install-btn" type="button" onclick="installCurrentSalonApp()">📱 Preuzmi app prodavnice</button><small>Prečica otvara baš ovaj profil${logo ? " i koristi logo firme gde browser dozvoljava" : ""}.</small></div>`}
       <section class="shoe-products-section">
         ${products.length ? `<div class="shoe-grid">${products.map((product, index) => renderShoeProductCard(product, index)).join("")}</div>` : `<div class="card"><h2>Još nema oglasa</h2><p class="muted">Vlasnik još nije dodao patike u katalog.</p></div>`}
       </section>

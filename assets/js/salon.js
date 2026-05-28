@@ -138,8 +138,59 @@ function bindSalonTabs() {
 function bindSalonInstall() {
   document.getElementById("salon-install-btn")?.addEventListener("click", async () => {
     window.App?.clearSavedSalon?.();
-    await window.App?.installOwnerApp?.();
+    const manifestData = await getOwnerPanelManifestData();
+    await window.App?.installOwnerApp?.(manifestData);
   });
+}
+
+async function getOwnerPanelManifestData() {
+  const businessName = currentSalon?.salon_name || "CityStyle";
+  const profileKey = currentSalon?.public_profile_code || currentSalon?.slug || currentSalonId || "owner";
+  const data = {
+    name: businessName,
+    panelName: `${businessName} Panel`,
+    slug: currentSalon?.slug || "",
+    profileCode: profileKey,
+    salonId: currentSalonId || "",
+    themeColor: currentSalon?.theme_color || "classic-red",
+    iconUrl: ""
+  };
+
+  try {
+    if (!currentSalonId || !window.db) return data;
+    const { data: settings } = await window.db
+      .from("salon_settings")
+      .select("logo_url,cover_image_url,home_image_url")
+      .eq("salon_id", currentSalonId)
+      .maybeSingle();
+
+    let icon = settings?.logo_url || settings?.cover_image_url || settings?.home_image_url || "";
+
+    if (!icon) {
+      const { data: homeImages } = await window.db
+        .from("home_images")
+        .select("image_url,sort_order")
+        .eq("salon_id", currentSalonId)
+        .order("sort_order", { ascending: true })
+        .limit(1);
+      icon = homeImages?.[0]?.image_url || "";
+    }
+
+    data.iconUrl = String(icon || "").trim();
+  } catch (err) {
+    console.warn("Owner panel ikonica nije učitana, koristi se fallback:", err);
+  }
+
+  return data;
+}
+
+async function prepareOwnerPanelManifest() {
+  try {
+    const manifestData = await getOwnerPanelManifestData();
+    window.App?.updateManifestForOwner?.(manifestData);
+  } catch (err) {
+    console.warn("Owner panel manifest nije pripremljen:", err);
+  }
 }
 
 function bindSalonLogout() {
@@ -194,6 +245,7 @@ async function handleSalonLogin() {
   window.App?.setAppLanguage?.(salon.app_language || "sr");
   window.App?.applySalonTheme?.(salon.theme_color);
   renderSalonDashboard();
+  await prepareOwnerPanelManifest();
   await showSection(getDefaultOwnerSection());
 }
 
@@ -216,6 +268,7 @@ async function loadSalonForAdminPreview(salonId) {
   window.App?.setAppLanguage?.(data.app_language || "sr");
   window.App?.applySalonTheme?.(data.theme_color);
   renderSalonDashboard();
+  await prepareOwnerPanelManifest();
   await showSection(getDefaultOwnerSection());
 }
 
@@ -243,6 +296,7 @@ async function loadSalonFromSession(salonId) {
   window.App?.setAppLanguage?.(data.app_language || "sr");
   window.App?.applySalonTheme?.(data.theme_color);
   renderSalonDashboard();
+  await prepareOwnerPanelManifest();
   await showSection(getDefaultOwnerSection());
 }
 
@@ -305,7 +359,8 @@ function renderSalonDashboardLegacyDisabled() {
     if (labels[btn.dataset.section]) btn.textContent = labels[btn.dataset.section];
     if (btn.dataset.section === "garage") btn.classList.toggle("hidden", !ownerHasGaragePackage());
   });
-  document.getElementById("salon-install-btn").textContent = S("ownerInstallBtn", "Preuzmi panel vlasnika");
+  const ownerPanelName = currentSalon?.salon_name ? `Preuzmi ${currentSalon.salon_name} Panel` : S("ownerInstallBtn", "Preuzmi panel vlasnika");
+  document.getElementById("salon-install-btn").textContent = ownerPanelName;
   document.getElementById("salon-logout-btn").textContent = S("logout", "Odjavi se");
 
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
@@ -1711,8 +1766,9 @@ async function uploadLogo() {
   if (!url) return;
   const { error } = await window.db.from("salon_settings").upsert({ salon_id: currentSalonId, logo_url: url }, { onConflict: "salon_id" });
   if (error) return window.App.showMessage("Logo nije sačuvan.", "error");
+  await prepareOwnerPanelManifest();
   await loadCurrentSettings();
-  window.App.showMessage("Logo je uspešno postavljen.", "success");
+  window.App.showMessage("Logo je uspešno postavljen. Panel prečica će pokušati da koristi ovaj logo.", "success");
 }
 
 
@@ -1779,7 +1835,8 @@ function renderSalonDashboard() {
     btn.classList.toggle("hidden", !allowed || (btn.dataset.section === "garage" && !ownerHasGaragePackage()));
     if (labels[btn.dataset.section]) btn.textContent = labels[btn.dataset.section];
   });
-  document.getElementById("salon-install-btn").textContent = S("ownerInstallBtn", "Preuzmi panel vlasnika");
+  const ownerPanelName = currentSalon?.salon_name ? `Preuzmi ${currentSalon.salon_name} Panel` : S("ownerInstallBtn", "Preuzmi panel vlasnika");
+  document.getElementById("salon-install-btn").textContent = ownerPanelName;
   document.getElementById("salon-logout-btn").textContent = S("logout", "Odjavi se");
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
   const expired = isPaymentExpired(currentSalon.paid_until);
@@ -1944,7 +2001,8 @@ async function uploadCoverImage() {
   if (!url) return;
   const { error } = await window.db.from("salon_settings").upsert({ salon_id: currentSalonId, cover_image_url: url }, { onConflict: "salon_id" });
   if (error) return window.App.showMessage("Početna slika nije sačuvana. Pokrenite SQL za cover_image_url.", "error");
-  await loadCurrentSettings(); window.App.showMessage("Početna slika je postavljena.", "success");
+  await prepareOwnerPanelManifest();
+  await loadCurrentSettings(); window.App.showMessage("Početna slika je postavljena. Panel prečica će je koristiti ako nema logo.", "success");
 }
 
 Object.assign(window, { showProductImages, uploadProductExtraImages, deleteProductExtraImage, copyProductLink, previewProductAsClient, uploadCoverImage });

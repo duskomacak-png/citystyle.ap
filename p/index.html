@@ -6,9 +6,9 @@
   <title>Instalacija profila - CityStyle</title>
   <meta name="theme-color" content="#0b0b0f">
   <link rel="apple-touch-icon" href="../assets/icons/icon-192.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=v143installedlaunch">
+  <link rel="stylesheet" href="../assets/css/style.css?v=v160multipwa">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../assets/js/config.js?v=v143installedlaunch"></script>
+  <script src="../assets/js/config.js?v=v160multipwa"></script>
   <style>
     body{min-height:100vh;margin:0;background:#0b0b0f;color:#fff;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:flex;align-items:center;justify-content:center;padding:18px;}
     .pwa-gateway{width:min(520px,100%);background:rgba(20,20,26,.94);border:1px solid rgba(255,255,255,.12);box-shadow:0 24px 80px rgba(0,0,0,.45);border-radius:28px;padding:24px;text-align:center;}
@@ -30,21 +30,6 @@
       window.__cityStyleDeferredPrompt = event;
       window.dispatchEvent(new CustomEvent("citystyle-install-ready"));
     });
-    window.__cityStyleMarkInstalled = function(keys, name) {
-      try {
-        const storageKey = "citystyle_profile_pwa_installed_v1";
-        const map = JSON.parse(localStorage.getItem(storageKey) || "{}");
-        (Array.isArray(keys) ? keys : [keys]).forEach(function(rawKey) {
-          const key = String(rawKey || "").trim().toLowerCase();
-          if (key) map[key] = { name: name || document.title || "CityStyle profil", installedAt: new Date().toISOString() };
-        });
-        localStorage.setItem(storageKey, JSON.stringify(map));
-      } catch (err) {}
-    };
-    window.addEventListener("appinstalled", function() {
-      const params = new URLSearchParams(location.search || "");
-      window.__cityStyleMarkInstalled([params.get("profile"), params.get("salon")], document.title || "CityStyle profil");
-    });
   </script>
 </head>
 <body>
@@ -63,7 +48,7 @@
 
   <script>
   (function profileInstallGateway(){
-    const VERSION = "v143installedlaunch";
+    const VERSION = "v160multipwa";
     const FALLBACK_192 = "/assets/icons/icon-192.png";
     const FALLBACK_512 = "/assets/icons/icon-512.png";
     const params = new URLSearchParams(location.search || "");
@@ -83,21 +68,9 @@
     function cleanText(value){ return String(value || "").replace(/[<>]/g, "").trim(); }
     function initials(name){ return (cleanText(name).split(/\s+/).filter(Boolean).slice(0,2).map(w => w[0]?.toUpperCase()).join("") || "CS"); }
     function setStatus(msg, ok){ statusEl.textContent = msg || ""; statusEl.style.color = ok ? "#86efac" : "#fca5a5"; }
-    function markThisProfileInstalled(){
-      if (window.__cityStyleMarkInstalled) window.__cityStyleMarkInstalled([state.profile, state.slug, rawProfile], state.name || document.title || "CityStyle profil");
-    }
-    function isStandaloneLaunch(){
-      return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
-    }
-    function redirectStandaloneShortcutToProfile(){
-      if (!isStandaloneLaunch()) return;
-      if (params.get("install") !== "1") return;
-      markThisProfileInstalled();
-      setTimeout(function(){ location.replace(profileUrl()); }, 450);
-    }
     function isCode(value){ return /^cs_p_/i.test(String(value || "")); }
     function profileQuery(){ return isCode(state.profile) ? `profile=${encodeURIComponent(state.profile)}` : `salon=${encodeURIComponent(state.slug || state.profile)}`; }
-    function profileUrl(){ return `${location.origin}/?${profileQuery()}&pwa=1&v=${VERSION}`; }
+    function profileUrl(){ return `${location.origin}/?${profileQuery()}&v=${VERSION}`; }
 
     function setIconPreview(src, name){
       if (src) {
@@ -200,7 +173,6 @@
         state.icon512 = state.icon192;
         setManifest();
         setStatus(window.__cityStyleDeferredPrompt ? "Spremno za instalaciju." : "Ako dugme ne otvori sistemsku instalaciju, koristi meni browsera → Dodaj na početni ekran.", !!window.__cityStyleDeferredPrompt);
-        redirectStandaloneShortcutToProfile();
       } catch (err) {
         console.warn("Profil nije učitan za PWA gateway:", err);
       }
@@ -226,11 +198,9 @@
       window.__cityStyleDeferredPrompt = null;
       promptEvent.prompt();
       const choice = await promptEvent.userChoice;
-      if (choice?.outcome === "accepted") { markThisProfileInstalled(); setStatus("Prečica je dodata na početni ekran.", true); }
+      if (choice?.outcome === "accepted") setStatus("Prečica je dodata na početni ekran.", true);
       else setStatus("Instalacija je otkazana.", false);
     });
-
-    openProfileBtn.addEventListener("click", function(){ markThisProfileInstalled(); });
 
     copyBtn.addEventListener("click", async function(){
       try { await navigator.clipboard.writeText(profileUrl()); setStatus("Link profila je kopiran.", true); }

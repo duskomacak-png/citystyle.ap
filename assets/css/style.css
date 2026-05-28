@@ -4370,23 +4370,3 @@ html.cs-real-zoom-active body{
     padding:10px 8px !important;
   }
 }
-
-
-/* v1.3.42 - installed profile state */
-.installed-profile-note{
-  width:100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  padding:12px 14px;
-  border-radius:16px;
-  background:rgba(22,163,74,.12);
-  border:1px solid rgba(74,222,128,.28);
-  color:#bbf7d0;
-  font-weight:800;
-  text-align:center;
-}
-.shoe-install-row .installed-profile-note{
-  margin:0;
-}
