@@ -24,7 +24,7 @@
         var params = new URLSearchParams(window.location.search || "");
         var slug = params.get("salon") || params.get("profile");
         if (!slug) {
-          addManifest("manifest.json?v=v1346maskable");
+          addManifest("manifest.json?v=v1344saveprofile");
           return;
         }
         var encodedSlug = encodeURIComponent(slug);
@@ -35,34 +35,32 @@
           name: profileName,
           short_name: profileName.length > 12 ? profileName.slice(0, 12).trim() : profileName,
           description: "Prečica za direktan ulaz u ovaj CityStyle profil.",
-          start_url: (isProfileCode ? "/?profile=" : "/?salon=") + encodedSlug + "&pwa_profile=" + encodedSlug + "&v=v1346maskable",
+          start_url: (isProfileCode ? "/?profile=" : "/?salon=") + encodedSlug + "&pwa_profile=" + encodedSlug + "&v=v1344saveprofile",
           scope: "/",
           display: "standalone",
           background_color: "#0b0b0f",
           theme_color: "#b91c1c",
           orientation: "portrait",
           icons: [
-            { src: "/assets/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
-            { src: "/assets/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
-            { src: "/assets/icons/icon-192-maskable.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
-            { src: "/assets/icons/icon-512-maskable.png", sizes: "512x512", type: "image/png", purpose: "maskable" }
+            { src: "/assets/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
+            { src: "/assets/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" }
           ]
         };
         var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
         addManifest(URL.createObjectURL(blob));
       } catch (err) {
-        addManifest("manifest.json?v=v1346maskable");
+        addManifest("manifest.json?v=v1344saveprofile");
       }
     })();
   </script>
-  <link rel="apple-touch-icon" href="assets/icons/icon-192-maskable.png">
-  <link rel="stylesheet" href="assets/css/style.css?v=v1346maskable">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  <link rel="stylesheet" href="assets/css/style.css?v=v1344saveprofile">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/config.js?v=v1346maskable"></script>
-  <script src="assets/js/main.js?v=v1346maskable"></script>
-  <script src="assets/js/auth.js?v=v1346maskable"></script>
-  <script src="assets/js/booking-logic.js?v=v1346maskable"></script>
-  <script src="assets/js/client.js?v=v1346maskable" defer></script>
+  <script src="assets/js/config.js?v=v1344saveprofile"></script>
+  <script src="assets/js/main.js?v=v1344saveprofile"></script>
+  <script src="assets/js/auth.js?v=v1344saveprofile"></script>
+  <script src="assets/js/booking-logic.js?v=v1344saveprofile"></script>
+  <script src="assets/js/client.js?v=v1344saveprofile" defer></script>
 </head>
 <body>
   <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>
