@@ -1144,7 +1144,13 @@ async function submitAppointment() {
     return;
   }
 
-  if (insertedAppointment?.id) {
+  // Push notifications are intentionally limited to hair/beauty salon bookings.
+  // Shops/product profiles must not trigger owner push from this appointment/request flow.
+  const notificationBusinessRaw = `${currentSalon?.business_type || ""} ${currentSalon?.business_type_label || ""} ${currentSalon?.profile_type || ""} ${currentSalon?.salon_name || ""}`.toLowerCase();
+  const shouldNotifySalonOwner = window.App.normalizeBusinessType(currentSalon?.business_type) === "salon"
+    || /frizer|salon|barber|beauty|kozmet/.test(notificationBusinessRaw);
+
+  if (insertedAppointment?.id && shouldNotifySalonOwner) {
     window.App.notifyOwnerAboutNewAppointment(insertedAppointment.id);
   }
 

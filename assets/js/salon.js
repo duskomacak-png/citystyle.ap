@@ -610,6 +610,14 @@ async function renderAppointments() {
   const activeCount = items.filter(item => ["new", "confirmed"].includes(item.status)).length;
   const newCount = items.filter(item => item.status === "new").length;
   window.App.setAppBadgeCount?.(newCount);
+  const notificationBusinessRaw = `${currentSalon?.business_type || ""} ${currentSalon?.business_type_label || ""} ${currentSalon?.profile_type || ""} ${currentSalon?.salon_name || ""}`.toLowerCase();
+  const ownerNotificationsAllowed = window.App.normalizeBusinessType(currentSalon?.business_type) === "salon"
+    || /frizer|salon|barber|beauty|kozmet/.test(notificationBusinessRaw);
+  const notificationButtonHtml = adminOwnerPreviewMode
+    ? `<span class="status-pill">Samo pregled</span>`
+    : ownerNotificationsAllowed
+      ? `<button class="btn btn-primary btn-small" type="button" onclick="enableOwnerNotifications()">${S("enableNotifications", "Uključi obaveštenja")}</button>`
+      : `<span class="status-pill">Obaveštenja samo za termine salona</span>`;
   content.innerHTML = `
     <div class="section-head paper-section-head">
       <div>
@@ -617,7 +625,7 @@ async function renderAppointments() {
         <p class="muted">Pregled zahteva i zakazanih termina po datumu, vremenu, usluzi i korisniku.</p>
       </div>
       <div class="toolbar-actions">
-        ${adminOwnerPreviewMode ? `<span class="status-pill">Samo pregled</span>` : `<button class="btn btn-primary btn-small" type="button" onclick="enableOwnerNotifications()">${S("enableNotifications", "Uključi obaveštenja")}</button>`}
+        ${notificationButtonHtml}
         <button class="btn btn-dark btn-small" type="button" onclick="renderAppointments()">${S("refresh", "Osveži")}</button>
       </div>
     </div>
