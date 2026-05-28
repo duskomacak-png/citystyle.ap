@@ -1,6 +1,6 @@
 // sw.js
 // Minimal cache reset service worker for CityStyle.app
-const CACHE_NAME = "citystyle-v1345-maskable";
+const CACHE_NAME = "citystyle-v1346-maskable";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -27,12 +27,12 @@ self.addEventListener("push", (event) => {
   const options = {
     body: data.body || "Stigao je novi zahtev korisnika.",
     icon: "/assets/icons/icon-192.png",
-    badge: "/assets/icons/icon-192.png",
+    badge: "/assets/icons/icon-192-maskable.png",
     data: {
       url: data.url || "salon/",
       badgeCount: data.badgeCount || 1
     },
-    tag: data.tag || "citystyle-v1345-maskable",
+    tag: data.tag || "citystyle-v1346-maskable",
     renotify: true
   };
 

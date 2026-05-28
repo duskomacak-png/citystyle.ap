@@ -656,7 +656,7 @@ function updateManifestForOwner() {
     name: "CityStyle - Panel vlasnika",
     short_name: "CityStyle",
     description: "Prečica za direktan ulaz u panel vlasnika biznisa.",
-    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=v1345maskable`,
+    start_url: `${getAppPath("salon/")}?pwa_owner=1&v=v1346maskable`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -714,7 +714,7 @@ function makeInitialsIconDataUrl(name = "CityStyle", bg = "#b91c1c") {
     return canvas.toDataURL("image/png");
   } catch (err) {
     console.warn("Initials icon nije napravljen:", err);
-    return `${getAppBaseUrl()}assets/icons/icon-192.png`;
+    return `${getAppBaseUrl()}assets/icons/icon-192-maskable.png`;
   }
 }
 
@@ -734,7 +734,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=v1345maskable`,
+    start_url: `${getAppBaseUrl()}?salon=${encodedSlug}&pwa_profile=${encodedSlug}&v=v1346maskable`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -743,7 +743,7 @@ function updateManifestForSalon(slug, options = {}) {
     icons: [
       { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "any" },
       { src: icon512, sizes: "512x512", type: "image/png", purpose: "any" },
-      { src: icon512, sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: `${getAppBaseUrl()}assets/icons/icon-192-maskable.png`, sizes: "192x192", type: "image/png", purpose: "maskable" },
       { src: `${getAppBaseUrl()}assets/icons/icon-512-maskable.png`, sizes: "512x512", type: "image/png", purpose: "maskable" }
     ]
   };
@@ -936,7 +936,7 @@ async function registerPushForSalon(salonId) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v1345maskable", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v1346maskable", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
