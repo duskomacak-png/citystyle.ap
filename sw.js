@@ -1,6 +1,6 @@
 // sw.js
 // Minimal cache reset service worker for CityStyle.app
-const CACHE_NAME = "citystyle-v162-currency-km";
+const CACHE_NAME = "citystyle-v163-salon-currency-km-fix";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -32,7 +32,7 @@ self.addEventListener("push", (event) => {
       url: data.url || "salon/",
       badgeCount: data.badgeCount || 1
     },
-    tag: data.tag || "citystyle-v162-currency-km",
+    tag: data.tag || "citystyle-v163-salon-currency-km-fix",
     renotify: true
   };
 

@@ -1179,6 +1179,25 @@ function productPriceLabel(product = {}) {
   return `${window.App.formatMoney ? window.App.formatMoney(price) : price.toLocaleString("sr-RS")} ${currency}`;
 }
 
+
+function ensureSalonCurrencyOptions(selectId, selectedValue = "RSD") {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  const selected = window.App && window.App.normalizeCurrency ? window.App.normalizeCurrency(selectedValue || select.value || "RSD") : String(selectedValue || select.value || "RSD").toUpperCase();
+  const options = [
+    ["RSD", "RSD"],
+    ["EUR", "EUR"],
+    ["KM", "KM"]
+  ];
+  select.innerHTML = options.map(([value, label]) => `<option value="${value}" ${selected === value ? "selected" : ""}>${label}</option>`).join("");
+}
+
+function ensureAllSalonCurrencyOptions() {
+  ensureSalonCurrencyOptions("service-currency", document.getElementById("service-currency")?.value || "RSD");
+  ensureSalonCurrencyOptions("product-currency", document.getElementById("product-currency")?.value || "RSD");
+  ensureSalonCurrencyOptions("garage-currency", document.getElementById("garage-currency")?.value || "EUR");
+}
+
 function productStatusLabel(status) {
   return {
     available: "Na stanju",
@@ -2048,6 +2067,7 @@ async function showAddProductForm(productId = null) {
     <label>Glavna slika proizvoda</label>${product?.image_url ? `<img class="owner-product-preview" src="${salonEscapeHtml(product.image_url)}" alt="Slika proizvoda"><p class="field-help">Ako ne izaberete novu sliku, ostaje postojeća.</p>` : ""}<input id="product-main-image" type="file" accept="image/png,image/jpeg,image/webp">
     <p class="field-help product-upload-tip"><strong>Preporuka za najbolji prikaz:</strong> koristite uspravne slike približno <strong>2:3 ili 3:4</strong>. Proizvod neka bude u donjem/srednjem delu slike, sa čistom pozadinom i malo praznog prostora iznad za naziv, cenu i dugmad.</p>
     <div class="card-actions"><button class="btn btn-primary" type="button" onclick="saveProduct()">${product ? "Sačuvaj izmene" : "Dodaj proizvod"}</button><button class="btn btn-dark" type="button" onclick="hideProductForm()">Otkaži</button></div></div>`;
+  ensureSalonCurrencyOptions("product-currency", product?.currency || "RSD");
   box.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -2133,3 +2153,7 @@ async function uploadCoverImage() {
 }
 
 Object.assign(window, { showProductImages, uploadProductExtraImages, deleteProductExtraImage, copyProductLink, previewProductAsClient, uploadCoverImage });
+
+
+// Safety patch: if an older browser/service-worker leaves a select with only RSD, repopulate currencies.
+setTimeout(() => { try { ensureAllSalonCurrencyOptions(); } catch (e) {} }, 300);
