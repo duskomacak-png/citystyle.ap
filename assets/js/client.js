@@ -450,6 +450,22 @@ async function loadGarageListings() {
   }));
 }
 
+
+function formatSalonWelcomeText(text = "") {
+  const raw = String(text || "").trim();
+  const cleanDefault = "Dobrodošli. Izaberite uslugu, datum i zakažite termin.";
+  const type = window.App?.normalizeBusinessType ? window.App.normalizeBusinessType(currentSalon?.business_type) : "general";
+  if ((type === "salon" || type === "general") && !raw) return cleanDefault;
+  if (type !== "salon" && type !== "general") return raw;
+  let value = raw;
+  value = value.replace(/Dobrodošli\.\s*Izaberite uslugu, datum i slobodan termin i zakažite termin\.?/i, cleanDefault);
+  value = value.replace(/Dobrodošli\.\s*Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev\.?/i, cleanDefault);
+  value = value.replace(/slobodan termin i zakažite termin/gi, "zakažite termin");
+  value = value.replace(/slobodan termin ili pošaljite zahtev/gi, "zakažite termin");
+  value = value.replace(/pošaljite zahtev/gi, "zakažite termin");
+  return value || cleanDefault;
+}
+
 async function renderSalonHome() {
   const app = document.getElementById("app");
   app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
@@ -468,6 +484,9 @@ async function renderSalonHome() {
 
   const publicName = settings?.welcome_title || currentSalon.salon_name || "Profil";
   const profileLabels = window.App.getBusinessProfileLabels(currentSalon.business_type);
+  const normalizedType = window.App.normalizeBusinessType(currentSalon.business_type);
+  const isSalonBookingProfile = normalizedType === "salon" || normalizedType === "general";
+  const primaryActionLabel = isSalonBookingProfile ? "Zakaži termin" : profileLabels.action;
   currentSalon._publicName = publicName;
   currentSalon._publicLogo = settings?.logo_url || "";
   currentSalon._publicPhone = settings?.phone || currentSalon.phone || "";
@@ -501,7 +520,7 @@ async function renderSalonHome() {
 
         <h1>${escapeHtml(publicName)}</h1>
         <div class="public-profile-text">
-          <p class="intro-text">${escapeHtml(settings?.welcome_text || C("welcomeDefault", "Dobrodošli. Izaberite uslugu, datum i slobodan termin i zakažite termin."))}</p>
+          <p class="intro-text">${escapeHtml(formatSalonWelcomeText(settings?.welcome_text || C("welcomeDefault", "Dobrodošli. Izaberite uslugu, datum i zakažite termin.")))}</p>
           ${(settings?.phone || settings?.address) ? `
             <div class="public-profile-contact">
               ${settings?.phone ? `<a href="tel:${escapeHtml(window.App.normalizePhoneForTel ? window.App.normalizePhoneForTel(settings.phone) : settings.phone)}">📞 ${escapeHtml(settings.phone)}</a>` : ""}
@@ -511,8 +530,8 @@ async function renderSalonHome() {
         </div>
 
         <div class="client-actions">
-          <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(profileLabels.action)}</button>
-          ${products.length ? `<button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>` : ""}
+          <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(primaryActionLabel)}</button>
+          ${(!isSalonBookingProfile && products.length) ? `<button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>` : ""}
           ${garageListings.length ? `<button class="btn btn-dark" type="button" onclick="showGarage()">Garaža / oglasi</button>` : ""}
           ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app ovog profila")}</button>`}
         </div>
@@ -938,7 +957,7 @@ function showBookingForm() {
   const profileLabels = window.App.getBusinessProfileLabels(currentSalon?.business_type);
   const bookingActionLabel = isSalonProfile ? "Zakaži termin" : profileLabels.action;
   const bookingFormTitle = isSalonProfile ? "Zakažite termin" : profileLabels.formTitle;
-  const bookingFormIntro = isSalonProfile ? "Izaberite uslugu, datum i slobodan termin." : profileLabels.formIntro;
+  const bookingFormIntro = isSalonProfile ? "Izaberite uslugu, datum i termin." : profileLabels.formIntro;
   selectedDate = today;
   selectedTime = null;
 
@@ -1312,12 +1331,12 @@ async function renderSalonHome() {
         ${settings?.logo_url ? `<img src="${escapeHtml(settings.logo_url)}" alt="${escapeHtml(publicName)} logo" class="salon-logo">` : `<div class="logo-circle">${escapeHtml(publicName?.charAt(0).toUpperCase() || "S")}</div>`}
         <h1>${escapeHtml(publicName)}</h1>
         <div class="public-profile-text">
-          <p class="intro-text">${escapeHtml(settings?.welcome_text || C("welcomeDefault", "Dobrodošli. Izaberite uslugu, datum i slobodan termin i zakažite termin."))}</p>
+          <p class="intro-text">${escapeHtml(formatSalonWelcomeText(settings?.welcome_text || C("welcomeDefault", "Dobrodošli. Izaberite uslugu, datum i zakažite termin.")))}</p>
           ${(settings?.phone || settings?.address) ? `<div class="public-profile-contact">${settings?.phone ? `<a href="tel:${escapeHtml(csSafePhone(settings.phone))}">📞 ${escapeHtml(settings.phone)}</a>` : ""}${settings?.address ? renderPublicAddressLink(settings.address) : ""}</div>` : ""}
         </div>
         <div class="client-actions">
           <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(primaryActionLabel)}</button>
-          ${products.length ? `<button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>` : ""}
+          ${(!isSalonBookingProfile && products.length) ? `<button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>` : ""}
           ${garageListings.length ? `<button class="btn btn-dark" type="button" onclick="showGarage()">Garaža / oglasi</button>` : ""}
           ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app ovog profila")}</button>`}
         </div>

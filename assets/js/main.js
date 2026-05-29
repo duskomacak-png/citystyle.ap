@@ -295,10 +295,10 @@ function applySalonTheme(value) {
 
 const BUSINESS_PROFILE_LABELS = {
   general: {
-    name: "Opšti biznis", action: "Pošalji zahtev", services: "Usluge / ponuda", formTitle: "Pošaljite zahtev", formIntro: "Izaberite uslugu, datum i slobodan termin. U napomeni možete opisati šta vam treba.", noteLabel: "Napomena / opis zahteva", notePlaceholder: "Napišite dodatne informacije za vlasnika profila.", requestKindLabel: "Vrsta zahteva", requestKindPlaceholder: "npr. upit, usluga, ponuda"
+    name: "Opšti biznis", action: "Pošalji zahtev", services: "Usluge / ponuda", formTitle: "Pošaljite zahtev", formIntro: "Izaberite uslugu, datum i termin. U napomeni možete opisati šta vam treba.", noteLabel: "Napomena / opis zahteva", notePlaceholder: "Napišite dodatne informacije za vlasnika profila.", requestKindLabel: "Vrsta zahteva", requestKindPlaceholder: "npr. upit, usluga, ponuda"
   },
   salon: {
-    name: "Salon / termini", action: "Zakaži termin", services: "Usluge i cenovnik", formTitle: "Zakažite termin", formIntro: "Izaberite uslugu, datum i slobodan termin.", noteLabel: "Napomena", notePlaceholder: "Opcionalno", requestKindLabel: "Željena usluga", requestKindPlaceholder: "npr. šišanje, farbanje, tretman"
+    name: "Salon / termini", action: "Zakaži termin", services: "Usluge i cenovnik", formTitle: "Zakažite termin", formIntro: "Izaberite uslugu, datum i termin.", noteLabel: "Napomena", notePlaceholder: "Opcionalno", requestKindLabel: "Željena usluga", requestKindPlaceholder: "npr. šišanje, farbanje, tretman"
   },
   repair: {
     name: "Majstor / kvarovi", action: "Prijavi kvar", services: "Usluge, kvarovi i intervencije", formTitle: "Prijavite kvar ili problem", formIntro: "Izaberite uslugu/intervenciju, željeni termin i opišite kvar. Vlasnik će vas kontaktirati radi potvrde.", noteLabel: "Opis kvara / problema", notePlaceholder: "npr. klima ne hladi, curi voda, grejanje ne radi...", requestKindLabel: "Vrsta kvara", requestKindPlaceholder: "npr. klima, grejanje, voda, struja"
@@ -339,7 +339,7 @@ const APP_TRANSLATIONS = {
     ownerPreviewTitle: "Pregled javne stranice",
     ownerPreviewText: "Ovako korisnik vidi vaš profil.",
     backToOwnerPanel: "Nazad u panel vlasnika",
-    welcomeDefault: "Dobrodošli. Izaberite uslugu, datum i slobodan termin i zakažite termin.",
+    welcomeDefault: "Dobrodošli. Izaberite uslugu, datum i zakažite termin.",
     sendRequest: "Pošalji zahtev",
     servicesOffer: "Usluge / ponuda",
     installThisProfile: "Preuzmi app ovog profila",
@@ -360,7 +360,7 @@ const APP_TRANSLATIONS = {
     sunday: "Nedelja",
     bookingUnavailable: "Zakazivanje nije dostupno",
     sendRequestTitle: "Pošaljite zahtev",
-    chooseServiceDateTime: "Izaberite uslugu, datum i slobodan termin.",
+    chooseServiceDateTime: "Izaberite uslugu, datum i termin.",
     serviceAndPrice: "Usluga i cena",
     chooseService: "Izaberite uslugu",
     chooseServiceFirst: "Prvo izaberite uslugu.",
@@ -765,7 +765,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v169_zakazi_termin_text_fix`,
+    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v170_salon_clean_actions`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -960,7 +960,7 @@ async function registerPushForSalon(salonId) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v169_zakazi_termin_text_fix", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v170_salon_clean_actions", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
