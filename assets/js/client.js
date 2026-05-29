@@ -747,6 +747,28 @@ function getProductStatusLabel(status) {
   }[status] || "Na upit";
 }
 
+function renderPublicProductCard(product = {}, index = 0) {
+  const imgs = typeof csProductImages === "function" ? csProductImages(product) : (product.image_url ? [product.image_url] : []);
+  const img = imgs[0] || "";
+  const click = typeof openShoeViewer === "function" ? ` onclick="openShoeViewer(${index})"` : "";
+  return `
+    <button class="product-public-card product-public-card-with-image" type="button"${click}>
+      <div class="product-public-image-wrap">
+        ${img ? `<img class="product-public-image" src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Proizvod')}">` : `<div class="product-public-image product-public-no-image">Bez slike</div>`}
+      </div>
+      <div class="product-public-copy">
+        <strong>${escapeHtml(product.name || "Proizvod")}</strong>
+        ${product.category ? `<span>${escapeHtml(product.category)}</span>` : ""}
+        ${product.description ? `<p>${escapeHtml(product.description)}</p>` : ""}
+      </div>
+      <div class="product-public-meta">
+        <b>${renderProductPrice(product)}</b>
+        <small>${getProductStatusLabel(product.stock_status)}</small>
+      </div>
+    </button>
+  `;
+}
+
 function renderClientProductsPreview() {
   if (!products.length) return "";
   return `
@@ -756,21 +778,9 @@ function renderClientProductsPreview() {
         <small>${C("showList", "Prikaži listu")}</small>
       </summary>
       <div class="client-services-panel-body">
-        <p class="muted">Pregled proizvoda, artikala ili cenovnika koje ovaj biznis nudi.</p>
-        <div class="product-public-grid">
-          ${products.map(product => `
-            <div class="product-public-card">
-              <div>
-                <strong>${escapeHtml(product.name)}</strong>
-                ${product.category ? `<span>${escapeHtml(product.category)}</span>` : ""}
-                ${product.description ? `<p>${escapeHtml(product.description)}</p>` : ""}
-              </div>
-              <div class="product-public-meta">
-                <b>${renderProductPrice(product)}</b>
-                <small>${getProductStatusLabel(product.stock_status)}</small>
-              </div>
-            </div>
-          `).join("")}
+        <p class="muted">Pregled proizvoda, artikala ili cenovnika koje ovaj biznis nudi. Dodir na proizvod otvara veću sliku.</p>
+        <div class="product-public-grid product-public-grid-images">
+          ${products.map((product, index) => renderPublicProductCard(product, index)).join("")}
         </div>
       </div>
     </details>
@@ -1144,13 +1154,7 @@ async function submitAppointment() {
     return;
   }
 
-  // Push notifications are intentionally limited to hair/beauty salon bookings.
-  // Shops/product profiles must not trigger owner push from this appointment/request flow.
-  const notificationBusinessRaw = `${currentSalon?.business_type || ""} ${currentSalon?.business_type_label || ""} ${currentSalon?.profile_type || ""} ${currentSalon?.salon_name || ""}`.toLowerCase();
-  const shouldNotifySalonOwner = window.App.normalizeBusinessType(currentSalon?.business_type) === "salon"
-    || /frizer|salon|barber|beauty|kozmet/.test(notificationBusinessRaw);
-
-  if (insertedAppointment?.id && shouldNotifySalonOwner) {
+  if (insertedAppointment?.id) {
     window.App.notifyOwnerAboutNewAppointment(insertedAppointment.id);
   }
 
@@ -1342,8 +1346,11 @@ function showProducts() {
     if (section) section.scrollIntoView({ behavior: "smooth", block: "start" });
     return;
   }
-  if (!products.length) { box.innerHTML = `<div class="card"><h2>${C("productsCatalog", "Proizvodi / cenovnik")}</h2><p class="muted">Ovaj profil trenutno nema javno prikazane proizvode.</p></div>`; return; }
-  box.innerHTML = `<details class="card client-hours-panel client-products-panel" open><summary><span>${C("productsCatalog", "Proizvodi / cenovnik")}</span><small>${C("hideList", "Sakrij listu")}</small></summary><div class="client-services-panel-body"><div class="product-public-grid">${products.map(product => `<div class="product-public-card"><div><strong>${escapeHtml(product.name)}</strong>${product.category ? `<span>${escapeHtml(product.category)}</span>` : ""}${product.description ? `<p>${escapeHtml(product.description)}</p>` : ""}</div><div class="product-public-meta"><b>${renderProductPrice(product)}</b><small>${getProductStatusLabel(product.stock_status)}</small></div></div>`).join("")}</div></div></details>`;
+  if (!products.length) {
+    box.innerHTML = `<div class="card"><h2>${C("productsCatalog", "Proizvodi / cenovnik")}</h2><p class="muted">Ovaj profil trenutno nema javno prikazane proizvode.</p></div>`;
+    return;
+  }
+  box.innerHTML = `<details class="card client-hours-panel client-products-panel" open><summary><span>${C("productsCatalog", "Proizvodi / cenovnik")}</span><small>${C("hideList", "Sakrij listu")}</small></summary><div class="client-services-panel-body"><div class="product-public-grid product-public-grid-images">${products.map((product, index) => renderPublicProductCard(product, index)).join("")}</div></div></details>`;
   box.scrollIntoView({ behavior: "smooth" });
 }
 

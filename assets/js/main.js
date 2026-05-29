@@ -119,6 +119,7 @@ function formatMoney(value) {
 function normalizeCurrency(value) {
   const c = String(value || "RSD").trim().toUpperCase();
   if (c === "EUR" || c === "€" || c === "EVRO" || c === "EVRI") return "EUR";
+  if (c === "KM" || c === "BAM" || c === "BIH" || c === "BOSNA" || c === "KONVERTIBILNA MARKA" || c === "KONVERTIBILNE MARKE") return "KM";
   return "RSD";
 }
 
@@ -132,7 +133,7 @@ function formatServicePrice(item = {}) {
     return t("priceByAgreement", "Cena po dogovoru");
   }
 
-  const suffix = currency === "EUR" ? "EUR" : "RSD";
+  const suffix = currency === "EUR" ? "EUR" : (currency === "KM" ? "KM" : "RSD");
 
   if (to && to > from) {
     return `${formatMoney(from)}–${formatMoney(to)} ${suffix}`;
@@ -666,9 +667,7 @@ function updateManifestForOwner(options = {}) {
   const cleanIcon = String(options.iconUrl || options.logoUrl || "").trim();
   const iconUrl = cleanIcon || makeInitialsIconDataUrl(businessName, "#b91c1c");
   const icon512 = String(options.icon512Url || "").trim() || iconUrl || makeInitialsIconDataUrl(businessName, "#b91c1c");
-  const openSection = String(options.openSection || options.section || "appointments").trim().toLowerCase();
-  const safeSection = ["appointments", "products", "services", "analytics", "settings"].includes(openSection) ? openSection : "appointments";
-  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&open=${encodeURIComponent(safeSection)}&v=v152pushappointments`;
+  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v1348owneridentity`;
   const baseManifest = {
     id: `${getAppBaseUrl()}pwa/owner/${encodedKey}`,
     name: appName,
@@ -766,7 +765,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v160multipwa`,
+    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v162_currency_km`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -961,7 +960,7 @@ async function registerPushForSalon(salonId) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v160multipwa", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v162_currency_km", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {

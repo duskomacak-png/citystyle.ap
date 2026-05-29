@@ -5,6 +5,116 @@ let currentSalonId = null;
 let currentSection = "appointments";
 let appointmentCache = [];
 let adminOwnerPreviewMode = false;
+let ownerAppointmentChannel = null;
+let ownerNotificationUnlocked = false;
+let ownerNotificationLastId = "";
+
+function unlockOwnerNotificationSound() {
+  ownerNotificationUnlocked = true;
+  window.removeEventListener("pointerdown", unlockOwnerNotificationSound);
+  window.removeEventListener("keydown", unlockOwnerNotificationSound);
+}
+window.addEventListener("pointerdown", unlockOwnerNotificationSound, { once: true });
+window.addEventListener("keydown", unlockOwnerNotificationSound, { once: true });
+
+function playOwnerAppointmentSound() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx || !ownerNotificationUnlocked) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+    [880, 1175, 1568].forEach((freq, index) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + index * 0.16);
+      gain.gain.setValueAtTime(0.0001, now + index * 0.16);
+      gain.gain.exponentialRampToValueAtTime(0.18, now + index * 0.16 + 0.025);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.16 + 0.13);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + index * 0.16);
+      osc.stop(now + index * 0.16 + 0.15);
+    });
+    setTimeout(() => ctx.close?.(), 900);
+  } catch (err) {
+    console.warn("Owner notification sound failed:", err);
+  }
+}
+
+function renderOwnerAppointmentAlert(appointment = {}) {
+  document.querySelector(".owner-live-alert")?.remove();
+  const date = appointment.appointment_date ? window.App.formatDate(appointment.appointment_date) : "nov termin";
+  const time = String(appointment.appointment_time || "").slice(0, 5);
+  const service = appointment.service_name_snapshot || "Usluga";
+  const client = appointment.client_name || "Klijent";
+  const phone = appointment.client_phone || "";
+  const wrap = document.createElement("div");
+  wrap.className = "owner-live-alert";
+  wrap.innerHTML = `
+    <div class="owner-live-alert-card">
+      <button class="owner-live-alert-close" type="button" onclick="this.closest('.owner-live-alert').remove()">×</button>
+      <div class="owner-live-alert-icon">🔔</div>
+      <div class="owner-live-alert-copy">
+        <strong>Novi termin je stigao</strong>
+        <p>${salonEscapeHtml(client)} • ${salonEscapeHtml(service)}</p>
+        <small>${salonEscapeHtml(date)} ${time ? "u " + salonEscapeHtml(time) : ""}${phone ? " • " + salonEscapeHtml(phone) : ""}</small>
+      </div>
+      <button class="btn btn-primary btn-small" type="button" onclick="document.querySelector('.owner-live-alert')?.remove(); showSection('appointments')">Otvori termine</button>
+    </div>`;
+  document.body.appendChild(wrap);
+  setTimeout(() => wrap.remove(), 18000);
+}
+
+async function showOwnerAppointmentBrowserNotification(appointment = {}) {
+  try {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    if (document.visibilityState === "visible") return;
+    const title = "Novi termin - CityStyle";
+    const body = `${appointment.client_name || "Klijent"} • ${appointment.service_name_snapshot || "Usluga"} • ${String(appointment.appointment_time || "").slice(0,5)}`;
+    const reg = await navigator.serviceWorker?.ready;
+    if (reg?.showNotification) {
+      await reg.showNotification(title, { body, icon: "/assets/icons/icon-192.png", badge: "/assets/icons/icon-192.png", data: { url: "/salon/?section=appointments" }, tag: `citystyle-owner-${appointment.id || Date.now()}`, renotify: true });
+    }
+  } catch (err) {
+    console.warn("Local browser notification failed:", err);
+  }
+}
+
+async function handleOwnerNewAppointment(appointment = {}) {
+  if (!appointment?.id || String(appointment.id) === String(ownerNotificationLastId)) return;
+  ownerNotificationLastId = String(appointment.id);
+  playOwnerAppointmentSound();
+  renderOwnerAppointmentAlert(appointment);
+  showOwnerAppointmentBrowserNotification(appointment);
+  window.App?.showMessage?.("🔔 Stigao je novi zahtev / termin.", "success");
+  window.App?.setAppBadgeCount?.(1);
+  if (currentSection === "appointments") await renderAppointments();
+}
+
+function setupOwnerAppointmentRealtime() {
+  if (!window.db?.channel || !currentSalonId || adminOwnerPreviewMode) return;
+  try {
+    if (ownerAppointmentChannel) window.db.removeChannel(ownerAppointmentChannel);
+    ownerAppointmentChannel = window.db
+      .channel(`owner-appointments-${currentSalonId}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "appointments", filter: `salon_id=eq.${currentSalonId}` }, payload => {
+        handleOwnerNewAppointment(payload.new || {});
+      })
+      .subscribe(status => {
+        if (status === "SUBSCRIBED") console.log("CityStyle owner appointment realtime active");
+      });
+  } catch (err) {
+    console.warn("Realtime notifikacije nisu pokrenute:", err);
+  }
+}
+
+function cleanupOwnerAppointmentRealtime() {
+  try {
+    if (ownerAppointmentChannel && window.db?.removeChannel) window.db.removeChannel(ownerAppointmentChannel);
+  } catch (err) {}
+  ownerAppointmentChannel = null;
+}
 const salonEscapeHtml = (value) => window.App.escapeHtml(value);
 const salonEscapeJs = (value) => window.App.escapeJs(value);
 const S = (key, fallback = "") => window.App?.t ? window.App.t(key, fallback) : (fallback || key);
@@ -167,8 +277,7 @@ async function getOwnerPanelManifestData() {
     profileCode: profileKey,
     salonId: currentSalonId || "",
     themeColor: currentSalon?.theme_color || "classic-red",
-    iconUrl: "",
-    openSection: ownerIsShopProfile() ? "products" : "appointments"
+    iconUrl: ""
   };
 
   try {
@@ -205,6 +314,7 @@ function bindSalonLogout() {
   document.getElementById("salon-logout-btn")?.addEventListener("click", () => {
     window.Auth.salonLogout();
     window.App?.clearSalonTheme?.();
+    cleanupOwnerAppointmentRealtime();
     currentSalon = null;
     currentSalonId = null;
     document.getElementById("salon-install-btn")?.classList.add("hidden");
@@ -234,26 +344,8 @@ function renderSalonLogin() {
   `;
 }
 
-function getRequestedOwnerSection() {
-  const requested = String(window.App?.getUrlParam?.("open") || "").trim().toLowerCase();
-  const allowed = ["appointments", "services", "products", "analytics", "garage", "gallery", "hours", "settings"];
-  if (allowed.includes(requested)) return requested;
-  try {
-    const saved = sessionStorage.getItem("citystyle_owner_open_section");
-    if (allowed.includes(saved)) {
-      sessionStorage.removeItem("citystyle_owner_open_section");
-      return saved;
-    }
-  } catch (err) {}
-  return "";
-}
-
 function getDefaultOwnerSection() {
-  const requested = getRequestedOwnerSection();
-  if (requested) return requested;
-  // Salon/frizer owner should land on appointments, especially when opening
-  // from a shortcut/badge after a new booking. Shops still land on products.
-  return ownerIsShopProfile() ? "products" : "appointments";
+  return ownerIsShopProfile() ? "products" : "services";
 }
 
 async function handleSalonLogin() {
@@ -272,6 +364,7 @@ async function handleSalonLogin() {
   window.App?.applySalonTheme?.(salon.theme_color);
   renderSalonDashboard();
   await prepareOwnerPanelManifest();
+  setupOwnerAppointmentRealtime();
   await showSection(getDefaultOwnerSection());
 }
 
@@ -323,6 +416,7 @@ async function loadSalonFromSession(salonId) {
   window.App?.applySalonTheme?.(data.theme_color);
   renderSalonDashboard();
   await prepareOwnerPanelManifest();
+  setupOwnerAppointmentRealtime();
   await showSection(getDefaultOwnerSection());
 }
 
@@ -629,18 +723,6 @@ async function renderAppointments() {
   const activeCount = items.filter(item => ["new", "confirmed"].includes(item.status)).length;
   const newCount = items.filter(item => item.status === "new").length;
   window.App.setAppBadgeCount?.(newCount);
-  const notificationBusinessRaw = `${currentSalon?.business_type || ""} ${currentSalon?.business_type_label || ""} ${currentSalon?.profile_type || ""} ${currentSalon?.salon_name || ""}`.toLowerCase();
-  const ownerNotificationsAllowed = window.App.normalizeBusinessType(currentSalon?.business_type) === "salon"
-    || /frizer|salon|barber|beauty|kozmet/.test(notificationBusinessRaw);
-  const notificationButtonHtml = adminOwnerPreviewMode
-    ? `<span class="status-pill">Samo pregled</span>`
-    : ownerNotificationsAllowed
-      ? `<button class="btn btn-primary btn-small" type="button" onclick="enableOwnerNotifications()">${S("enableNotifications", "Uključi obaveštenja")}</button>`
-      : `<span class="status-pill">Obaveštenja samo za termine salona</span>`;
-  const openedFromPush = window.App?.getUrlParam?.("fromPush") === "1";
-  const pushOpenNotice = openedFromPush
-    ? `<div class="owner-subscription-alert"><div><strong>🔔 Otvoreno iz notifikacije</strong><p>Ovde su aktivni termini i podaci osobe koja je zakazala.</p></div></div>`
-    : "";
   content.innerHTML = `
     <div class="section-head paper-section-head">
       <div>
@@ -648,13 +730,12 @@ async function renderAppointments() {
         <p class="muted">Pregled zahteva i zakazanih termina po datumu, vremenu, usluzi i korisniku.</p>
       </div>
       <div class="toolbar-actions">
-        ${notificationButtonHtml}
+        ${adminOwnerPreviewMode ? `<span class="status-pill">Samo pregled</span>` : `<button class="btn btn-primary btn-small" type="button" onclick="enableOwnerNotifications()">${S("enableNotifications", "Uključi obaveštenja")}</button>`}
         <button class="btn btn-dark btn-small" type="button" onclick="renderAppointments()">${S("refresh", "Osveži")}</button>
       </div>
     </div>
 
     ${renderOwnerSubscriptionNotice()}
-    ${pushOpenNotice}
 
     <div class="owner-dashboard-grid">
       <div class="owner-metric-card"><span>Danas</span><strong>${todayCount}</strong><small>aktivnih zahteva</small></div>
@@ -990,7 +1071,9 @@ async function showAddServiceForm(serviceId = null) {
       </div>
       <label>Valuta</label>
       <select id="service-currency">
-        <option value="RSD" ${!service || (service.currency || "RSD") === "RSD" ? "selected" : ""}>Dinari (RSD)</option>
+        <option value="RSD" ${window.App.normalizeCurrency(service?.currency || "RSD") === "RSD" ? "selected" : ""}>Dinari (RSD)</option>
+        <option value="EUR" ${window.App.normalizeCurrency(service?.currency || "RSD") === "EUR" ? "selected" : ""}>Evro (EUR)</option>
+        <option value="KM" ${window.App.normalizeCurrency(service?.currency || "RSD") === "KM" ? "selected" : ""}>Konvertibilna marka (KM)</option>
       </select>
       <p class="muted form-help">Ako usluga ima raspon cene, unesite npr. 500 u “Cena od” i 800 u “Cena do”. Ako je cena po dogovoru, unesite 0.</p>
       <label>Trajanje u minutima</label><input id="service-duration" type="number" min="5" step="5" value="${service ? Number(service.duration_minutes || 0) : ""}" placeholder="45">
@@ -1010,7 +1093,7 @@ async function saveService() {
   const price = Number(document.getElementById("service-price")?.value || 0);
   const priceToRaw = document.getElementById("service-price-to")?.value;
   const priceTo = priceToRaw === "" || priceToRaw === undefined ? null : Number(priceToRaw);
-  const currency = "RSD";
+  const currency = window.App.normalizeCurrency(document.getElementById("service-currency")?.value || "RSD");
   const duration = Number(document.getElementById("service-duration")?.value || 0);
   if (!name || price < 0 || (priceTo !== null && priceTo < 0) || duration <= 0) return window.App.showMessage("Unesite naziv usluge, cenu, valutu i trajanje.", "error");
   if (priceTo !== null && priceTo > 0 && priceTo < price) return window.App.showMessage("Cena do ne može biti manja od cene od.", "error");
@@ -1179,8 +1262,9 @@ async function showAddProductFormLegacyDisabled(productId = null) {
         <div>
           <label>Valuta</label>
           <select id="product-currency">
-            <option value="RSD" ${!product || (product.currency || "RSD") === "RSD" ? "selected" : ""}>Dinari (RSD)</option>
-            
+            <option value="RSD" ${window.App.normalizeCurrency(product?.currency || "RSD") === "RSD" ? "selected" : ""}>Dinari (RSD)</option>
+            <option value="EUR" ${window.App.normalizeCurrency(product?.currency || "RSD") === "EUR" ? "selected" : ""}>Evro (EUR)</option>
+            <option value="KM" ${window.App.normalizeCurrency(product?.currency || "RSD") === "KM" ? "selected" : ""}>Konvertibilna marka (KM)</option>
           </select>
         </div>
       </div>
@@ -1209,7 +1293,7 @@ async function saveProductLegacyDisabled() {
   const category = document.getElementById("product-category")?.value.trim() || null;
   const description = document.getElementById("product-description")?.value.trim() || null;
   const price = Number(document.getElementById("product-price")?.value || 0);
-  const currency = "RSD";
+  const currency = window.App.normalizeCurrency(document.getElementById("product-currency")?.value || "RSD");
   const stock_status = document.getElementById("product-stock-status")?.value || "available";
   const sort_order = Number(document.getElementById("product-sort-order")?.value || 100);
 
@@ -1394,6 +1478,8 @@ async function showGarageForm(listingId = "") {
         <label>Valuta
           <select id="garage-currency">
             <option value="RSD" ${window.App.normalizeCurrency(item?.currency || 'EUR')==='RSD'?'selected':''}>RSD</option>
+            <option value="EUR" ${window.App.normalizeCurrency(item?.currency || 'EUR')==='EUR'?'selected':''}>EUR</option>
+            <option value="KM" ${window.App.normalizeCurrency(item?.currency || 'EUR')==='KM'?'selected':''}>KM</option>
           </select>
         </label>
         <label>Status
@@ -1838,9 +1924,11 @@ function setOwnerPanelLoggedInUI(isLoggedIn) {
   const tabs = document.getElementById("salon-tabs");
   const logoutBtn = document.getElementById("salon-logout-btn");
   const installBtn = document.getElementById("salon-install-btn");
+  const notificationsBtn = document.getElementById("salon-notifications-btn");
   if (tabs) tabs.classList.toggle("hidden", !isLoggedIn);
   if (logoutBtn) logoutBtn.classList.toggle("hidden", !isLoggedIn || adminOwnerPreviewMode);
   if (installBtn) installBtn.classList.toggle("hidden", !isLoggedIn || adminOwnerPreviewMode);
+  if (notificationsBtn) notificationsBtn.classList.toggle("hidden", !isLoggedIn || adminOwnerPreviewMode || ownerIsShopProfile());
 }
 function removeOwnerLoginCards() {
   document.querySelectorAll(".login-card").forEach(card => {
@@ -1954,7 +2042,7 @@ async function showAddProductForm(productId = null) {
     <label>Naziv proizvoda</label><input id="product-name" type="text" value="${product ? salonEscapeHtml(product.name) : ""}" placeholder="Primer: Nike Air Max"><p class="field-help">Upišite glavni naziv koji kupac prvo vidi.</p>
     <label>Brend / kategorija</label><input id="product-category" type="text" value="${product ? salonEscapeHtml(product.category || "") : ""}" placeholder="Primer: Nike / patike"><p class="field-help">Ovde ide brend ili kategorija proizvoda.</p>
     <label>Opis / brojevi</label><textarea id="product-description" rows="3" placeholder="Primer: Brojevi od 40 do 46">${product ? salonEscapeHtml(product.description || "") : ""}</textarea><p class="field-help">Ovde napišite kratki opis, brojeve, veličine ili kratku napomenu za kupca.</p>
-    <div class="grid two"><div><label>Cena</label><input id="product-price" type="text" inputmode="numeric" value="${product ? salonEscapeHtml(product.price || "") : ""}" placeholder="Primer: 4700"></div><div><label>Valuta</label><select id="product-currency"><option value="RSD" selected>RSD</option></select></div></div>
+    <div class="grid two"><div><label>Cena</label><input id="product-price" type="text" inputmode="numeric" value="${product ? salonEscapeHtml(product.price || "") : ""}" placeholder="Primer: 4700"></div><div><label>Valuta</label><select id="product-currency"><option value="RSD" ${window.App.normalizeCurrency(product?.currency || "RSD") === "RSD" ? "selected" : ""}>RSD</option><option value="EUR" ${window.App.normalizeCurrency(product?.currency || "RSD") === "EUR" ? "selected" : ""}>EUR</option><option value="KM" ${window.App.normalizeCurrency(product?.currency || "RSD") === "KM" ? "selected" : ""}>KM</option></select></div></div>
     <label>Status dostupnosti</label><select id="product-stock-status"><option value="available" ${!product || product.stock_status === "available" ? "selected" : ""}>Na stanju</option><option value="preorder" ${product && product.stock_status === "preorder" ? "selected" : ""}>Po porudžbini</option><option value="out" ${product && product.stock_status === "out" ? "selected" : ""}>Trenutno nema</option></select><p class="field-help">Kupac u otvorenom oglasu vidi i ovaj status.</p>
     <label>Redosled</label><input id="product-sort-order" type="number" value="${product ? Number(product.sort_order || 100) : 100}">
     <label>Glavna slika proizvoda</label>${product?.image_url ? `<img class="owner-product-preview" src="${salonEscapeHtml(product.image_url)}" alt="Slika proizvoda"><p class="field-help">Ako ne izaberete novu sliku, ostaje postojeća.</p>` : ""}<input id="product-main-image" type="file" accept="image/png,image/jpeg,image/webp">
@@ -1970,7 +2058,7 @@ async function saveProduct() {
   const category = document.getElementById("product-category")?.value.trim() || null;
   const description = document.getElementById("product-description")?.value.trim() || null;
   const price = normalizeOwnerPrice(document.getElementById("product-price")?.value || 0);
-  const currency = "RSD";
+  const currency = window.App.normalizeCurrency(document.getElementById("product-currency")?.value || "RSD");
   const stock_status = document.getElementById("product-stock-status")?.value || "available";
   const sort_order = Number(document.getElementById("product-sort-order")?.value || 100);
   let existing = null;
