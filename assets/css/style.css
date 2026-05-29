@@ -4487,7 +4487,7 @@ html.cs-real-zoom-active body{
 }
 
 
-/* v184_owner_panel_cache_fix: premium cleaner public/customer view for salons and service profiles.
+/* v186_real_owner_notifications: premium cleaner public/customer view for salons and service profiles.
    Safe visual layer only: no database fields, IDs or booking logic changed. */
 body:has(.salon-themed-page){
   background:
@@ -4787,7 +4787,7 @@ body:has(.salon-themed-page){
   .salon-themed-page .product-public-grid{grid-template-columns:1fr;}
 }
 
-/* v184_owner_panel_cache_fix: smaller one-page public salon layout.
+/* v186_real_owner_notifications: smaller one-page public salon layout.
    Goal: compact first screen, less vertical space, closer to agreed compact mock. */
 .salon-themed-page{
   max-width:430px;
@@ -5044,7 +5044,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v184_owner_panel_cache_fix: real compact one-screen direction */
+/* v186_real_owner_notifications: real compact one-screen direction */
 .salon-themed-page{
   max-width:390px;
   padding:6px 7px 16px;
@@ -5267,7 +5267,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v184_owner_panel_cache_fix: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
+/* v186_real_owner_notifications: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
 .salon-themed-page .client-actions{
   grid-template-columns:1fr 1fr;
 }
@@ -5283,7 +5283,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v184_owner_panel_cache_fix: public gallery fullscreen preview with close button and pinch zoom. */
+/* v186_real_owner_notifications: public gallery fullscreen preview with close button and pinch zoom. */
 .gallery-zoom-backdrop{
   z-index:10020;
   background:rgba(0,0,0,.92);
@@ -5370,7 +5370,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v184_owner_panel_cache_fix: replace full working-hours dropdown with today's hours only */
+/* v186_real_owner_notifications: replace full working-hours dropdown with today's hours only */
 .salon-themed-page .today-hours-card{
   min-height:52px;
   margin:0;
@@ -5408,7 +5408,7 @@ body:has(.salon-themed-page){
 .salon-themed-page .today-hours-card.unknown b{color:rgba(255,255,255,.65);font-size:12.5px;white-space:normal;text-align:right;}
 
 
-/* v184_owner_panel_cache_fix: make phone and location clearly clickable for customers */
+/* v186_real_owner_notifications: make phone and location clearly clickable for customers */
 .salon-themed-page .public-profile-contact.public-contact-actions{
   grid-column:1 / -1;
   display:grid;
@@ -5534,7 +5534,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v184_owner_panel_cache_fix: keep phone/map cards same width as buttons, but text must fit cleanly */
+/* v186_real_owner_notifications: keep phone/map cards same width as buttons, but text must fit cleanly */
 .salon-themed-page .public-profile-contact.public-contact-actions.compact-contact-actions{
   grid-template-columns:1fr 1fr;
   gap:10px;
@@ -5643,7 +5643,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v184_owner_panel_cache_fix: use short icon+verb buttons, common mobile pattern */
+/* v186_real_owner_notifications: use short icon+verb buttons, common mobile pattern */
 .salon-themed-page .public-profile-contact.quick-contact-actions{
   grid-column:1 / -1;
   display:grid !important;
@@ -5774,7 +5774,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v184_owner_panel_cache_fix: zoom gallery can browse other images by vertical swipe */
+/* v186_real_owner_notifications: zoom gallery can browse other images by vertical swipe */
 .gallery-zoom-shell{
   position:relative;
 }
@@ -5836,7 +5836,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v184_owner_panel_cache_fix_dashboard
+/* v186_real_owner_notifications_dashboard
    Safe owner-panel visual refresh. Existing JS functions/IDs stay alive. */
 body:has(.salon-panel){
   background:
@@ -6354,4 +6354,25 @@ body:has(.salon-panel){
   .salon-panel #salon-tabs.panel-tabs:not(.hidden){
     max-width:250px !important;
   }
+}
+
+
+/* v186_real_owner_notifications: keep notification action only in owner header */
+.salon-panel .owner-dashboard-grid.owner-dashboard-grid-two{
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+}
+.salon-panel .section-head.paper-section-head .toolbar-actions{
+  align-self:flex-start;
+}
+@media(max-width:860px){
+  .salon-panel .owner-dashboard-grid.owner-dashboard-grid-two{
+    grid-template-columns:1fr !important;
+  }
+}
+
+
+/* v186 real local owner notifications */
+.owner-live-alert-card{
+  border:1px solid rgba(248,113,113,.38) !important;
+  box-shadow:0 18px 60px rgba(220,38,38,.28), 0 18px 60px rgba(0,0,0,.42) !important;
 }

@@ -6,8 +6,10 @@ let currentSection = "appointments";
 let appointmentCache = [];
 let adminOwnerPreviewMode = false;
 let ownerAppointmentChannel = null;
+let ownerAppointmentPollTimer = null;
 let ownerNotificationUnlocked = false;
 let ownerNotificationLastId = "";
+let ownerNotificationStartedAt = new Date().toISOString();
 
 function unlockOwnerNotificationSound() {
   ownerNotificationUnlocked = true;
@@ -69,12 +71,21 @@ function renderOwnerAppointmentAlert(appointment = {}) {
 async function showOwnerAppointmentBrowserNotification(appointment = {}) {
   try {
     if (!("Notification" in window) || Notification.permission !== "granted") return;
-    if (document.visibilityState === "visible") return;
     const title = "Novi termin - CityStyle";
     const body = `${appointment.client_name || "Klijent"} • ${appointment.service_name_snapshot || "Usluga"} • ${String(appointment.appointment_time || "").slice(0,5)}`;
-    const reg = await navigator.serviceWorker?.ready;
+    const options = {
+      body,
+      icon: "/assets/icons/icon-192.png",
+      badge: "/assets/icons/icon-192.png",
+      data: { url: "/salon/?section=appointments" },
+      tag: `citystyle-owner-${appointment.id || Date.now()}`,
+      renotify: true
+    };
+    const reg = await navigator.serviceWorker?.ready?.catch?.(() => null);
     if (reg?.showNotification) {
-      await reg.showNotification(title, { body, icon: "/assets/icons/icon-192.png", badge: "/assets/icons/icon-192.png", data: { url: "/salon/?section=appointments" }, tag: `citystyle-owner-${appointment.id || Date.now()}`, renotify: true });
+      await reg.showNotification(title, options);
+    } else {
+      new Notification(title, options);
     }
   } catch (err) {
     console.warn("Local browser notification failed:", err);
@@ -93,6 +104,7 @@ async function handleOwnerNewAppointment(appointment = {}) {
 }
 
 function setupOwnerAppointmentRealtime() {
+  startOwnerAppointmentPolling();
   if (!window.db?.channel || !currentSalonId || adminOwnerPreviewMode) return;
   try {
     if (ownerAppointmentChannel) window.db.removeChannel(ownerAppointmentChannel);
@@ -114,6 +126,40 @@ function cleanupOwnerAppointmentRealtime() {
     if (ownerAppointmentChannel && window.db?.removeChannel) window.db.removeChannel(ownerAppointmentChannel);
   } catch (err) {}
   ownerAppointmentChannel = null;
+}
+
+function stopOwnerAppointmentPolling() {
+  if (ownerAppointmentPollTimer) clearInterval(ownerAppointmentPollTimer);
+  ownerAppointmentPollTimer = null;
+}
+
+async function checkOwnerNewAppointmentsByPolling() {
+  if (!currentSalonId || !window.db || adminOwnerPreviewMode) return;
+  try {
+    const { data, error } = await window.db
+      .from("appointments")
+      .select("*")
+      .eq("salon_id", currentSalonId)
+      .gte("created_at", ownerNotificationStartedAt)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (error || !data?.length) return;
+    const latest = data[0];
+    if (!latest?.id || String(latest.id) === String(ownerNotificationLastId)) return;
+
+    const created = latest.created_at ? new Date(latest.created_at).getTime() : Date.now();
+    if (created + 5000 < new Date(ownerNotificationStartedAt).getTime()) return;
+    await handleOwnerNewAppointment(latest);
+  } catch (err) {
+    console.warn("Polling notifikacije nisu uspele:", err);
+  }
+}
+
+function startOwnerAppointmentPolling() {
+  stopOwnerAppointmentPolling();
+  if (!currentSalonId || adminOwnerPreviewMode) return;
+  ownerAppointmentPollTimer = setInterval(checkOwnerNewAppointmentsByPolling, 15000);
 }
 const salonEscapeHtml = (value) => window.App.escapeHtml(value);
 const salonEscapeJs = (value) => window.App.escapeJs(value);
@@ -360,6 +406,7 @@ async function handleSalonLogin() {
   if (!salon) return;
   currentSalon = salon;
   currentSalonId = salon.id;
+  ownerNotificationStartedAt = new Date().toISOString();
   window.App?.setAppLanguage?.(salon.app_language || "sr");
   window.App?.applySalonTheme?.(salon.theme_color);
   renderSalonDashboard();
@@ -384,6 +431,7 @@ async function loadSalonForAdminPreview(salonId) {
 
   currentSalon = data;
   currentSalonId = data.id;
+  ownerNotificationStartedAt = new Date().toISOString();
   window.App?.setAppLanguage?.(data.app_language || "sr");
   window.App?.applySalonTheme?.(data.theme_color);
   renderSalonDashboard();
@@ -522,7 +570,44 @@ async function showSectionLegacyDisabled(section) {
 
 async function enableOwnerNotifications() {
   if (stopAdminOwnerPreviewEdit()) return;
-  await window.App.registerPushForSalon(currentSalonId);
+
+  ownerNotificationUnlocked = true;
+  ownerNotificationStartedAt = new Date().toISOString();
+  setupOwnerAppointmentRealtime();
+  startOwnerAppointmentPolling();
+
+  let permissionOk = true;
+  if ("Notification" in window) {
+    if (Notification.permission === "default") {
+      const permission = await Notification.requestPermission();
+      permissionOk = permission === "granted";
+    } else if (Notification.permission === "denied") {
+      permissionOk = false;
+    }
+  }
+
+  // Try real web-push subscription if VAPID / Edge Function are configured.
+  // If not configured, local realtime/polling notification still works while owner panel is open.
+  const pushReady = await window.App.registerPushForSalon(currentSalonId);
+
+  try {
+    playOwnerAppointmentSound();
+    renderOwnerAppointmentAlert({
+      id: `test-${Date.now()}`,
+      client_name: "Test obaveštenje",
+      service_name_snapshot: "Notifikacije su uključene",
+      appointment_date: new Date().toISOString().slice(0, 10),
+      appointment_time: "00:00"
+    });
+  } catch (err) {}
+
+  if (pushReady) {
+    window.App.showMessage("Obaveštenja su uključena. Novi termin će prikazati zvuk, poruku i browser notifikaciju.", "success");
+  } else if (permissionOk) {
+    window.App.showMessage("Lokalna obaveštenja su uključena dok je panel vlasnika otvoren. Za obaveštenja kad je app zatvorena treba podesiti Web Push server.", "info");
+  } else {
+    window.App.showMessage("Vizuelno i zvučno obaveštenje radi dok je panel otvoren. Browser notifikacije su blokirane u podešavanjima.", "info");
+  }
 }
 
 function getOwnerSourceLink(source = "") {
@@ -730,17 +815,16 @@ async function renderAppointments() {
         <p class="muted">Pregled zahteva i zakazanih termina po datumu, vremenu, usluzi i korisniku.</p>
       </div>
       <div class="toolbar-actions">
-        ${adminOwnerPreviewMode ? `<span class="status-pill">Samo pregled</span>` : `<button class="btn btn-primary btn-small" type="button" onclick="enableOwnerNotifications()">${S("enableNotifications", "Uključi obaveštenja")}</button>`}
+        ${adminOwnerPreviewMode ? `<span class="status-pill">Samo pregled</span>` : ""}
         <button class="btn btn-dark btn-small" type="button" onclick="renderAppointments()">${S("refresh", "Osveži")}</button>
       </div>
     </div>
 
     ${renderOwnerSubscriptionNotice()}
 
-    <div class="owner-dashboard-grid">
+    <div class="owner-dashboard-grid owner-dashboard-grid-two">
       <div class="owner-metric-card"><span>Danas</span><strong>${todayCount}</strong><small>aktivnih zahteva</small></div>
       <div class="owner-metric-card"><span>Ukupno aktivno</span><strong>${activeCount}</strong><small>novi i potvrđeni</small></div>
-      <div class="owner-metric-card"><span>Notifikacije</span><strong>🔔</strong><small>uključite na telefonu vlasnika</small></div>
     </div>
 
     <div class="paper-toolbar card">
