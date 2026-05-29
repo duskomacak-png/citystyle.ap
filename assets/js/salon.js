@@ -527,10 +527,10 @@ function renderSalonDashboardLegacyDisabled() {
     if (labels[btn.dataset.section]) btn.textContent = labels[btn.dataset.section];
     if (btn.dataset.section === "garage") btn.classList.toggle("hidden", !ownerHasGaragePackage());
   });
-  const ownerPanelName = S("ownerInstallBtn", "Instaliraj panel");
+  const ownerPanelName = "Instaliraj panel";
   document.getElementById("salon-install-btn").textContent = ownerPanelName;
   document.getElementById("salon-notifications-btn").textContent = "Notifikacije";
-  document.getElementById("salon-logout-btn").textContent = S("logout", "Odjava");
+  document.getElementById("salon-logout-btn").textContent = "Odjava";
 
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
   const expired = isPaymentExpired(currentSalon.paid_until);
@@ -2086,7 +2086,7 @@ function renderSalonDashboard() {
     analytics: "Statistika",
     garage: "Garaža",
     gallery: "Galerija",
-    hours: "Radno vreme",
+    hours: "Raspored",
     settings: "Podešavanja"
   };
   document.querySelectorAll("#salon-tabs button").forEach(btn => {
@@ -2094,10 +2094,10 @@ function renderSalonDashboard() {
     btn.classList.toggle("hidden", !allowed || (btn.dataset.section === "garage" && !ownerHasGaragePackage()));
     if (labels[btn.dataset.section]) btn.textContent = labels[btn.dataset.section];
   });
-  const ownerPanelName = S("ownerInstallBtn", "Instaliraj panel");
+  const ownerPanelName = "Instaliraj panel";
   document.getElementById("salon-install-btn").textContent = ownerPanelName;
   document.getElementById("salon-notifications-btn").textContent = "Notifikacije";
-  document.getElementById("salon-logout-btn").textContent = S("logout", "Odjava");
+  document.getElementById("salon-logout-btn").textContent = "Odjava";
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
   const expired = isPaymentExpired(currentSalon.paid_until);
   document.getElementById("salon-status-text").innerHTML = adminOwnerPreviewMode ? `Admin pregled vlasničkog panela • izmene su zaključane` : expired ? `Aktivan profil • <span class="danger-text">Uplata istekla</span>` : (shop ? `Aktivna prodavnica patika` : `Aktivan salon`);
