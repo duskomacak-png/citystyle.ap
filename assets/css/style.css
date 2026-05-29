@@ -4487,7 +4487,7 @@ html.cs-real-zoom-active body{
 }
 
 
-/* v181_gallery_swipe: premium cleaner public/customer view for salons and service profiles.
+/* v182_owner_panel_responsive_refresh: premium cleaner public/customer view for salons and service profiles.
    Safe visual layer only: no database fields, IDs or booking logic changed. */
 body:has(.salon-themed-page){
   background:
@@ -4787,7 +4787,7 @@ body:has(.salon-themed-page){
   .salon-themed-page .product-public-grid{grid-template-columns:1fr;}
 }
 
-/* v181_gallery_swipe: smaller one-page public salon layout.
+/* v182_owner_panel_responsive_refresh: smaller one-page public salon layout.
    Goal: compact first screen, less vertical space, closer to agreed compact mock. */
 .salon-themed-page{
   max-width:430px;
@@ -5044,7 +5044,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v181_gallery_swipe: real compact one-screen direction */
+/* v182_owner_panel_responsive_refresh: real compact one-screen direction */
 .salon-themed-page{
   max-width:390px;
   padding:6px 7px 16px;
@@ -5267,7 +5267,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v181_gallery_swipe: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
+/* v182_owner_panel_responsive_refresh: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
 .salon-themed-page .client-actions{
   grid-template-columns:1fr 1fr;
 }
@@ -5283,7 +5283,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v181_gallery_swipe: public gallery fullscreen preview with close button and pinch zoom. */
+/* v182_owner_panel_responsive_refresh: public gallery fullscreen preview with close button and pinch zoom. */
 .gallery-zoom-backdrop{
   z-index:10020;
   background:rgba(0,0,0,.92);
@@ -5370,7 +5370,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v181_gallery_swipe: replace full working-hours dropdown with today's hours only */
+/* v182_owner_panel_responsive_refresh: replace full working-hours dropdown with today's hours only */
 .salon-themed-page .today-hours-card{
   min-height:52px;
   margin:0;
@@ -5408,7 +5408,7 @@ body:has(.salon-themed-page){
 .salon-themed-page .today-hours-card.unknown b{color:rgba(255,255,255,.65);font-size:12.5px;white-space:normal;text-align:right;}
 
 
-/* v181_gallery_swipe: make phone and location clearly clickable for customers */
+/* v182_owner_panel_responsive_refresh: make phone and location clearly clickable for customers */
 .salon-themed-page .public-profile-contact.public-contact-actions{
   grid-column:1 / -1;
   display:grid;
@@ -5534,7 +5534,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v181_gallery_swipe: keep phone/map cards same width as buttons, but text must fit cleanly */
+/* v182_owner_panel_responsive_refresh: keep phone/map cards same width as buttons, but text must fit cleanly */
 .salon-themed-page .public-profile-contact.public-contact-actions.compact-contact-actions{
   grid-template-columns:1fr 1fr;
   gap:10px;
@@ -5643,7 +5643,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v181_gallery_swipe: use short icon+verb buttons, common mobile pattern */
+/* v182_owner_panel_responsive_refresh: use short icon+verb buttons, common mobile pattern */
 .salon-themed-page .public-profile-contact.quick-contact-actions{
   grid-column:1 / -1;
   display:grid !important;
@@ -5774,7 +5774,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v181_gallery_swipe: zoom gallery can browse other images by vertical swipe */
+/* v182_owner_panel_responsive_refresh: zoom gallery can browse other images by vertical swipe */
 .gallery-zoom-shell{
   position:relative;
 }
@@ -5833,4 +5833,156 @@ body:has(.salon-themed-page){
     top:10px;
     font-size:12px;
   }
+}
+
+
+/* v182_owner_panel_responsive_refresh */
+.salon-panel{
+  max-width:1180px;
+  padding-top:20px;
+}
+.salon-panel .panel-header{
+  display:grid;
+  grid-template-columns:minmax(0,1.5fr) minmax(280px,.95fr);
+  align-items:center;
+  gap:18px;
+  padding:22px;
+  border-radius:26px;
+  background:linear-gradient(180deg,rgba(10,10,14,.96),rgba(15,15,22,.92));
+}
+.salon-panel .panel-header h1{
+  font-size:clamp(30px,4vw,56px);
+  line-height:1.02;
+  margin:0;
+  letter-spacing:-.03em;
+}
+.salon-panel .panel-header p{
+  margin-top:6px;
+  font-size:18px;
+  color:#d4d4d8;
+}
+.salon-panel .panel-header-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  width:100%;
+}
+.salon-panel .panel-header-actions .btn{
+  min-height:56px;
+  padding:12px 14px;
+  border-radius:18px;
+  font-size:15px;
+  line-height:1.15;
+  justify-content:center;
+  text-align:center;
+}
+.salon-panel .panel-header-actions #salon-notifications-btn{
+  grid-column:1 / -1;
+}
+#salon-tabs.panel-tabs:not(.hidden){
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px !important;
+  overflow:visible !important;
+  padding:14px 0 18px !important;
+}
+#salon-tabs.panel-tabs:not(.hidden) button:not(.hidden){
+  min-height:74px !important;
+  padding:14px 12px !important;
+  border-radius:18px !important;
+  white-space:normal !important;
+  font-size:14px !important;
+  line-height:1.15 !important;
+  letter-spacing:-.02em !important;
+  font-weight:850 !important;
+  background:linear-gradient(180deg,rgba(19,19,27,.98),rgba(15,15,22,.94)) !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  box-shadow:0 10px 24px rgba(0,0,0,.18);
+}
+#salon-tabs.panel-tabs:not(.hidden) button.active{
+  background:linear-gradient(135deg,var(--red),var(--red2)) !important;
+  color:#fff !important;
+}
+#salon-content{
+  min-height:320px;
+}
+.salon-panel .section-head.paper-section-head,
+.salon-panel .section-head,
+.salon-panel .admin-toolbar{
+  align-items:flex-start;
+  gap:14px;
+}
+.salon-panel .toolbar-actions{
+  justify-content:flex-end;
+}
+.salon-panel .toolbar-actions .btn{
+  min-height:42px;
+}
+.salon-panel .paper-toolbar.card{
+  display:grid;
+  grid-template-columns:1.2fr minmax(180px,.7fr);
+  gap:14px;
+  align-items:end;
+}
+.salon-panel .paper-toolbar.card label{
+  margin:0;
+}
+.salon-panel .owner-dashboard-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;
+}
+.salon-panel .owner-metric-card{
+  min-height:148px;
+  padding:18px;
+  border-radius:20px;
+}
+.salon-panel .owner-metric-card strong{
+  font-size:42px;
+}
+.salon-panel .paper-mobile-list{
+  display:grid;
+  gap:12px;
+}
+.salon-panel .paper-mobile-item{
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:18px;
+  background:rgba(255,255,255,.03);
+  padding:14px;
+}
+.salon-panel .card.center h3{
+  font-size:clamp(28px,4vw,48px);
+  line-height:1.1;
+  margin-bottom:12px;
+}
+@media(max-width:1080px){
+  #salon-tabs.panel-tabs:not(.hidden){grid-template-columns:repeat(3,minmax(0,1fr)) !important;}
+}
+@media(max-width:820px){
+  .salon-panel{padding:12px;}
+  .salon-panel .panel-header{
+    grid-template-columns:1fr;
+    padding:18px;
+    gap:16px;
+  }
+  .salon-panel .panel-header p{font-size:16px;}
+  .salon-panel .panel-header-actions{
+    grid-template-columns:1fr;
+  }
+  .salon-panel .panel-header-actions #salon-notifications-btn{grid-column:auto;}
+  #salon-tabs.panel-tabs:not(.hidden){grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:10px !important;}
+  #salon-tabs.panel-tabs:not(.hidden) button:not(.hidden){min-height:68px !important; font-size:13px !important;}
+  .salon-panel .paper-toolbar.card{grid-template-columns:1fr;}
+  .salon-panel .owner-dashboard-grid{grid-template-columns:1fr; gap:12px;}
+  .salon-panel .owner-metric-card{min-height:auto;}
+  .salon-panel .section-head.paper-section-head,
+  .salon-panel .section-head,
+  .salon-panel .admin-toolbar{flex-direction:column; align-items:stretch;}
+  .salon-panel .toolbar-actions{justify-content:stretch; width:100%;}
+  .salon-panel .toolbar-actions .btn{width:100%;}
+}
+@media(max-width:520px){
+  .salon-panel .panel-header h1{font-size:clamp(24px,9vw,42px);}
+  .salon-panel .panel-header p{font-size:15px;}
+  #salon-tabs.panel-tabs:not(.hidden) button:not(.hidden){min-height:64px !important; padding:12px 10px !important; font-size:12.5px !important;}
+  .salon-panel .card.center h3{font-size:24px;}
 }

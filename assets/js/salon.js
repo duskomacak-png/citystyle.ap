@@ -479,7 +479,7 @@ function renderSalonDashboardLegacyDisabled() {
     if (labels[btn.dataset.section]) btn.textContent = labels[btn.dataset.section];
     if (btn.dataset.section === "garage") btn.classList.toggle("hidden", !ownerHasGaragePackage());
   });
-  const ownerPanelName = currentSalon?.salon_name ? `Preuzmi ${currentSalon.salon_name} Panel` : S("ownerInstallBtn", "Preuzmi panel vlasnika");
+  const ownerPanelName = S("ownerInstallBtn", "Preuzmi panel");
   document.getElementById("salon-install-btn").textContent = ownerPanelName;
   document.getElementById("salon-logout-btn").textContent = S("logout", "Odjavi se");
 
@@ -1963,25 +1963,25 @@ function renderSalonDashboard() {
   setOwnerPanelLoggedInUI(true);
   const shop = ownerIsShopProfile();
   const labels = shop ? {
-    products: "Proizvodi / oglasi",
+    products: "Proizvodi",
     analytics: "Statistika / QR",
-    settings: "Profil / početna slika"
+    settings: "Podešavanja"
   } : {
-    appointments: "Zahtevi / termini",
-    services: "Usluge / ponuda",
-    products: "Proizvodi / katalog",
+    appointments: "Zahtevi",
+    services: "Usluge",
+    products: "Proizvodi",
     analytics: "Statistika / QR",
     garage: "Garaža",
-    gallery: "Galerija radova",
+    gallery: "Galerija",
     hours: "Radno vreme",
-    settings: "Profil / podešavanje"
+    settings: "Podešavanja"
   };
   document.querySelectorAll("#salon-tabs button").forEach(btn => {
     const allowed = !!labels[btn.dataset.section] && (!shop || ["products","analytics","settings"].includes(btn.dataset.section));
     btn.classList.toggle("hidden", !allowed || (btn.dataset.section === "garage" && !ownerHasGaragePackage()));
     if (labels[btn.dataset.section]) btn.textContent = labels[btn.dataset.section];
   });
-  const ownerPanelName = currentSalon?.salon_name ? `Preuzmi ${currentSalon.salon_name} Panel` : S("ownerInstallBtn", "Preuzmi panel vlasnika");
+  const ownerPanelName = S("ownerInstallBtn", "Preuzmi panel");
   document.getElementById("salon-install-btn").textContent = ownerPanelName;
   document.getElementById("salon-logout-btn").textContent = S("logout", "Odjavi se");
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
