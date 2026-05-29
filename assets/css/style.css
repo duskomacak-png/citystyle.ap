@@ -4487,7 +4487,7 @@ html.cs-real-zoom-active body{
 }
 
 
-/* v186_real_owner_notifications: premium cleaner public/customer view for salons and service profiles.
+/* v187_real_owner_mobile_fix: premium cleaner public/customer view for salons and service profiles.
    Safe visual layer only: no database fields, IDs or booking logic changed. */
 body:has(.salon-themed-page){
   background:
@@ -4787,7 +4787,7 @@ body:has(.salon-themed-page){
   .salon-themed-page .product-public-grid{grid-template-columns:1fr;}
 }
 
-/* v186_real_owner_notifications: smaller one-page public salon layout.
+/* v187_real_owner_mobile_fix: smaller one-page public salon layout.
    Goal: compact first screen, less vertical space, closer to agreed compact mock. */
 .salon-themed-page{
   max-width:430px;
@@ -5044,7 +5044,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v186_real_owner_notifications: real compact one-screen direction */
+/* v187_real_owner_mobile_fix: real compact one-screen direction */
 .salon-themed-page{
   max-width:390px;
   padding:6px 7px 16px;
@@ -5267,7 +5267,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v186_real_owner_notifications: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
+/* v187_real_owner_mobile_fix: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
 .salon-themed-page .client-actions{
   grid-template-columns:1fr 1fr;
 }
@@ -5283,7 +5283,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v186_real_owner_notifications: public gallery fullscreen preview with close button and pinch zoom. */
+/* v187_real_owner_mobile_fix: public gallery fullscreen preview with close button and pinch zoom. */
 .gallery-zoom-backdrop{
   z-index:10020;
   background:rgba(0,0,0,.92);
@@ -5370,7 +5370,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v186_real_owner_notifications: replace full working-hours dropdown with today's hours only */
+/* v187_real_owner_mobile_fix: replace full working-hours dropdown with today's hours only */
 .salon-themed-page .today-hours-card{
   min-height:52px;
   margin:0;
@@ -5408,7 +5408,7 @@ body:has(.salon-themed-page){
 .salon-themed-page .today-hours-card.unknown b{color:rgba(255,255,255,.65);font-size:12.5px;white-space:normal;text-align:right;}
 
 
-/* v186_real_owner_notifications: make phone and location clearly clickable for customers */
+/* v187_real_owner_mobile_fix: make phone and location clearly clickable for customers */
 .salon-themed-page .public-profile-contact.public-contact-actions{
   grid-column:1 / -1;
   display:grid;
@@ -5534,7 +5534,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v186_real_owner_notifications: keep phone/map cards same width as buttons, but text must fit cleanly */
+/* v187_real_owner_mobile_fix: keep phone/map cards same width as buttons, but text must fit cleanly */
 .salon-themed-page .public-profile-contact.public-contact-actions.compact-contact-actions{
   grid-template-columns:1fr 1fr;
   gap:10px;
@@ -5643,7 +5643,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v186_real_owner_notifications: use short icon+verb buttons, common mobile pattern */
+/* v187_real_owner_mobile_fix: use short icon+verb buttons, common mobile pattern */
 .salon-themed-page .public-profile-contact.quick-contact-actions{
   grid-column:1 / -1;
   display:grid !important;
@@ -5774,7 +5774,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v186_real_owner_notifications: zoom gallery can browse other images by vertical swipe */
+/* v187_real_owner_mobile_fix: zoom gallery can browse other images by vertical swipe */
 .gallery-zoom-shell{
   position:relative;
 }
@@ -5836,7 +5836,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v186_real_owner_notifications_dashboard
+/* v187_real_owner_mobile_fix_dashboard
    Safe owner-panel visual refresh. Existing JS functions/IDs stay alive. */
 body:has(.salon-panel){
   background:
@@ -6357,7 +6357,7 @@ body:has(.salon-panel){
 }
 
 
-/* v186_real_owner_notifications: keep notification action only in owner header */
+/* v187_real_owner_mobile_fix: keep notification action only in owner header */
 .salon-panel .owner-dashboard-grid.owner-dashboard-grid-two{
   grid-template-columns:repeat(2,minmax(0,1fr)) !important;
 }
@@ -6375,4 +6375,442 @@ body:has(.salon-panel){
 .owner-live-alert-card{
   border:1px solid rgba(248,113,113,.38) !important;
   box-shadow:0 18px 60px rgba(220,38,38,.28), 0 18px 60px rgba(0,0,0,.42) !important;
+}
+
+
+/* v187_REAL_OWNER_MOBILE_FIX
+   Final hard override for the ACTUAL owner panel HTML.
+   Goal: clean on mobile and desktop without relying on mockup-only layout. */
+
+body:has(.salon-panel),
+body{
+  --owner-card:#101016;
+  --owner-card-2:#15151d;
+  --owner-border:rgba(255,255,255,.10);
+  --owner-red:#dc2626;
+}
+
+/* Global owner wrapper */
+.salon-panel{
+  width:100% !important;
+  max-width:1180px !important;
+  margin:0 auto !important;
+  padding:14px !important;
+}
+
+/* Header: compact, sale-ready */
+.salon-panel .panel-header{
+  margin:0 0 14px !important;
+  padding:18px !important;
+  border-radius:24px !important;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(220,38,38,.18), transparent 42%),
+    linear-gradient(180deg, rgba(255,255,255,.060), rgba(255,255,255,.020)),
+    #09090d !important;
+  border:1px solid var(--owner-border) !important;
+  box-shadow:0 20px 55px rgba(0,0,0,.36) !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(260px,420px) !important;
+  gap:18px !important;
+  align-items:center !important;
+}
+
+.salon-panel .panel-header h1{
+  font-size:clamp(26px, 4vw, 46px) !important;
+  line-height:1.03 !important;
+  letter-spacing:-.04em !important;
+  margin:0 0 6px !important;
+}
+
+.salon-panel .panel-header p,
+.salon-panel #salon-status-text{
+  color:#d4d4d8 !important;
+  font-size:15px !important;
+  font-weight:650 !important;
+}
+
+.salon-panel #salon-status-text::before{
+  content:"";
+  display:inline-block;
+  width:8px;
+  height:8px;
+  border-radius:999px;
+  background:#22c55e;
+  box-shadow:0 0 12px rgba(34,197,94,.7);
+  margin-right:8px;
+}
+
+.salon-panel .panel-header-actions{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:10px !important;
+  width:100% !important;
+}
+
+.salon-panel .panel-header-actions .btn{
+  width:100% !important;
+  min-height:46px !important;
+  padding:10px 12px !important;
+  border-radius:14px !important;
+  font-size:13px !important;
+  line-height:1.12 !important;
+  text-align:center !important;
+  white-space:normal !important;
+}
+
+.salon-panel .panel-header-actions #salon-notifications-btn{
+  grid-column:1 / -1 !important;
+  background:linear-gradient(135deg, #ef4444, #b91c1c) !important;
+}
+
+.salon-panel .panel-header-actions #salon-logout-btn{
+  grid-column:2 !important;
+}
+
+.salon-panel .panel-header-actions #salon-install-btn{
+  grid-column:1 !important;
+}
+
+/* Owner menu actual tabs */
+#salon-tabs.panel-tabs:not(.hidden){
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:10px !important;
+  overflow:visible !important;
+  padding:0 !important;
+  margin:0 0 18px !important;
+}
+
+#salon-tabs.panel-tabs:not(.hidden) button:not(.hidden){
+  width:100% !important;
+  min-width:0 !important;
+  min-height:58px !important;
+  padding:10px 8px !important;
+  border-radius:17px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  white-space:normal !important;
+  word-break:normal !important;
+  overflow-wrap:normal !important;
+  font-size:13px !important;
+  font-weight:850 !important;
+  line-height:1.12 !important;
+  letter-spacing:-.02em !important;
+  color:#f4f4f5 !important;
+  background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018)), #101016 !important;
+  border:1px solid rgba(255,255,255,.095) !important;
+  box-shadow:0 12px 28px rgba(0,0,0,.20) !important;
+}
+
+#salon-tabs.panel-tabs:not(.hidden) button.active{
+  background:linear-gradient(135deg, #dc2626, #991b1b) !important;
+  border-color:rgba(248,113,113,.46) !important;
+}
+
+/* Section title */
+.salon-panel .owner-section-title,
+.salon-panel .section-head{
+  display:flex !important;
+  justify-content:space-between !important;
+  align-items:flex-end !important;
+  gap:14px !important;
+  margin:6px 0 14px !important;
+}
+
+.salon-panel .owner-section-title h2,
+.salon-panel .section-head h2{
+  font-size:clamp(26px, 3.5vw, 42px) !important;
+  line-height:1.05 !important;
+  letter-spacing:-.04em !important;
+}
+
+.salon-panel .owner-section-title p,
+.salon-panel .section-head p{
+  max-width:720px !important;
+  line-height:1.5 !important;
+}
+
+.salon-panel .owner-add-btn,
+.salon-panel .section-head .btn-primary{
+  min-height:46px !important;
+  border-radius:15px !important;
+  padding:12px 18px !important;
+}
+
+/* Appointment metrics */
+.salon-panel .owner-dashboard-grid{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:12px !important;
+}
+
+.salon-panel .owner-metric-card{
+  min-height:118px !important;
+  padding:16px !important;
+  border-radius:22px !important;
+}
+
+/* Services: force compact actual new list */
+.salon-panel .owner-services-table{
+  display:block !important;
+  padding:8px !important;
+  margin:0 !important;
+  border-radius:24px !important;
+  background:linear-gradient(180deg,rgba(255,255,255,.050),rgba(255,255,255,.018)) !important;
+  border:1px solid rgba(255,255,255,.095) !important;
+}
+
+.salon-panel .owner-services-head,
+.salon-panel .owner-service-row{
+  display:grid !important;
+  grid-template-columns:minmax(210px,1.4fr) 90px 140px 95px minmax(220px,.9fr) !important;
+  gap:12px !important;
+  align-items:center !important;
+}
+
+.salon-panel .owner-services-head{
+  color:#9ca3af !important;
+  font-size:11px !important;
+  font-weight:900 !important;
+  text-transform:uppercase !important;
+  letter-spacing:.06em !important;
+  padding:9px 12px !important;
+  border-bottom:1px solid rgba(255,255,255,.07) !important;
+}
+
+.salon-panel .owner-service-row{
+  padding:12px !important;
+  border-bottom:1px solid rgba(255,255,255,.065) !important;
+  border-radius:16px !important;
+}
+
+.salon-panel .owner-service-main strong{
+  font-size:16px !important;
+}
+
+.salon-panel .owner-service-main small,
+.salon-panel .owner-service-main p{
+  color:#a1a1aa !important;
+  font-size:12px !important;
+}
+
+.salon-panel .owner-service-price,
+.salon-panel .owner-service-duration{
+  font-size:14px !important;
+  font-weight:850 !important;
+  color:#f4f4f5 !important;
+}
+
+.salon-panel .owner-status-pill{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:5px 9px !important;
+  border-radius:999px !important;
+  background:rgba(34,197,94,.14) !important;
+  color:#86efac !important;
+  font-size:12px !important;
+  font-weight:900 !important;
+}
+
+.salon-panel .owner-service-actions{
+  display:flex !important;
+  justify-content:flex-end !important;
+  gap:8px !important;
+}
+
+.salon-panel .owner-service-actions .btn{
+  min-height:36px !important;
+  width:auto !important;
+  padding:8px 10px !important;
+  border-radius:11px !important;
+  font-size:12px !important;
+}
+
+/* Hide old service cards if browser somehow mixes old/new HTML */
+.salon-panel .service-card:not(.owner-service-row){
+  max-width:none !important;
+}
+
+/* Desktop wide: sidebar menu + content */
+@media(min-width:1000px){
+  .salon-panel{
+    display:grid !important;
+    grid-template-columns:250px minmax(0,1fr) !important;
+    grid-template-areas:
+      "header header"
+      "tabs content" !important;
+    gap:18px !important;
+  }
+
+  .salon-panel .panel-header{ grid-area:header !important; }
+
+  #salon-tabs.panel-tabs:not(.hidden){
+    grid-area:tabs !important;
+    display:flex !important;
+    flex-direction:column !important;
+    position:sticky !important;
+    top:12px !important;
+    padding:12px !important;
+    border-radius:24px !important;
+    background:linear-gradient(180deg,rgba(255,255,255,.052),rgba(255,255,255,.018)) !important;
+    border:1px solid rgba(255,255,255,.09) !important;
+  }
+
+  #salon-tabs.panel-tabs:not(.hidden) button:not(.hidden){
+    justify-content:flex-start !important;
+    text-align:left !important;
+    min-height:48px !important;
+    border-radius:14px !important;
+    padding:11px 13px !important;
+  }
+
+  #salon-content{ grid-area:content !important; min-width:0 !important; }
+}
+
+/* Tablet */
+@media(max-width:999px){
+  .salon-panel{
+    display:block !important;
+    max-width:760px !important;
+  }
+}
+
+/* Mobile: real layout, no huge broken cards */
+@media(max-width:640px){
+  .salon-panel{
+    padding:10px !important;
+    max-width:520px !important;
+  }
+
+  .salon-panel .panel-header{
+    display:block !important;
+    padding:15px !important;
+    border-radius:22px !important;
+  }
+
+  .salon-panel .panel-header h1{
+    font-size:clamp(24px, 8vw, 36px) !important;
+  }
+
+  .salon-panel .panel-header-actions{
+    grid-template-columns:1fr !important;
+    margin-top:14px !important;
+  }
+
+  .salon-panel .panel-header-actions #salon-install-btn,
+  .salon-panel .panel-header-actions #salon-notifications-btn,
+  .salon-panel .panel-header-actions #salon-logout-btn{
+    grid-column:auto !important;
+  }
+
+  #salon-tabs.panel-tabs:not(.hidden){
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:8px !important;
+    margin:14px 0 18px !important;
+  }
+
+  #salon-tabs.panel-tabs:not(.hidden) button:not(.hidden){
+    min-height:58px !important;
+    padding:9px 8px !important;
+    border-radius:15px !important;
+    font-size:12.5px !important;
+  }
+
+  .salon-panel .owner-section-title,
+  .salon-panel .section-head{
+    display:block !important;
+  }
+
+  .salon-panel .owner-section-title .btn,
+  .salon-panel .section-head .btn,
+  .salon-panel .owner-add-btn{
+    width:100% !important;
+    margin-top:12px !important;
+  }
+
+  .salon-panel .owner-dashboard-grid{
+    grid-template-columns:1fr !important;
+  }
+
+  .salon-panel .owner-services-head{
+    display:none !important;
+  }
+
+  .salon-panel .owner-services-table{
+    padding:0 !important;
+    background:transparent !important;
+    border:0 !important;
+    box-shadow:none !important;
+  }
+
+  .salon-panel .owner-service-row{
+    display:grid !important;
+    grid-template-columns:1fr auto !important;
+    gap:8px 12px !important;
+    margin:0 0 12px !important;
+    padding:14px !important;
+    border-radius:20px !important;
+    border:1px solid rgba(255,255,255,.095) !important;
+    background:linear-gradient(180deg,rgba(255,255,255,.050),rgba(255,255,255,.020)) !important;
+    box-shadow:0 16px 38px rgba(0,0,0,.24) !important;
+  }
+
+  .salon-panel .owner-service-main{
+    grid-column:1 !important;
+    min-width:0 !important;
+  }
+
+  .salon-panel .owner-service-main strong{
+    font-size:17px !important;
+    line-height:1.15 !important;
+  }
+
+  .salon-panel .owner-service-duration{
+    grid-column:1 !important;
+    color:#a1a1aa !important;
+  }
+
+  .salon-panel .owner-service-price{
+    grid-column:2 !important;
+    grid-row:1 / span 2 !important;
+    align-self:start !important;
+    text-align:right !important;
+    font-size:16px !important;
+    max-width:150px !important;
+  }
+
+  .salon-panel .owner-service-row > div:nth-child(4){
+    grid-column:1 / -1 !important;
+  }
+
+  .salon-panel .owner-service-actions{
+    grid-column:1 / -1 !important;
+    display:grid !important;
+    grid-template-columns:1fr 1fr 1fr !important;
+    gap:7px !important;
+  }
+
+  .salon-panel .owner-service-actions .btn{
+    width:100% !important;
+    min-height:40px !important;
+    font-size:12px !important;
+    padding:8px 6px !important;
+  }
+
+  .salon-panel .card.center h3{
+    font-size:22px !important;
+    line-height:1.2 !important;
+  }
+}
+
+@media(max-width:380px){
+  #salon-tabs.panel-tabs:not(.hidden){
+    grid-template-columns:1fr 1fr !important;
+  }
+  .salon-panel .owner-service-actions{
+    grid-template-columns:1fr !important;
+  }
 }

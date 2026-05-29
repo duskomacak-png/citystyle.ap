@@ -514,12 +514,12 @@ function garagePackageLabel() {
 
 function renderSalonDashboardLegacyDisabled() {
   const labels = {
-    appointments: S("tabAppointments", "Zahtevi / termini"),
-    services: S("tabServices", "Usluge / ponuda"),
-    products: S("tabProducts", "Proizvodi / katalog"),
+    appointments: S("tabAppointments", "Termini"),
+    services: S("tabServices", "Usluge"),
+    products: S("tabProducts", "Proizvodi"),
     analytics: "Statistika / QR",
     garage: "Garaža",
-    gallery: "Galerija radova",
+    gallery: "Galerija",
     hours: S("tabHours", "Radno vreme"),
     settings: S("tabSettings", "Podešavanje profila")
   };
@@ -811,7 +811,7 @@ async function renderAppointments() {
   content.innerHTML = `
     <div class="section-head paper-section-head">
       <div>
-        <h2>Zahtevi / termini</h2>
+        <h2>Termini</h2>
         <p class="muted">Pregled zahteva i zakazanih termina po datumu, vremenu, usluzi i korisniku.</p>
       </div>
       <div class="toolbar-actions">
@@ -833,7 +833,7 @@ async function renderAppointments() {
         <select id="appointment-filter" onchange="changeAppointmentFilter()">
           <option value="active" ${statusFilter === "active" ? "selected" : ""}>Aktivni termini</option>
           <option value="today" ${statusFilter === "today" ? "selected" : ""}>${S("todayAppointments", "Današnji termini")}</option>
-          <option value="date" ${statusFilter === "date" ? "selected" : ""}>Zahtevi / termini po datumu</option>
+          <option value="date" ${statusFilter === "date" ? "selected" : ""}>Termini po datumu</option>
           <option value="done" ${statusFilter === "done" ? "selected" : ""}>${S("done", "Završeni termini")}</option>
           <option value="cancelled" ${statusFilter === "cancelled" ? "selected" : ""}>Otkazani termini</option>
         </select>
@@ -1266,7 +1266,7 @@ async function renderProductsLegacyDisabled() {
   content.innerHTML = `
     <div class="section-head">
       <div>
-        <h2>Proizvodi / katalog</h2>
+        <h2>Proizvodi</h2>
         <p class="muted">Dodajte proizvode, artikle, cenovnik ili ponudu koju korisnici vide na javnom QR profilu.</p>
       </div>
       ${adminOwnerPreviewMode ? `<span class="status-pill">Samo pregled</span>` : `<button class="btn btn-primary" type="button" onclick="showAddProductForm()">Dodaj proizvod</button>`}
@@ -1751,7 +1751,7 @@ async function renderGallery() {
   content.innerHTML = `
     <div class="section-head">
       <div>
-        <h2>Galerija radova</h2>
+        <h2>Galerija</h2>
         <p class="muted">Dodajte do 10 slika radova. Slike se prikazuju na javnom QR profilu.</p>
       </div>
       ${adminOwnerPreviewMode ? "" : `<button class="btn btn-primary" type="button" onclick="showGalleryUploadForm()">Dodaj sliku</button>`}
@@ -1784,7 +1784,7 @@ async function loadGallery() {
 
   list.innerHTML = `<div class="owner-gallery-grid">${items.map(image => `
     <div class="card owner-gallery-card ${image.active ? "" : "muted-card"}">
-      <img src="${salonEscapeHtml(image.image_url)}" alt="Galerija radova">
+      <img src="${salonEscapeHtml(image.image_url)}" alt="Galerija">
       ${image.caption ? `<p>${salonEscapeHtml(image.caption)}</p>` : `<p class="muted">Bez opisa</p>`}
       <small>Redosled: ${Number(image.sort_order || 100)} • ${image.active ? "Javno" : "Sakriveno"}</small>
       ${adminOwnerPreviewMode ? `<div class="card-actions"><span class="status-pill">Admin pregled</span></div>` : `<div class="card-actions">
@@ -2125,7 +2125,7 @@ function normalizeOwnerPrice(value) {
 }
 
 async function renderProducts() {
-  const title = ownerIsShopProfile() ? "Proizvodi / oglasi prodavnice patika" : "Proizvodi / katalog";
+  const title = ownerIsShopProfile() ? "Proizvodi / oglasi prodavnice patika" : "Proizvodi";
   document.getElementById("salon-content").innerHTML = `
     <div class="section-head">
       <div><h2>${title}</h2><p class="muted">Dodajte, izmenite i uredite proizvode koje korisnik vidi na javnoj stranici.</p></div>
