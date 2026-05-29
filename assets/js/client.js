@@ -711,7 +711,7 @@ function renderClientServicesPreview() {
   }
 
   return `
-    <details class="card client-hours-panel client-services-panel">
+    <details class="card client-hours-panel client-services-panel" open>
       <summary>
         <span>${escapeHtml(profileLabels.services)}</span>
         <small>${C("showList", "Prikaži listu")}</small>
