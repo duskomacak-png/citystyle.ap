@@ -671,13 +671,17 @@ function openGarageListing(listingId) {
 
 function renderClientGalleryPreview() {
   if (!galleryImages.length) return "";
-  const previewImages = galleryImages.slice(0, 5);
+  const previewLimit = 5;
+  const previewImages = galleryImages.slice(0, previewLimit);
   const remaining = Math.max(0, galleryImages.length - previewImages.length);
+  const headerCount = remaining > 0
+    ? `${previewImages.length}/${galleryImages.length} • +${remaining}`
+    : `${galleryImages.length}/${galleryImages.length}`;
   return `
-    <details class="card client-hours-panel client-gallery-panel">
+    <details class="card client-hours-panel client-gallery-panel" open>
       <summary>
         <span>Galerija radova</span>
-        <small>${galleryImages.length}/10</small>
+        <small>${headerCount}</small>
       </summary>
       <div class="public-gallery-grid public-gallery-grid-compact">
         ${previewImages.map(image => `
@@ -687,7 +691,7 @@ function renderClientGalleryPreview() {
           </button>
         `).join("")}
         ${remaining > 0 ? `
-          <button type="button" class="public-gallery-item public-gallery-more" onclick="openPublicGalleryOverview()">
+          <button type="button" class="public-gallery-item public-gallery-more" aria-label="Prikaži još radova" onclick="openPublicGalleryOverview()">
             <strong>+${remaining}</strong>
             <span>Još radova</span>
           </button>
