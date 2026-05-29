@@ -695,8 +695,8 @@ function renderClientGalleryPreview() {
         <small>${headerCount}</small>
       </summary>
       <div class="public-gallery-grid public-gallery-grid-compact">
-        ${previewImages.map(image => `
-          <button type="button" class="public-gallery-item" onclick="openPublicGalleryImage('${escapeJs(image.image_url)}', '${escapeJs(image.caption || '')}')">
+        ${previewImages.map((image, index) => `
+          <button type="button" class="public-gallery-item" onclick="openPublicGalleryImage('${escapeJs(image.image_url)}', '${escapeJs(image.caption || '')}', ${index})">
             <img src="${escapeHtml(image.image_url)}" alt="${escapeHtml(image.caption || 'Galerija radova')}">
             ${image.caption ? `<span>${escapeHtml(image.caption)}</span>` : ""}
           </button>
@@ -722,8 +722,8 @@ function openPublicGalleryOverview() {
         <button class="btn btn-dark btn-small" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
       </div>
       <div class="public-gallery-grid gallery-overview-grid">
-        ${galleryImages.map(image => `
-          <button type="button" class="public-gallery-item" onclick="this.closest('.modal-backdrop').remove(); openPublicGalleryImage('${escapeJs(image.image_url)}', '${escapeJs(image.caption || '')}')">
+        ${galleryImages.map((image, index) => `
+          <button type="button" class="public-gallery-item" onclick="this.closest('.modal-backdrop').remove(); openPublicGalleryImage('${escapeJs(image.image_url)}', '${escapeJs(image.caption || '')}', ${index})">
             <img src="${escapeHtml(image.image_url)}" alt="${escapeHtml(image.caption || 'Galerija radova')}">
             ${image.caption ? `<span>${escapeHtml(image.caption)}</span>` : ""}
           </button>
@@ -733,141 +733,172 @@ function openPublicGalleryOverview() {
   document.body.appendChild(modal);
 }
 
-function openPublicGalleryImage(url, caption = "") {
+
+function openPublicGalleryImage(url, caption = "", index = null) {
+  const safeIndex = Number.isFinite(Number(index))
+    ? Math.max(0, Math.min(Number(index), Math.max(0, galleryImages.length - 1)))
+    : Math.max(0, galleryImages.findIndex(img => String(img.image_url) === String(url)));
+  const activeIndex = safeIndex >= 0 ? safeIndex : 0;
   const modal = document.createElement("div");
   modal.className = "modal-backdrop gallery-lightbox gallery-zoom-backdrop";
   modal.innerHTML = `
     <div class="gallery-zoom-shell">
       <button class="gallery-zoom-close" type="button" aria-label="Zatvori galeriju" onclick="this.closest('.modal-backdrop').remove()">×</button>
+      <div class="gallery-zoom-counter" id="gallery-zoom-counter"></div>
+      <button class="gallery-nav-btn gallery-nav-prev" type="button" aria-label="Prethodna slika">‹</button>
+      <button class="gallery-nav-btn gallery-nav-next" type="button" aria-label="Sledeća slika">›</button>
       <div class="gallery-zoom-stage">
-        <img class="gallery-zoom-image" src="${escapeHtml(url)}" alt="${escapeHtml(caption || 'Galerija radova')}">
+        <img class="gallery-zoom-image" src="" alt="Galerija radova">
       </div>
-      ${caption ? `<p class="gallery-zoom-caption">${escapeHtml(caption)}</p>` : ""}
-      <div class="gallery-zoom-help">Raširite prstima za zoom • prevucite sliku kada je uvećana</div>
+      <p class="gallery-zoom-caption"></p>
+      <div class="gallery-zoom-help">Prevucite gore/dole za sledeću sliku • raširite prstima za zoom</div>
     </div>`;
   document.body.appendChild(modal);
-  setupGalleryZoom(modal);
+  setupGalleryZoom(modal, activeIndex);
 }
 
-function setupGalleryZoom(modal) {
-  const stage = modal.querySelector(".gallery-zoom-stage");
+function setupGalleryZoom(modal, startIndex = 0) {
   const img = modal.querySelector(".gallery-zoom-image");
-  if (!stage || !img) return;
+  const stage = modal.querySelector(".gallery-zoom-stage");
+  const captionEl = modal.querySelector(".gallery-zoom-caption");
+  const counterEl = modal.querySelector("#gallery-zoom-counter");
+  const prevBtn = modal.querySelector(".gallery-nav-prev");
+  const nextBtn = modal.querySelector(".gallery-nav-next");
 
-  let scale = 1;
-  let translateX = 0;
-  let translateY = 0;
-  let startScale = 1;
-  let startDistance = 0;
-  let startX = 0;
-  let startY = 0;
-  let baseX = 0;
-  let baseY = 0;
+  const images = (galleryImages || []).filter(item => item && item.image_url);
+  let currentIndex = images.length ? Math.max(0, Math.min(Number(startIndex) || 0, images.length - 1)) : 0;
+  let scale = 1, startScale = 1, posX = 0, posY = 0, startX = 0, startY = 0, lastX = 0, lastY = 0;
+  let activePointers = new Map();
   let lastTap = 0;
-  const pointers = new Map();
-
-  function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-  }
+  let swipeStartX = 0;
+  let swipeStartY = 0;
+  let swipeStartTime = 0;
 
   function applyTransform() {
-    if (scale <= 1.01) {
-      scale = 1;
-      translateX = 0;
-      translateY = 0;
-    } else {
-      const maxX = (stage.clientWidth * (scale - 1)) / 2;
-      const maxY = (stage.clientHeight * (scale - 1)) / 2;
-      translateX = clamp(translateX, -maxX, maxX);
-      translateY = clamp(translateY, -maxY, maxY);
-    }
-    img.style.transform = `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`;
+    img.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
   }
 
-  function getDistance(a, b) {
-    return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  function resetZoom() {
+    scale = 1;
+    posX = 0;
+    posY = 0;
+    applyTransform();
   }
+
+  function renderImage(nextIndex) {
+    if (!images.length) return;
+    currentIndex = (nextIndex + images.length) % images.length;
+    const item = images[currentIndex] || {};
+    img.src = item.image_url || "";
+    img.alt = item.caption || "Galerija radova";
+    captionEl.textContent = item.caption || "";
+    captionEl.style.display = item.caption ? "block" : "none";
+    counterEl.textContent = `${currentIndex + 1}/${images.length}`;
+    prevBtn.style.display = images.length > 1 ? "grid" : "none";
+    nextBtn.style.display = images.length > 1 ? "grid" : "none";
+    resetZoom();
+  }
+
+  function showPrev() { renderImage(currentIndex - 1); }
+  function showNext() { renderImage(currentIndex + 1); }
+
+  function pointerDistance() {
+    const points = [...activePointers.values()];
+    if (points.length < 2) return 0;
+    const [a, b] = points;
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
+
+  let startDistance = 0;
 
   stage.addEventListener("pointerdown", (event) => {
-    pointers.set(event.pointerId, event);
-    stage.setPointerCapture?.(event.pointerId);
+    activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    stage.setPointerCapture(event.pointerId);
+    swipeStartX = event.clientX;
+    swipeStartY = event.clientY;
+    swipeStartTime = Date.now();
 
-    if (pointers.size === 1) {
-      const now = Date.now();
-      if (now - lastTap < 280) {
-        scale = scale > 1 ? 1 : 2.2;
-        translateX = 0;
-        translateY = 0;
-        applyTransform();
-      }
-      lastTap = now;
-      startX = event.clientX;
-      startY = event.clientY;
-      baseX = translateX;
-      baseY = translateY;
-    }
-
-    if (pointers.size === 2) {
-      const [a, b] = Array.from(pointers.values());
-      startDistance = getDistance(a, b);
+    if (activePointers.size === 1) {
+      startX = event.clientX - posX;
+      startY = event.clientY - posY;
+      lastX = event.clientX;
+      lastY = event.clientY;
+    } else if (activePointers.size === 2) {
+      startDistance = pointerDistance();
       startScale = scale;
     }
-  }, { passive: false });
+  });
 
   stage.addEventListener("pointermove", (event) => {
-    if (!pointers.has(event.pointerId)) return;
-    pointers.set(event.pointerId, event);
+    if (!activePointers.has(event.pointerId)) return;
+    activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
 
-    if (pointers.size === 2) {
-      event.preventDefault();
-      const [a, b] = Array.from(pointers.values());
-      const nextDistance = getDistance(a, b);
+    if (activePointers.size === 2) {
+      const dist = pointerDistance();
       if (startDistance > 0) {
-        scale = clamp(startScale * (nextDistance / startDistance), 1, 4);
+        scale = Math.min(4, Math.max(1, startScale * (dist / startDistance)));
+        if (scale === 1) {
+          posX = 0; posY = 0;
+        }
         applyTransform();
       }
       return;
     }
 
-    if (pointers.size === 1 && scale > 1) {
-      event.preventDefault();
-      translateX = baseX + (event.clientX - startX);
-      translateY = baseY + (event.clientY - startY);
+    if (scale > 1 && activePointers.size === 1) {
+      posX = event.clientX - startX;
+      posY = event.clientY - startY;
+      lastX = event.clientX;
+      lastY = event.clientY;
       applyTransform();
     }
-  }, { passive: false });
+  });
 
-  function releasePointer(event) {
-    pointers.delete(event.pointerId);
-    if (pointers.size < 2) {
-      startDistance = 0;
-      startScale = scale;
+  function finishPointer(event) {
+    const dx = event.clientX - swipeStartX;
+    const dy = event.clientY - swipeStartY;
+    const dt = Date.now() - swipeStartTime;
+    activePointers.delete(event.pointerId);
+
+    if (scale <= 1.05 && images.length > 1 && dt < 650 && Math.abs(dy) > 70 && Math.abs(dy) > Math.abs(dx) * 1.2) {
+      if (dy < 0) showNext();   // swipe up
+      else showPrev();          // swipe down
+      return;
     }
-    if (pointers.size === 1) {
-      const remaining = Array.from(pointers.values())[0];
-      startX = remaining.clientX;
-      startY = remaining.clientY;
-      baseX = translateX;
-      baseY = translateY;
-    }
+
+    if (scale < 1.05) resetZoom();
   }
 
-  stage.addEventListener("pointerup", releasePointer);
-  stage.addEventListener("pointercancel", releasePointer);
-  stage.addEventListener("pointerleave", releasePointer);
+  stage.addEventListener("pointerup", finishPointer);
+  stage.addEventListener("pointercancel", finishPointer);
+
+  stage.addEventListener("dblclick", () => {
+    if (scale > 1) resetZoom();
+    else {
+      scale = 2;
+      applyTransform();
+    }
+  });
 
   stage.addEventListener("wheel", (event) => {
     event.preventDefault();
-    const delta = event.deltaY < 0 ? 0.18 : -0.18;
-    scale = clamp(scale + delta, 1, 4);
+    scale = Math.min(4, Math.max(1, scale + (event.deltaY < 0 ? 0.2 : -0.2)));
+    if (scale === 1) { posX = 0; posY = 0; }
     applyTransform();
   }, { passive: false });
 
-  modal.addEventListener("click", (event) => {
-    if (event.target === modal) modal.remove();
+  prevBtn.addEventListener("click", showPrev);
+  nextBtn.addEventListener("click", showNext);
+
+  modal.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowUp" || event.key === "ArrowLeft") showPrev();
+    if (event.key === "ArrowDown" || event.key === "ArrowRight") showNext();
+    if (event.key === "Escape") modal.remove();
   });
 
-  applyTransform();
+  modal.tabIndex = -1;
+  modal.focus();
+  renderImage(currentIndex);
 }
 
 function installCurrentSalonApp() {

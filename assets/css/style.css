@@ -4487,7 +4487,7 @@ html.cs-real-zoom-active body{
 }
 
 
-/* v180_action_grid_fix: premium cleaner public/customer view for salons and service profiles.
+/* v181_gallery_swipe: premium cleaner public/customer view for salons and service profiles.
    Safe visual layer only: no database fields, IDs or booking logic changed. */
 body:has(.salon-themed-page){
   background:
@@ -4787,7 +4787,7 @@ body:has(.salon-themed-page){
   .salon-themed-page .product-public-grid{grid-template-columns:1fr;}
 }
 
-/* v180_action_grid_fix: smaller one-page public salon layout.
+/* v181_gallery_swipe: smaller one-page public salon layout.
    Goal: compact first screen, less vertical space, closer to agreed compact mock. */
 .salon-themed-page{
   max-width:430px;
@@ -5044,7 +5044,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v180_action_grid_fix: real compact one-screen direction */
+/* v181_gallery_swipe: real compact one-screen direction */
 .salon-themed-page{
   max-width:390px;
   padding:6px 7px 16px;
@@ -5267,7 +5267,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v180_action_grid_fix: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
+/* v181_gallery_swipe: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
 .salon-themed-page .client-actions{
   grid-template-columns:1fr 1fr;
 }
@@ -5283,7 +5283,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v180_action_grid_fix: public gallery fullscreen preview with close button and pinch zoom. */
+/* v181_gallery_swipe: public gallery fullscreen preview with close button and pinch zoom. */
 .gallery-zoom-backdrop{
   z-index:10020;
   background:rgba(0,0,0,.92);
@@ -5370,7 +5370,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v180_action_grid_fix: replace full working-hours dropdown with today's hours only */
+/* v181_gallery_swipe: replace full working-hours dropdown with today's hours only */
 .salon-themed-page .today-hours-card{
   min-height:52px;
   margin:0;
@@ -5408,7 +5408,7 @@ body:has(.salon-themed-page){
 .salon-themed-page .today-hours-card.unknown b{color:rgba(255,255,255,.65);font-size:12.5px;white-space:normal;text-align:right;}
 
 
-/* v180_action_grid_fix: make phone and location clearly clickable for customers */
+/* v181_gallery_swipe: make phone and location clearly clickable for customers */
 .salon-themed-page .public-profile-contact.public-contact-actions{
   grid-column:1 / -1;
   display:grid;
@@ -5534,7 +5534,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v180_action_grid_fix: keep phone/map cards same width as buttons, but text must fit cleanly */
+/* v181_gallery_swipe: keep phone/map cards same width as buttons, but text must fit cleanly */
 .salon-themed-page .public-profile-contact.public-contact-actions.compact-contact-actions{
   grid-template-columns:1fr 1fr;
   gap:10px;
@@ -5643,7 +5643,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v180_action_grid_fix: use short icon+verb buttons, common mobile pattern */
+/* v181_gallery_swipe: use short icon+verb buttons, common mobile pattern */
 .salon-themed-page .public-profile-contact.quick-contact-actions{
   grid-column:1 / -1;
   display:grid !important;
@@ -5769,6 +5769,68 @@ body:has(.salon-themed-page){
     font-size:12.5px;
   }
   .salon-themed-page .client-actions.client-actions-salon-grid .quick-action-label{
+    font-size:12px;
+  }
+}
+
+
+/* v181_gallery_swipe: zoom gallery can browse other images by vertical swipe */
+.gallery-zoom-shell{
+  position:relative;
+}
+.gallery-zoom-counter{
+  position:absolute;
+  left:14px;
+  top:14px;
+  z-index:3;
+  min-width:48px;
+  padding:7px 10px;
+  border-radius:999px;
+  background:rgba(0,0,0,.46);
+  border:1px solid rgba(255,255,255,.16);
+  color:#fff;
+  font-size:13px;
+  font-weight:850;
+  text-align:center;
+}
+.gallery-nav-btn{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  z-index:3;
+  width:44px;
+  height:44px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  background:rgba(0,0,0,.42);
+  border:1px solid rgba(255,255,255,.16);
+  color:#fff;
+  font-size:34px;
+  line-height:1;
+}
+.gallery-nav-prev{ left:12px; }
+.gallery-nav-next{ right:12px; }
+.gallery-zoom-stage{
+  touch-action:none;
+  user-select:none;
+}
+.gallery-zoom-image{
+  transition:transform .12s ease;
+  will-change:transform;
+}
+@media(max-width:560px){
+  .gallery-nav-btn{
+    width:38px;
+    height:38px;
+    font-size:28px;
+  }
+  .gallery-nav-prev{ left:8px; }
+  .gallery-nav-next{ right:8px; }
+  .gallery-zoom-counter{
+    left:10px;
+    top:10px;
     font-size:12px;
   }
 }
