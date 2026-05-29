@@ -517,7 +517,7 @@ function renderSalonDashboardLegacyDisabled() {
     appointments: S("tabAppointments", "Termini"),
     services: S("tabServices", "Usluge"),
     products: S("tabProducts", "Proizvodi"),
-    analytics: "Statistika / QR",
+    analytics: "Statistika",
     garage: "Garaža",
     gallery: "Galerija",
     hours: S("tabHours", "Radno vreme"),
