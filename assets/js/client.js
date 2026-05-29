@@ -1007,23 +1007,29 @@ function renderClientWorkingHours(hours) {
     0: C("sunday", "Nedelja")
   };
 
-  const order = [1, 2, 3, 4, 5, 6, 0];
-  const rows = order.map(day => {
-    const h = (hours || []).find(row => Number(row.day_of_week) === day);
-    if (!h || h.is_closed) {
-      return `<div class="service-row hours-list-row"><div><strong>${dayNames[day]}</strong><span>${C("closed", "Zatvoreno")}</span></div><b>—</b></div>`;
-    }
-    return `<div class="service-row hours-list-row"><div><strong>${dayNames[day]}</strong><span>${C("workingHours", "Radno vreme")}</span></div><b>${String(h.open_time).slice(0,5)}–${String(h.close_time).slice(0,5)}</b></div>`;
-  }).join("");
+  const today = new Date().getDay();
+  const todayHours = (hours || []).find(row => Number(row.day_of_week) === today);
+  const dayName = dayNames[today] || C("today", "Danas");
+
+  let statusText = C("workingHoursNotSet", "Radno vreme nije podešeno za danas");
+  let statusClass = "unknown";
+
+  if (todayHours && !todayHours.is_closed) {
+    statusText = `${String(todayHours.open_time || "").slice(0,5)}–${String(todayHours.close_time || "").slice(0,5)}`;
+    statusClass = "open";
+  } else if (todayHours && todayHours.is_closed) {
+    statusText = C("closedToday", "Danas zatvoreno");
+    statusClass = "closed";
+  }
 
   return `
-    <details class="card client-hours-panel">
-      <summary>
-        <span>${C("workingHours", "Radno vreme")}</span>
-        <small>${C("showSchedule", "Prikaži raspored")}</small>
-      </summary>
-      <div class="service-list hours-list">${rows}</div>
-    </details>
+    <div class="card today-hours-card ${statusClass}">
+      <div>
+        <span>Današnje radno vreme</span>
+        <strong>${escapeHtml(dayName)}</strong>
+      </div>
+      <b>${escapeHtml(statusText)}</b>
+    </div>
   `;
 }
 

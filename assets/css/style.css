@@ -4487,7 +4487,7 @@ html.cs-real-zoom-active body{
 }
 
 
-/* v171_gallery_zoom: premium cleaner public/customer view for salons and service profiles.
+/* v172_today_hours: premium cleaner public/customer view for salons and service profiles.
    Safe visual layer only: no database fields, IDs or booking logic changed. */
 body:has(.salon-themed-page){
   background:
@@ -4787,7 +4787,7 @@ body:has(.salon-themed-page){
   .salon-themed-page .product-public-grid{grid-template-columns:1fr;}
 }
 
-/* v171_gallery_zoom: smaller one-page public salon layout.
+/* v172_today_hours: smaller one-page public salon layout.
    Goal: compact first screen, less vertical space, closer to agreed compact mock. */
 .salon-themed-page{
   max-width:430px;
@@ -5044,7 +5044,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v171_gallery_zoom: real compact one-screen direction */
+/* v172_today_hours: real compact one-screen direction */
 .salon-themed-page{
   max-width:390px;
   padding:6px 7px 16px;
@@ -5267,7 +5267,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v171_gallery_zoom: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
+/* v172_today_hours: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
 .salon-themed-page .client-actions{
   grid-template-columns:1fr 1fr;
 }
@@ -5283,7 +5283,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v171_gallery_zoom: public gallery fullscreen preview with close button and pinch zoom. */
+/* v172_today_hours: public gallery fullscreen preview with close button and pinch zoom. */
 .gallery-zoom-backdrop{
   z-index:10020;
   background:rgba(0,0,0,.92);
@@ -5369,3 +5369,40 @@ body:has(.salon-themed-page){
     font-size:28px;
   }
 }
+
+/* v172_today_hours: replace full working-hours dropdown with today's hours only */
+.salon-themed-page .today-hours-card{
+  min-height:52px;
+  margin:0;
+  padding:12px 14px;
+  border-radius:20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:0 18px 44px rgba(0,0,0,.30);
+}
+.salon-themed-page .today-hours-card span{
+  display:block;
+  color:rgba(255,255,255,.54);
+  font-size:12px;
+  font-weight:800;
+}
+.salon-themed-page .today-hours-card strong{
+  display:block;
+  color:#fff;
+  font-size:15px;
+  font-weight:900;
+  line-height:1.15;
+}
+.salon-themed-page .today-hours-card b{
+  color:#fff;
+  font-size:15px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.salon-themed-page .today-hours-card.open b{color:#bbf7d0;}
+.salon-themed-page .today-hours-card.closed b{color:#fca5a5;}
+.salon-themed-page .today-hours-card.unknown b{color:rgba(255,255,255,.65);font-size:12.5px;white-space:normal;text-align:right;}
