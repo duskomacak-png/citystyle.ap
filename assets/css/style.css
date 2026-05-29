@@ -4487,7 +4487,7 @@ html.cs-real-zoom-active body{
 }
 
 
-/* v166_ultra_compact_customer_ui: premium cleaner public/customer view for salons and service profiles.
+/* v167_no_duplicate_services_ui: premium cleaner public/customer view for salons and service profiles.
    Safe visual layer only: no database fields, IDs or booking logic changed. */
 body:has(.salon-themed-page){
   background:
@@ -4787,7 +4787,7 @@ body:has(.salon-themed-page){
   .salon-themed-page .product-public-grid{grid-template-columns:1fr;}
 }
 
-/* v166_ultra_compact_customer_ui: smaller one-page public salon layout.
+/* v167_no_duplicate_services_ui: smaller one-page public salon layout.
    Goal: compact first screen, less vertical space, closer to agreed compact mock. */
 .salon-themed-page{
   max-width:430px;
@@ -5044,7 +5044,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v166_ultra_compact_customer_ui: real compact one-screen direction */
+/* v167_no_duplicate_services_ui: real compact one-screen direction */
 .salon-themed-page{
   max-width:390px;
   padding:6px 7px 16px;
@@ -5264,4 +5264,20 @@ body:has(.salon-themed-page){
   .salon-themed-page .booking-two-cols{
     grid-template-columns:1fr!important;
   }
+}
+
+
+/* v167_no_duplicate_services_ui: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
+.salon-themed-page .client-actions{
+  grid-template-columns:1fr 1fr;
+}
+.salon-themed-page .client-actions .btn-primary{
+  grid-column:1 / -1;
+}
+.salon-themed-page .client-actions .btn-dark{
+  min-height:38px;
+}
+@media(max-width:560px){
+  .salon-themed-page .client-actions{grid-template-columns:1fr 1fr;}
+  .salon-themed-page .client-actions .btn-primary{grid-column:1 / -1;}
 }
