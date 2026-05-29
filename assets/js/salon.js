@@ -371,16 +371,16 @@ function bindSalonLogout() {
 function renderSalonLogin() {
   window.App?.clearSalonTheme?.();
   window.App?.setAppLanguage?.("sr");
-  document.getElementById("salon-name").textContent = "Panel vlasnika biznisa";
-  document.getElementById("salon-status-text").textContent = "Unesite email adresu biznisa i kod firme koji vam je dodelio administrator.";
+  document.getElementById("salon-name").textContent = "CityStyle Panel";
+  document.getElementById("salon-status-text").textContent = "Prijavite se za upravljanje terminima, uslugama, galerijom i podešavanjima profila.";
   setOwnerPanelLoggedInUI(false);
   document.getElementById("salon-tabs").classList.add("hidden");
   document.getElementById("salon-logout-btn").classList.add("hidden");
   document.getElementById("salon-install-btn")?.classList.add("hidden");
   document.getElementById("salon-content").innerHTML = `
     <div class="card login-card">
-      <h2>Ulaz za vlasnika biznisa</h2>
-      <p class="muted">Unesite email adresu biznisa i kod firme koji vam je dodelio administrator. Posle uspešne prijave ostajete prijavljeni na ovom uređaju dok ne kliknete „Odjavi se”.</p>
+      <h2>Prijava vlasnika</h2>
+      <p class="muted">Unesite email i kod firme. Posle prijave ostajete prijavljeni na ovom uređaju dok ne kliknete „Odjavi se”.</p>
       <label>Email vlasnika / biznisa</label>
       <input id="salon-login-email" type="email" placeholder="salon@email.com">
       <label>Kod firme</label>
@@ -529,7 +529,7 @@ function renderSalonDashboardLegacyDisabled() {
   });
   const ownerPanelName = S("ownerInstallBtn", "Preuzmi panel");
   document.getElementById("salon-install-btn").textContent = ownerPanelName;
-  document.getElementById("salon-logout-btn").textContent = S("logout", "Odjavi se");
+  document.getElementById("salon-logout-btn").textContent = S("logout", "Odjava");
 
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
   const expired = isPaymentExpired(currentSalon.paid_until);
@@ -2052,10 +2052,14 @@ function setOwnerPanelLoggedInUI(isLoggedIn) {
   const logoutBtn = document.getElementById("salon-logout-btn");
   const installBtn = document.getElementById("salon-install-btn");
   const notificationsBtn = document.getElementById("salon-notifications-btn");
+  const headerActions = document.getElementById("salon-header-actions");
   if (tabs) tabs.classList.toggle("hidden", !isLoggedIn);
   if (logoutBtn) logoutBtn.classList.toggle("hidden", !isLoggedIn || adminOwnerPreviewMode);
   if (installBtn) installBtn.classList.toggle("hidden", !isLoggedIn || adminOwnerPreviewMode);
   if (notificationsBtn) notificationsBtn.classList.toggle("hidden", !isLoggedIn || adminOwnerPreviewMode || ownerIsShopProfile());
+  if (headerActions) headerActions.classList.toggle("hidden", !isLoggedIn);
+  document.body.classList.toggle("owner-authenticated", !!isLoggedIn);
+  document.body.classList.toggle("owner-logged-out", !isLoggedIn);
 }
 function removeOwnerLoginCards() {
   document.querySelectorAll(".login-card").forEach(card => {
@@ -2091,7 +2095,7 @@ function renderSalonDashboard() {
   });
   const ownerPanelName = S("ownerInstallBtn", "Preuzmi panel");
   document.getElementById("salon-install-btn").textContent = ownerPanelName;
-  document.getElementById("salon-logout-btn").textContent = S("logout", "Odjavi se");
+  document.getElementById("salon-logout-btn").textContent = S("logout", "Odjava");
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
   const expired = isPaymentExpired(currentSalon.paid_until);
   document.getElementById("salon-status-text").innerHTML = adminOwnerPreviewMode ? `Admin pregled vlasničkog panela • izmene su zaključane` : expired ? `Aktivan profil • <span class="danger-text">Uplata istekla</span>` : (shop ? `Aktivna prodavnica patika` : `Aktivan salon`);
