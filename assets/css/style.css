@@ -4487,7 +4487,7 @@ html.cs-real-zoom-active body{
 }
 
 
-/* v167_no_duplicate_services_ui: premium cleaner public/customer view for salons and service profiles.
+/* v169_zakazi_termin_text_fix: premium cleaner public/customer view for salons and service profiles.
    Safe visual layer only: no database fields, IDs or booking logic changed. */
 body:has(.salon-themed-page){
   background:
@@ -4787,7 +4787,7 @@ body:has(.salon-themed-page){
   .salon-themed-page .product-public-grid{grid-template-columns:1fr;}
 }
 
-/* v167_no_duplicate_services_ui: smaller one-page public salon layout.
+/* v169_zakazi_termin_text_fix: smaller one-page public salon layout.
    Goal: compact first screen, less vertical space, closer to agreed compact mock. */
 .salon-themed-page{
   max-width:430px;
@@ -5044,7 +5044,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v167_no_duplicate_services_ui: real compact one-screen direction */
+/* v169_zakazi_termin_text_fix: real compact one-screen direction */
 .salon-themed-page{
   max-width:390px;
   padding:6px 7px 16px;
@@ -5267,7 +5267,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v167_no_duplicate_services_ui: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
+/* v169_zakazi_termin_text_fix: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
 .salon-themed-page .client-actions{
   grid-template-columns:1fr 1fr;
 }

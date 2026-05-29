@@ -501,7 +501,7 @@ async function renderSalonHome() {
 
         <h1>${escapeHtml(publicName)}</h1>
         <div class="public-profile-text">
-          <p class="intro-text">${escapeHtml(settings?.welcome_text || C("welcomeDefault", "Dobrodošli. Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev."))}</p>
+          <p class="intro-text">${escapeHtml(settings?.welcome_text || C("welcomeDefault", "Dobrodošli. Izaberite uslugu, datum i slobodan termin i zakažite termin."))}</p>
           ${(settings?.phone || settings?.address) ? `
             <div class="public-profile-contact">
               ${settings?.phone ? `<a href="tel:${escapeHtml(window.App.normalizePhoneForTel ? window.App.normalizePhoneForTel(settings.phone) : settings.phone)}">📞 ${escapeHtml(settings.phone)}</a>` : ""}
@@ -934,15 +934,18 @@ function showBookingForm() {
 
   const today = window.BookingLogic?.getLocalDateString ? window.BookingLogic.getLocalDateString() : new Date().toISOString().split("T")[0];
   const businessType = window.App.normalizeBusinessType(currentSalon?.business_type);
-  const isSalonProfile = businessType === "salon";
+  const isSalonProfile = businessType === "salon" || businessType === "general";
   const profileLabels = window.App.getBusinessProfileLabels(currentSalon?.business_type);
+  const bookingActionLabel = isSalonProfile ? "Zakaži termin" : profileLabels.action;
+  const bookingFormTitle = isSalonProfile ? "Zakažite termin" : profileLabels.formTitle;
+  const bookingFormIntro = isSalonProfile ? "Izaberite uslugu, datum i slobodan termin." : profileLabels.formIntro;
   selectedDate = today;
   selectedTime = null;
 
   box.innerHTML = `
     <div class="card booking-card booking-paper-card">
-      <h2>${escapeHtml(profileLabels.formTitle)}</h2>
-      <p class="muted">${escapeHtml(profileLabels.formIntro)}</p>
+      <h2>${escapeHtml(bookingFormTitle)}</h2>
+      <p class="muted">${escapeHtml(bookingFormIntro)}</p>
 
       <label>${C("serviceAndPrice", "Usluga i cena")}</label>
       <select id="booking-service" class="booking-service-dropdown">
@@ -1008,7 +1011,7 @@ function showBookingForm() {
         <textarea id="client-note" rows="4" placeholder="${escapeHtml(profileLabels.notePlaceholder)}"></textarea>
       ` : ""}
 
-      <button class="btn btn-primary booking-submit-btn" type="button" onclick="submitAppointment()">${escapeHtml(profileLabels.action)}</button>
+      <button class="btn btn-primary booking-submit-btn" type="button" onclick="submitAppointment()">${escapeHtml(bookingActionLabel)}</button>
     </div>
   `;
 
@@ -1299,6 +1302,9 @@ async function renderSalonHome() {
   if (csIsShopProfile(currentSalon, products.length)) return renderShoeShopHome(settings || {});
 
   const profileLabels = window.App.getBusinessProfileLabels(currentSalon.business_type);
+  const normalizedType = window.App.normalizeBusinessType(currentSalon.business_type);
+  const isSalonBookingProfile = normalizedType === "salon" || normalizedType === "general";
+  const primaryActionLabel = isSalonBookingProfile ? "Zakaži termin" : profileLabels.action;
   app.innerHTML = `
     <section class="client-page salon-themed-page">
       ${adminPreviewMode ? `<div class="owner-preview-bar admin-preview-bar"><div><strong>${C("adminClientPreviewTitle", "Admin pregled: korisnička strana")}</strong><span>${C("adminClientPreviewText", "Ovako korisnik vidi ovaj profil. Ovo dugme vidi samo prijavljeni admin.")}</span></div><a class="btn btn-primary" href="${window.App.getAppPath('admin/')}">${C("backToAdmin", "Nazad u admin")}</a></div>` : ownerPreviewMode ? `<div class="owner-preview-bar"><div><strong>${C("ownerPreviewTitle", "Pregled javne stranice")}</strong><span>${C("ownerPreviewText", "Ovako korisnik vidi vaš profil.")}</span></div><a class="btn btn-primary" href="${window.App.getAppPath('salon/')}">${C("backToOwnerPanel", "Nazad u panel vlasnika")}</a></div>` : ""}
@@ -1306,17 +1312,17 @@ async function renderSalonHome() {
         ${settings?.logo_url ? `<img src="${escapeHtml(settings.logo_url)}" alt="${escapeHtml(publicName)} logo" class="salon-logo">` : `<div class="logo-circle">${escapeHtml(publicName?.charAt(0).toUpperCase() || "S")}</div>`}
         <h1>${escapeHtml(publicName)}</h1>
         <div class="public-profile-text">
-          <p class="intro-text">${escapeHtml(settings?.welcome_text || C("welcomeDefault", "Dobrodošli. Izaberite uslugu, datum i slobodan termin ili pošaljite zahtev."))}</p>
+          <p class="intro-text">${escapeHtml(settings?.welcome_text || C("welcomeDefault", "Dobrodošli. Izaberite uslugu, datum i slobodan termin i zakažite termin."))}</p>
           ${(settings?.phone || settings?.address) ? `<div class="public-profile-contact">${settings?.phone ? `<a href="tel:${escapeHtml(csSafePhone(settings.phone))}">📞 ${escapeHtml(settings.phone)}</a>` : ""}${settings?.address ? renderPublicAddressLink(settings.address) : ""}</div>` : ""}
         </div>
         <div class="client-actions">
-          <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(profileLabels.action)}</button>
+          <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(primaryActionLabel)}</button>
           ${products.length ? `<button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>` : ""}
           ${garageListings.length ? `<button class="btn btn-dark" type="button" onclick="showGarage()">Garaža / oglasi</button>` : ""}
           ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app ovog profila")}</button>`}
         </div>
       </div>
-      <div id="client-extra">${renderClientServicesPreview()}${renderClientProductsPreview()}${renderClientGaragePreview()}${renderClientGalleryPreview()}${renderClientWorkingHours(workingHours || [])}</div>
+      <div id="client-extra">${isSalonBookingProfile ? "" : renderClientServicesPreview()}${renderClientProductsPreview()}${renderClientGaragePreview()}${renderClientGalleryPreview()}${renderClientWorkingHours(workingHours || [])}</div>
       <div id="booking-box"></div>
       ${renderCityStylePowered("client-powered")}
     </section>`;

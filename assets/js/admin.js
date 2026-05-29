@@ -1023,7 +1023,7 @@ async function createDefaultSettings(salonId, salonName, phone, city) {
   await window.db.from("salon_settings").upsert({
     salon_id: salonId,
     welcome_title: `Dobrodošli u ${salonName}`,
-    welcome_text: "Pošaljite zahtev ili zakažite termin brzo i jednostavno.",
+    welcome_text: "Zakažite termin brzo i jednostavno.",
     phone,
     address: city || null
   }, { onConflict: "salon_id" });
