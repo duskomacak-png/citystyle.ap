@@ -342,7 +342,7 @@ const APP_TRANSLATIONS = {
     welcomeDefault: "Dobrodošli. Izaberite uslugu, datum i zakažite termin.",
     sendRequest: "Pošalji zahtev",
     servicesOffer: "Usluge / ponuda",
-    installThisProfile: "Preuzmi app ovog profila",
+    installThisProfile: "Preuzmi app",
     noServicesSmall: "Nema dostupnih usluga",
     noServicesText: "Trenutno nema dostupnih usluga za online zahtev.",
     showList: "Prikaži listu",
@@ -765,7 +765,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v174_contact_actions`,
+    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v176_short_install_label`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -960,7 +960,7 @@ async function registerPushForSalon(salonId) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v174_contact_actions", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v176_short_install_label", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
