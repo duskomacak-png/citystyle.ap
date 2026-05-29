@@ -4487,7 +4487,7 @@ html.cs-real-zoom-active body{
 }
 
 
-/* v176_short_install_label: premium cleaner public/customer view for salons and service profiles.
+/* v177_contact_text_fit: premium cleaner public/customer view for salons and service profiles.
    Safe visual layer only: no database fields, IDs or booking logic changed. */
 body:has(.salon-themed-page){
   background:
@@ -4787,7 +4787,7 @@ body:has(.salon-themed-page){
   .salon-themed-page .product-public-grid{grid-template-columns:1fr;}
 }
 
-/* v176_short_install_label: smaller one-page public salon layout.
+/* v177_contact_text_fit: smaller one-page public salon layout.
    Goal: compact first screen, less vertical space, closer to agreed compact mock. */
 .salon-themed-page{
   max-width:430px;
@@ -5044,7 +5044,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v176_short_install_label: real compact one-screen direction */
+/* v177_contact_text_fit: real compact one-screen direction */
 .salon-themed-page{
   max-width:390px;
   padding:6px 7px 16px;
@@ -5267,7 +5267,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v176_short_install_label: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
+/* v177_contact_text_fit: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
 .salon-themed-page .client-actions{
   grid-template-columns:1fr 1fr;
 }
@@ -5283,7 +5283,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v176_short_install_label: public gallery fullscreen preview with close button and pinch zoom. */
+/* v177_contact_text_fit: public gallery fullscreen preview with close button and pinch zoom. */
 .gallery-zoom-backdrop{
   z-index:10020;
   background:rgba(0,0,0,.92);
@@ -5370,7 +5370,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v176_short_install_label: replace full working-hours dropdown with today's hours only */
+/* v177_contact_text_fit: replace full working-hours dropdown with today's hours only */
 .salon-themed-page .today-hours-card{
   min-height:52px;
   margin:0;
@@ -5408,7 +5408,7 @@ body:has(.salon-themed-page){
 .salon-themed-page .today-hours-card.unknown b{color:rgba(255,255,255,.65);font-size:12.5px;white-space:normal;text-align:right;}
 
 
-/* v176_short_install_label: make phone and location clearly clickable for customers */
+/* v177_contact_text_fit: make phone and location clearly clickable for customers */
 .salon-themed-page .public-profile-contact.public-contact-actions{
   grid-column:1 / -1;
   display:grid;
@@ -5531,5 +5531,68 @@ body:has(.salon-themed-page){
   }
   .salon-themed-page .compact-contact-actions .public-contact-copy small{
     font-size:10.75px;
+  }
+}
+
+/* v177_contact_text_fit: keep phone/map cards same width as buttons, but text must fit cleanly */
+.salon-themed-page .public-profile-contact.public-contact-actions.compact-contact-actions{
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.salon-themed-page .compact-contact-actions .public-contact-action{
+  min-height:64px;
+  padding:8px 10px;
+  border-radius:18px;
+  grid-template-columns:34px minmax(0,1fr) 12px;
+  align-items:center;
+  gap:9px;
+}
+.salon-themed-page .compact-contact-actions .public-contact-copy{
+  min-width:0;
+  overflow:hidden;
+}
+.salon-themed-page .compact-contact-actions .public-contact-copy b{
+  display:block;
+  font-size:12px;
+  line-height:1.05;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.salon-themed-page .compact-contact-actions .public-contact-copy small{
+  display:block;
+  margin-top:3px;
+  font-size:12px;
+  line-height:1.1;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  word-break:normal;
+  overflow-wrap:normal;
+  -webkit-line-clamp:unset;
+  -webkit-box-orient:unset;
+}
+.salon-themed-page .compact-contact-actions .public-map-action .public-contact-copy small{
+  font-size:11.5px;
+}
+.salon-themed-page .compact-contact-actions .public-contact-arrow{
+  font-size:18px;
+}
+@media(max-width:420px){
+  .salon-themed-page .public-profile-contact.public-contact-actions.compact-contact-actions{
+    gap:8px;
+  }
+  .salon-themed-page .compact-contact-actions .public-contact-action{
+    min-height:60px;
+    padding:8px 9px;
+    grid-template-columns:32px minmax(0,1fr) 10px;
+    gap:8px;
+  }
+  .salon-themed-page .compact-contact-actions .public-contact-copy b{
+    font-size:11.5px;
+  }
+  .salon-themed-page .compact-contact-actions .public-contact-copy small,
+  .salon-themed-page .compact-contact-actions .public-map-action .public-contact-copy small{
+    font-size:11px;
   }
 }
