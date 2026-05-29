@@ -527,8 +527,9 @@ function renderSalonDashboardLegacyDisabled() {
     if (labels[btn.dataset.section]) btn.textContent = labels[btn.dataset.section];
     if (btn.dataset.section === "garage") btn.classList.toggle("hidden", !ownerHasGaragePackage());
   });
-  const ownerPanelName = S("ownerInstallBtn", "Preuzmi panel");
+  const ownerPanelName = S("ownerInstallBtn", "Instaliraj panel");
   document.getElementById("salon-install-btn").textContent = ownerPanelName;
+  document.getElementById("salon-notifications-btn").textContent = "Notifikacije";
   document.getElementById("salon-logout-btn").textContent = S("logout", "Odjava");
 
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
@@ -2093,8 +2094,9 @@ function renderSalonDashboard() {
     btn.classList.toggle("hidden", !allowed || (btn.dataset.section === "garage" && !ownerHasGaragePackage()));
     if (labels[btn.dataset.section]) btn.textContent = labels[btn.dataset.section];
   });
-  const ownerPanelName = S("ownerInstallBtn", "Preuzmi panel");
+  const ownerPanelName = S("ownerInstallBtn", "Instaliraj panel");
   document.getElementById("salon-install-btn").textContent = ownerPanelName;
+  document.getElementById("salon-notifications-btn").textContent = "Notifikacije";
   document.getElementById("salon-logout-btn").textContent = S("logout", "Odjava");
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
   const expired = isPaymentExpired(currentSalon.paid_until);

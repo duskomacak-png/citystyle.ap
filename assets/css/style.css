@@ -4487,7 +4487,7 @@ html.cs-real-zoom-active body{
 }
 
 
-/* v191_final_owner_panel_polish: premium cleaner public/customer view for salons and service profiles.
+/* v192_owner_panel_sales_polish: premium cleaner public/customer view for salons and service profiles.
    Safe visual layer only: no database fields, IDs or booking logic changed. */
 body:has(.salon-themed-page){
   background:
@@ -4787,7 +4787,7 @@ body:has(.salon-themed-page){
   .salon-themed-page .product-public-grid{grid-template-columns:1fr;}
 }
 
-/* v191_final_owner_panel_polish: smaller one-page public salon layout.
+/* v192_owner_panel_sales_polish: smaller one-page public salon layout.
    Goal: compact first screen, less vertical space, closer to agreed compact mock. */
 .salon-themed-page{
   max-width:430px;
@@ -5044,7 +5044,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v191_final_owner_panel_polish: real compact one-screen direction */
+/* v192_owner_panel_sales_polish: real compact one-screen direction */
 .salon-themed-page{
   max-width:390px;
   padding:6px 7px 16px;
@@ -5267,7 +5267,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v191_final_owner_panel_polish: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
+/* v192_owner_panel_sales_polish: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
 .salon-themed-page .client-actions{
   grid-template-columns:1fr 1fr;
 }
@@ -5283,7 +5283,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v191_final_owner_panel_polish: public gallery fullscreen preview with close button and pinch zoom. */
+/* v192_owner_panel_sales_polish: public gallery fullscreen preview with close button and pinch zoom. */
 .gallery-zoom-backdrop{
   z-index:10020;
   background:rgba(0,0,0,.92);
@@ -5370,7 +5370,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v191_final_owner_panel_polish: replace full working-hours dropdown with today's hours only */
+/* v192_owner_panel_sales_polish: replace full working-hours dropdown with today's hours only */
 .salon-themed-page .today-hours-card{
   min-height:52px;
   margin:0;
@@ -5408,7 +5408,7 @@ body:has(.salon-themed-page){
 .salon-themed-page .today-hours-card.unknown b{color:rgba(255,255,255,.65);font-size:12.5px;white-space:normal;text-align:right;}
 
 
-/* v191_final_owner_panel_polish: make phone and location clearly clickable for customers */
+/* v192_owner_panel_sales_polish: make phone and location clearly clickable for customers */
 .salon-themed-page .public-profile-contact.public-contact-actions{
   grid-column:1 / -1;
   display:grid;
@@ -5534,7 +5534,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v191_final_owner_panel_polish: keep phone/map cards same width as buttons, but text must fit cleanly */
+/* v192_owner_panel_sales_polish: keep phone/map cards same width as buttons, but text must fit cleanly */
 .salon-themed-page .public-profile-contact.public-contact-actions.compact-contact-actions{
   grid-template-columns:1fr 1fr;
   gap:10px;
@@ -5643,7 +5643,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v191_final_owner_panel_polish: use short icon+verb buttons, common mobile pattern */
+/* v192_owner_panel_sales_polish: use short icon+verb buttons, common mobile pattern */
 .salon-themed-page .public-profile-contact.quick-contact-actions{
   grid-column:1 / -1;
   display:grid !important;
@@ -5706,7 +5706,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v191_final_owner_panel_polish: exact requested layout */
+/* v192_owner_panel_sales_polish: exact requested layout */
 .salon-themed-page .client-actions.client-actions-salon-grid{
   display:grid !important;
   grid-template-columns:1fr 1fr;
@@ -5774,7 +5774,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v191_final_owner_panel_polish: zoom gallery can browse other images by vertical swipe */
+/* v192_owner_panel_sales_polish: zoom gallery can browse other images by vertical swipe */
 .gallery-zoom-shell{
   position:relative;
 }
@@ -5836,7 +5836,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v191_final_owner_panel_polish
+/* v192_owner_panel_sales_polish
    Safe owner-panel visual refresh. Existing JS functions/IDs stay alive. */
 body:has(.salon-panel){
   background:
@@ -6334,7 +6334,7 @@ body:has(.salon-panel){
 }
 
 
-/* v191_final_owner_panel_polish final hard override: owner panel must not fall back to old oversized card view */
+/* v192_owner_panel_sales_polish final hard override: owner panel must not fall back to old oversized card view */
 .salon-panel{
   max-width:1280px !important;
 }
@@ -6357,7 +6357,7 @@ body:has(.salon-panel){
 }
 
 
-/* v191_final_owner_panel_polish: keep notification action only in owner header */
+/* v192_owner_panel_sales_polish: keep notification action only in owner header */
 .salon-panel .owner-dashboard-grid.owner-dashboard-grid-two{
   grid-template-columns:repeat(2,minmax(0,1fr)) !important;
 }
@@ -6371,14 +6371,14 @@ body:has(.salon-panel){
 }
 
 
-/* v191_final_owner_panel_polish real local owner notifications */
+/* v192_owner_panel_sales_polish real local owner notifications */
 .owner-live-alert-card{
   border:1px solid rgba(248,113,113,.38) !important;
   box-shadow:0 18px 60px rgba(220,38,38,.28), 0 18px 60px rgba(0,0,0,.42) !important;
 }
 
 
-/* v191_final_owner_panel_polish
+/* v192_owner_panel_sales_polish
    Final hard override for the ACTUAL owner panel HTML.
    Goal: clean on mobile and desktop without relying on mockup-only layout. */
 
@@ -6816,7 +6816,7 @@ body{
 }
 
 
-/* v191_final_owner_panel_polish
+/* v192_owner_panel_sales_polish
    Make the real mobile owner panel look closer to the generated mockup:
    logo header, action cards, icon menu tiles, cleaner mobile layout. */
 
@@ -7111,7 +7111,7 @@ body{
 }
 
 
-/* ===== v191_final_owner_panel_polish owner panel polish override ===== */
+/* ===== v192_owner_panel_sales_polish owner panel polish override ===== */
 :root{
   --owner-bg:#06070a;
   --owner-card:#0f1117;
@@ -7392,7 +7392,7 @@ body:has(.salon-panel){background:
 }
 
 
-/* v191_final_owner_panel_polish owner login state + compact brick toolbar */
+/* v192_owner_panel_sales_polish owner login state + compact brick toolbar */
 body.owner-logged-out .salon-panel #salon-header-actions,
 body.owner-logged-out .salon-panel #salon-tabs{
   display:none !important;
@@ -7913,4 +7913,372 @@ body.owner-authenticated .salon-panel .owner-service-actions .btn{
   body.owner-authenticated .salon-panel .owner-service-actions{
     grid-template-columns:1fr !important;
   }
+}
+
+
+/* v192_OWNER_PANEL_SALES_POLISH */
+body.owner-authenticated .salon-panel{
+  max-width:1140px !important;
+  padding:12px !important;
+}
+
+body.owner-authenticated .salon-panel .panel-header{
+  position:relative !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto !important;
+  gap:16px !important;
+  align-items:end !important;
+  padding:22px !important;
+  margin-bottom:16px !important;
+  border-radius:28px !important;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(239,68,68,.18), transparent 34%),
+    linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.018)),
+    #0d1017 !important;
+  border:1px solid rgba(255,255,255,.09) !important;
+  box-shadow:0 18px 48px rgba(0,0,0,.28) !important;
+}
+
+body.owner-authenticated .salon-panel .panel-header h1{
+  font-size:clamp(34px, 5vw, 54px) !important;
+  line-height:0.96 !important;
+  letter-spacing:-.055em !important;
+  margin:0 0 10px !important;
+  max-width:12ch !important;
+}
+
+body.owner-authenticated .salon-panel #salon-status-text{
+  display:flex !important;
+  align-items:center !important;
+  gap:12px !important;
+  font-size:15px !important;
+  font-weight:800 !important;
+  color:#f3f4f6 !important;
+  margin:0 !important;
+}
+body.owner-authenticated .salon-panel #salon-status-text::before{
+  content:"" !important;
+  width:12px !important;
+  height:12px !important;
+  border-radius:999px !important;
+  background:#22c55e !important;
+  box-shadow:0 0 0 10px rgba(34,197,94,.10), 0 0 18px rgba(34,197,94,.45) !important;
+  flex:0 0 auto !important;
+}
+
+body.owner-authenticated .salon-panel .panel-header-actions{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  justify-content:flex-end !important;
+  align-items:center !important;
+  gap:10px !important;
+  width:auto !important;
+  max-width:520px !important;
+}
+
+body.owner-authenticated .salon-panel .panel-header-actions .btn{
+  min-height:46px !important;
+  padding:0 16px !important;
+  border-radius:14px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:8px !important;
+  white-space:nowrap !important;
+  font-size:13.5px !important;
+  line-height:1 !important;
+  font-weight:850 !important;
+  background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.018)), #121620 !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  box-shadow:0 10px 24px rgba(0,0,0,.18) !important;
+}
+body.owner-authenticated .salon-panel .panel-header-actions .btn::before{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:18px !important;
+  height:18px !important;
+  font-size:16px !important;
+}
+body.owner-authenticated .salon-panel #salon-install-btn::before{content:"⇩" !important; color:#fb7185 !important;}
+body.owner-authenticated .salon-panel #salon-notifications-btn::before{content:"🔔" !important;}
+body.owner-authenticated .salon-panel #salon-logout-btn::before{content:"↪" !important; color:#fb7185 !important;}
+body.owner-authenticated .salon-panel #salon-notifications-btn{
+  background:linear-gradient(135deg,#dc2626,#ef4444) !important;
+  border-color:rgba(255,255,255,.10) !important;
+}
+
+body.owner-authenticated #salon-tabs.panel-tabs:not(.hidden){
+  display:grid !important;
+  grid-template-columns:repeat(4, minmax(0,1fr)) !important;
+  gap:12px !important;
+  margin:0 0 22px !important;
+  padding:0 !important;
+  overflow:visible !important;
+}
+body.owner-authenticated #salon-tabs.panel-tabs:not(.hidden) button:not(.hidden){
+  min-height:82px !important;
+  border-radius:22px !important;
+  padding:16px 18px !important;
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:14px !important;
+  text-align:left !important;
+  white-space:normal !important;
+  font-size:16px !important;
+  line-height:1.08 !important;
+  font-weight:850 !important;
+  background:linear-gradient(180deg, rgba(255,255,255,.042), rgba(255,255,255,.016)), #10141d !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  box-shadow:0 14px 30px rgba(0,0,0,.20) !important;
+}
+body.owner-authenticated #salon-tabs.panel-tabs:not(.hidden) button:not(.hidden)::before{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:34px !important;
+  height:34px !important;
+  border-radius:11px !important;
+  margin:0 !important;
+  background:rgba(239,68,68,.10) !important;
+  color:#ef4444 !important;
+  font-size:16px !important;
+  line-height:1 !important;
+  flex:0 0 auto !important;
+}
+body.owner-authenticated #salon-tabs.panel-tabs:not(.hidden) button.active{
+  background:linear-gradient(135deg, rgba(185,28,28,.92), rgba(239,68,68,.94)) !important;
+  border-color:rgba(255,255,255,.10) !important;
+}
+body.owner-authenticated #salon-tabs.panel-tabs:not(.hidden) button.active::before{
+  background:rgba(255,255,255,.14) !important;
+  color:#fff !important;
+}
+
+body.owner-authenticated .salon-panel .owner-section-title,
+body.owner-authenticated .salon-panel .section-head{
+  display:flex !important;
+  justify-content:space-between !important;
+  align-items:flex-end !important;
+  gap:16px !important;
+  margin:6px 0 16px !important;
+}
+body.owner-authenticated .salon-panel .owner-eyebrow{
+  display:block !important;
+  margin-bottom:6px !important;
+  font-size:11px !important;
+  font-weight:950 !important;
+  letter-spacing:.16em !important;
+  text-transform:uppercase !important;
+  color:#fca5a5 !important;
+}
+body.owner-authenticated .salon-panel .owner-section-title h2,
+body.owner-authenticated .salon-panel .section-head h2{
+  margin:0 0 6px !important;
+  font-size:clamp(30px, 4vw, 44px) !important;
+  line-height:1.02 !important;
+  letter-spacing:-.045em !important;
+}
+body.owner-authenticated .salon-panel .owner-add-btn,
+body.owner-authenticated .salon-panel .section-head .btn-primary{
+  min-height:48px !important;
+  padding:12px 18px !important;
+  border-radius:16px !important;
+  font-size:15px !important;
+}
+
+body.owner-authenticated .salon-panel .owner-service-list,
+body.owner-authenticated .salon-panel .owner-services-table{
+  display:grid !important;
+  gap:12px !important;
+}
+body.owner-authenticated .salon-panel .owner-services-table{
+  padding:0 !important;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+}
+body.owner-authenticated .salon-panel .owner-services-head{display:none !important;}
+body.owner-authenticated .salon-panel .owner-service-row{
+  display:grid !important;
+  grid-template-columns:minmax(0, 1.6fr) 90px 160px auto auto !important;
+  gap:12px !important;
+  align-items:center !important;
+  padding:18px !important;
+  border-radius:24px !important;
+  background:linear-gradient(180deg, rgba(255,255,255,.038), rgba(255,255,255,.015)), #0f131b !important;
+  border:1px solid rgba(255,255,255,.09) !important;
+  box-shadow:0 14px 34px rgba(0,0,0,.22) !important;
+}
+body.owner-authenticated .salon-panel .owner-service-main strong{
+  display:block !important;
+  font-size:26px !important;
+  line-height:1.04 !important;
+  letter-spacing:-.035em !important;
+  margin-bottom:3px !important;
+}
+body.owner-authenticated .salon-panel .owner-service-main small,
+body.owner-authenticated .salon-panel .owner-service-main p{
+  color:#aeb3c2 !important;
+  font-size:14px !important;
+}
+body.owner-authenticated .salon-panel .owner-service-duration,
+body.owner-authenticated .salon-panel .owner-service-price{
+  font-size:17px !important;
+  font-weight:850 !important;
+  color:#fff !important;
+}
+body.owner-authenticated .salon-panel .owner-service-duration{color:#c9ced8 !important;}
+body.owner-authenticated .salon-panel .owner-status-pill{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  min-height:38px !important;
+  padding:0 14px !important;
+  border-radius:999px !important;
+  font-size:13px !important;
+  font-weight:850 !important;
+  background:rgba(34,197,94,.16) !important;
+  color:#a7f3d0 !important;
+  border:1px solid rgba(34,197,94,.15) !important;
+}
+body.owner-authenticated .salon-panel .owner-status-pill.hidden-status{
+  background:rgba(107,114,128,.18) !important;
+  color:#d1d5db !important;
+  border-color:rgba(107,114,128,.22) !important;
+}
+body.owner-authenticated .salon-panel .owner-service-actions{
+  display:flex !important;
+  justify-content:flex-end !important;
+  gap:8px !important;
+  flex-wrap:wrap !important;
+}
+body.owner-authenticated .salon-panel .owner-service-actions .btn{
+  min-width:92px !important;
+  min-height:38px !important;
+  padding:8px 12px !important;
+  border-radius:12px !important;
+  font-size:13px !important;
+  font-weight:800 !important;
+}
+
+@media (max-width: 980px){
+  body.owner-authenticated .salon-panel .panel-header{
+    grid-template-columns:1fr !important;
+    align-items:start !important;
+  }
+  body.owner-authenticated .salon-panel .panel-header-actions{
+    justify-content:flex-start !important;
+    max-width:none !important;
+  }
+  body.owner-authenticated #salon-tabs.panel-tabs:not(.hidden){
+    grid-template-columns:repeat(3, minmax(0,1fr)) !important;
+  }
+  body.owner-authenticated .salon-panel .owner-service-row{
+    grid-template-columns:minmax(0, 1.4fr) 88px 140px auto !important;
+  }
+  body.owner-authenticated .salon-panel .owner-service-row > .owner-service-actions{
+    grid-column:1 / -1 !important;
+    justify-content:flex-start !important;
+  }
+}
+@media (max-width: 640px){
+  body.owner-authenticated .salon-panel{
+    padding:10px !important;
+  }
+  body.owner-authenticated .salon-panel .panel-header{
+    padding:18px !important;
+    border-radius:24px !important;
+  }
+  body.owner-authenticated .salon-panel .panel-header h1{
+    font-size:clamp(26px, 8vw, 38px) !important;
+    max-width:none !important;
+  }
+  body.owner-authenticated .salon-panel .panel-header-actions{
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    width:100% !important;
+    gap:10px !important;
+  }
+  body.owner-authenticated .salon-panel #salon-logout-btn{
+    grid-column:1 / -1 !important;
+  }
+  body.owner-authenticated .salon-panel .panel-header-actions .btn{
+    min-height:48px !important;
+    padding:0 12px !important;
+    font-size:13px !important;
+  }
+  body.owner-authenticated #salon-tabs.panel-tabs:not(.hidden){
+    grid-template-columns:1fr 1fr !important;
+    gap:10px !important;
+  }
+  body.owner-authenticated #salon-tabs.panel-tabs:not(.hidden) button:not(.hidden){
+    min-height:72px !important;
+    border-radius:18px !important;
+    padding:14px !important;
+    font-size:14px !important;
+    gap:10px !important;
+  }
+  body.owner-authenticated #salon-tabs.panel-tabs:not(.hidden) button:not(.hidden)::before{
+    width:30px !important;
+    height:30px !important;
+    font-size:15px !important;
+  }
+  body.owner-authenticated .salon-panel .owner-section-title,
+  body.owner-authenticated .salon-panel .section-head{
+    display:block !important;
+  }
+  body.owner-authenticated .salon-panel .owner-add-btn,
+  body.owner-authenticated .salon-panel .section-head .btn-primary{
+    width:100% !important;
+    margin-top:10px !important;
+  }
+  body.owner-authenticated .salon-panel .owner-section-title h2,
+  body.owner-authenticated .salon-panel .section-head h2{
+    font-size:clamp(26px, 9vw, 36px) !important;
+  }
+  body.owner-authenticated .salon-panel .owner-service-row{
+    grid-template-columns:1fr 1fr !important;
+    gap:10px !important;
+    padding:16px !important;
+  }
+  body.owner-authenticated .salon-panel .owner-service-main{
+    grid-column:1 / -1 !important;
+  }
+  body.owner-authenticated .salon-panel .owner-service-main strong{
+    font-size:19px !important;
+  }
+  body.owner-authenticated .salon-panel .owner-service-duration{
+    grid-column:1 !important;
+    justify-self:start !important;
+    font-size:15px !important;
+  }
+  body.owner-authenticated .salon-panel .owner-service-price{
+    grid-column:2 !important;
+    justify-self:end !important;
+    font-size:15px !important;
+  }
+  body.owner-authenticated .salon-panel .owner-service-row > div:nth-child(4){
+    grid-column:1 / -1 !important;
+  }
+  body.owner-authenticated .salon-panel .owner-service-actions{
+    grid-column:1 / -1 !important;
+    display:grid !important;
+    grid-template-columns:1fr 1fr 1fr !important;
+    gap:8px !important;
+  }
+  body.owner-authenticated .salon-panel .owner-service-actions .btn{
+    width:100% !important;
+    min-width:0 !important;
+    min-height:44px !important;
+    padding:8px !important;
+    font-size:12.5px !important;
+  }
+}
+@media (max-width: 390px){
+  body.owner-authenticated .salon-panel .panel-header-actions{grid-template-columns:1fr !important;}
+  body.owner-authenticated .salon-panel #salon-logout-btn{grid-column:auto !important;}
+  body.owner-authenticated .salon-panel .owner-service-actions{grid-template-columns:1fr !important;}
 }
