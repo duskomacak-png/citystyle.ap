@@ -656,7 +656,7 @@ function renderClientGalleryPreview() {
   const previewImages = galleryImages.slice(0, 5);
   const remaining = Math.max(0, galleryImages.length - previewImages.length);
   return `
-    <details class="card client-hours-panel client-gallery-panel" open>
+    <details class="card client-hours-panel client-gallery-panel">
       <summary>
         <span>Galerija radova</span>
         <small>${galleryImages.length}/10</small>
