@@ -529,7 +529,9 @@ async function renderSalonHome() {
           ` : ""}
         </div>
 
-        <div class="client-actions">
+        <div class="client-actions ${isSalonBookingProfile ? 'client-actions-salon-grid' : ''}">
+          ${isSalonBookingProfile && settings?.address ? renderPublicAddressAction(settings.address, 'Pronađi nas') : ''}
+          ${isSalonBookingProfile && settings?.phone ? `<a class="btn btn-dark quick-action-btn phone-quick-btn" href="tel:${escapeHtml(csSafePhone(settings.phone))}"><span class="quick-action-icon quick-action-icon-phone">✆</span><span class="quick-action-label">Pozovi salon</span></a>` : ''}
           <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(primaryActionLabel)}</button>
           ${(!isSalonBookingProfile && products.length) ? `<button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>` : ""}
           ${garageListings.length ? `<button class="btn btn-dark" type="button" onclick="showGarage()">Garaža / oglasi</button>` : ""}
@@ -571,17 +573,13 @@ function renderPublicAddressLink(address = "", className = "shoe-meta-link") {
   return `<a class="${className} maps-link" href="${safeUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">📍 ${safeAddress}</a>`;
 }
 
-function renderPublicAddressAction(address = "") {
+function renderPublicAddressAction(address = "", label = "Pronađi nas") {
   const clean = String(address || "").trim();
   if (!clean) return "";
   const url = getGoogleMapsUrl(clean);
-  const safeAddress = escapeHtml(clean);
   const safeUrl = escapeHtml(url);
-  return `<a class="public-contact-action public-map-action maps-link" href="${safeUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
-    <span class="public-contact-icon">📍</span>
-    <span class="public-contact-copy"><b>Mapa</b><small>${safeAddress}</small></span>
-    <span class="public-contact-arrow">›</span>
-  </a>`;
+  const safeLabel = escapeHtml(label);
+  return `<a class="btn btn-dark quick-action-btn map-quick-btn maps-link" href="${safeUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()"><span class="quick-action-icon">📍</span><span class="quick-action-label">${safeLabel}</span></a>`;
 }
 
 function renderGaragePrice(item = {}) {
@@ -1480,16 +1478,11 @@ async function renderSalonHome() {
         <h1>${escapeHtml(publicName)}</h1>
         <div class="public-profile-text">
           <p class="intro-text">${escapeHtml(formatSalonWelcomeText(settings?.welcome_text || C("welcomeDefault", "Dobrodošli. Izaberite uslugu, datum i zakažite termin.")))}</p>
-          ${(settings?.phone || settings?.address) ? `<div class="public-profile-contact public-contact-actions compact-contact-actions">
-            ${settings?.address ? renderPublicAddressAction(settings.address) : ""}
-            ${settings?.phone ? `<a class="public-contact-action public-phone-action" href="tel:${escapeHtml(csSafePhone(settings.phone))}">
-              <span class="public-contact-icon public-contact-icon-phone">✆</span>
-              <span class="public-contact-copy"><b>Pozovi</b><small>${escapeHtml(settings.phone)}</small></span>
-              <span class="public-contact-arrow">›</span>
-            </a>` : ""}
-          </div>` : ""}
+
         </div>
-        <div class="client-actions">
+        <div class="client-actions ${isSalonBookingProfile ? 'client-actions-salon-grid' : ''}">
+          ${isSalonBookingProfile && settings?.address ? renderPublicAddressAction(settings.address, 'Pronađi nas') : ''}
+          ${isSalonBookingProfile && settings?.phone ? `<a class="btn btn-dark quick-action-btn phone-quick-btn" href="tel:${escapeHtml(csSafePhone(settings.phone))}"><span class="quick-action-icon quick-action-icon-phone">✆</span><span class="quick-action-label">Pozovi salon</span></a>` : ''}
           <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(primaryActionLabel)}</button>
           ${(!isSalonBookingProfile && products.length) ? `<button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>` : ""}
           ${garageListings.length ? `<button class="btn btn-dark" type="button" onclick="showGarage()">Garaža / oglasi</button>` : ""}
