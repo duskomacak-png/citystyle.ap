@@ -4487,7 +4487,7 @@ html.cs-real-zoom-active body{
 }
 
 
-/* v173_gallery_open_default: premium cleaner public/customer view for salons and service profiles.
+/* v174_contact_actions: premium cleaner public/customer view for salons and service profiles.
    Safe visual layer only: no database fields, IDs or booking logic changed. */
 body:has(.salon-themed-page){
   background:
@@ -4787,7 +4787,7 @@ body:has(.salon-themed-page){
   .salon-themed-page .product-public-grid{grid-template-columns:1fr;}
 }
 
-/* v173_gallery_open_default: smaller one-page public salon layout.
+/* v174_contact_actions: smaller one-page public salon layout.
    Goal: compact first screen, less vertical space, closer to agreed compact mock. */
 .salon-themed-page{
   max-width:430px;
@@ -5044,7 +5044,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v173_gallery_open_default: real compact one-screen direction */
+/* v174_contact_actions: real compact one-screen direction */
 .salon-themed-page{
   max-width:390px;
   padding:6px 7px 16px;
@@ -5267,7 +5267,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v173_gallery_open_default: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
+/* v174_contact_actions: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
 .salon-themed-page .client-actions{
   grid-template-columns:1fr 1fr;
 }
@@ -5283,7 +5283,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v173_gallery_open_default: public gallery fullscreen preview with close button and pinch zoom. */
+/* v174_contact_actions: public gallery fullscreen preview with close button and pinch zoom. */
 .gallery-zoom-backdrop{
   z-index:10020;
   background:rgba(0,0,0,.92);
@@ -5370,7 +5370,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v173_gallery_open_default: replace full working-hours dropdown with today's hours only */
+/* v174_contact_actions: replace full working-hours dropdown with today's hours only */
 .salon-themed-page .today-hours-card{
   min-height:52px;
   margin:0;
@@ -5406,3 +5406,69 @@ body:has(.salon-themed-page){
 .salon-themed-page .today-hours-card.open b{color:#bbf7d0;}
 .salon-themed-page .today-hours-card.closed b{color:#fca5a5;}
 .salon-themed-page .today-hours-card.unknown b{color:rgba(255,255,255,.65);font-size:12.5px;white-space:normal;text-align:right;}
+
+
+/* v174_contact_actions: make phone and location clearly clickable for customers */
+.salon-themed-page .public-profile-contact.public-contact-actions{
+  grid-column:1 / -1;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:7px;
+  margin-top:6px;
+}
+.salon-themed-page .public-contact-actions .public-contact-action{
+  display:grid;
+  grid-template-columns:34px minmax(0,1fr) 18px;
+  align-items:center;
+  gap:9px;
+  width:100%;
+  min-height:46px;
+  padding:7px 10px;
+  border-radius:16px;
+  background:rgba(255,255,255,.065);
+  border:1px solid rgba(255,255,255,.12);
+  color:#f8fafc;
+  text-align:left;
+}
+.salon-themed-page .public-contact-icon{
+  width:30px;
+  height:30px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  background:rgba(239,68,68,.17);
+  font-size:15px;
+}
+.salon-themed-page .public-contact-copy{
+  min-width:0;
+  display:block;
+}
+.salon-themed-page .public-contact-copy b{
+  display:block;
+  font-size:12px;
+  line-height:1.08;
+  color:#fff;
+  letter-spacing:.01em;
+}
+.salon-themed-page .public-contact-copy small{
+  display:block;
+  margin-top:2px;
+  font-size:13px;
+  line-height:1.12;
+  font-weight:850;
+  color:rgba(255,255,255,.88);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.salon-themed-page .public-contact-arrow{
+  justify-self:end;
+  font-size:24px;
+  line-height:1;
+  color:rgba(255,255,255,.66);
+}
+@media(min-width:520px){
+  .salon-themed-page .public-profile-contact.public-contact-actions{
+    grid-template-columns:1fr 1fr;
+  }
+}

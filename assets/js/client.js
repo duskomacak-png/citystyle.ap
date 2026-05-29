@@ -571,6 +571,19 @@ function renderPublicAddressLink(address = "", className = "shoe-meta-link") {
   return `<a class="${className} maps-link" href="${safeUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">📍 ${safeAddress}</a>`;
 }
 
+function renderPublicAddressAction(address = "") {
+  const clean = String(address || "").trim();
+  if (!clean) return "";
+  const url = getGoogleMapsUrl(clean);
+  const safeAddress = escapeHtml(clean);
+  const safeUrl = escapeHtml(url);
+  return `<a class="public-contact-action public-map-action maps-link" href="${safeUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
+    <span class="public-contact-icon">📍</span>
+    <span class="public-contact-copy"><b>Otvori mapu</b><small>${safeAddress}</small></span>
+    <span class="public-contact-arrow">›</span>
+  </a>`;
+}
+
 function renderGaragePrice(item = {}) {
   const price = Number(item.price || 0);
   const currency = window.App.normalizeCurrency(item.currency || "EUR");
@@ -1467,7 +1480,14 @@ async function renderSalonHome() {
         <h1>${escapeHtml(publicName)}</h1>
         <div class="public-profile-text">
           <p class="intro-text">${escapeHtml(formatSalonWelcomeText(settings?.welcome_text || C("welcomeDefault", "Dobrodošli. Izaberite uslugu, datum i zakažite termin.")))}</p>
-          ${(settings?.phone || settings?.address) ? `<div class="public-profile-contact">${settings?.phone ? `<a href="tel:${escapeHtml(csSafePhone(settings.phone))}">📞 ${escapeHtml(settings.phone)}</a>` : ""}${settings?.address ? renderPublicAddressLink(settings.address) : ""}</div>` : ""}
+          ${(settings?.phone || settings?.address) ? `<div class="public-profile-contact public-contact-actions">
+            ${settings?.phone ? `<a class="public-contact-action public-phone-action" href="tel:${escapeHtml(csSafePhone(settings.phone))}">
+              <span class="public-contact-icon">📞</span>
+              <span class="public-contact-copy"><b>Pozovi salon</b><small>${escapeHtml(settings.phone)}</small></span>
+              <span class="public-contact-arrow">›</span>
+            </a>` : ""}
+            ${settings?.address ? renderPublicAddressAction(settings.address) : ""}
+          </div>` : ""}
         </div>
         <div class="client-actions">
           <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(primaryActionLabel)}</button>
