@@ -513,7 +513,7 @@ async function renderSalonHome() {
         <div class="client-actions">
           <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(profileLabels.action)}</button>
           <button class="btn btn-dark" type="button" onclick="showServices()">${escapeHtml(profileLabels.services)}</button>
-          <button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>
+          ${products.length ? `<button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>` : ""}
           ${garageListings.length ? `<button class="btn btn-dark" type="button" onclick="showGarage()">Garaža / oglasi</button>` : ""}
           ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app ovog profila")}</button>`}
         </div>
@@ -653,22 +653,51 @@ function openGarageListing(listingId) {
 
 function renderClientGalleryPreview() {
   if (!galleryImages.length) return "";
+  const previewImages = galleryImages.slice(0, 5);
+  const remaining = Math.max(0, galleryImages.length - previewImages.length);
   return `
     <details class="card client-hours-panel client-gallery-panel" open>
       <summary>
         <span>Galerija radova</span>
         <small>${galleryImages.length}/10</small>
       </summary>
-      <div class="public-gallery-grid">
-        ${galleryImages.map(image => `
+      <div class="public-gallery-grid public-gallery-grid-compact">
+        ${previewImages.map(image => `
           <button type="button" class="public-gallery-item" onclick="openPublicGalleryImage('${escapeJs(image.image_url)}', '${escapeJs(image.caption || '')}')">
             <img src="${escapeHtml(image.image_url)}" alt="${escapeHtml(image.caption || 'Galerija radova')}">
             ${image.caption ? `<span>${escapeHtml(image.caption)}</span>` : ""}
           </button>
         `).join("")}
+        ${remaining > 0 ? `
+          <button type="button" class="public-gallery-item public-gallery-more" onclick="openPublicGalleryOverview()">
+            <strong>+${remaining}</strong>
+            <span>Još radova</span>
+          </button>
+        ` : ""}
       </div>
     </details>
   `;
+}
+
+function openPublicGalleryOverview() {
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop gallery-lightbox";
+  modal.innerHTML = `
+    <div class="modal-card gallery-overview-card">
+      <div class="gallery-overview-head">
+        <h2>Galerija radova</h2>
+        <button class="btn btn-dark btn-small" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
+      </div>
+      <div class="public-gallery-grid gallery-overview-grid">
+        ${galleryImages.map(image => `
+          <button type="button" class="public-gallery-item" onclick="this.closest('.modal-backdrop').remove(); openPublicGalleryImage('${escapeJs(image.image_url)}', '${escapeJs(image.caption || '')}')">
+            <img src="${escapeHtml(image.image_url)}" alt="${escapeHtml(image.caption || 'Galerija radova')}">
+            ${image.caption ? `<span>${escapeHtml(image.caption)}</span>` : ""}
+          </button>
+        `).join("")}
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
 }
 
 function openPublicGalleryImage(url, caption = "") {
@@ -711,7 +740,7 @@ function renderClientServicesPreview() {
   }
 
   return `
-    <details class="card client-hours-panel client-services-panel" open>
+    <details class="card client-hours-panel client-services-panel">
       <summary>
         <span>${escapeHtml(profileLabels.services)}</span>
         <small>${C("showList", "Prikaži listu")}</small>

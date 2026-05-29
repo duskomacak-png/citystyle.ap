@@ -4487,7 +4487,7 @@ html.cs-real-zoom-active body{
 }
 
 
-/* v164_customer_ui: premium cleaner public/customer view for salons and service profiles.
+/* v165_compact_customer_ui: premium cleaner public/customer view for salons and service profiles.
    Safe visual layer only: no database fields, IDs or booking logic changed. */
 body:has(.salon-themed-page){
   background:
@@ -4785,4 +4785,260 @@ body:has(.salon-themed-page){
   .salon-themed-page .client-actions .btn-primary{grid-column:auto;}
   .salon-themed-page .product-public-grid-images,
   .salon-themed-page .product-public-grid{grid-template-columns:1fr;}
+}
+
+/* v165_compact_customer_ui: smaller one-page public salon layout.
+   Goal: compact first screen, less vertical space, closer to agreed compact mock. */
+.salon-themed-page{
+  max-width:430px;
+  padding:8px 8px 18px;
+}
+.salon-themed-page .salon-header{
+  display:grid;
+  grid-template-columns:72px minmax(0,1fr);
+  gap:10px 12px;
+  padding:14px;
+  border-radius:22px;
+  margin:2px 0 10px;
+}
+.salon-themed-page .salon-logo,
+.salon-themed-page .logo-circle{
+  grid-column:1;
+  grid-row:1 / span 2;
+  width:72px;
+  height:72px;
+  max-width:72px;
+  max-height:72px;
+  margin:0;
+  border-radius:18px;
+}
+.salon-themed-page .salon-header h1{
+  grid-column:2;
+  margin:0;
+  font-size:clamp(18px,7vw,30px);
+  line-height:1.02;
+  align-self:end;
+}
+.salon-themed-page .public-profile-text{
+  grid-column:2;
+  margin-top:0;
+}
+.salon-themed-page .intro-text{
+  margin:2px 0 0;
+  font-size:12.5px;
+  line-height:1.42;
+}
+.salon-themed-page .public-profile-contact{
+  grid-column:1 / -1;
+  margin-top:4px;
+  gap:7px;
+}
+.salon-themed-page .public-profile-contact a,
+.salon-themed-page .shoe-meta-link{
+  min-height:34px;
+  padding:8px 10px;
+  font-size:12.5px;
+}
+.salon-themed-page .client-actions{
+  grid-column:1 / -1;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:10px;
+}
+.salon-themed-page .client-actions .btn,
+.salon-themed-page .client-actions button{
+  min-height:44px;
+  border-radius:14px;
+  padding:10px 11px;
+  font-size:12.5px;
+}
+.salon-themed-page .client-actions .btn-primary{
+  grid-column:1 / -1;
+  min-height:50px;
+  font-size:15px;
+  border-radius:16px;
+}
+.salon-themed-page #client-extra,
+.salon-themed-page #booking-box{
+  gap:8px;
+}
+.salon-themed-page .card,
+.salon-themed-page .client-hours-panel,
+.salon-themed-page .booking-paper-card{
+  border-radius:20px;
+}
+.salon-themed-page .client-hours-panel summary{
+  min-height:48px;
+  padding:12px 14px;
+  font-size:14px;
+}
+.salon-themed-page .client-hours-panel summary small{
+  font-size:12px;
+}
+.salon-themed-page .client-services-panel-body{
+  padding:0 12px 12px;
+}
+.salon-themed-page .service-select-card{
+  min-height:56px;
+  padding:10px 12px;
+  border-radius:14px;
+}
+.salon-themed-page .service-select-card strong{
+  font-size:14px;
+}
+.salon-themed-page .service-select-card span,
+.salon-themed-page .service-select-card .muted,
+.salon-themed-page .service-public-description{
+  font-size:11.5px;
+}
+.salon-themed-page .service-select-card b{
+  font-size:13px;
+}
+.salon-themed-page .product-public-grid-images,
+.salon-themed-page .product-public-grid{
+  gap:8px;
+}
+.salon-themed-page .product-public-card{
+  border-radius:16px;
+}
+.salon-themed-page .product-public-copy,
+.salon-themed-page .product-public-meta{
+  padding:8px;
+}
+.salon-themed-page .product-public-copy strong{
+  font-size:13px;
+}
+.salon-themed-page .product-public-copy span,
+.salon-themed-page .product-public-copy p,
+.salon-themed-page .product-public-meta small,
+.salon-themed-page .product-public-meta b{
+  font-size:11.5px;
+}
+.public-gallery-grid-compact{
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-top:10px;
+}
+.salon-themed-page .public-gallery-item{
+  border-radius:14px;
+}
+.salon-themed-page .public-gallery-item span{
+  font-size:11px;
+  padding:6px 7px;
+}
+.public-gallery-more{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  min-height:100%;
+  aspect-ratio:1 / 1;
+  background:rgba(255,255,255,.03);
+}
+.public-gallery-more strong{
+  font-size:24px;
+  line-height:1;
+  color:#ef4444;
+}
+.public-gallery-more span{
+  text-align:center;
+}
+.gallery-overview-card{
+  max-width:min(92vw,780px);
+  text-align:left;
+}
+.gallery-overview-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+.gallery-overview-grid{
+  grid-template-columns:repeat(auto-fit,minmax(100px,1fr));
+  max-height:70vh;
+  overflow:auto;
+  padding-right:4px;
+}
+.salon-themed-page .booking-paper-card{
+  padding:14px;
+  margin-top:8px;
+}
+.salon-themed-page .booking-paper-card h2{
+  font-size:20px;
+  margin-bottom:2px;
+}
+.salon-themed-page .booking-paper-card .muted{
+  font-size:12px;
+}
+.salon-themed-page label{
+  margin:11px 0 5px;
+  font-size:11.5px;
+}
+.salon-themed-page input,
+.salon-themed-page select,
+.salon-themed-page textarea{
+  min-height:44px;
+  border-radius:13px;
+  padding:10px 12px;
+}
+.salon-themed-page #selected-time-view,
+.salon-themed-page #booking-date,
+.salon-themed-page #booking-service,
+.salon-themed-page #client-name,
+.salon-themed-page #client-phone,
+.salon-themed-page #client-phone-country{
+  font-size:13.5px;
+}
+.salon-themed-page .selected-service-summary,
+.salon-themed-page .field-help{
+  font-size:11.5px;
+}
+.salon-themed-page .selected-service-summary{
+  margin-top:6px;
+  padding:8px 10px;
+  border-radius:12px;
+}
+.salon-themed-page .booking-two-cols{
+  gap:10px;
+}
+.salon-themed-page .time-grid{
+  gap:7px;
+}
+.salon-themed-page .time-slot{
+  min-height:40px;
+  border-radius:12px;
+  font-size:13px;
+}
+.salon-themed-page .booking-submit-btn{
+  min-height:48px;
+  margin-top:12px;
+  border-radius:16px;
+  font-size:15px;
+}
+@media(max-width:560px){
+  .salon-themed-page{padding:8px 8px 18px;}
+  .salon-themed-page .salon-header{
+    grid-template-columns:64px minmax(0,1fr);
+    gap:9px 10px;
+    padding:12px;
+    border-radius:20px;
+  }
+  .salon-themed-page .salon-logo,
+  .salon-themed-page .logo-circle{
+    width:64px;
+    height:64px;
+    max-width:64px;
+    max-height:64px;
+    border-radius:16px;
+  }
+  .salon-themed-page .salon-header h1{
+    font-size:clamp(16px, 8vw, 26px);
+  }
+  .salon-themed-page .client-actions{
+    grid-template-columns:1fr;
+  }
+  .salon-themed-page .client-actions .btn-primary{
+    grid-column:auto;
+  }
 }
