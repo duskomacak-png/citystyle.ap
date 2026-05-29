@@ -4487,7 +4487,7 @@ html.cs-real-zoom-active body{
 }
 
 
-/* v170_salon_clean_actions: premium cleaner public/customer view for salons and service profiles.
+/* v171_gallery_zoom: premium cleaner public/customer view for salons and service profiles.
    Safe visual layer only: no database fields, IDs or booking logic changed. */
 body:has(.salon-themed-page){
   background:
@@ -4787,7 +4787,7 @@ body:has(.salon-themed-page){
   .salon-themed-page .product-public-grid{grid-template-columns:1fr;}
 }
 
-/* v170_salon_clean_actions: smaller one-page public salon layout.
+/* v171_gallery_zoom: smaller one-page public salon layout.
    Goal: compact first screen, less vertical space, closer to agreed compact mock. */
 .salon-themed-page{
   max-width:430px;
@@ -5044,7 +5044,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v170_salon_clean_actions: real compact one-screen direction */
+/* v171_gallery_zoom: real compact one-screen direction */
 .salon-themed-page{
   max-width:390px;
   padding:6px 7px 16px;
@@ -5267,7 +5267,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v170_salon_clean_actions: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
+/* v171_gallery_zoom: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
 .salon-themed-page .client-actions{
   grid-template-columns:1fr 1fr;
 }
@@ -5280,4 +5280,92 @@ body:has(.salon-themed-page){
 @media(max-width:560px){
   .salon-themed-page .client-actions{grid-template-columns:1fr 1fr;}
   .salon-themed-page .client-actions .btn-primary{grid-column:1 / -1;}
+}
+
+
+/* v171_gallery_zoom: public gallery fullscreen preview with close button and pinch zoom. */
+.gallery-zoom-backdrop{
+  z-index:10020;
+  background:rgba(0,0,0,.92);
+  padding:0;
+  place-items:stretch;
+}
+.gallery-zoom-shell{
+  position:relative;
+  width:100vw;
+  height:100dvh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:42px 12px 34px;
+}
+.gallery-zoom-close{
+  position:fixed;
+  top:calc(14px + env(safe-area-inset-top, 0px));
+  right:calc(14px + env(safe-area-inset-right, 0px));
+  z-index:2;
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  padding:0;
+  font-size:30px;
+  line-height:1;
+  font-weight:800;
+  background:rgba(10,10,14,.82);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.22);
+  box-shadow:0 12px 30px rgba(0,0,0,.45);
+}
+.gallery-zoom-stage{
+  width:100%;
+  height:min(78dvh, 760px);
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+  border-radius:18px;
+}
+.gallery-zoom-image{
+  max-width:100%;
+  max-height:100%;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+  transform-origin:center center;
+  will-change:transform;
+  transition:transform .06s linear;
+  border-radius:16px;
+  box-shadow:0 20px 60px rgba(0,0,0,.48);
+}
+.gallery-zoom-caption{
+  margin:10px auto 0;
+  max-width:92vw;
+  color:#f4f4f5;
+  text-align:center;
+  font-weight:700;
+}
+.gallery-zoom-help{
+  margin-top:8px;
+  color:rgba(255,255,255,.55);
+  font-size:12px;
+  text-align:center;
+}
+@media(max-width:560px){
+  .gallery-zoom-shell{
+    padding:52px 8px 26px;
+  }
+  .gallery-zoom-stage{
+    height:76dvh;
+    border-radius:14px;
+  }
+  .gallery-zoom-close{
+    width:42px;
+    height:42px;
+    font-size:28px;
+  }
 }

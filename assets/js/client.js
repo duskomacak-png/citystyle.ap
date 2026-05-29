@@ -720,14 +720,139 @@ function openPublicGalleryOverview() {
 
 function openPublicGalleryImage(url, caption = "") {
   const modal = document.createElement("div");
-  modal.className = "modal-backdrop gallery-lightbox";
+  modal.className = "modal-backdrop gallery-lightbox gallery-zoom-backdrop";
   modal.innerHTML = `
-    <div class="modal-card gallery-lightbox-card">
-      <img src="${escapeHtml(url)}" alt="${escapeHtml(caption || 'Galerija radova')}">
-      ${caption ? `<p>${escapeHtml(caption)}</p>` : ""}
-      <button class="btn btn-dark" type="button" onclick="this.closest('.modal-backdrop').remove()">Zatvori</button>
+    <div class="gallery-zoom-shell">
+      <button class="gallery-zoom-close" type="button" aria-label="Zatvori galeriju" onclick="this.closest('.modal-backdrop').remove()">×</button>
+      <div class="gallery-zoom-stage">
+        <img class="gallery-zoom-image" src="${escapeHtml(url)}" alt="${escapeHtml(caption || 'Galerija radova')}">
+      </div>
+      ${caption ? `<p class="gallery-zoom-caption">${escapeHtml(caption)}</p>` : ""}
+      <div class="gallery-zoom-help">Raširite prstima za zoom • prevucite sliku kada je uvećana</div>
     </div>`;
   document.body.appendChild(modal);
+  setupGalleryZoom(modal);
+}
+
+function setupGalleryZoom(modal) {
+  const stage = modal.querySelector(".gallery-zoom-stage");
+  const img = modal.querySelector(".gallery-zoom-image");
+  if (!stage || !img) return;
+
+  let scale = 1;
+  let translateX = 0;
+  let translateY = 0;
+  let startScale = 1;
+  let startDistance = 0;
+  let startX = 0;
+  let startY = 0;
+  let baseX = 0;
+  let baseY = 0;
+  let lastTap = 0;
+  const pointers = new Map();
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function applyTransform() {
+    if (scale <= 1.01) {
+      scale = 1;
+      translateX = 0;
+      translateY = 0;
+    } else {
+      const maxX = (stage.clientWidth * (scale - 1)) / 2;
+      const maxY = (stage.clientHeight * (scale - 1)) / 2;
+      translateX = clamp(translateX, -maxX, maxX);
+      translateY = clamp(translateY, -maxY, maxY);
+    }
+    img.style.transform = `translate3d(${translateX}px, ${translateY}px, 0) scale(${scale})`;
+  }
+
+  function getDistance(a, b) {
+    return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  }
+
+  stage.addEventListener("pointerdown", (event) => {
+    pointers.set(event.pointerId, event);
+    stage.setPointerCapture?.(event.pointerId);
+
+    if (pointers.size === 1) {
+      const now = Date.now();
+      if (now - lastTap < 280) {
+        scale = scale > 1 ? 1 : 2.2;
+        translateX = 0;
+        translateY = 0;
+        applyTransform();
+      }
+      lastTap = now;
+      startX = event.clientX;
+      startY = event.clientY;
+      baseX = translateX;
+      baseY = translateY;
+    }
+
+    if (pointers.size === 2) {
+      const [a, b] = Array.from(pointers.values());
+      startDistance = getDistance(a, b);
+      startScale = scale;
+    }
+  }, { passive: false });
+
+  stage.addEventListener("pointermove", (event) => {
+    if (!pointers.has(event.pointerId)) return;
+    pointers.set(event.pointerId, event);
+
+    if (pointers.size === 2) {
+      event.preventDefault();
+      const [a, b] = Array.from(pointers.values());
+      const nextDistance = getDistance(a, b);
+      if (startDistance > 0) {
+        scale = clamp(startScale * (nextDistance / startDistance), 1, 4);
+        applyTransform();
+      }
+      return;
+    }
+
+    if (pointers.size === 1 && scale > 1) {
+      event.preventDefault();
+      translateX = baseX + (event.clientX - startX);
+      translateY = baseY + (event.clientY - startY);
+      applyTransform();
+    }
+  }, { passive: false });
+
+  function releasePointer(event) {
+    pointers.delete(event.pointerId);
+    if (pointers.size < 2) {
+      startDistance = 0;
+      startScale = scale;
+    }
+    if (pointers.size === 1) {
+      const remaining = Array.from(pointers.values())[0];
+      startX = remaining.clientX;
+      startY = remaining.clientY;
+      baseX = translateX;
+      baseY = translateY;
+    }
+  }
+
+  stage.addEventListener("pointerup", releasePointer);
+  stage.addEventListener("pointercancel", releasePointer);
+  stage.addEventListener("pointerleave", releasePointer);
+
+  stage.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    const delta = event.deltaY < 0 ? 0.18 : -0.18;
+    scale = clamp(scale + delta, 1, 4);
+    applyTransform();
+  }, { passive: false });
+
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) modal.remove();
+  });
+
+  applyTransform();
 }
 
 function installCurrentSalonApp() {
