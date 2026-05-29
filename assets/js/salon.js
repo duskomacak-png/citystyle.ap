@@ -1009,12 +1009,20 @@ function getAppointmentStatusLabel(status) {
   return { new: S("newRequests", "Novo"), confirmed: S("confirmed", "Potvrđeno"), cancelled: "Otkazano", done: S("done", "Završeno"), no_show: "Nije došao/la" }[status] || status;
 }
 
+
 async function renderServices() {
   const content = document.getElementById("salon-content");
   content.innerHTML = `
-    <div class="section-head"><div><h2>Usluge / ponuda</h2><p class="muted">Dodajte i uredite usluge koje korisnici mogu izabrati prilikom slanja zahteva ili zakazivanja.</p></div>${adminOwnerPreviewMode ? `<span class="status-pill">Samo pregled</span>` : `<button class="btn btn-primary" type="button" onclick="showAddServiceForm()">Dodaj uslugu</button>`}</div>
+    <div class="owner-section-title">
+      <div>
+        <span class="owner-eyebrow">Upravljanje ponudom</span>
+        <h2>Usluge</h2>
+        <p class="muted">Uredite usluge koje mušterije biraju pri zakazivanju termina.</p>
+      </div>
+      ${adminOwnerPreviewMode ? `<span class="status-pill">Samo pregled</span>` : `<button class="btn btn-primary owner-add-btn" type="button" onclick="showAddServiceForm()">+ Dodaj uslugu</button>`}
+    </div>
     <div id="service-form-box"></div>
-    <div id="services-list" class="cards"><div class="loading-box">${S("loadingProfile", "Učitavanje usluga...")}</div></div>
+    <div id="services-list" class="owner-service-list"><div class="loading-box">${S("loadingProfile", "Učitavanje usluga...")}</div></div>
   `;
   await loadServices();
 }
@@ -1023,25 +1031,41 @@ async function loadServices() {
   const list = document.getElementById("services-list");
   const { data: services, error } = await window.db.from("services").select("*").eq("salon_id", currentSalonId).order("sort_order", { ascending: true });
   if (error) {
-    list.innerHTML = `<p class="error-text">Greška pri učitavanju usluga.</p>`;
+    list.innerHTML = `<div class="card"><p class="error-text">Greška pri učitavanju usluga.</p></div>`;
     return;
   }
   if (!services?.length) {
-    list.innerHTML = `<div class="card center"><p class="muted">${S("noServicesText", "Još nemate dodatih usluga. Dodajte prvu uslugu kako bi klijenti mogli da zakažu termin.")}</p></div>`;
+    list.innerHTML = `<div class="card center owner-empty-card"><h3>Još nema usluga</h3><p class="muted">${S("noServicesText", "Dodajte prvu uslugu kako bi klijenti mogli da zakažu termin.")}</p>${adminOwnerPreviewMode ? "" : `<button class="btn btn-primary" onclick="showAddServiceForm()">Dodaj prvu uslugu</button>`}</div>`;
     return;
   }
-  list.innerHTML = services.map(service => `
-    <div class="card service-card">
-      <div class="service-row"><div><strong>${salonEscapeHtml(service.name)}</strong><span>${service.category ? salonEscapeHtml(service.category) + " • " : ""}${Number(service.duration_minutes || 0)} min</span></div><b>${window.App.formatServicePrice(service)}</b></div>
-      ${service.description ? `<p class="muted">${salonEscapeHtml(service.description)}</p>` : ""}
-      <p class="muted">Status: ${service.active ? "Aktivna" : "Sakrivena"}</p>
-      ${adminOwnerPreviewMode ? `<div class="card-actions"><span class="status-pill">Admin pregled</span></div>` : `<div class="card-actions">
-        <button class="btn btn-dark" type="button" onclick="editService('${service.id}')">Uredi</button>
-        <button class="btn btn-dark" type="button" onclick="toggleServiceActive('${service.id}', ${service.active ? "true" : "false"})">${service.active ? "Sakrij" : "Aktiviraj"}</button>
-        <button class="btn btn-danger" type="button" onclick="deleteService('${service.id}')">${S("delete", "Obriši")}</button>
-      </div>`}
+  list.innerHTML = `
+    <div class="owner-services-table card">
+      <div class="owner-services-head">
+        <span>Usluga</span>
+        <span>Trajanje</span>
+        <span>Cena</span>
+        <span>Status</span>
+        <span>Akcije</span>
+      </div>
+      ${services.map(service => `
+        <div class="owner-service-row ${service.active ? "" : "is-hidden"}">
+          <div class="owner-service-main">
+            <strong>${salonEscapeHtml(service.name)}</strong>
+            ${service.category ? `<small>${salonEscapeHtml(service.category)}</small>` : ""}
+            ${service.description ? `<p>${salonEscapeHtml(service.description)}</p>` : ""}
+          </div>
+          <div class="owner-service-duration">${Number(service.duration_minutes || 0)} min</div>
+          <div class="owner-service-price">${window.App.formatServicePrice(service)}</div>
+          <div><span class="owner-status-pill ${service.active ? "active" : "hidden-status"}">${service.active ? "Aktivna" : "Sakrivena"}</span></div>
+          ${adminOwnerPreviewMode ? `<div class="owner-service-actions"><span class="status-pill">Pregled</span></div>` : `<div class="owner-service-actions">
+            <button class="btn btn-dark btn-small" type="button" onclick="editService('${service.id}')">Uredi</button>
+            <button class="btn btn-dark btn-small" type="button" onclick="toggleServiceActive('${service.id}', ${service.active ? "true" : "false"})">${service.active ? "Sakrij" : "Aktiviraj"}</button>
+            <button class="btn btn-danger btn-small" type="button" onclick="deleteService('${service.id}')">${S("delete", "Obriši")}</button>
+          </div>`}
+        </div>
+      `).join("")}
     </div>
-  `).join("");
+  `;
 }
 
 async function showAddServiceForm(serviceId = null) {
@@ -1964,13 +1988,13 @@ function renderSalonDashboard() {
   const shop = ownerIsShopProfile();
   const labels = shop ? {
     products: "Proizvodi",
-    analytics: "Statistika / QR",
+    analytics: "Statistika",
     settings: "Podešavanja"
   } : {
-    appointments: "Zahtevi",
+    appointments: "Termini",
     services: "Usluge",
     products: "Proizvodi",
-    analytics: "Statistika / QR",
+    analytics: "Statistika",
     garage: "Garaža",
     gallery: "Galerija",
     hours: "Radno vreme",

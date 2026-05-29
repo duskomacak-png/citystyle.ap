@@ -4487,7 +4487,7 @@ html.cs-real-zoom-active body{
 }
 
 
-/* v182_owner_panel_responsive_refresh: premium cleaner public/customer view for salons and service profiles.
+/* v183_owner_premium: premium cleaner public/customer view for salons and service profiles.
    Safe visual layer only: no database fields, IDs or booking logic changed. */
 body:has(.salon-themed-page){
   background:
@@ -4787,7 +4787,7 @@ body:has(.salon-themed-page){
   .salon-themed-page .product-public-grid{grid-template-columns:1fr;}
 }
 
-/* v182_owner_panel_responsive_refresh: smaller one-page public salon layout.
+/* v183_owner_premium: smaller one-page public salon layout.
    Goal: compact first screen, less vertical space, closer to agreed compact mock. */
 .salon-themed-page{
   max-width:430px;
@@ -5044,7 +5044,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v182_owner_panel_responsive_refresh: real compact one-screen direction */
+/* v183_owner_premium: real compact one-screen direction */
 .salon-themed-page{
   max-width:390px;
   padding:6px 7px 16px;
@@ -5267,7 +5267,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v182_owner_panel_responsive_refresh: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
+/* v183_owner_premium: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
 .salon-themed-page .client-actions{
   grid-template-columns:1fr 1fr;
 }
@@ -5283,7 +5283,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v182_owner_panel_responsive_refresh: public gallery fullscreen preview with close button and pinch zoom. */
+/* v183_owner_premium: public gallery fullscreen preview with close button and pinch zoom. */
 .gallery-zoom-backdrop{
   z-index:10020;
   background:rgba(0,0,0,.92);
@@ -5370,7 +5370,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v182_owner_panel_responsive_refresh: replace full working-hours dropdown with today's hours only */
+/* v183_owner_premium: replace full working-hours dropdown with today's hours only */
 .salon-themed-page .today-hours-card{
   min-height:52px;
   margin:0;
@@ -5408,7 +5408,7 @@ body:has(.salon-themed-page){
 .salon-themed-page .today-hours-card.unknown b{color:rgba(255,255,255,.65);font-size:12.5px;white-space:normal;text-align:right;}
 
 
-/* v182_owner_panel_responsive_refresh: make phone and location clearly clickable for customers */
+/* v183_owner_premium: make phone and location clearly clickable for customers */
 .salon-themed-page .public-profile-contact.public-contact-actions{
   grid-column:1 / -1;
   display:grid;
@@ -5534,7 +5534,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v182_owner_panel_responsive_refresh: keep phone/map cards same width as buttons, but text must fit cleanly */
+/* v183_owner_premium: keep phone/map cards same width as buttons, but text must fit cleanly */
 .salon-themed-page .public-profile-contact.public-contact-actions.compact-contact-actions{
   grid-template-columns:1fr 1fr;
   gap:10px;
@@ -5643,7 +5643,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v182_owner_panel_responsive_refresh: use short icon+verb buttons, common mobile pattern */
+/* v183_owner_premium: use short icon+verb buttons, common mobile pattern */
 .salon-themed-page .public-profile-contact.quick-contact-actions{
   grid-column:1 / -1;
   display:grid !important;
@@ -5774,7 +5774,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v182_owner_panel_responsive_refresh: zoom gallery can browse other images by vertical swipe */
+/* v183_owner_premium: zoom gallery can browse other images by vertical swipe */
 .gallery-zoom-shell{
   position:relative;
 }
@@ -5836,153 +5836,499 @@ body:has(.salon-themed-page){
 }
 
 
-/* v182_owner_panel_responsive_refresh */
+/* v183_owner_premium_dashboard
+   Safe owner-panel visual refresh. Existing JS functions/IDs stay alive. */
+body:has(.salon-panel){
+  background:
+    radial-gradient(circle at 86% -16%, rgba(220,38,38,.22), transparent 34rem),
+    radial-gradient(circle at 0% 8%, rgba(255,255,255,.045), transparent 30rem),
+    #060608;
+}
+
 .salon-panel{
-  max-width:1180px;
-  padding-top:20px;
-}
-.salon-panel .panel-header{
+  width:100%;
+  max-width:1280px !important;
+  margin:0 auto;
+  padding:18px !important;
   display:grid;
-  grid-template-columns:minmax(0,1.5fr) minmax(280px,.95fr);
-  align-items:center;
+  grid-template-columns:250px minmax(0,1fr);
+  grid-template-areas:
+    "header header"
+    "tabs content";
   gap:18px;
-  padding:22px;
-  border-radius:26px;
-  background:linear-gradient(180deg,rgba(10,10,14,.96),rgba(15,15,22,.92));
 }
+
+.salon-panel .panel-header{
+  grid-area:header;
+  margin:0 !important;
+  padding:20px !important;
+  border-radius:26px !important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.060),rgba(255,255,255,.020)),
+    #0b0b10 !important;
+  border:1px solid rgba(255,255,255,.105) !important;
+  box-shadow:0 24px 60px rgba(0,0,0,.38) !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto !important;
+  gap:18px !important;
+  align-items:center !important;
+}
+
 .salon-panel .panel-header h1{
-  font-size:clamp(30px,4vw,56px);
-  line-height:1.02;
-  margin:0;
-  letter-spacing:-.03em;
+  font-size:clamp(24px,3.4vw,44px) !important;
+  line-height:1.02 !important;
+  letter-spacing:-.045em !important;
+  margin:0 !important;
 }
+
 .salon-panel .panel-header p{
   margin-top:6px;
-  font-size:18px;
-  color:#d4d4d8;
-}
-.salon-panel .panel-header-actions{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:10px;
-  width:100%;
-}
-.salon-panel .panel-header-actions .btn{
-  min-height:56px;
-  padding:12px 14px;
-  border-radius:18px;
+  color:#c9c9d1;
   font-size:15px;
-  line-height:1.15;
-  justify-content:center;
-  text-align:center;
+  font-weight:650;
 }
-.salon-panel .panel-header-actions #salon-notifications-btn{
-  grid-column:1 / -1;
+
+.salon-panel .panel-header p::before{
+  content:"";
+  display:inline-block;
+  width:8px;
+  height:8px;
+  margin-right:8px;
+  border-radius:999px;
+  background:#22c55e;
+  box-shadow:0 0 14px rgba(34,197,94,.65);
 }
-#salon-tabs.panel-tabs:not(.hidden){
-  display:grid !important;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:12px !important;
-  overflow:visible !important;
-  padding:14px 0 18px !important;
+
+.salon-panel .panel-header-actions{
+  display:flex !important;
+  gap:10px !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  flex-wrap:wrap !important;
+  width:auto !important;
+  min-width:280px;
 }
-#salon-tabs.panel-tabs:not(.hidden) button:not(.hidden){
-  min-height:74px !important;
-  padding:14px 12px !important;
-  border-radius:18px !important;
+
+.salon-panel .panel-header-actions .btn{
+  min-height:44px !important;
+  width:auto !important;
+  padding:10px 14px !important;
+  border-radius:13px !important;
+  font-size:12.5px !important;
+  line-height:1.12 !important;
   white-space:normal !important;
-  font-size:14px !important;
-  line-height:1.15 !important;
-  letter-spacing:-.02em !important;
-  font-weight:850 !important;
-  background:linear-gradient(180deg,rgba(19,19,27,.98),rgba(15,15,22,.94)) !important;
-  border:1px solid rgba(255,255,255,.10) !important;
-  box-shadow:0 10px 24px rgba(0,0,0,.18);
+  text-align:center !important;
 }
+
+.salon-panel .panel-header-actions #salon-notifications-btn{
+  background:linear-gradient(135deg,#dc2626,#991b1b) !important;
+}
+
+#salon-tabs.panel-tabs:not(.hidden){
+  grid-area:tabs;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:8px !important;
+  align-self:start;
+  position:sticky;
+  top:14px;
+  padding:14px !important;
+  overflow:visible !important;
+  border-radius:24px;
+  background:linear-gradient(180deg,rgba(255,255,255,.052),rgba(255,255,255,.018));
+  border:1px solid rgba(255,255,255,.090);
+  box-shadow:0 20px 45px rgba(0,0,0,.24);
+}
+
+#salon-tabs.panel-tabs:not(.hidden) button:not(.hidden){
+  width:100% !important;
+  min-height:48px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:10px !important;
+  padding:11px 13px !important;
+  border-radius:14px !important;
+  white-space:nowrap !important;
+  word-break:normal !important;
+  overflow:hidden !important;
+  text-align:left !important;
+  font-size:13px !important;
+  line-height:1.08 !important;
+  font-weight:820 !important;
+  letter-spacing:-.015em !important;
+  background:rgba(17,17,24,.82) !important;
+  border:1px solid rgba(255,255,255,.090) !important;
+  color:#e8e8ee !important;
+  box-shadow:none !important;
+}
+
+#salon-tabs.panel-tabs:not(.hidden) button:not(.hidden)::before{
+  content:"•";
+  width:22px;
+  height:22px;
+  flex:0 0 22px;
+  display:grid;
+  place-items:center;
+  border-radius:8px;
+  color:#ef4444;
+  background:rgba(239,68,68,.10);
+  font-size:17px;
+  line-height:1;
+}
+
+#salon-tabs.panel-tabs:not(.hidden) button[data-section="appointments"]::before{content:"▣";}
+#salon-tabs.panel-tabs:not(.hidden) button[data-section="services"]::before{content:"✂";}
+#salon-tabs.panel-tabs:not(.hidden) button[data-section="products"]::before{content:"▤";}
+#salon-tabs.panel-tabs:not(.hidden) button[data-section="analytics"]::before{content:"⌁";}
+#salon-tabs.panel-tabs:not(.hidden) button[data-section="garage"]::before{content:"◇";}
+#salon-tabs.panel-tabs:not(.hidden) button[data-section="gallery"]::before{content:"▧";}
+#salon-tabs.panel-tabs:not(.hidden) button[data-section="hours"]::before{content:"◷";}
+#salon-tabs.panel-tabs:not(.hidden) button[data-section="settings"]::before{content:"⚙";}
+
 #salon-tabs.panel-tabs:not(.hidden) button.active{
-  background:linear-gradient(135deg,var(--red),var(--red2)) !important;
+  background:linear-gradient(135deg,rgba(220,38,38,.95),rgba(127,29,29,.92)) !important;
+  border-color:rgba(248,113,113,.42) !important;
   color:#fff !important;
 }
+
+#salon-tabs.panel-tabs:not(.hidden) button.active::before{
+  background:rgba(255,255,255,.14);
+  color:#fff;
+}
+
 #salon-content{
-  min-height:320px;
+  grid-area:content;
+  min-width:0;
 }
-.salon-panel .section-head.paper-section-head,
-.salon-panel .section-head,
-.salon-panel .admin-toolbar{
-  align-items:flex-start;
-  gap:14px;
+
+.salon-panel .owner-section-title,
+.salon-panel .section-head{
+  margin:0 0 14px !important;
+  display:flex !important;
+  align-items:flex-end !important;
+  justify-content:space-between !important;
+  gap:16px !important;
 }
-.salon-panel .toolbar-actions{
-  justify-content:flex-end;
+
+.salon-panel .owner-eyebrow{
+  display:inline-flex;
+  margin-bottom:7px;
+  color:#fca5a5;
+  font-size:12px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.08em;
 }
-.salon-panel .toolbar-actions .btn{
-  min-height:42px;
+
+.salon-panel .owner-section-title h2,
+.salon-panel .section-head h2{
+  margin:0 0 6px !important;
+  font-size:clamp(26px,3.4vw,44px) !important;
+  line-height:1.02 !important;
+  letter-spacing:-.04em !important;
 }
-.salon-panel .paper-toolbar.card{
+
+.salon-panel .owner-add-btn,
+.salon-panel .section-head > .btn,
+.salon-panel .section-head .btn-primary{
+  min-height:46px !important;
+  border-radius:14px !important;
+  padding:12px 18px !important;
+}
+
+.salon-panel .owner-service-list,
+.salon-panel #services-list.cards{
+  display:block !important;
+}
+
+.salon-panel .owner-services-table{
+  padding:10px !important;
+  margin:0 !important;
+  border-radius:24px !important;
+  overflow:hidden;
+  background:linear-gradient(180deg,rgba(255,255,255,.050),rgba(255,255,255,.018)) !important;
+}
+
+.salon-panel .owner-services-head,
+.salon-panel .owner-service-row{
   display:grid;
-  grid-template-columns:1.2fr minmax(180px,.7fr);
-  gap:14px;
-  align-items:end;
-}
-.salon-panel .paper-toolbar.card label{
-  margin:0;
-}
-.salon-panel .owner-dashboard-grid{
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:14px;
-}
-.salon-panel .owner-metric-card{
-  min-height:148px;
-  padding:18px;
-  border-radius:20px;
-}
-.salon-panel .owner-metric-card strong{
-  font-size:42px;
-}
-.salon-panel .paper-mobile-list{
-  display:grid;
+  grid-template-columns:minmax(210px,1.25fr) 100px 150px 100px minmax(230px,.9fr);
   gap:12px;
+  align-items:center;
 }
-.salon-panel .paper-mobile-item{
-  border:1px solid rgba(255,255,255,.10);
-  border-radius:18px;
-  background:rgba(255,255,255,.03);
-  padding:14px;
+
+.salon-panel .owner-services-head{
+  padding:10px 12px;
+  color:#9696a3;
+  font-size:11px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  border-bottom:1px solid rgba(255,255,255,.080);
 }
-.salon-panel .card.center h3{
-  font-size:clamp(28px,4vw,48px);
-  line-height:1.1;
-  margin-bottom:12px;
+
+.salon-panel .owner-service-row{
+  padding:12px;
+  border-bottom:1px solid rgba(255,255,255,.065);
+  border-radius:16px;
 }
-@media(max-width:1080px){
-  #salon-tabs.panel-tabs:not(.hidden){grid-template-columns:repeat(3,minmax(0,1fr)) !important;}
+
+.salon-panel .owner-service-row:last-child{
+  border-bottom:0;
 }
-@media(max-width:820px){
-  .salon-panel{padding:12px;}
+
+.salon-panel .owner-service-row:hover{
+  background:rgba(255,255,255,.035);
+}
+
+.salon-panel .owner-service-main strong{
+  display:block;
+  color:#fff;
+  font-size:15px;
+  line-height:1.15;
+}
+
+.salon-panel .owner-service-main small,
+.salon-panel .owner-service-main p{
+  display:block;
+  margin-top:3px;
+  color:#9ca3af;
+  font-size:12px;
+  line-height:1.25;
+}
+
+.salon-panel .owner-service-duration,
+.salon-panel .owner-service-price{
+  color:#f4f4f5;
+  font-size:14px;
+  font-weight:850;
+}
+
+.salon-panel .owner-status-pill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:26px;
+  padding:5px 9px;
+  border-radius:999px;
+  background:rgba(34,197,94,.14);
+  color:#86efac;
+  font-size:12px;
+  font-weight:900;
+}
+
+.salon-panel .owner-status-pill.hidden-status{
+  background:rgba(148,163,184,.14);
+  color:#cbd5e1;
+}
+
+.salon-panel .owner-service-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+.salon-panel .owner-service-actions .btn{
+  min-height:36px !important;
+  padding:8px 10px !important;
+  border-radius:11px !important;
+  font-size:12px !important;
+  width:auto !important;
+}
+
+.salon-panel .owner-empty-card{
+  padding:28px !important;
+  border-radius:24px !important;
+}
+
+.salon-panel .owner-empty-card h3{
+  font-size:28px;
+}
+
+.salon-panel .owner-dashboard-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  gap:12px !important;
+}
+
+.salon-panel .owner-metric-card{
+  min-height:128px;
+  border-radius:22px !important;
+  padding:16px !important;
+}
+
+.salon-panel .owner-metric-card strong{
+  font-size:36px !important;
+}
+
+.salon-panel .paper-toolbar.card{
+  border-radius:22px !important;
+  padding:16px !important;
+}
+
+@media(max-width:1050px){
+  .salon-panel{
+    grid-template-columns:210px minmax(0,1fr);
+  }
+  .salon-panel .owner-services-head,
+  .salon-panel .owner-service-row{
+    grid-template-columns:minmax(190px,1.2fr) 80px 125px 90px minmax(210px,.9fr);
+  }
+}
+
+@media(max-width:860px){
+  .salon-panel{
+    display:block !important;
+    max-width:640px !important;
+    padding:12px !important;
+  }
+
   .salon-panel .panel-header{
-    grid-template-columns:1fr;
-    padding:18px;
-    gap:16px;
+    display:block !important;
+    padding:18px !important;
+    border-radius:24px !important;
   }
-  .salon-panel .panel-header p{font-size:16px;}
+
+  .salon-panel .panel-header h1{
+    font-size:clamp(25px,8vw,40px) !important;
+  }
+
+  .salon-panel .panel-header p{
+    font-size:15px !important;
+  }
+
   .salon-panel .panel-header-actions{
-    grid-template-columns:1fr;
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    width:100% !important;
+    min-width:0 !important;
+    margin-top:18px;
   }
-  .salon-panel .panel-header-actions #salon-notifications-btn{grid-column:auto;}
-  #salon-tabs.panel-tabs:not(.hidden){grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:10px !important;}
-  #salon-tabs.panel-tabs:not(.hidden) button:not(.hidden){min-height:68px !important; font-size:13px !important;}
-  .salon-panel .paper-toolbar.card{grid-template-columns:1fr;}
-  .salon-panel .owner-dashboard-grid{grid-template-columns:1fr; gap:12px;}
-  .salon-panel .owner-metric-card{min-height:auto;}
-  .salon-panel .section-head.paper-section-head,
-  .salon-panel .section-head,
-  .salon-panel .admin-toolbar{flex-direction:column; align-items:stretch;}
-  .salon-panel .toolbar-actions{justify-content:stretch; width:100%;}
-  .salon-panel .toolbar-actions .btn{width:100%;}
+
+  .salon-panel .panel-header-actions .btn{
+    width:100% !important;
+    min-height:48px !important;
+    font-size:13px !important;
+  }
+
+  #salon-tabs.panel-tabs:not(.hidden){
+    position:static !important;
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:10px !important;
+    padding:0 !important;
+    margin:16px 0 22px !important;
+    background:transparent !important;
+    border:0 !important;
+    box-shadow:none !important;
+  }
+
+  #salon-tabs.panel-tabs:not(.hidden) button:not(.hidden){
+    min-height:66px !important;
+    justify-content:center !important;
+    text-align:center !important;
+    white-space:normal !important;
+    padding:10px 8px !important;
+    border-radius:16px !important;
+    font-size:12.5px !important;
+    background:rgba(17,17,24,.88) !important;
+  }
+
+  #salon-tabs.panel-tabs:not(.hidden) button:not(.hidden)::before{
+    display:none !important;
+  }
+
+  .salon-panel .owner-section-title,
+  .salon-panel .section-head{
+    display:block !important;
+    margin-bottom:14px !important;
+  }
+
+  .salon-panel .owner-section-title .btn,
+  .salon-panel .section-head .btn{
+    width:100% !important;
+    margin-top:12px;
+  }
+
+  .salon-panel .owner-dashboard-grid{
+    grid-template-columns:1fr !important;
+  }
+
+  .salon-panel .owner-services-head{
+    display:none !important;
+  }
+
+  .salon-panel .owner-services-table{
+    padding:0 !important;
+    background:transparent !important;
+    border:0 !important;
+    box-shadow:none !important;
+  }
+
+  .salon-panel .owner-service-row{
+    display:grid !important;
+    grid-template-columns:1fr auto;
+    gap:10px 12px;
+    align-items:start;
+    margin:0 0 12px !important;
+    padding:16px !important;
+    border-radius:22px !important;
+    border:1px solid rgba(255,255,255,.095) !important;
+    background:linear-gradient(180deg,rgba(255,255,255,.050),rgba(255,255,255,.020)) !important;
+    box-shadow:0 18px 42px rgba(0,0,0,.26);
+  }
+
+  .salon-panel .owner-service-main{
+    grid-column:1;
+  }
+
+  .salon-panel .owner-service-main strong{
+    font-size:18px;
+  }
+
+  .salon-panel .owner-service-duration{
+    grid-column:1;
+    color:#a1a1aa;
+    font-size:14px;
+  }
+
+  .salon-panel .owner-service-price{
+    grid-column:2;
+    grid-row:1 / span 2;
+    align-self:start;
+    text-align:right;
+    font-size:17px;
+    color:#fff;
+  }
+
+  .salon-panel .owner-service-row > div:nth-child(4){
+    grid-column:1 / -1;
+  }
+
+  .salon-panel .owner-service-actions{
+    grid-column:1 / -1;
+    display:grid !important;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:8px !important;
+  }
+
+  .salon-panel .owner-service-actions .btn{
+    width:100% !important;
+    min-height:42px !important;
+    font-size:12.5px !important;
+  }
 }
-@media(max-width:520px){
-  .salon-panel .panel-header h1{font-size:clamp(24px,9vw,42px);}
-  .salon-panel .panel-header p{font-size:15px;}
-  #salon-tabs.panel-tabs:not(.hidden) button:not(.hidden){min-height:64px !important; padding:12px 10px !important; font-size:12.5px !important;}
-  .salon-panel .card.center h3{font-size:24px;}
+
+@media(max-width:420px){
+  #salon-tabs.panel-tabs:not(.hidden){
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+
+  .salon-panel .owner-service-actions{
+    grid-template-columns:1fr !important;
+  }
+
+  .salon-panel .owner-service-price{
+    font-size:16px;
+  }
 }
