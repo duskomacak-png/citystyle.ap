@@ -1,6 +1,6 @@
 // sw.js
 // Minimal cache reset service worker for CityStyle.app
-const CACHE_NAME = "citystyle-v193_owner_panel_compact_polish";
+const CACHE_NAME = "citystyle-v194_stable_laptop_owner_panel";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -32,7 +32,7 @@ self.addEventListener("push", (event) => {
       url: data.url || "salon/",
       badgeCount: data.badgeCount || 1
     },
-    tag: data.tag || "citystyle-v193_owner_panel_compact_polish",
+    tag: data.tag || "citystyle-v194_stable_laptop_owner_panel",
     renotify: true
   };
 
