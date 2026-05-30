@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle true background push service worker - v221 keep push active
-const CACHE_NAME = "citystyle-v221_keep_push_active";
+// CityStyle true background push service worker - v222 askcreate-style clean notifications
+const CACHE_NAME = "citystyle-v222_clean_push";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -55,10 +55,7 @@ async function showOwnerAppointmentNotification(data = {}, suffix = "") {
     requireInteraction: false,
     silent: false,
     vibrate: [220, 80, 220],
-    timestamp: Date.now(),
-    actions: [
-      { action: "open-appointments", title: "Otvori termine" }
-    ]
+    timestamp: Date.now()
   };
 
   await self.registration.showNotification(title, options);
@@ -76,8 +73,6 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-
-  if (event.action === "close") return;
 
   const targetUrl = event.notification?.data?.url || "/salon/?section=appointments&from_push=1";
   event.waitUntil((async () => {
