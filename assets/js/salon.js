@@ -2086,7 +2086,7 @@ function renderSalonDashboard() {
     analytics: "Statistika",
     garage: "Garaža",
     gallery: "Galerija",
-    hours: "Raspored",
+    hours: "Radno vreme",
     settings: "Podešavanja"
   };
   document.querySelectorAll("#salon-tabs button").forEach(btn => {

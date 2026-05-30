@@ -4487,7 +4487,7 @@ html.cs-real-zoom-active body{
 }
 
 
-/* v194_stable_laptop_owner_panel: premium cleaner public/customer view for salons and service profiles.
+/* v195_radno_vreme_fix: premium cleaner public/customer view for salons and service profiles.
    Safe visual layer only: no database fields, IDs or booking logic changed. */
 body:has(.salon-themed-page){
   background:
@@ -4787,7 +4787,7 @@ body:has(.salon-themed-page){
   .salon-themed-page .product-public-grid{grid-template-columns:1fr;}
 }
 
-/* v194_stable_laptop_owner_panel: smaller one-page public salon layout.
+/* v195_radno_vreme_fix: smaller one-page public salon layout.
    Goal: compact first screen, less vertical space, closer to agreed compact mock. */
 .salon-themed-page{
   max-width:430px;
@@ -5044,7 +5044,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v194_stable_laptop_owner_panel: real compact one-screen direction */
+/* v195_radno_vreme_fix: real compact one-screen direction */
 .salon-themed-page{
   max-width:390px;
   padding:6px 7px 16px;
@@ -5267,7 +5267,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v194_stable_laptop_owner_panel: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
+/* v195_radno_vreme_fix: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
 .salon-themed-page .client-actions{
   grid-template-columns:1fr 1fr;
 }
@@ -5283,7 +5283,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v194_stable_laptop_owner_panel: public gallery fullscreen preview with close button and pinch zoom. */
+/* v195_radno_vreme_fix: public gallery fullscreen preview with close button and pinch zoom. */
 .gallery-zoom-backdrop{
   z-index:10020;
   background:rgba(0,0,0,.92);
@@ -5370,7 +5370,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v194_stable_laptop_owner_panel: replace full working-hours dropdown with today's hours only */
+/* v195_radno_vreme_fix: replace full working-hours dropdown with today's hours only */
 .salon-themed-page .today-hours-card{
   min-height:52px;
   margin:0;
@@ -5408,7 +5408,7 @@ body:has(.salon-themed-page){
 .salon-themed-page .today-hours-card.unknown b{color:rgba(255,255,255,.65);font-size:12.5px;white-space:normal;text-align:right;}
 
 
-/* v194_stable_laptop_owner_panel: make phone and location clearly clickable for customers */
+/* v195_radno_vreme_fix: make phone and location clearly clickable for customers */
 .salon-themed-page .public-profile-contact.public-contact-actions{
   grid-column:1 / -1;
   display:grid;
@@ -5534,7 +5534,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v194_stable_laptop_owner_panel: keep phone/map cards same width as buttons, but text must fit cleanly */
+/* v195_radno_vreme_fix: keep phone/map cards same width as buttons, but text must fit cleanly */
 .salon-themed-page .public-profile-contact.public-contact-actions.compact-contact-actions{
   grid-template-columns:1fr 1fr;
   gap:10px;
@@ -5643,7 +5643,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v194_stable_laptop_owner_panel: use short icon+verb buttons, common mobile pattern */
+/* v195_radno_vreme_fix: use short icon+verb buttons, common mobile pattern */
 .salon-themed-page .public-profile-contact.quick-contact-actions{
   grid-column:1 / -1;
   display:grid !important;
@@ -5706,7 +5706,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v194_stable_laptop_owner_panel: exact requested layout */
+/* v195_radno_vreme_fix: exact requested layout */
 .salon-themed-page .client-actions.client-actions-salon-grid{
   display:grid !important;
   grid-template-columns:1fr 1fr;
@@ -5774,7 +5774,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v194_stable_laptop_owner_panel: zoom gallery can browse other images by vertical swipe */
+/* v195_radno_vreme_fix: zoom gallery can browse other images by vertical swipe */
 .gallery-zoom-shell{
   position:relative;
 }
@@ -5836,7 +5836,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v194_stable_laptop_owner_panel
+/* v195_radno_vreme_fix
    Safe owner-panel visual refresh. Existing JS functions/IDs stay alive. */
 body:has(.salon-panel){
   background:
@@ -6334,7 +6334,7 @@ body:has(.salon-panel){
 }
 
 
-/* v194_stable_laptop_owner_panel final hard override: owner panel must not fall back to old oversized card view */
+/* v195_radno_vreme_fix final hard override: owner panel must not fall back to old oversized card view */
 .salon-panel{
   max-width:1280px !important;
 }
@@ -6357,7 +6357,7 @@ body:has(.salon-panel){
 }
 
 
-/* v194_stable_laptop_owner_panel: keep notification action only in owner header */
+/* v195_radno_vreme_fix: keep notification action only in owner header */
 .salon-panel .owner-dashboard-grid.owner-dashboard-grid-two{
   grid-template-columns:repeat(2,minmax(0,1fr)) !important;
 }
@@ -6371,14 +6371,14 @@ body:has(.salon-panel){
 }
 
 
-/* v194_stable_laptop_owner_panel real local owner notifications */
+/* v195_radno_vreme_fix real local owner notifications */
 .owner-live-alert-card{
   border:1px solid rgba(248,113,113,.38) !important;
   box-shadow:0 18px 60px rgba(220,38,38,.28), 0 18px 60px rgba(0,0,0,.42) !important;
 }
 
 
-/* v194_stable_laptop_owner_panel
+/* v195_radno_vreme_fix
    Final hard override for the ACTUAL owner panel HTML.
    Goal: clean on mobile and desktop without relying on mockup-only layout. */
 
@@ -6816,7 +6816,7 @@ body{
 }
 
 
-/* v194_stable_laptop_owner_panel
+/* v195_radno_vreme_fix
    Make the real mobile owner panel look closer to the generated mockup:
    logo header, action cards, icon menu tiles, cleaner mobile layout. */
 
@@ -7111,7 +7111,7 @@ body{
 }
 
 
-/* ===== v194_stable_laptop_owner_panel owner panel polish override ===== */
+/* ===== v195_radno_vreme_fix owner panel polish override ===== */
 :root{
   --owner-bg:#06070a;
   --owner-card:#0f1117;
@@ -7392,7 +7392,7 @@ body:has(.salon-panel){background:
 }
 
 
-/* v194_stable_laptop_owner_panel owner login state + compact brick toolbar */
+/* v195_radno_vreme_fix owner login state + compact brick toolbar */
 body.owner-logged-out .salon-panel #salon-header-actions,
 body.owner-logged-out .salon-panel #salon-tabs{
   display:none !important;
@@ -7554,7 +7554,7 @@ body.owner-authenticated #salon-tabs.panel-tabs:not(.hidden) button:not(.hidden)
 }
 
 
-/* v194_stable_laptop_owner_panel
+/* v195_radno_vreme_fix
    Final practical polish before GitHub:
    - no owner actions before login
    - after login: small Excel-like brick toolbar, not huge cards
@@ -7916,7 +7916,7 @@ body.owner-authenticated .salon-panel .owner-service-actions .btn{
 }
 
 
-/* v194_stable_laptop_owner_panel */
+/* v195_radno_vreme_fix */
 body.owner-authenticated .salon-panel{
   max-width:1140px !important;
   padding:12px !important;
@@ -8284,7 +8284,7 @@ body.owner-authenticated .salon-panel .owner-service-actions .btn{
 }
 
 
-/* v194_stable_laptop_owner_panel */
+/* v195_radno_vreme_fix */
 body.owner-authenticated .salon-panel{
   max-width:1080px !important;
 }
@@ -8521,7 +8521,7 @@ body.owner-authenticated .salon-panel .owner-service-actions .btn{
 }
 
 
-/* v194_stable_laptop_owner_panel
+/* v195_radno_vreme_fix
    Desktop/laptop-only final override.
    Goal: stable, clean owner panel on laptop: no oversized tiles, no overflow, normal business dashboard. */
 @media (min-width: 900px){
