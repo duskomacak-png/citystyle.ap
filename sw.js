@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle v227 - native system notification test repair
-const CACHE_NAME = "citystyle-v227_native_test_notification";
+// CityStyle v228 - native system notification test repair
+const CACHE_NAME = "citystyle-v228_native_debug_notification";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

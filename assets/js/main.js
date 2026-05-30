@@ -671,7 +671,7 @@ function updateManifestForOwner(options = {}) {
   const cleanIcon = String(options.iconUrl || options.logoUrl || "").trim();
   const iconUrl = cleanIcon || makeInitialsIconDataUrl(businessName, "#b91c1c");
   const icon512 = String(options.icon512Url || "").trim() || iconUrl || makeInitialsIconDataUrl(businessName, "#b91c1c");
-  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v227_native_test_notification`;
+  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v228_native_debug_notification`;
   const baseManifest = {
     id: `/pwa/owner/${encodedKey}`,
     name: appName,
@@ -771,7 +771,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v227_native_test_notification`,
+    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v228_native_debug_notification`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -1021,7 +1021,7 @@ async function registerPushForSalon(salonId, options = {}) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v227_native_test_notification", { scope: "/", updateViaCache: "none" });
+    await navigator.serviceWorker.register("/sw.js?v=v228_native_debug_notification", { scope: "/", updateViaCache: "none" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
@@ -1142,7 +1142,57 @@ async function notifyOwnerAboutNewAppointment(appointmentId, extra = {}) {
   return true;
 }
 
+async function sendNativeSystemTestNotification() {
+  try {
+    if (!("serviceWorker" in navigator)) {
+      showMessage("Service Worker nije podržan u ovom browseru.", "error");
+      return false;
+    }
+    if (!("Notification" in window)) {
+      showMessage("Ovaj browser ne podržava sistemska obaveštenja.", "error");
+      return false;
+    }
+    if (Notification.permission === "denied") {
+      showMessage("Sistemska obaveštenja su BLOKIRANA za ovaj sajt/app. Otvori podešavanja i dozvoli Notifications.", "error");
+      return false;
+    }
+    const permission = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
+    if (permission !== "granted") {
+      showMessage("Nisi dozvolio sistemska obaveštenja.", "error");
+      return false;
+    }
+
+    const registration = await navigator.serviceWorker.register("/sw.js?v=v228_native_debug_notification", { scope: "/", updateViaCache: "none" });
+    try { await registration.update(); } catch (err) { console.warn("SW update warning", err); }
+    const ready = await navigator.serviceWorker.ready;
+    if (!ready || typeof ready.showNotification !== "function") {
+      showMessage("registration.showNotification nije dostupan. Chrome/PWA ne može da prikaže sistemsku notifikaciju.", "error");
+      return false;
+    }
+
+    await ready.showNotification("CITYSTYLE TEST SISTEMSKA", {
+      body: "Ako ovo vidiš u Android obaveštenjima, sistemska notifikacija radi. Ako ne vidiš, telefon/Chrome je blokira.",
+      icon: "/assets/icons/icon-192.png",
+      badge: "/assets/icons/icon-192.png",
+      tag: `citystyle-native-diagnostic-${Date.now()}`,
+      requireInteraction: true,
+      renotify: true,
+      silent: false,
+      vibrate: [300, 120, 300, 120, 300],
+      data: { url: "/salon/?section=appointments&from_test=1", diagnostic: true }
+    });
+
+    showMessage("Poslat je TEST SISTEMSKA. Povuci obaveštenja odozgo. Ako ga nema tamo, nije do Supabase-a nego do Chrome/Android/PWA prikaza.", "info");
+    return true;
+  } catch (err) {
+    console.error("sendNativeSystemTestNotification failed", err);
+    showMessage(`Sistemska test notifikacija NIJE uspela: ${err?.message || err}`, "error");
+    return false;
+  }
+}
+
 window.App = {
+  sendNativeSystemTestNotification,
   getUrlParam,
   saveLocal,
   getLocal,

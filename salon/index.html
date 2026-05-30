@@ -5,15 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Biznis panel - CityStyle</title>
   <meta name="theme-color" content="#0b0b0f">
-  <link rel="manifest" href="../manifest.json?v=v227_native_test_notification">
+  <link rel="manifest" href="../manifest.json?v=v228_native_debug_notification">
   <link rel="apple-touch-icon" href="../assets/icons/icon-192.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=v227_native_test_notification">
+  <link rel="stylesheet" href="../assets/css/style.css?v=v228_native_debug_notification">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../assets/js/config.js?v=v227_native_test_notification"></script>
-  <script src="../assets/js/main.js?v=v227_native_test_notification"></script>
-  <script src="../assets/js/auth.js?v=v227_native_test_notification"></script>
-  <script src="../assets/js/storage.js?v=v227_native_test_notification"></script>
-  <script src="../assets/js/salon.js?v=v227_native_test_notification" defer></script>
+  <script src="../assets/js/config.js?v=v228_native_debug_notification"></script>
+  <script src="../assets/js/main.js?v=v228_native_debug_notification"></script>
+  <script src="../assets/js/auth.js?v=v228_native_debug_notification"></script>
+  <script src="../assets/js/storage.js?v=v228_native_debug_notification"></script>
+  <script src="../assets/js/salon.js?v=v228_native_debug_notification" defer></script>
 </head>
 <body>
   <noscript><div class="noscript-box">Ova aplikacija zahteva uključen JavaScript.</div></noscript>
@@ -23,6 +23,7 @@
       <div id="salon-header-actions" class="panel-header-actions hidden">
         <button id="salon-install-btn" class="btn btn-dark hidden" type="button">Preuzmi panel vlasnika</button>
         <button id="salon-notifications-btn" class="btn btn-primary hidden" type="button" onclick="enableOwnerNotifications()">Uključi obaveštenja</button>
+        <button id="salon-native-test-btn" class="btn btn-dark hidden" type="button" onclick="testOwnerSystemNotification()">TEST SISTEMSKA</button>
         <button id="salon-logout-btn" class="btn btn-dark hidden" type="button">Odjavi se</button>
       </div>
     </header>

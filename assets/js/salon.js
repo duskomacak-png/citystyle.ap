@@ -737,6 +737,16 @@ function setActiveTab(section) {
   document.querySelectorAll("#salon-tabs button").forEach(btn => btn.classList.toggle("active", btn.dataset.section === section));
 }
 
+async function testOwnerSystemNotification() {
+  if (stopAdminOwnerPreviewEdit()) return;
+  if (!window.App?.sendNativeSystemTestNotification) {
+    window.App?.showMessage?.("Test sistemske notifikacije nije dostupan u ovoj verziji. Osveži app/GitHub cache.", "error");
+    return;
+  }
+  await window.App.sendNativeSystemTestNotification();
+}
+window.testOwnerSystemNotification = testOwnerSystemNotification;
+
 async function enableOwnerNotifications() {
   if (stopAdminOwnerPreviewEdit()) return;
 
@@ -831,7 +841,7 @@ async function ensureOwnerPushIsActive(reason = "panel-open") {
 
     if ("serviceWorker" in navigator) {
       try {
-        await navigator.serviceWorker.register("/sw.js?v=v227_native_test_notification", { scope: "/", updateViaCache: "none" });
+        await navigator.serviceWorker.register("/sw.js?v=v228_native_debug_notification", { scope: "/", updateViaCache: "none" });
         const registration = await navigator.serviceWorker.ready;
         if (registration?.update) {
           registration.update().catch(() => {});
@@ -2098,11 +2108,13 @@ function setOwnerPanelLoggedInUI(isLoggedIn) {
   const logoutBtn = document.getElementById("salon-logout-btn");
   const installBtn = document.getElementById("salon-install-btn");
   const notificationsBtn = document.getElementById("salon-notifications-btn");
+  const nativeTestBtn = document.getElementById("salon-native-test-btn");
   const headerActions = document.getElementById("salon-header-actions");
   if (tabs) tabs.classList.toggle("hidden", !isLoggedIn);
   if (logoutBtn) logoutBtn.classList.toggle("hidden", !isLoggedIn || adminOwnerPreviewMode);
   if (installBtn) installBtn.classList.toggle("hidden", !isLoggedIn || adminOwnerPreviewMode);
   if (notificationsBtn) notificationsBtn.classList.toggle("hidden", !isLoggedIn || adminOwnerPreviewMode || ownerIsShopProfile());
+  if (nativeTestBtn) nativeTestBtn.classList.toggle("hidden", !isLoggedIn || adminOwnerPreviewMode || ownerIsShopProfile());
   if (headerActions) headerActions.classList.toggle("hidden", !isLoggedIn);
   document.body.classList.toggle("owner-authenticated", !!isLoggedIn);
   document.body.classList.toggle("owner-logged-out", !isLoggedIn);
@@ -2147,7 +2159,7 @@ function renderSalonDashboard() {
   document.getElementById("salon-logout-btn").textContent = "Odjava";
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
   const expired = isPaymentExpired(currentSalon.paid_until);
-  document.getElementById("salon-status-text").innerHTML = adminOwnerPreviewMode ? `Admin pregled vlasničkog panela • izmene su zaključane` : expired ? `Aktivan profil • <span class="danger-text">Uplata istekla</span>` : (shop ? `Aktivna prodavnica patika` : `Aktivan salon`);
+  document.getElementById("salon-status-text").innerHTML = adminOwnerPreviewMode ? `Admin pregled vlasničkog panela • izmene su zaključane` : expired ? `Aktivan profil • <span class="danger-text">Uplata istekla</span>` : (shop ? `Aktivna prodavnica patika • v228` : `Aktivan salon • v228`);
   document.getElementById("salon-tabs").classList.remove("hidden");
   document.getElementById("salon-logout-btn").classList.toggle("hidden", adminOwnerPreviewMode);
   document.getElementById("salon-install-btn")?.classList.toggle("hidden", adminOwnerPreviewMode);
