@@ -6,9 +6,9 @@
   <title>Instalacija profila - CityStyle</title>
   <meta name="theme-color" content="#0b0b0f">
   <link rel="apple-touch-icon" href="../assets/icons/icon-192.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=v232_logo_shortcut_fix">
+  <link rel="stylesheet" href="../assets/css/style.css?v=v230_final_push_clean">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../assets/js/config.js?v=v232_logo_shortcut_fix"></script>
+  <script src="../assets/js/config.js?v=v230_final_push_clean"></script>
   <style>
     body{min-height:100vh;margin:0;background:#0b0b0f;color:#fff;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:flex;align-items:center;justify-content:center;padding:18px;}
     .pwa-gateway{width:min(520px,100%);background:rgba(20,20,26,.94);border:1px solid rgba(255,255,255,.12);box-shadow:0 24px 80px rgba(0,0,0,.45);border-radius:28px;padding:24px;text-align:center;}
@@ -48,7 +48,7 @@
 
   <script>
   (function profileInstallGateway(){
-    const VERSION = "v232_logo_shortcut_fix";
+    const VERSION = "v230_final_push_clean";
     const FALLBACK_192 = "/assets/icons/icon-192-maskable.png";
     const FALLBACK_512 = "/assets/icons/icon-512-maskable.png";
     const params = new URLSearchParams(location.search || "");
@@ -224,11 +224,9 @@ function setIconPreview(src, name){
           ? { data: [] }
           : await window.db.from("home_images").select("image_url,sort_order").eq("salon_id", salon.id).order("sort_order", { ascending:true }).limit(1);
         state.name = cleanText(settings?.welcome_title || salon.salon_name || nameHint || "CityStyle profil");
-        // Owner panel shortcut is identity-only: uploaded logo only.
-        // Public/customer profile also prefers logo, with home image fallback only when no logo exists.
-        state.logo = isPanel
-          ? cleanText(settings?.logo_url || "")
-          : cleanText(settings?.logo_url || homeImages?.[0]?.image_url || "");
+        // Owner panel shortcut is identity-only: logo first, then main profile/cover image.
+        // It must not pull a random gallery/product/service image. Public profile may still use gallery fallback.
+        state.logo = cleanText(settings?.logo_url || settings?.cover_image_url || settings?.home_image_url || (!isPanel ? homeImages?.[0]?.image_url : "") || "");
         setIconPreview(state.logo, state.name);
         const dataIcon512 = await createPwaIconDataUrl(state.logo, 512);
         const dataIcon192 = await createPwaIconDataUrl(state.logo, 192);

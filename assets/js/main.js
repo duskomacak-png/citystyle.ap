@@ -656,11 +656,8 @@ async function installOwnerApp(options = {}) {
     if (ownerKey) localStorage.setItem("citystyle_owner_shortcut_profile", ownerKey);
   } catch (err) {}
 
-  const ownerName = String(options.name || options.displayName || "CityStyle Panel").trim();
-  await installApp(
-    "Ako Chrome ne ponudi INSTALIRAJ, obriši staru prečicu i otvori ovaj panel direktno u Chrome-u. Ne instalirati /p/ stranicu. Cilj je prava PWA instalacija pod imenom City Style Panel.",
-    `${ownerName} panel je dodat na telefon.`
-  );
+  const ownerName = String(options.name || options.displayName || "Panel vlasnika").trim();
+  await installApp("Ako se sistemska instalacija ne otvori automatski: Chrome meni ⋮ → Add to Home screen / Dodaj na početni ekran. Nemoj instalirati /p/ stranicu.", `${ownerName} panel je dodat na telefon.`);
 }
 
 function updateManifestForOwner(options = {}) {
@@ -671,39 +668,26 @@ function updateManifestForOwner(options = {}) {
   const theme = normalizeSalonTheme(options.themeColor || "classic-red");
   const profileKey = String(options.profileCode || options.publicProfileCode || options.slug || options.salonId || "owner").trim();
   const encodedKey = encodeURIComponent(profileKey || "owner");
-  const originalIcon = makeAbsoluteIconUrl(options.originalIconUrl || options.logoUrl || options.iconSourceUrl || "");
-  const cleanIcon = makeAbsoluteIconUrl(options.iconUrl || options.logoUrl || "");
+  const cleanIcon = String(options.iconUrl || options.logoUrl || "").trim();
   const iconUrl = cleanIcon || makeInitialsIconDataUrl(businessName, "#b91c1c");
-  const icon512 = makeAbsoluteIconUrl(options.icon512Url || "") || iconUrl || makeInitialsIconDataUrl(businessName, "#b91c1c");
-  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&section=appointments&v=v232_logo_shortcut_fix`;
+  const icon512 = String(options.icon512Url || "").trim() || iconUrl || makeInitialsIconDataUrl(businessName, "#b91c1c");
+  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v230_final_push_clean`;
   const baseManifest = {
-    // v231: stable owner-panel identity. Stable id + /salon/ scope gives Android/Chrome
-    // the best chance to treat the owner panel as a separate installed PWA/WebAPK,
-    // instead of showing badges only on the Chrome icon.
-    id: `/pwa/citystyle-owner-panel-${encodedKey}`,
+    id: `/pwa/owner/${encodedKey}`,
     name: appName,
     short_name: shortName || "Panel",
     description: `Panel vlasnika za ${businessName}.`,
     start_url: start,
-    scope: `${getAppBaseUrl()}salon/`,
+    scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
     theme_color: "#0b0b0f",
     orientation: "portrait",
-    launch_handler: { client_mode: "focus-existing" },
     icons: [
-      { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "any maskable" },
-      { src: icon512, sizes: "512x512", type: "image/png", purpose: "any maskable" },
-      ...(originalIcon && originalIcon !== iconUrl ? [{ src: originalIcon, sizes: "512x512", type: "image/png", purpose: "any" }] : [])
-    ],
-    shortcuts: [
-      {
-        name: "Termini",
-        short_name: "Termini",
-        description: "Otvori nove zahteve za termin.",
-        url: `${getAppPath("salon/")}?section=appointments&from_shortcut=1`,
-        icons: [{ src: iconUrl, sizes: "192x192", type: "image/png" }]
-      }
+      { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "maskable" },
+      { src: icon512, sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: icon512, sizes: "512x512", type: "image/png", purpose: "any" }
     ]
   };
   try {
@@ -768,84 +752,15 @@ function makeInitialsIconDataUrl(name = "CityStyle", bg = "#b91c1c") {
   }
 }
 
-
-function makeAbsoluteIconUrl(url = "") {
-  const clean = String(url || "").trim();
-  if (!clean) return "";
-  if (/^data:image\//i.test(clean)) return clean;
-  try {
-    return new URL(clean, window.location.origin).href;
-  } catch (err) {
-    return clean;
-  }
-}
-
-async function createBusinessPwaIconDataUrl(imageUrl = "", businessName = "CityStyle", size = 512) {
-  const cleanUrl = makeAbsoluteIconUrl(imageUrl);
-  if (!cleanUrl) return makeInitialsIconDataUrl(businessName, "#b91c1c");
-  if (/^data:image\/png/i.test(cleanUrl) && size === 512) return cleanUrl;
-
-  try {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.referrerPolicy = "no-referrer";
-
-    await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error("Logo load timeout")), 6500);
-      img.onload = () => { clearTimeout(timer); resolve(); };
-      img.onerror = () => { clearTimeout(timer); reject(new Error("Logo load failed")); };
-      img.src = cleanUrl;
-    });
-
-    const canvas = document.createElement("canvas");
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext("2d");
-
-    // Android/WebAPK ikona mora biti kvadratna i maskable-safe.
-    // Logo se crta u centralnoj zoni, da ga launcher ne iseče po ivicama.
-    ctx.fillStyle = "#0b0b0f";
-    ctx.fillRect(0, 0, size, size);
-
-    const bg = ctx.createRadialGradient(size * 0.72, size * 0.12, size * 0.04, size * 0.5, size * 0.5, size * 0.82);
-    bg.addColorStop(0, "rgba(239,68,68,.34)");
-    bg.addColorStop(0.55, "rgba(127,29,29,.18)");
-    bg.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, size, size);
-
-    const iw = img.naturalWidth || img.width || size;
-    const ih = img.naturalHeight || img.height || size;
-    const safe = Math.round(size * 0.68);
-    const scale = Math.min(safe / iw, safe / ih);
-    const dw = Math.max(1, Math.round(iw * scale));
-    const dh = Math.max(1, Math.round(ih * scale));
-    const dx = Math.round((size - dw) / 2);
-    const dy = Math.round((size - dh) / 2);
-
-    ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,.42)";
-    ctx.shadowBlur = Math.round(size * 0.035);
-    ctx.drawImage(img, dx, dy, dw, dh);
-    ctx.restore();
-
-    return canvas.toDataURL("image/png");
-  } catch (err) {
-    console.warn("Logo nije mogao u PWA ikonu, koristi se inicijal fallback:", err);
-    return makeInitialsIconDataUrl(businessName, "#b91c1c");
-  }
-}
-
 function updateManifestForSalon(slug, options = {}) {
   if (!slug) return;
   const rawName = String(options.name || options.displayName || "").trim();
   const appName = rawName || "CityStyle profil";
   const shortName = appName.length > 12 ? appName.slice(0, 12).trim() : appName;
   const theme = normalizeSalonTheme(options.themeColor || "classic-red");
-  const originalIcon = makeAbsoluteIconUrl(options.originalIconUrl || options.logoUrl || options.iconSourceUrl || options.iconUrl || "");
-  const cleanIcon = makeAbsoluteIconUrl(options.iconUrl || options.logoUrl || "");
+  const cleanIcon = String(options.iconUrl || "").trim();
   const iconUrl = cleanIcon || makeInitialsIconDataUrl(appName, "#b91c1c");
-  const icon512 = makeAbsoluteIconUrl(options.icon512Url || "") || iconUrl || makeInitialsIconDataUrl(appName, "#b91c1c");
+  const icon512 = String(options.icon512Url || "").trim() || iconUrl || makeInitialsIconDataUrl(appName, "#b91c1c");
   const profileCode = String(options.profileCode || options.publicProfileCode || slug || "").trim();
   const encodedSlug = encodeURIComponent(slug);
   const encodedProfile = encodeURIComponent(profileCode || slug);
@@ -856,7 +771,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v232_logo_shortcut_fix`,
+    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v230_final_push_clean`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -866,8 +781,7 @@ function updateManifestForSalon(slug, options = {}) {
       { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "maskable" },
       { src: icon512, sizes: "512x512", type: "image/png", purpose: "maskable" },
       { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "any" },
-      { src: icon512, sizes: "512x512", type: "image/png", purpose: "any" },
-      ...(originalIcon && originalIcon !== iconUrl ? [{ src: originalIcon, sizes: "512x512", type: "image/png", purpose: "any" }] : [])
+      { src: icon512, sizes: "512x512", type: "image/png", purpose: "any" }
     ]
   };
   try {
@@ -940,20 +854,6 @@ window.addEventListener("appinstalled", () => {
   document.getElementById("install-app-btn")?.remove();
   showMessage("CityStyle je dodat na početni ekran.", "success");
 });
-
-// v231: when sw.js receives a push while a CityStyle window is open, mirror the
-// badge call through the page too. Some Android launchers attach app badges only
-// to the installed PWA window context, not only the service worker context.
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.addEventListener("message", (event) => {
-    const data = event.data || {};
-    if (data.type === "CITYSTYLE_SET_BADGE") {
-      setAppBadgeCount(data.count || 1);
-    } else if (data.type === "CITYSTYLE_CLEAR_BADGE") {
-      clearAppBadgeCount();
-    }
-  });
-}
 
 
   function normalizePhoneForTel(phone) {
@@ -1121,7 +1021,7 @@ async function registerPushForSalon(salonId, options = {}) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v232_logo_shortcut_fix", { scope: "/", updateViaCache: "none" });
+    await navigator.serviceWorker.register("/sw.js?v=v230_final_push_clean", { scope: "/", updateViaCache: "none" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
@@ -1288,8 +1188,6 @@ window.App = {
   installOwnerApp,
   updateManifestForOwner,
   updateManifestForSalon,
-  createBusinessPwaIconDataUrl,
-  makeAbsoluteIconUrl,
   getInitialsFromName,
   isStandaloneMode
 };

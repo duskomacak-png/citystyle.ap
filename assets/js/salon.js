@@ -461,9 +461,16 @@ function bindSalonInstall() {
     window.App?.clearSavedSalon?.();
     const manifestData = await getOwnerPanelManifestData();
 
-    // v231: install the owner panel directly from /salon/ with manifest-owner.json
-    // and the dynamic owner manifest already applied. Redirecting to /p/ can create
-    // a Chrome shortcut identity, which makes notification badges appear on Chrome.
+    // /p/ is only an install launcher; the saved shortcut opens the real owner panel.
+    if (window.App?.getProfileInstallGatewayUrl) {
+      const url = window.App.getProfileInstallGatewayUrl({
+        public_profile_code: manifestData.profileCode,
+        slug: manifestData.slug
+      }, { name: manifestData.name, panel: true });
+      window.location.href = url;
+      return;
+    }
+
     await window.App?.installOwnerApp?.(manifestData);
   });
 }
@@ -489,21 +496,12 @@ async function getOwnerPanelManifestData() {
       .eq("salon_id", currentSalonId)
       .maybeSingle();
 
-    // Owner panel shortcut must use ONLY the uploaded business logo.
-    // Do NOT fall back to cover/home/gallery/product photos, because the owner asked
-    // that salon/shop shortcuts show the business logo, not a random image.
-    const logo = String(settings?.logo_url || "").trim();
+    // Owner panel shortcut must use only the business identity image.
+    // Do NOT fall back to random gallery/home_images photos, because that can put
+    // a product/treatment photo on the owner's app shortcut instead of the salon/shop logo.
+    const icon = settings?.logo_url || settings?.cover_image_url || settings?.home_image_url || "";
 
-    data.logoUrl = logo;
-    data.originalIconUrl = logo;
-
-    if (logo && window.App?.createBusinessPwaIconDataUrl) {
-      data.icon512Url = await window.App.createBusinessPwaIconDataUrl(logo, businessName, 512);
-      data.iconUrl = await window.App.createBusinessPwaIconDataUrl(logo, businessName, 192);
-    } else {
-      data.iconUrl = "";
-      data.icon512Url = "";
-    }
+    data.iconUrl = String(icon || "").trim();
   } catch (err) {
     console.warn("Owner panel ikonica nije učitana, koristi se fallback:", err);
   }
@@ -834,7 +832,7 @@ async function ensureOwnerPushIsActive(reason = "panel-open") {
 
     if ("serviceWorker" in navigator) {
       try {
-        await navigator.serviceWorker.register("/sw.js?v=v232_logo_shortcut_fix", { scope: "/", updateViaCache: "none" });
+        await navigator.serviceWorker.register("/sw.js?v=v230_final_push_clean", { scope: "/", updateViaCache: "none" });
         const registration = await navigator.serviceWorker.ready;
         if (registration?.update) {
           registration.update().catch(() => {});
@@ -2152,7 +2150,7 @@ function renderSalonDashboard() {
   document.getElementById("salon-logout-btn").textContent = "Odjava";
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
   const expired = isPaymentExpired(currentSalon.paid_until);
-  document.getElementById("salon-status-text").innerHTML = adminOwnerPreviewMode ? `Admin pregled vlasničkog panela • izmene su zaključane` : expired ? `Aktivan profil • <span class="danger-text">Uplata istekla</span>` : (shop ? `Aktivna prodavnica patika • v231` : `Aktivan salon • v231`);
+  document.getElementById("salon-status-text").innerHTML = adminOwnerPreviewMode ? `Admin pregled vlasničkog panela • izmene su zaključane` : expired ? `Aktivan profil • <span class="danger-text">Uplata istekla</span>` : (shop ? `Aktivna prodavnica patika • v230` : `Aktivan salon • v230`);
   document.getElementById("salon-tabs").classList.remove("hidden");
   document.getElementById("salon-logout-btn").classList.toggle("hidden", adminOwnerPreviewMode);
   document.getElementById("salon-install-btn")?.classList.toggle("hidden", adminOwnerPreviewMode);
