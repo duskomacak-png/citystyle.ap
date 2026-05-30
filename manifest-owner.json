@@ -3,7 +3,7 @@
   "name": "City Style Panel",
   "short_name": "CityStyle Panel",
   "description": "Panel vlasnika za CityStyle.app termine, usluge i obaveštenja.",
-  "start_url": "/salon/?pwa_owner=1&section=appointments&v=v231_pwa_badge_fix",
+  "start_url": "/salon/?pwa_owner=1&section=appointments&v=v232_logo_shortcut_fix",
   "scope": "/salon/",
   "display": "standalone",
   "background_color": "#0b0b0f",

@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle v231 - PWA owner badge identity fix
-const CACHE_NAME = "citystyle-v231_pwa_badge_fix";
+// CityStyle v232 - PWA owner badge identity fix
+const CACHE_NAME = "citystyle-v232_logo_shortcut_fix";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

@@ -490,7 +490,28 @@ async function renderSalonHome() {
   currentSalon._publicName = publicName;
   currentSalon._publicLogo = settings?.logo_url || "";
   currentSalon._publicPhone = settings?.phone || currentSalon.phone || "";
-  window.App?.updateManifestForSalon?.(currentSalon.slug, { name: publicName, iconUrl: settings?.logo_url, themeColor: currentSalon.theme_color, profileCode: currentSalon.public_profile_code });
+
+  // Public/customer shortcut also uses the business logo when the user installs the profile.
+  // We prepare a square, maskable-safe icon before updating the manifest.
+  let publicIcon192 = currentSalon._publicLogo || "";
+  let publicIcon512 = currentSalon._publicLogo || "";
+  try {
+    if (currentSalon._publicLogo && window.App?.createBusinessPwaIconDataUrl) {
+      publicIcon512 = await window.App.createBusinessPwaIconDataUrl(currentSalon._publicLogo, publicName, 512);
+      publicIcon192 = await window.App.createBusinessPwaIconDataUrl(currentSalon._publicLogo, publicName, 192);
+    }
+  } catch (err) {
+    console.warn("Javna PWA ikonica nije pretvorena, koristi se logo/fallback:", err);
+  }
+
+  window.App?.updateManifestForSalon?.(currentSalon.slug, {
+    name: publicName,
+    iconUrl: publicIcon192,
+    icon512Url: publicIcon512,
+    originalIconUrl: currentSalon._publicLogo,
+    themeColor: currentSalon.theme_color,
+    profileCode: currentSalon.public_profile_code
+  });
 
   app.innerHTML = `
     <section class="client-page salon-themed-page">
@@ -1501,7 +1522,28 @@ async function renderSalonHome() {
   currentSalon._publicName = publicName;
   currentSalon._publicLogo = settings?.logo_url || "";
   currentSalon._publicPhone = settings?.phone || currentSalon.phone || "";
-  window.App?.updateManifestForSalon?.(currentSalon.slug, { name: publicName, iconUrl: settings?.logo_url, themeColor: currentSalon.theme_color, profileCode: currentSalon.public_profile_code });
+
+  // Public/customer shortcut also uses the business logo when the user installs the profile.
+  // We prepare a square, maskable-safe icon before updating the manifest.
+  let publicIcon192 = currentSalon._publicLogo || "";
+  let publicIcon512 = currentSalon._publicLogo || "";
+  try {
+    if (currentSalon._publicLogo && window.App?.createBusinessPwaIconDataUrl) {
+      publicIcon512 = await window.App.createBusinessPwaIconDataUrl(currentSalon._publicLogo, publicName, 512);
+      publicIcon192 = await window.App.createBusinessPwaIconDataUrl(currentSalon._publicLogo, publicName, 192);
+    }
+  } catch (err) {
+    console.warn("Javna PWA ikonica nije pretvorena, koristi se logo/fallback:", err);
+  }
+
+  window.App?.updateManifestForSalon?.(currentSalon.slug, {
+    name: publicName,
+    iconUrl: publicIcon192,
+    icon512Url: publicIcon512,
+    originalIconUrl: currentSalon._publicLogo,
+    themeColor: currentSalon.theme_color,
+    profileCode: currentSalon.public_profile_code
+  });
 
   if (csIsShopProfile(currentSalon, products.length)) return renderShoeShopHome(settings || {});
 

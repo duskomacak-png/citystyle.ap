@@ -1,8 +1,8 @@
 // assets/js/pwa-head.js
-// CityStyle v231 - early manifest identity for platform/profile PWA.
+// CityStyle v232 - early manifest identity for platform/profile PWA.
 // Runs before the main app so Android Chrome sees a manifest immediately.
 (function cityStyleEarlyPwaHead() {
-  const VERSION = "v231_pwa_badge_fix";
+  const VERSION = "v232_logo_shortcut_fix";
   const FALLBACK_ICON_192 = "/assets/icons/icon-192-maskable.png";
   const FALLBACK_ICON_512 = "/assets/icons/icon-512-maskable.png";
 

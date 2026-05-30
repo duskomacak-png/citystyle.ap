@@ -489,12 +489,21 @@ async function getOwnerPanelManifestData() {
       .eq("salon_id", currentSalonId)
       .maybeSingle();
 
-    // Owner panel shortcut must use only the business identity image.
-    // Do NOT fall back to random gallery/home_images photos, because that can put
-    // a product/treatment photo on the owner's app shortcut instead of the salon/shop logo.
-    const icon = settings?.logo_url || settings?.cover_image_url || settings?.home_image_url || "";
+    // Owner panel shortcut must use ONLY the uploaded business logo.
+    // Do NOT fall back to cover/home/gallery/product photos, because the owner asked
+    // that salon/shop shortcuts show the business logo, not a random image.
+    const logo = String(settings?.logo_url || "").trim();
 
-    data.iconUrl = String(icon || "").trim();
+    data.logoUrl = logo;
+    data.originalIconUrl = logo;
+
+    if (logo && window.App?.createBusinessPwaIconDataUrl) {
+      data.icon512Url = await window.App.createBusinessPwaIconDataUrl(logo, businessName, 512);
+      data.iconUrl = await window.App.createBusinessPwaIconDataUrl(logo, businessName, 192);
+    } else {
+      data.iconUrl = "";
+      data.icon512Url = "";
+    }
   } catch (err) {
     console.warn("Owner panel ikonica nije učitana, koristi se fallback:", err);
   }
@@ -825,7 +834,7 @@ async function ensureOwnerPushIsActive(reason = "panel-open") {
 
     if ("serviceWorker" in navigator) {
       try {
-        await navigator.serviceWorker.register("/sw.js?v=v231_pwa_badge_fix", { scope: "/", updateViaCache: "none" });
+        await navigator.serviceWorker.register("/sw.js?v=v232_logo_shortcut_fix", { scope: "/", updateViaCache: "none" });
         const registration = await navigator.serviceWorker.ready;
         if (registration?.update) {
           registration.update().catch(() => {});
