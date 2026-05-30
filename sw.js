@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle aggressive owner appointment push service worker
-const CACHE_NAME = "citystyle-v212_owner_audioctx_fix";
+// CityStyle owner appointment push service worker - v213 tank push fix
+const CACHE_NAME = "citystyle-v213_tank_push_fix";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -69,20 +69,7 @@ self.addEventListener("push", (event) => {
 
   event.waitUntil((async () => {
     await setOwnerBadge(data.badgeCount || 1);
-
-    // First notification immediately.
     await showOwnerAppointmentNotification(data);
-
-    // Aggressive fallback: repeat signal shortly after if Android allows SW to stay alive.
-    // This helps when the first notification is missed. Browser/OS may still throttle it.
-    if (data.urgent !== false) {
-      await new Promise(resolve => setTimeout(resolve, 4500));
-      await setOwnerBadge(data.badgeCount || 1);
-      await showOwnerAppointmentNotification(data, "repeat1");
-      await new Promise(resolve => setTimeout(resolve, 6500));
-      await setOwnerBadge(data.badgeCount || 1);
-      await showOwnerAppointmentNotification(data, "repeat2");
-    }
   })());
 });
 

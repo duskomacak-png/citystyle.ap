@@ -671,7 +671,7 @@ function updateManifestForOwner(options = {}) {
   const cleanIcon = String(options.iconUrl || options.logoUrl || "").trim();
   const iconUrl = cleanIcon || makeInitialsIconDataUrl(businessName, "#b91c1c");
   const icon512 = String(options.icon512Url || "").trim() || iconUrl || makeInitialsIconDataUrl(businessName, "#b91c1c");
-  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v212_owner_audioctx_fix`;
+  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v213_tank_push_fix`;
   const baseManifest = {
     id: `/pwa/owner/${encodedKey}`,
     name: appName,
@@ -771,7 +771,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v212_owner_audioctx_fix`,
+    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v213_tank_push_fix`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -892,6 +892,34 @@ async function clearAppBadgeCount() {
   await setAppBadgeCount(0);
 }
 
+async function cleanupOldPushRowsForDevice(payload) {
+  // Tenk fix: when the owner explicitly enables notifications, deactivate stale endpoints
+  // from the same salon + same browser/device before saving the fresh endpoint.
+  // If old rows stay alive, Edge Function may keep sending to dead 404/410 subscriptions.
+  if (!window.db || !payload?.salon_id) return;
+  try {
+    if (payload.user_agent) {
+      await window.db
+        .from("push_subscriptions")
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .eq("salon_id", payload.salon_id)
+        .eq("user_agent", payload.user_agent);
+    }
+  } catch (err) {
+    console.warn("Old push rows cleanup by user_agent skipped:", err);
+  }
+  try {
+    if (payload.endpoint) {
+      await window.db
+        .from("push_subscriptions")
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .eq("endpoint", payload.endpoint);
+    }
+  } catch (err) {
+    console.warn("Old push row cleanup by endpoint skipped:", err);
+  }
+}
+
 async function savePushSubscriptionToDb(payload) {
   if (!window.db) return { error: { message: "Supabase nije učitan." } };
 
@@ -993,7 +1021,7 @@ async function registerPushForSalon(salonId, options = {}) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v212_owner_audioctx_fix", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v213_tank_push_fix", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
@@ -1054,6 +1082,10 @@ async function registerPushForSalon(salonId, options = {}) {
       is_active: true,
       updated_at: new Date().toISOString()
     };
+
+    if (options.forceNew) {
+      await cleanupOldPushRowsForDevice(payload);
+    }
 
     const { error } = await savePushSubscriptionToDb(payload);
 
