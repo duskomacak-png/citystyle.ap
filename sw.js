@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle v228 - native system notification test repair
-const CACHE_NAME = "citystyle-v228_native_debug_notification";
+// CityStyle v229 - SW message native notification test
+const CACHE_NAME = "citystyle-v229_sw_message_native_test";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -103,6 +103,41 @@ async function showOwnerAppointmentNotification(data = {}) {
     }
   }
 }
+
+
+
+self.addEventListener("message", (event) => {
+  const data = event.data || {};
+  if (!data || data.type !== "CITYSTYLE_FORCE_NATIVE_TEST") return;
+
+  event.waitUntil((async () => {
+    let ok = false;
+    let errorMessage = "";
+    try {
+      await self.registration.showNotification("CITYSTYLE SW TEST", {
+        body: "Ovo je prava sistemska notifikacija pokrenuta direktno iz sw.js.",
+        icon: "/assets/icons/icon-192.png",
+        badge: "/assets/icons/icon-192.png",
+        tag: `citystyle-sw-message-test-${Date.now()}`,
+        requireInteraction: true,
+        renotify: true,
+        silent: false,
+        vibrate: [300, 120, 300, 120, 300],
+        data: { url: "/salon/?section=appointments&from_sw_test=1", diagnostic: true }
+      });
+      ok = true;
+    } catch (err) {
+      errorMessage = err && err.message ? err.message : String(err || "unknown error");
+      console.error("CITYSTYLE_FORCE_NATIVE_TEST failed", err);
+    }
+
+    try {
+      if (event.source && event.source.postMessage) {
+        event.source.postMessage({ type: "CITYSTYLE_FORCE_NATIVE_TEST_RESULT", ok, error: errorMessage });
+      }
+    } catch (replyErr) {}
+  })());
+});
 
 self.addEventListener("push", (event) => {
   const data = normalizePushData(event);
