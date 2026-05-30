@@ -1,6 +1,6 @@
 // sw.js
 // CityStyle aggressive owner appointment push service worker
-const CACHE_NAME = "citystyle-v206_aggressive_owner_notifications";
+const CACHE_NAME = "citystyle-v207_sound_unlock_push";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -36,7 +36,7 @@ async function showOwnerAppointmentNotification(data = {}, suffix = "") {
   const service = data.service_name || data.service_name_snapshot || data.service || "Usluga";
   const clientName = data.client_name || data.clientName || "Klijent";
   const time = String(data.appointment_time || data.time || "").slice(0, 5);
-  const title = data.title || "🔔 Novi termin";
+  const title = data.title || "🔔 NOVI TERMIN";
   const body = data.body || `${clientName} • ${service}${time ? " • " + time : ""}`;
 
   const options = {
@@ -52,7 +52,7 @@ async function showOwnerAppointmentNotification(data = {}, suffix = "") {
     renotify: true,
     requireInteraction: true,
     silent: false,
-    vibrate: [260, 90, 260, 90, 420],
+    vibrate: [300, 100, 300, 100, 500, 120, 300],
     timestamp: Date.now(),
     actions: [
       { action: "open-appointments", title: "Otvori termine" },
@@ -76,9 +76,12 @@ self.addEventListener("push", (event) => {
     // Aggressive fallback: repeat signal shortly after if Android allows SW to stay alive.
     // This helps when the first notification is missed. Browser/OS may still throttle it.
     if (data.urgent !== false) {
-      await new Promise(resolve => setTimeout(resolve, 6500));
+      await new Promise(resolve => setTimeout(resolve, 4500));
       await setOwnerBadge(data.badgeCount || 1);
       await showOwnerAppointmentNotification(data, "repeat1");
+      await new Promise(resolve => setTimeout(resolve, 6500));
+      await setOwnerBadge(data.badgeCount || 1);
+      await showOwnerAppointmentNotification(data, "repeat2");
     }
   })());
 });

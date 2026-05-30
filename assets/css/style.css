@@ -9553,3 +9553,9 @@ body.owner-has-new-appointment #salon-tabs button[data-section="appointments"]{
   0%,100%{ box-shadow:0 22px 55px rgba(0,0,0,.45),0 0 0 1px rgba(239,68,68,.16); }
   50%{ box-shadow:0 22px 55px rgba(0,0,0,.45),0 0 0 4px rgba(239,68,68,.22),0 0 38px rgba(239,68,68,.35); }
 }
+
+
+/* v207 sound/notification activation helper */
+body.owner-sound-ready #salon-notifications-btn{
+  background: linear-gradient(135deg,#16a34a,#22c55e) !important;
+}

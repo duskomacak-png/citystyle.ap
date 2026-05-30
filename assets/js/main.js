@@ -968,7 +968,7 @@ async function registerPushForSalon(salonId) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v206_aggressive_owner_notifications", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v207_sound_unlock_push", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
@@ -976,24 +976,15 @@ async function registerPushForSalon(salonId) {
       return false;
     }
 
-    // Fresh subscription is safer after many test versions / VAPID changes.
-    // Old subscriptions can silently point to a previous key and then push fails.
-    let existingSubscription = await registration.pushManager.getSubscription();
-    if (existingSubscription) {
-      try {
-        await existingSubscription.unsubscribe();
-      } catch (err) {
-        console.warn("Old push unsubscribe failed, continuing:", err);
-      }
-    }
+    let subscription = await registration.pushManager.getSubscription();
 
-    let subscription;
-    try {
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
-      });
-    } catch (err) {
+    if (!subscription) {
+      try {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+        });
+      } catch (err) {
       console.error("Push subscribe failed:", err);
       const msg = String(err?.message || err || "");
       if (/permission|denied/i.test(msg)) {
@@ -1006,6 +997,7 @@ async function registerPushForSalon(salonId) {
         showMessage(`Push servis ne može da se aktivira: ${msg || "nepoznata greška"}`, "error");
       }
       return false;
+    }
     }
 
     const json = subscription.toJSON();

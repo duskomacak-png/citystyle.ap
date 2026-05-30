@@ -110,37 +110,110 @@ async function getInitialOwnerSection() {
 }
 
 
-function unlockOwnerNotificationSound() {
-  ownerNotificationUnlocked = true;
-  window.removeEventListener("pointerdown", unlockOwnerNotificationSound);
-  window.removeEventListener("keydown", unlockOwnerNotificationSound);
+function getOwnerSoundKey() {
+  return currentSalonId ? `citystyle_owner_sound_enabled_${currentSalonId}` : "citystyle_owner_sound_enabled";
 }
+
+function isOwnerSoundStoredEnabled() {
+  try { return localStorage.getItem(getOwnerSoundKey()) === "1"; } catch (err) { return false; }
+}
+
+function storeOwnerSoundEnabled(value = true) {
+  try { localStorage.setItem(getOwnerSoundKey(), value ? "1" : "0"); } catch (err) {}
+  document.body.classList.toggle("owner-sound-ready", !!value);
+}
+
+async function ensureOwnerAudioContext() {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return null;
+
+  if (!ownerAudioCtx || ownerAudioCtx.state === "closed") {
+    ownerAudioCtx = new AudioCtx();
+    ownerAudioMaster = ownerAudioCtx.createGain();
+    ownerAudioMaster.gain.setValueAtTime(0.001, ownerAudioCtx.currentTime);
+    ownerAudioMaster.connect(ownerAudioCtx.destination);
+  }
+
+  if (ownerAudioCtx.state === "suspended") {
+    try { await ownerAudioCtx.resume(); } catch (err) {}
+  }
+
+  return ownerAudioCtx;
+}
+
+async function unlockOwnerNotificationSound() {
+  try {
+    const ctx = await ensureOwnerAudioContext();
+    ownerNotificationUnlocked = !!ctx;
+    ownerNotificationSoundEnabled = !!ctx;
+    if (ctx) storeOwnerSoundEnabled(true);
+    window.removeEventListener("pointerdown", unlockOwnerNotificationSound);
+    window.removeEventListener("keydown", unlockOwnerNotificationSound);
+    return !!ctx;
+  } catch (err) {
+    console.warn("Owner sound unlock failed:", err);
+    return false;
+  }
+}
+
 window.addEventListener("pointerdown", unlockOwnerNotificationSound, { once: true });
 window.addEventListener("keydown", unlockOwnerNotificationSound, { once: true });
 
-function playOwnerAppointmentSound() {
+async function playOwnerAppointmentSound(force = false) {
   try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx || !ownerNotificationUnlocked) return;
-    const ctx = new AudioCtx();
-    const now = ctx.currentTime;
-    [880, 1175, 1568].forEach((freq, index) => {
+    const ctx = await ensureOwnerAudioContext();
+    if (!ctx) return false;
+
+    // Browser blocks sound if user never enabled it. "force" is used only from the explicit enable button.
+    if (!force && !ownerNotificationUnlocked && !ownerNotificationSoundEnabled && !isOwnerSoundStoredEnabled()) return false;
+
+    ownerNotificationUnlocked = true;
+    ownerNotificationSoundEnabled = true;
+
+    if (navigator.vibrate) {
+      try { navigator.vibrate([240, 90, 240, 90, 420]); } catch (err) {}
+    }
+
+    const now = ctx.currentTime + 0.02;
+    const master = ownerAudioMaster || ctx.destination;
+    const pattern = [
+      { f: 880, t: 0.00, d: 0.16, v: 0.22 },
+      { f: 1175, t: 0.18, d: 0.16, v: 0.22 },
+      { f: 1568, t: 0.36, d: 0.18, v: 0.24 },
+      { f: 1175, t: 0.78, d: 0.18, v: 0.20 },
+      { f: 1568, t: 0.98, d: 0.22, v: 0.24 }
+    ];
+
+    pattern.forEach(({ f, t, d, v }) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = "sine";
-      osc.frequency.setValueAtTime(freq, now + index * 0.16);
-      gain.gain.setValueAtTime(0.0001, now + index * 0.16);
-      gain.gain.exponentialRampToValueAtTime(0.18, now + index * 0.16 + 0.025);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.16 + 0.13);
+      osc.frequency.setValueAtTime(f, now + t);
+      gain.gain.setValueAtTime(0.0001, now + t);
+      gain.gain.exponentialRampToValueAtTime(v, now + t + 0.025);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + t + d);
       osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now + index * 0.16);
-      osc.stop(now + index * 0.16 + 0.15);
+      gain.connect(master);
+      osc.start(now + t);
+      osc.stop(now + t + d + 0.03);
     });
-    setTimeout(() => ctx.close?.(), 900);
+
+    return true;
   } catch (err) {
     console.warn("Owner notification sound failed:", err);
+    return false;
   }
+}
+
+async function testOwnerNotificationSound() {
+  ownerNotificationUnlocked = true;
+  ownerNotificationSoundEnabled = true;
+  storeOwnerSoundEnabled(true);
+  const ok = await playOwnerAppointmentSound(true);
+  if (!ok) {
+    window.App?.showMessage?.("Telefon/browser nije dozvolio zvuk. Dodirnite ekran i pokušajte ponovo.", "error");
+  }
+  return ok;
 }
 
 function renderOwnerAppointmentAlert(appointment = {}) {
@@ -206,7 +279,8 @@ async function handleOwnerNewAppointment(appointment = {}) {
   const count = await countOwnerNewAppointments();
   setOwnerPendingAppointments(count || 1, appointment.id);
 
-  playOwnerAppointmentSound();
+  await playOwnerAppointmentSound();
+  setTimeout(() => playOwnerAppointmentSound(), 1400);
   renderOwnerAppointmentAlert(appointment);
   showOwnerAppointmentBrowserNotification(appointment);
   window.App?.showMessage?.("🔔 Stigao je novi termin. Kliknite na obaveštenje ili dugme Termini.", "success");
@@ -571,6 +645,9 @@ async function loadSalonFromSession(salonId) {
 
   currentSalon = data;
   currentSalonId = data.id;
+  ownerNotificationSoundEnabled = isOwnerSoundStoredEnabled();
+  ownerNotificationUnlocked = ownerNotificationSoundEnabled;
+  document.body.classList.toggle("owner-sound-ready", ownerNotificationSoundEnabled);
   window.App?.setAppLanguage?.(data.app_language || "sr");
   window.App?.applySalonTheme?.(data.theme_color);
   renderSalonDashboard();
@@ -640,7 +717,7 @@ function renderSalonDashboardLegacyDisabled() {
   });
   const ownerPanelName = "Instaliraj panel";
   document.getElementById("salon-install-btn").textContent = ownerPanelName;
-  document.getElementById("salon-notifications-btn").textContent = "Notifikacije";
+  document.getElementById("salon-notifications-btn").textContent = "Uključi zvuk i notifikacije";
   document.getElementById("salon-logout-btn").textContent = "Odjava";
 
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
@@ -684,7 +761,14 @@ async function showSectionLegacyDisabled(section) {
 async function enableOwnerNotifications() {
   if (stopAdminOwnerPreviewEdit()) return;
 
+  // This must happen immediately after the button click, before long awaits,
+  // otherwise Android/Chrome can block audio.
   ownerNotificationUnlocked = true;
+  ownerNotificationSoundEnabled = true;
+  storeOwnerSoundEnabled(true);
+  await ensureOwnerAudioContext();
+  await testOwnerNotificationSound();
+
   try { localStorage.setItem(`citystyle_owner_notifications_enabled_${currentSalonId}`, "1"); } catch (err) {}
   ownerNotificationStartedAt = new Date().toISOString();
   setupOwnerAppointmentRealtime();
@@ -700,27 +784,24 @@ async function enableOwnerNotifications() {
     }
   }
 
-  // Try real web-push subscription if VAPID / Edge Function are configured.
-  // If not configured, local realtime/polling notification still works while owner panel is open.
   const pushReady = await window.App.registerPushForSalon(currentSalonId);
 
   try {
-    playOwnerAppointmentSound();
     renderOwnerAppointmentAlert({
       id: `test-${Date.now()}`,
       client_name: "Test obaveštenje",
-      service_name_snapshot: "Notifikacije su uključene",
+      service_name_snapshot: "Zvuk i notifikacije su uključeni",
       appointment_date: new Date().toISOString().slice(0, 10),
       appointment_time: "00:00"
     });
   } catch (err) {}
 
   if (pushReady) {
-    window.App.showMessage("Obaveštenja su uključena. Novi termin će prikazati zvuk, poruku i browser notifikaciju.", "success");
+    window.App.showMessage("Zvuk i obaveštenja su uključeni. Kada stigne termin, telefon treba da zvoni/vibrira i otvori Termine.", "success");
   } else if (permissionOk) {
-    window.App.showMessage("Lokalna obaveštenja su uključena dok je panel vlasnika otvoren. Za obaveštenja kad je app zatvorena treba podesiti Web Push server.", "info");
+    window.App.showMessage("Zvuk i lokalni signal rade dok je panel otvoren. Za pozadinske push notifikacije proveri VAPID/Edge Function.", "info");
   } else {
-    window.App.showMessage("Vizuelno i zvučno obaveštenje radi dok je panel otvoren. Browser notifikacije su blokirane u podešavanjima.", "info");
+    window.App.showMessage("Zvuk u panelu je uključen, ali browser notifikacije su blokirane. Dozvoli Notifications za citystyle.app.", "error");
   }
 }
 
@@ -2219,7 +2300,7 @@ function renderSalonDashboard() {
   });
   const ownerPanelName = "Instaliraj panel";
   document.getElementById("salon-install-btn").textContent = ownerPanelName;
-  document.getElementById("salon-notifications-btn").textContent = "Notifikacije";
+  document.getElementById("salon-notifications-btn").textContent = "Uključi zvuk i notifikacije";
   document.getElementById("salon-logout-btn").textContent = "Odjava";
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
   const expired = isPaymentExpired(currentSalon.paid_until);
