@@ -9618,7 +9618,7 @@ body.owner-sound-ready #salon-notifications-btn{
   }
 }
 
-/* v220_ordered_install_notify_flow: one-click owner push setup */
+/* v221_keep_push_active: one-click owner push setup */
 .owner-notification-onboarding{z-index:10020 !important;}
 .owner-notification-onboarding-card{max-width:460px;text-align:left;padding:22px;background:linear-gradient(180deg,#14141c,#0b0b10);}
 .owner-notification-onboarding-card h2{font-size:24px;line-height:1.15;margin:6px 0 10px;text-align:center;}
@@ -9634,7 +9634,7 @@ body.owner-sound-ready #salon-notifications-btn{
 @media(min-width:560px){.owner-notification-onboarding-actions{grid-template-columns:1fr auto}.owner-notification-onboarding-actions .btn-dark{min-width:110px}}
 
 
-/* v220_ordered_install_notify_flow: no automatic notification wall, simple owner setup flow */
+/* v221_keep_push_active: no automatic notification wall, simple owner setup flow */
 .owner-setup-flow-card{
   border:1px solid rgba(255,255,255,.10);
   background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.025));

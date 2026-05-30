@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle true background push service worker - v219 safe notification flow
-const CACHE_NAME = "citystyle-v220_ordered_install_notify_flow";
+// CityStyle true background push service worker - v221 keep push active
+const CACHE_NAME = "citystyle-v221_keep_push_active";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -8,9 +8,11 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
+    Promise.all([
+      self.clients.claim(),
+      caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
+    ])
   );
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {

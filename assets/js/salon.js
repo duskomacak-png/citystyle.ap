@@ -938,20 +938,46 @@ async function enableOwnerNotifications() {
   }
 }
 
-async function autoRefreshOwnerPushRegistration() {
-  if (!currentSalonId || adminOwnerPreviewMode || ownerIsShopProfile()) return;
+async function ensureOwnerPushIsActive(reason = "panel-open") {
+  if (!currentSalonId || adminOwnerPreviewMode || ownerIsShopProfile()) return false;
+
   try {
     const enabled = localStorage.getItem(`citystyle_owner_notifications_enabled_${currentSalonId}`) === "1";
-    if (!enabled) return;
+    if (!enabled) {
+      refreshOwnerNotificationsButtonState();
+      return false;
+    }
+
     if (!("Notification" in window) || Notification.permission !== "granted") {
       refreshOwnerNotificationsButtonState();
-      return;
+      return false;
     }
-    await window.App?.registerPushForSalon?.(currentSalonId);
+
+    if ("serviceWorker" in navigator) {
+      try {
+        await navigator.serviceWorker.register("/sw.js?v=v221_keep_push_active", { scope: "/" });
+        const registration = await navigator.serviceWorker.ready;
+        if (registration?.update) {
+          registration.update().catch(() => {});
+        }
+        console.log("Owner push service worker ready", { reason, scope: registration?.scope || null });
+      } catch (swErr) {
+        console.warn("Owner push service worker refresh failed", swErr);
+      }
+    }
+
+    const ok = await window.App?.registerPushForSalon?.(currentSalonId, { forceNew: false, reason });
     refreshOwnerNotificationsButtonState();
+    return !!ok;
   } catch (err) {
-    console.warn("Auto push refresh failed:", err);
+    console.warn("Owner push ensure failed:", err);
+    refreshOwnerNotificationsButtonState();
+    return false;
   }
+}
+
+async function autoRefreshOwnerPushRegistration() {
+  return ensureOwnerPushIsActive("auto-refresh");
 }
 
 window.addEventListener("focus", () => {
@@ -2471,7 +2497,8 @@ function renderSalonDashboard() {
   document.getElementById("salon-logout-btn").classList.toggle("hidden", adminOwnerPreviewMode);
   document.getElementById("salon-install-btn")?.classList.toggle("hidden", adminOwnerPreviewMode);
   applyAdminOwnerPreviewHeader();
-  // v220: no automatic notification modal. Owner uses the normal setup card/buttons: skini app -> uključi obaveštenja.
+  // v221: no automatic notification wall. Keep the existing push registration alive when owner opens the installed panel.
+  setTimeout(() => { ensureOwnerPushIsActive("render-dashboard"); }, 900);
 }
 
 async function showSection(section) {
@@ -2633,7 +2660,7 @@ async function uploadCoverImage() {
   await loadCurrentSettings(); window.App.showMessage("Početna slika je postavljena. Panel prečica će je koristiti samo ako nema logo/sliku profila. Galerijske slike se ne koriste za prečicu.", "success");
 }
 
-Object.assign(window, { showProductImages, uploadProductExtraImages, deleteProductExtraImage, copyProductLink, previewProductAsClient, uploadCoverImage });
+Object.assign(window, { showProductImages, uploadProductExtraImages, deleteProductExtraImage, copyProductLink, previewProductAsClient, uploadCoverImage, ensureOwnerPushIsActive });
 
 
 // Safety patch: if an older browser/service-worker leaves a select with only RSD, repopulate currencies.
