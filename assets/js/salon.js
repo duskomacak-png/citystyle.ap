@@ -386,6 +386,37 @@ function daysUntilSubscriptionEnd(dateString) {
   return Math.ceil((target.getTime() - today.getTime()) / 86400000);
 }
 
+
+function renderOwnerSetupNotice() {
+  if (adminOwnerPreviewMode || ownerIsShopProfile()) return "";
+  const installed = !!window.App?.isStandaloneMode?.();
+  const notificationsOn = getOwnerNotificationsEnabled();
+  if (installed && notificationsOn) return "";
+
+  return `
+    <div class="owner-setup-flow-card card">
+      <div class="owner-setup-flow-head">
+        <div>
+          <strong>Prvi put? Uradi redom.</strong>
+          <p class="muted">Bez iskačućih zidova: prvo skini panel kao app, zatim uključi obaveštenja za nove termine.</p>
+        </div>
+      </div>
+      <div class="owner-setup-flow-steps">
+        <div class="owner-setup-step ${installed ? "done" : ""}">
+          <span>${installed ? "✓" : "1"}</span>
+          <div><b>Skini app vlasnika</b><small>${installed ? "Panel je otvoren kao app/prečica." : "Klikni dugme i dodaj panel na početni ekran telefona."}</small></div>
+          ${installed ? `<em>Gotovo</em>` : `<button class="btn btn-dark btn-small" type="button" onclick="document.getElementById('salon-install-btn')?.click()">Skini app</button>`}
+        </div>
+        <div class="owner-setup-step ${notificationsOn ? "done" : ""}">
+          <span>${notificationsOn ? "✓" : "2"}</span>
+          <div><b>Uključi obaveštenja</b><small>Koriste se samo za nove termine i zahteve kupaca.</small></div>
+          ${notificationsOn ? `<em>Aktivno</em>` : `<button class="btn btn-primary btn-small" type="button" onclick="enableOwnerNotifications()">Uključi</button>`}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderOwnerSubscriptionNotice() {
   if (adminOwnerPreviewMode || !currentSalon?.paid_until) return "";
   const days = daysUntilSubscriptionEnd(currentSalon.paid_until);
@@ -695,12 +726,12 @@ function refreshOwnerNotificationsButtonState() {
   if (!btn) return;
 
   if (getOwnerNotificationsEnabled()) {
-    btn.textContent = "Obaveštenja uključena";
+    btn.textContent = "Obaveštenja aktivna";
     btn.classList.add("is-enabled");
     btn.setAttribute("aria-pressed", "true");
     btn.title = "Obaveštenja su uključena za ovaj profil. Klik može ponovo osvežiti push vezu.";
   } else {
-    btn.textContent = "Uključi obaveštenja";
+    btn.textContent = "2. Uključi obaveštenja";
     btn.classList.remove("is-enabled");
     btn.setAttribute("aria-pressed", "false");
     btn.title = "Uključi obaveštenja za nove termine.";
@@ -792,7 +823,7 @@ function renderSalonDashboardLegacyDisabled() {
     if (labels[btn.dataset.section]) btn.textContent = labels[btn.dataset.section];
     if (btn.dataset.section === "garage") btn.classList.toggle("hidden", !ownerHasGaragePackage());
   });
-  const ownerPanelName = "Instaliraj panel";
+  const ownerPanelName = "1. Skini app";
   document.getElementById("salon-install-btn").textContent = ownerPanelName;
   refreshOwnerNotificationsButtonState();
   document.getElementById("salon-logout-btn").textContent = "Odjava";
@@ -839,7 +870,7 @@ async function enableOwnerNotifications() {
   if (stopAdminOwnerPreviewEdit()) return;
 
   const btn = document.getElementById("salon-notifications-btn");
-  const oldText = btn?.textContent || "Uključi obaveštenja";
+  const oldText = btn?.textContent || "2. Uključi obaveštenja";
 
   try {
     if (btn) {
@@ -883,7 +914,7 @@ async function enableOwnerNotifications() {
     const pushReady = await window.App.registerPushForSalon(currentSalonId, { forceNew: true });
 
     if (pushReady) {
-      if (btn) btn.textContent = "Obaveštenja uključena";
+      if (btn) btn.textContent = "Obaveštenja aktivna";
       refreshOwnerNotificationsButtonState();
       window.App.showMessage("Obaveštenja su uključena. Novi termini treba da stižu i kada panel nije otvoren.", "success");
     } else {
@@ -1147,6 +1178,7 @@ async function renderAppointments() {
     </div>
 
     ${renderOwnerSubscriptionNotice()}
+    ${renderOwnerSetupNotice()}
 
     <div class="owner-dashboard-grid owner-dashboard-grid-two">
       <div class="owner-metric-card"><span>Danas</span><strong>${todayCount}</strong><small>aktivnih zahteva</small></div>
@@ -2428,7 +2460,7 @@ function renderSalonDashboard() {
     btn.classList.toggle("hidden", !allowed || (btn.dataset.section === "garage" && !ownerHasGaragePackage()));
     if (labels[btn.dataset.section]) btn.textContent = labels[btn.dataset.section];
   });
-  const ownerPanelName = "Instaliraj panel";
+  const ownerPanelName = "1. Skini app";
   document.getElementById("salon-install-btn").textContent = ownerPanelName;
   refreshOwnerNotificationsButtonState();
   document.getElementById("salon-logout-btn").textContent = "Odjava";
@@ -2439,7 +2471,7 @@ function renderSalonDashboard() {
   document.getElementById("salon-logout-btn").classList.toggle("hidden", adminOwnerPreviewMode);
   document.getElementById("salon-install-btn")?.classList.toggle("hidden", adminOwnerPreviewMode);
   applyAdminOwnerPreviewHeader();
-  setTimeout(() => showOwnerNotificationOnboarding(false), 450);
+  // v220: no automatic notification modal. Owner uses the normal setup card/buttons: skini app -> uključi obaveštenja.
 }
 
 async function showSection(section) {
