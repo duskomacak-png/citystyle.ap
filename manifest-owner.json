@@ -1,0 +1,38 @@
+{
+  "id": "/pwa/citystyle-owner-panel-v231",
+  "name": "City Style Panel",
+  "short_name": "CityStyle Panel",
+  "description": "Panel vlasnika za CityStyle.app termine, usluge i obaveštenja.",
+  "start_url": "/salon/?pwa_owner=1&section=appointments&v=v231_pwa_badge_fix",
+  "scope": "/salon/",
+  "display": "standalone",
+  "background_color": "#0b0b0f",
+  "theme_color": "#0b0b0f",
+  "orientation": "portrait",
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "icons": [
+    {
+      "src": "/assets/icons/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Termini",
+      "short_name": "Termini",
+      "description": "Otvori nove zahteve za termin.",
+      "url": "/salon/?section=appointments&from_shortcut=1",
+      "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

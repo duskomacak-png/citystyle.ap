@@ -656,8 +656,11 @@ async function installOwnerApp(options = {}) {
     if (ownerKey) localStorage.setItem("citystyle_owner_shortcut_profile", ownerKey);
   } catch (err) {}
 
-  const ownerName = String(options.name || options.displayName || "Panel vlasnika").trim();
-  await installApp("Ako se sistemska instalacija ne otvori automatski: Chrome meni ⋮ → Add to Home screen / Dodaj na početni ekran. Nemoj instalirati /p/ stranicu.", `${ownerName} panel je dodat na telefon.`);
+  const ownerName = String(options.name || options.displayName || "CityStyle Panel").trim();
+  await installApp(
+    "Ako Chrome ne ponudi INSTALIRAJ, obriši staru prečicu i otvori ovaj panel direktno u Chrome-u. Ne instalirati /p/ stranicu. Cilj je prava PWA instalacija pod imenom City Style Panel.",
+    `${ownerName} panel je dodat na telefon.`
+  );
 }
 
 function updateManifestForOwner(options = {}) {
@@ -671,23 +674,34 @@ function updateManifestForOwner(options = {}) {
   const cleanIcon = String(options.iconUrl || options.logoUrl || "").trim();
   const iconUrl = cleanIcon || makeInitialsIconDataUrl(businessName, "#b91c1c");
   const icon512 = String(options.icon512Url || "").trim() || iconUrl || makeInitialsIconDataUrl(businessName, "#b91c1c");
-  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v230_final_push_clean`;
+  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&section=appointments&v=v231_pwa_badge_fix`;
   const baseManifest = {
-    id: `/pwa/owner/${encodedKey}`,
+    // v231: stable owner-panel identity. Stable id + /salon/ scope gives Android/Chrome
+    // the best chance to treat the owner panel as a separate installed PWA/WebAPK,
+    // instead of showing badges only on the Chrome icon.
+    id: `/pwa/citystyle-owner-panel-${encodedKey}`,
     name: appName,
     short_name: shortName || "Panel",
     description: `Panel vlasnika za ${businessName}.`,
     start_url: start,
-    scope: getAppBaseUrl(),
+    scope: `${getAppBaseUrl()}salon/`,
     display: "standalone",
     background_color: "#0b0b0f",
     theme_color: "#0b0b0f",
     orientation: "portrait",
+    launch_handler: { client_mode: "focus-existing" },
     icons: [
-      { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "maskable" },
-      { src: icon512, sizes: "512x512", type: "image/png", purpose: "maskable" },
-      { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "any" },
-      { src: icon512, sizes: "512x512", type: "image/png", purpose: "any" }
+      { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "any maskable" },
+      { src: icon512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+    ],
+    shortcuts: [
+      {
+        name: "Termini",
+        short_name: "Termini",
+        description: "Otvori nove zahteve za termin.",
+        url: `${getAppPath("salon/")}?section=appointments&from_shortcut=1`,
+        icons: [{ src: iconUrl, sizes: "192x192", type: "image/png" }]
+      }
     ]
   };
   try {
@@ -771,7 +785,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v230_final_push_clean`,
+    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v231_pwa_badge_fix`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -854,6 +868,20 @@ window.addEventListener("appinstalled", () => {
   document.getElementById("install-app-btn")?.remove();
   showMessage("CityStyle je dodat na početni ekran.", "success");
 });
+
+// v231: when sw.js receives a push while a CityStyle window is open, mirror the
+// badge call through the page too. Some Android launchers attach app badges only
+// to the installed PWA window context, not only the service worker context.
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.addEventListener("message", (event) => {
+    const data = event.data || {};
+    if (data.type === "CITYSTYLE_SET_BADGE") {
+      setAppBadgeCount(data.count || 1);
+    } else if (data.type === "CITYSTYLE_CLEAR_BADGE") {
+      clearAppBadgeCount();
+    }
+  });
+}
 
 
   function normalizePhoneForTel(phone) {
@@ -1021,7 +1049,7 @@ async function registerPushForSalon(salonId, options = {}) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v230_final_push_clean", { scope: "/", updateViaCache: "none" });
+    await navigator.serviceWorker.register("/sw.js?v=v231_pwa_badge_fix", { scope: "/", updateViaCache: "none" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {

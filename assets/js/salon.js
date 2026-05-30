@@ -461,16 +461,9 @@ function bindSalonInstall() {
     window.App?.clearSavedSalon?.();
     const manifestData = await getOwnerPanelManifestData();
 
-    // /p/ is only an install launcher; the saved shortcut opens the real owner panel.
-    if (window.App?.getProfileInstallGatewayUrl) {
-      const url = window.App.getProfileInstallGatewayUrl({
-        public_profile_code: manifestData.profileCode,
-        slug: manifestData.slug
-      }, { name: manifestData.name, panel: true });
-      window.location.href = url;
-      return;
-    }
-
+    // v231: install the owner panel directly from /salon/ with manifest-owner.json
+    // and the dynamic owner manifest already applied. Redirecting to /p/ can create
+    // a Chrome shortcut identity, which makes notification badges appear on Chrome.
     await window.App?.installOwnerApp?.(manifestData);
   });
 }
@@ -832,7 +825,7 @@ async function ensureOwnerPushIsActive(reason = "panel-open") {
 
     if ("serviceWorker" in navigator) {
       try {
-        await navigator.serviceWorker.register("/sw.js?v=v230_final_push_clean", { scope: "/", updateViaCache: "none" });
+        await navigator.serviceWorker.register("/sw.js?v=v231_pwa_badge_fix", { scope: "/", updateViaCache: "none" });
         const registration = await navigator.serviceWorker.ready;
         if (registration?.update) {
           registration.update().catch(() => {});
@@ -2150,7 +2143,7 @@ function renderSalonDashboard() {
   document.getElementById("salon-logout-btn").textContent = "Odjava";
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
   const expired = isPaymentExpired(currentSalon.paid_until);
-  document.getElementById("salon-status-text").innerHTML = adminOwnerPreviewMode ? `Admin pregled vlasničkog panela • izmene su zaključane` : expired ? `Aktivan profil • <span class="danger-text">Uplata istekla</span>` : (shop ? `Aktivna prodavnica patika • v230` : `Aktivan salon • v230`);
+  document.getElementById("salon-status-text").innerHTML = adminOwnerPreviewMode ? `Admin pregled vlasničkog panela • izmene su zaključane` : expired ? `Aktivan profil • <span class="danger-text">Uplata istekla</span>` : (shop ? `Aktivna prodavnica patika • v231` : `Aktivan salon • v231`);
   document.getElementById("salon-tabs").classList.remove("hidden");
   document.getElementById("salon-logout-btn").classList.toggle("hidden", adminOwnerPreviewMode);
   document.getElementById("salon-install-btn")?.classList.toggle("hidden", adminOwnerPreviewMode);

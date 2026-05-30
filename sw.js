@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle v230 - final clean owner push display
-const CACHE_NAME = "citystyle-v230_final_push_clean";
+// CityStyle v231 - PWA owner badge identity fix
+const CACHE_NAME = "citystyle-v231_pwa_badge_fix";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -50,9 +50,16 @@ function normalizePushData(event) {
 }
 
 async function setOwnerBadge(count = 1) {
+  const safeCount = Math.max(1, Number(count || 1));
   try {
     if (self.registration.setAppBadge) {
-      await self.registration.setAppBadge(Math.max(1, Number(count || 1)));
+      await self.registration.setAppBadge(safeCount);
+    }
+  } catch (err) {}
+  try {
+    const allClients = await clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const client of allClients) {
+      client.postMessage({ type: "CITYSTYLE_SET_BADGE", count: safeCount });
     }
   } catch (err) {}
 }
