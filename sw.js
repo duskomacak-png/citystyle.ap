@@ -1,6 +1,6 @@
 // sw.js
 // Minimal cache reset service worker for CityStyle.app
-const CACHE_NAME = "citystyle-v202_manifest_id_maskable";
+const CACHE_NAME = "citystyle-v205_owner_notifications";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -29,10 +29,10 @@ self.addEventListener("push", (event) => {
     icon: "/assets/icons/icon-192.png",
     badge: "/assets/icons/icon-192.png",
     data: {
-      url: data.url || "salon/",
+      url: data.url || "/salon/?section=appointments&from_push=1",
       badgeCount: data.badgeCount || 1
     },
-    tag: data.tag || "citystyle-v202_manifest_id_maskable",
+    tag: data.tag || "citystyle-owner-appointment",
     renotify: true
   };
 
@@ -53,10 +53,16 @@ self.addEventListener("notificationclick", (event) => {
     try {
       if (self.registration.clearAppBadge) await self.registration.clearAppBadge();
     } catch (err) {}
+    const target = new URL(targetUrl, self.location.origin);
     const allClients = await clients.matchAll({ type: "window", includeUncontrolled: true });
     for (const client of allClients) {
-      if (client.url.includes(targetUrl) && "focus" in client) return client.focus();
+      const clientUrl = new URL(client.url);
+      if (clientUrl.origin === target.origin && clientUrl.pathname.startsWith("/salon") && "focus" in client) {
+        await client.focus();
+        if ("navigate" in client) return client.navigate(target.href);
+        return client;
+      }
     }
-    return clients.openWindow(targetUrl);
+    return clients.openWindow(target.href);
   })());
 });

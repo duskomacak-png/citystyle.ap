@@ -11,6 +11,105 @@ let ownerNotificationUnlocked = false;
 let ownerNotificationLastId = "";
 let ownerNotificationStartedAt = new Date().toISOString();
 
+let ownerNotificationPendingCount = 0;
+
+function ownerPendingAppointmentKey() {
+  return currentSalonId ? `citystyle_owner_pending_appointments_${currentSalonId}` : "citystyle_owner_pending_appointments";
+}
+
+function ownerLastAppointmentKey() {
+  return currentSalonId ? `citystyle_owner_last_appointment_${currentSalonId}` : "citystyle_owner_last_appointment";
+}
+
+function setOwnerPendingAppointments(count = 1, appointmentId = "") {
+  ownerNotificationPendingCount = Math.max(1, Number(count || 1));
+  try {
+    localStorage.setItem(ownerPendingAppointmentKey(), String(ownerNotificationPendingCount));
+    if (appointmentId) localStorage.setItem(ownerLastAppointmentKey(), String(appointmentId));
+  } catch (err) {}
+  markOwnerNotificationUi(ownerNotificationPendingCount);
+}
+
+function clearOwnerPendingAppointments() {
+  ownerNotificationPendingCount = 0;
+  try {
+    localStorage.removeItem(ownerPendingAppointmentKey());
+    localStorage.removeItem(ownerLastAppointmentKey());
+  } catch (err) {}
+  markOwnerNotificationUi(0);
+  window.App?.clearAppBadgeCount?.();
+}
+
+function getStoredOwnerPendingAppointments() {
+  try {
+    return Number(localStorage.getItem(ownerPendingAppointmentKey()) || "0") || 0;
+  } catch (err) {
+    return 0;
+  }
+}
+
+function markOwnerNotificationUi(count = 0) {
+  const safeCount = Math.max(0, Number(count || 0));
+  document.body.classList.toggle("owner-has-new-appointment", safeCount > 0);
+  document.querySelectorAll("#salon-tabs button[data-section='appointments']").forEach(btn => {
+    btn.dataset.badge = safeCount > 0 ? String(safeCount) : "";
+    btn.setAttribute("aria-label", safeCount > 0 ? `Termini, ${safeCount} novih` : "Termini");
+  });
+  const baseTitle = currentSalon?.salon_name ? `${currentSalon.salon_name} Panel` : "CityStyle Panel";
+  document.title = safeCount > 0 ? `(${safeCount}) Novi termin - ${baseTitle}` : baseTitle;
+}
+
+function ownerOpenAppointmentsFromSignal() {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("section");
+    url.searchParams.delete("open");
+    url.searchParams.delete("from_push");
+    url.searchParams.delete("appointment_id");
+    window.history.replaceState({}, "", url.toString());
+  } catch (err) {}
+  return showSection("appointments");
+}
+
+async function countOwnerNewAppointments() {
+  if (!currentSalonId || !window.db || ownerIsShopProfile() || adminOwnerPreviewMode) return 0;
+  try {
+    const { count, error } = await window.db
+      .from("appointments")
+      .select("id", { count: "exact", head: true })
+      .eq("salon_id", currentSalonId)
+      .eq("status", "new");
+    if (error) return 0;
+    return Number(count || 0);
+  } catch (err) {
+    return 0;
+  }
+}
+
+function wantsAppointmentsFromUrl() {
+  const section = String(window.App?.getUrlParam?.("section") || "").toLowerCase();
+  const open = String(window.App?.getUrlParam?.("open") || "").toLowerCase();
+  const fromPush = String(window.App?.getUrlParam?.("from_push") || "").toLowerCase();
+  return section === "appointments" || open === "appointments" || fromPush === "1" || fromPush === "appointments";
+}
+
+async function getInitialOwnerSection() {
+  if (ownerIsShopProfile()) return getDefaultOwnerSection();
+  if (wantsAppointmentsFromUrl()) return "appointments";
+  const stored = getStoredOwnerPendingAppointments();
+  if (stored > 0) {
+    markOwnerNotificationUi(stored);
+    return "appointments";
+  }
+  const newCount = await countOwnerNewAppointments();
+  if (newCount > 0) {
+    setOwnerPendingAppointments(newCount);
+    return "appointments";
+  }
+  return getDefaultOwnerSection();
+}
+
+
 function unlockOwnerNotificationSound() {
   ownerNotificationUnlocked = true;
   window.removeEventListener("pointerdown", unlockOwnerNotificationSound);
@@ -62,7 +161,7 @@ function renderOwnerAppointmentAlert(appointment = {}) {
         <p>${salonEscapeHtml(client)} • ${salonEscapeHtml(service)}</p>
         <small>${salonEscapeHtml(date)} ${time ? "u " + salonEscapeHtml(time) : ""}${phone ? " • " + salonEscapeHtml(phone) : ""}</small>
       </div>
-      <button class="btn btn-primary btn-small" type="button" onclick="document.querySelector('.owner-live-alert')?.remove(); showSection('appointments')">Otvori termine</button>
+      <button class="btn btn-primary btn-small" type="button" onclick="document.querySelector('.owner-live-alert')?.remove(); ownerOpenAppointmentsFromSignal()">Otvori termine</button>
     </div>`;
   document.body.appendChild(wrap);
   setTimeout(() => wrap.remove(), 18000);
@@ -77,7 +176,7 @@ async function showOwnerAppointmentBrowserNotification(appointment = {}) {
       body,
       icon: "/assets/icons/icon-192.png",
       badge: "/assets/icons/icon-192.png",
-      data: { url: "/salon/?section=appointments" },
+      data: { url: `/salon/?section=appointments&from_push=1&appointment_id=${encodeURIComponent(appointment.id || "")}` },
       tag: `citystyle-owner-${appointment.id || Date.now()}`,
       renotify: true
     };
@@ -95,11 +194,16 @@ async function showOwnerAppointmentBrowserNotification(appointment = {}) {
 async function handleOwnerNewAppointment(appointment = {}) {
   if (!appointment?.id || String(appointment.id) === String(ownerNotificationLastId)) return;
   ownerNotificationLastId = String(appointment.id);
+
+  const count = await countOwnerNewAppointments();
+  setOwnerPendingAppointments(count || 1, appointment.id);
+
   playOwnerAppointmentSound();
   renderOwnerAppointmentAlert(appointment);
   showOwnerAppointmentBrowserNotification(appointment);
-  window.App?.showMessage?.("🔔 Stigao je novi zahtev / termin.", "success");
-  window.App?.setAppBadgeCount?.(1);
+  window.App?.showMessage?.("🔔 Stigao je novi termin. Kliknite na obaveštenje ili dugme Termini.", "success");
+  window.App?.setAppBadgeCount?.(count || 1);
+
   if (currentSection === "appointments") await renderAppointments();
 }
 
@@ -159,7 +263,8 @@ async function checkOwnerNewAppointmentsByPolling() {
 function startOwnerAppointmentPolling() {
   stopOwnerAppointmentPolling();
   if (!currentSalonId || adminOwnerPreviewMode) return;
-  ownerAppointmentPollTimer = setInterval(checkOwnerNewAppointmentsByPolling, 15000);
+  ownerAppointmentPollTimer = setInterval(checkOwnerNewAppointmentsByPolling, 7000);
+  setTimeout(checkOwnerNewAppointmentsByPolling, 1200);
 }
 const salonEscapeHtml = (value) => window.App.escapeHtml(value);
 const salonEscapeJs = (value) => window.App.escapeJs(value);
@@ -409,7 +514,8 @@ async function handleSalonLogin() {
   renderSalonDashboard();
   await prepareOwnerPanelManifest();
   setupOwnerAppointmentRealtime();
-  await showSection(getDefaultOwnerSection());
+  markOwnerNotificationUi(getStoredOwnerPendingAppointments());
+  await showSection(await getInitialOwnerSection());
 }
 
 async function loadSalonForAdminPreview(salonId) {
@@ -433,7 +539,7 @@ async function loadSalonForAdminPreview(salonId) {
   window.App?.applySalonTheme?.(data.theme_color);
   renderSalonDashboard();
   await prepareOwnerPanelManifest();
-  await showSection(getDefaultOwnerSection());
+  await showSection(await getInitialOwnerSection());
 }
 
 async function loadSalonFromSession(salonId) {
@@ -462,7 +568,7 @@ async function loadSalonFromSession(salonId) {
   renderSalonDashboard();
   await prepareOwnerPanelManifest();
   setupOwnerAppointmentRealtime();
-  await showSection(getDefaultOwnerSection());
+  await showSection(await getInitialOwnerSection());
 }
 
 function renderBlockedSalon(salon) {
@@ -571,6 +677,7 @@ async function enableOwnerNotifications() {
   if (stopAdminOwnerPreviewEdit()) return;
 
   ownerNotificationUnlocked = true;
+  try { localStorage.setItem(`citystyle_owner_notifications_enabled_${currentSalonId}`, "1"); } catch (err) {}
   ownerNotificationStartedAt = new Date().toISOString();
   setupOwnerAppointmentRealtime();
   startOwnerAppointmentPolling();
@@ -767,6 +874,7 @@ async function renderAnalytics() {
 }
 
 async function renderAppointments() {
+  clearOwnerPendingAppointments();
   const content = document.getElementById("salon-content");
   const today = new Date().toISOString().split("T")[0];
   const statusFilter = window.App?.getSessionValue?.("salonAppointmentsFilter") || "active";
@@ -850,6 +958,13 @@ async function renderAppointments() {
       </div>
     `}
   `;
+  setTimeout(() => {
+    const targetId = String(window.App?.getUrlParam?.("appointment_id") || "");
+    if (targetId) {
+      document.getElementById(`appointment-${targetId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document.getElementById(`appointment-mobile-${targetId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, 250);
 }
 
 function renderAppointmentPaperList(items) {
@@ -890,7 +1005,7 @@ function renderAppointmentRow(a) {
   const phoneHref = salonEscapeHtml(normalizePhoneForTel(a.client_phone || ""));
   const price = window.App.formatServicePrice(a);
   return `
-    <tr>
+    <tr id="appointment-${salonEscapeHtml(a.id)}" class="${String(window.App?.getUrlParam?.("appointment_id") || "") === String(a.id) ? "owner-highlight-appointment" : ""}">
       <td>${date}</td>
       <td><strong>${time}</strong></td>
       <td>${service}</td>
@@ -911,7 +1026,7 @@ function renderAppointmentMobileRow(a) {
   const phone = salonEscapeHtml(a.client_phone || "—");
   const phoneHref = salonEscapeHtml(normalizePhoneForTel(a.client_phone || ""));
   return `
-    <div class="paper-mobile-item">
+    <div id="appointment-mobile-${salonEscapeHtml(a.id)}" class="paper-mobile-item ${String(window.App?.getUrlParam?.("appointment_id") || "") === String(a.id) ? "owner-highlight-appointment" : ""}">
       <div class="paper-mobile-top">
         <div><strong>${time}</strong><span>${date}</span></div>
         ${renderAppointmentStatusSelect(a)}

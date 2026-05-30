@@ -4487,7 +4487,7 @@ html.cs-real-zoom-active body{
 }
 
 
-/* v202_manifest_id_maskable: premium cleaner public/customer view for salons and service profiles.
+/* v205_owner_notifications: premium cleaner public/customer view for salons and service profiles.
    Safe visual layer only: no database fields, IDs or booking logic changed. */
 body:has(.salon-themed-page){
   background:
@@ -4787,7 +4787,7 @@ body:has(.salon-themed-page){
   .salon-themed-page .product-public-grid{grid-template-columns:1fr;}
 }
 
-/* v202_manifest_id_maskable: smaller one-page public salon layout.
+/* v205_owner_notifications: smaller one-page public salon layout.
    Goal: compact first screen, less vertical space, closer to agreed compact mock. */
 .salon-themed-page{
   max-width:430px;
@@ -5044,7 +5044,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v202_manifest_id_maskable: real compact one-screen direction */
+/* v205_owner_notifications: real compact one-screen direction */
 .salon-themed-page{
   max-width:390px;
   padding:6px 7px 16px;
@@ -5267,7 +5267,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v202_manifest_id_maskable: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
+/* v205_owner_notifications: remove repeated Usluge/Ponuda CTA from top and rebalance remaining buttons */
 .salon-themed-page .client-actions{
   grid-template-columns:1fr 1fr;
 }
@@ -5283,7 +5283,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v202_manifest_id_maskable: public gallery fullscreen preview with close button and pinch zoom. */
+/* v205_owner_notifications: public gallery fullscreen preview with close button and pinch zoom. */
 .gallery-zoom-backdrop{
   z-index:10020;
   background:rgba(0,0,0,.92);
@@ -5370,7 +5370,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v202_manifest_id_maskable: replace full working-hours dropdown with today's hours only */
+/* v205_owner_notifications: replace full working-hours dropdown with today's hours only */
 .salon-themed-page .today-hours-card{
   min-height:52px;
   margin:0;
@@ -5408,7 +5408,7 @@ body:has(.salon-themed-page){
 .salon-themed-page .today-hours-card.unknown b{color:rgba(255,255,255,.65);font-size:12.5px;white-space:normal;text-align:right;}
 
 
-/* v202_manifest_id_maskable: make phone and location clearly clickable for customers */
+/* v205_owner_notifications: make phone and location clearly clickable for customers */
 .salon-themed-page .public-profile-contact.public-contact-actions{
   grid-column:1 / -1;
   display:grid;
@@ -5534,7 +5534,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v202_manifest_id_maskable: keep phone/map cards same width as buttons, but text must fit cleanly */
+/* v205_owner_notifications: keep phone/map cards same width as buttons, but text must fit cleanly */
 .salon-themed-page .public-profile-contact.public-contact-actions.compact-contact-actions{
   grid-template-columns:1fr 1fr;
   gap:10px;
@@ -5643,7 +5643,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v202_manifest_id_maskable: use short icon+verb buttons, common mobile pattern */
+/* v205_owner_notifications: use short icon+verb buttons, common mobile pattern */
 .salon-themed-page .public-profile-contact.quick-contact-actions{
   grid-column:1 / -1;
   display:grid !important;
@@ -5706,7 +5706,7 @@ body:has(.salon-themed-page){
   }
 }
 
-/* v202_manifest_id_maskable: exact requested layout */
+/* v205_owner_notifications: exact requested layout */
 .salon-themed-page .client-actions.client-actions-salon-grid{
   display:grid !important;
   grid-template-columns:1fr 1fr;
@@ -5774,7 +5774,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v202_manifest_id_maskable: zoom gallery can browse other images by vertical swipe */
+/* v205_owner_notifications: zoom gallery can browse other images by vertical swipe */
 .gallery-zoom-shell{
   position:relative;
 }
@@ -5836,7 +5836,7 @@ body:has(.salon-themed-page){
 }
 
 
-/* v202_manifest_id_maskable
+/* v205_owner_notifications
    Safe owner-panel visual refresh. Existing JS functions/IDs stay alive. */
 body:has(.salon-panel){
   background:
@@ -6334,7 +6334,7 @@ body:has(.salon-panel){
 }
 
 
-/* v202_manifest_id_maskable final hard override: owner panel must not fall back to old oversized card view */
+/* v205_owner_notifications final hard override: owner panel must not fall back to old oversized card view */
 .salon-panel{
   max-width:1280px !important;
 }
@@ -6357,7 +6357,7 @@ body:has(.salon-panel){
 }
 
 
-/* v202_manifest_id_maskable: keep notification action only in owner header */
+/* v205_owner_notifications: keep notification action only in owner header */
 .salon-panel .owner-dashboard-grid.owner-dashboard-grid-two{
   grid-template-columns:repeat(2,minmax(0,1fr)) !important;
 }
@@ -6371,14 +6371,14 @@ body:has(.salon-panel){
 }
 
 
-/* v202_manifest_id_maskable real local owner notifications */
+/* v205_owner_notifications real local owner notifications */
 .owner-live-alert-card{
   border:1px solid rgba(248,113,113,.38) !important;
   box-shadow:0 18px 60px rgba(220,38,38,.28), 0 18px 60px rgba(0,0,0,.42) !important;
 }
 
 
-/* v202_manifest_id_maskable
+/* v205_owner_notifications
    Final hard override for the ACTUAL owner panel HTML.
    Goal: clean on mobile and desktop without relying on mockup-only layout. */
 
@@ -6816,7 +6816,7 @@ body{
 }
 
 
-/* v202_manifest_id_maskable
+/* v205_owner_notifications
    Make the real mobile owner panel look closer to the generated mockup:
    logo header, action cards, icon menu tiles, cleaner mobile layout. */
 
@@ -7111,7 +7111,7 @@ body{
 }
 
 
-/* ===== v202_manifest_id_maskable owner panel polish override ===== */
+/* ===== v205_owner_notifications owner panel polish override ===== */
 :root{
   --owner-bg:#06070a;
   --owner-card:#0f1117;
@@ -7392,7 +7392,7 @@ body:has(.salon-panel){background:
 }
 
 
-/* v202_manifest_id_maskable owner login state + compact brick toolbar */
+/* v205_owner_notifications owner login state + compact brick toolbar */
 body.owner-logged-out .salon-panel #salon-header-actions,
 body.owner-logged-out .salon-panel #salon-tabs{
   display:none !important;
@@ -7554,7 +7554,7 @@ body.owner-authenticated #salon-tabs.panel-tabs:not(.hidden) button:not(.hidden)
 }
 
 
-/* v202_manifest_id_maskable
+/* v205_owner_notifications
    Final practical polish before GitHub:
    - no owner actions before login
    - after login: small Excel-like brick toolbar, not huge cards
@@ -7916,7 +7916,7 @@ body.owner-authenticated .salon-panel .owner-service-actions .btn{
 }
 
 
-/* v202_manifest_id_maskable */
+/* v205_owner_notifications */
 body.owner-authenticated .salon-panel{
   max-width:1140px !important;
   padding:12px !important;
@@ -8284,7 +8284,7 @@ body.owner-authenticated .salon-panel .owner-service-actions .btn{
 }
 
 
-/* v202_manifest_id_maskable */
+/* v205_owner_notifications */
 body.owner-authenticated .salon-panel{
   max-width:1080px !important;
 }
@@ -8521,7 +8521,7 @@ body.owner-authenticated .salon-panel .owner-service-actions .btn{
 }
 
 
-/* v202_manifest_id_maskable
+/* v205_owner_notifications
    Desktop/laptop-only final override.
    Goal: stable, clean owner panel on laptop: no oversized tiles, no overflow, normal business dashboard. */
 @media (min-width: 900px){
@@ -8907,8 +8907,8 @@ body.owner-authenticated .salon-panel .owner-service-actions .btn{
 }
 
 
-/* v202_manifest_id_maskable
-   Safe repair from v202_manifest_id_maskable base:
+/* v205_owner_notifications
+   Safe repair from v205_owner_notifications base:
    - does NOT hide existing functions
    - fixes mobile clipping
    - keeps laptop stable
@@ -9399,7 +9399,7 @@ body.owner-authenticated .salon-panel .owner-service-actions .btn{
 }
 
 
-/* v202_manifest_id_maskable
+/* v205_owner_notifications
    Product/shop owner profiles do not need notification button.
    Salons keep notifications for appointment bookings. */
 body.owner-authenticated.owner-shop-profile .salon-panel #salon-notifications-btn{
@@ -9413,5 +9413,112 @@ body.owner-authenticated.owner-shop-profile .salon-panel #salon-notifications-bt
   body.owner-authenticated.owner-shop-profile .salon-panel #salon-install-btn,
   body.owner-authenticated.owner-shop-profile .salon-panel #salon-logout-btn{
     grid-column:auto !important;
+  }
+}
+
+
+/* v205 owner appointment notification signal */
+body.owner-has-new-appointment #salon-tabs button[data-section="appointments"]{
+  position: relative !important;
+  box-shadow: 0 0 0 1px rgba(239,68,68,.45), 0 0 22px rgba(239,68,68,.28) !important;
+}
+
+body.owner-has-new-appointment #salon-tabs button[data-section="appointments"]::after{
+  content: attr(data-badge);
+  position: absolute;
+  right: -7px;
+  top: -7px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  display: grid;
+  place-items: center;
+  border: 2px solid #0b0b0f;
+  animation: ownerBadgePulse 1.2s infinite;
+}
+
+@keyframes ownerBadgePulse{
+  0%,100%{ transform: scale(1); box-shadow:0 0 0 0 rgba(239,68,68,.45); }
+  50%{ transform: scale(1.08); box-shadow:0 0 0 8px rgba(239,68,68,0); }
+}
+
+.owner-live-alert{
+  position: fixed;
+  z-index: 99999;
+  left: 12px;
+  right: 12px;
+  top: max(14px, env(safe-area-inset-top));
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.owner-live-alert-card{
+  width: min(620px, 100%);
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(127,29,29,.96), rgba(17,24,39,.96));
+  border: 1px solid rgba(255,255,255,.16);
+  box-shadow: 0 22px 55px rgba(0,0,0,.45), 0 0 0 1px rgba(239,68,68,.16);
+  color: #fff;
+}
+
+.owner-live-alert-icon{
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: rgba(239,68,68,.22);
+  font-size: 25px;
+  animation: ownerBellPulse 1.1s infinite;
+}
+
+.owner-live-alert-copy strong{ display:block; font-size:16px; }
+.owner-live-alert-copy p{ margin:2px 0; color:#fff; font-weight:800; }
+.owner-live-alert-copy small{ color:rgba(255,255,255,.78); }
+
+.owner-live-alert-close{
+  position:absolute;
+  margin-top:-38px;
+  right:18px;
+  width:30px;
+  height:30px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.20);
+  background:rgba(0,0,0,.35);
+  color:#fff;
+  font-size:20px;
+}
+
+.owner-highlight-appointment{
+  outline: 2px solid #ef4444 !important;
+  box-shadow: 0 0 0 5px rgba(239,68,68,.14), 0 12px 30px rgba(0,0,0,.25) !important;
+}
+
+@keyframes ownerBellPulse{
+  0%,100%{ transform: rotate(0deg) scale(1); }
+  35%{ transform: rotate(-9deg) scale(1.06); }
+  70%{ transform: rotate(9deg) scale(1.06); }
+}
+
+@media(max-width:640px){
+  .owner-live-alert-card{
+    grid-template-columns:auto 1fr;
+    padding:12px;
+  }
+  .owner-live-alert-card .btn{
+    grid-column:1 / -1;
+    width:100%;
   }
 }
