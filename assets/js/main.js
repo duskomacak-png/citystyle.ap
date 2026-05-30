@@ -633,25 +633,18 @@ async function installSalonApp(salonOrSlug, options = {}) {
   const slugToSave = typeof salonOrSlug === "object" ? (salonOrSlug.slug || code) : (options.slug || code);
   if (slugToSave) saveCurrentSalon(slugToSave);
 
-  // Customer/public profile install must stay on the public profile itself.
-  // Do NOT redirect to /p/ install gateway, because that page can become the
-  // saved shortcut start page and then customers keep reopening the install page.
-  const profileCode = String(options.profileCode || options.publicProfileCode || code || slugToSave || "").trim();
-  updateManifestForSalon(slugToSave || profileCode, {
-    ...options,
-    profileCode: profileCode || slugToSave,
-    publicProfileCode: profileCode || slugToSave
-  });
+  // Multiple profiles on one device need unique manifest IDs.
+  // /p/ is only an install launcher; the saved shortcut opens the real public profile.
+  const url = getProfileInstallGatewayUrl(salonOrSlug, options);
 
-  try {
-    if (profileCode || slugToSave) localStorage.setItem("citystyle_profile_shortcut_profile", profileCode || slugToSave);
-  } catch (err) {}
+  if (isStandaloneMode() && /Android/i.test(navigator.userAgent || "")) {
+    const noScheme = url.replace(/^https?:\/\//, "");
+    window.location.href = `intent://${noScheme}#Intent;scheme=https;package=com.android.chrome;end`;
+    setTimeout(() => { window.location.href = url; }, 900);
+    return;
+  }
 
-  const profileName = String(options.name || options.displayName || "CityStyle profil").trim();
-  await installApp(
-    "Ako se sistemska instalacija ne otvori automatski: Chrome meni ⋮ → Add to Home screen / Dodaj na početni ekran. Nemoj instalirati /p/ stranicu.",
-    `${profileName} je dodat na telefon.`
-  );
+  window.location.href = url;
 }
 
 async function installOwnerApp(options = {}) {
@@ -678,7 +671,7 @@ function updateManifestForOwner(options = {}) {
   const cleanIcon = String(options.iconUrl || options.logoUrl || "").trim();
   const iconUrl = cleanIcon || makeInitialsIconDataUrl(businessName, "#b91c1c");
   const icon512 = String(options.icon512Url || "").trim() || iconUrl || makeInitialsIconDataUrl(businessName, "#b91c1c");
-  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v200_direct_public_owner_install`;
+  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v201_multi_install_gateway`;
   const baseManifest = {
     id: `${getAppBaseUrl()}pwa/owner/${encodedKey}`,
     name: appName,
@@ -776,7 +769,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v200_direct_public_owner_install`,
+    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v201_multi_install_gateway`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -971,7 +964,7 @@ async function registerPushForSalon(salonId) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v200_direct_public_owner_install", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v201_multi_install_gateway", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {

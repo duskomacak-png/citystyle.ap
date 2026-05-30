@@ -6,9 +6,9 @@
   <title>Instalacija profila - CityStyle</title>
   <meta name="theme-color" content="#0b0b0f">
   <link rel="apple-touch-icon" href="../assets/icons/icon-192.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=v200_direct_public_owner_install">
+  <link rel="stylesheet" href="../assets/css/style.css?v=v201_multi_install_gateway">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../assets/js/config.js?v=v200_direct_public_owner_install"></script>
+  <script src="../assets/js/config.js?v=v201_multi_install_gateway"></script>
   <style>
     body{min-height:100vh;margin:0;background:#0b0b0f;color:#fff;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:flex;align-items:center;justify-content:center;padding:18px;}
     .pwa-gateway{width:min(520px,100%);background:rgba(20,20,26,.94);border:1px solid rgba(255,255,255,.12);box-shadow:0 24px 80px rgba(0,0,0,.45);border-radius:28px;padding:24px;text-align:center;}
@@ -36,7 +36,7 @@
   <main class="pwa-gateway">
     <div id="pwaIcon" class="pwa-logo pwa-logo-fallback">CS</div>
     <h1 id="pwaTitle">Instaliraj CityStyle profil</h1>
-    <p id="pwaSubtitle">Pripremamo posebnu prečicu za ovaj salon/prodavnicu.</p>
+    <p id="pwaSubtitle">Pripremamo posebnu prečicu. Posle instalacije prečica otvara direktno profil, ne ovu stranicu.</p>
     <div class="pwa-actions">
       <button id="installBtn" class="pwa-btn pwa-btn-primary" type="button">Instaliraj ovu prečicu</button>
       <a id="openProfileBtn" class="pwa-btn pwa-btn-dark" href="../">Otvori profil</a>
@@ -48,7 +48,7 @@
 
   <script>
   (function profileInstallGateway(){
-    const VERSION = "v200_direct_public_owner_install";
+    const VERSION = "v201_multi_install_gateway";
     const FALLBACK_192 = "/assets/icons/icon-192.png";
     const FALLBACK_512 = "/assets/icons/icon-512.png";
     const params = new URLSearchParams(location.search || "");
@@ -78,7 +78,17 @@
       return `${location.origin}/?${profileQuery()}&v=${VERSION}`;
     }
 
-    function setIconPreview(src, name){
+    
+    function isStandaloneMode(){
+      return window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone === true;
+    }
+
+    function leaveInstallPageIfStandalone(){
+      // If an old/manual shortcut accidentally starts on /p/, never trap the user here.
+      if (isStandaloneMode()) window.location.replace(profileUrl());
+    }
+
+function setIconPreview(src, name){
       if (src) {
         iconEl.className = "pwa-logo";
         iconEl.innerHTML = "";
@@ -177,6 +187,7 @@
       subtitleEl.textContent = isPanel ? "Ova prečica treba da otvara baš vlasnički panel, sa imenom i logom profila gde browser dozvoli." : "Ova prečica treba da otvara baš ovaj profil, sa posebnim imenom i ikonicom gde browser dozvoli.";
       openProfileBtn.textContent = isPanel ? "Otvori panel" : "Otvori profil";
       openProfileBtn.href = profileUrl();
+      leaveInstallPageIfStandalone();
     }
 
     async function loadProfile() {

@@ -293,18 +293,20 @@ function bindSalonTabs() {
 
 function bindSalonInstall() {
   document.getElementById("salon-install-btn")?.addEventListener("click", async () => {
+    window.App?.clearSavedSalon?.();
     const manifestData = await getOwnerPanelManifestData();
 
-    // Owner install must stay on the owner panel.
-    // Do NOT redirect to /p/ install gateway, because that page can be saved as
-    // the shortcut start page and then the owner keeps reopening the install screen.
-    if (window.App?.installOwnerApp) {
-      await window.App.installOwnerApp(manifestData);
+    // /p/ is only an install launcher; the saved shortcut opens the real owner panel.
+    if (window.App?.getProfileInstallGatewayUrl) {
+      const url = window.App.getProfileInstallGatewayUrl({
+        public_profile_code: manifestData.profileCode,
+        slug: manifestData.slug
+      }, { name: manifestData.name, panel: true });
+      window.location.href = url;
       return;
     }
 
-    const fallbackUrl = `${window.App?.getAppPath?.("salon/") || "./"}?pwa_owner=1&owner=${encodeURIComponent(manifestData.profileCode || manifestData.slug || "")}`;
-    window.location.href = fallbackUrl;
+    await window.App?.installOwnerApp?.(manifestData);
   });
 }
 
