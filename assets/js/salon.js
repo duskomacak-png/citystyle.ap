@@ -679,6 +679,34 @@ function garagePackageLabel() {
   }[pkg] || "Biznis";
 }
 
+
+function getOwnerNotificationsEnabled() {
+  try {
+    return !!currentSalonId
+      && localStorage.getItem(`citystyle_owner_notifications_enabled_${currentSalonId}`) === "1"
+      && (typeof Notification === "undefined" || Notification.permission !== "denied");
+  } catch (err) {
+    return false;
+  }
+}
+
+function refreshOwnerNotificationsButtonState() {
+  const btn = document.getElementById("salon-notifications-btn");
+  if (!btn) return;
+
+  if (getOwnerNotificationsEnabled()) {
+    btn.textContent = "Obaveštenja uključena";
+    btn.classList.add("is-enabled");
+    btn.setAttribute("aria-pressed", "true");
+    btn.title = "Obaveštenja su uključena za ovaj profil. Klik može ponovo osvežiti push vezu.";
+  } else {
+    btn.textContent = "Uključi obaveštenja";
+    btn.classList.remove("is-enabled");
+    btn.setAttribute("aria-pressed", "false");
+    btn.title = "Uključi obaveštenja za nove termine.";
+  }
+}
+
 function renderSalonDashboardLegacyDisabled() {
   const labels = {
     appointments: S("tabAppointments", "Termini"),
@@ -696,7 +724,7 @@ function renderSalonDashboardLegacyDisabled() {
   });
   const ownerPanelName = "Instaliraj panel";
   document.getElementById("salon-install-btn").textContent = ownerPanelName;
-  document.getElementById("salon-notifications-btn").textContent = "Uključi obaveštenja";
+  refreshOwnerNotificationsButtonState();
   document.getElementById("salon-logout-btn").textContent = "Odjava";
 
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
@@ -776,6 +804,7 @@ async function enableOwnerNotifications() {
     }
 
     if (!permissionOk) {
+      try { localStorage.removeItem(`citystyle_owner_notifications_enabled_${currentSalonId}`); } catch (err) {}
       if (btn) btn.textContent = "Dozvola blokirana";
       window.App.showMessage("Browser blokira notifikacije. Otvori Chrome podešavanja za citystyle.app i dozvoli Notifications.", "error");
       return;
@@ -795,8 +824,10 @@ async function enableOwnerNotifications() {
 
     if (pushReady) {
       if (btn) btn.textContent = "Obaveštenja uključena";
-      window.App.showMessage("Obaveštenja su uključena. Ako se pojavila test notifikacija, telefon prima push.", "success");
+      refreshOwnerNotificationsButtonState();
+      window.App.showMessage("Obaveštenja su uključena. Sada testiraj pravim zakazivanjem termina.", "success");
     } else {
+      try { localStorage.removeItem(`citystyle_owner_notifications_enabled_${currentSalonId}`); } catch (err) {}
       if (btn) btn.textContent = "Pokušaj ponovo";
       window.App.showMessage("Notifikacije nisu upisane u bazu. Proveri push_subscriptions SQL i VAPID ključeve.", "error");
     }
@@ -808,9 +839,9 @@ async function enableOwnerNotifications() {
     if (btn) {
       btn.disabled = false;
       btn.classList.remove("is-working");
-      // Leave success/error state visible a bit, then return to short safe text.
+      // Do not return to "Uključi" after success. Keep the real saved state visible.
       setTimeout(() => {
-        if (!btn.classList.contains("is-working")) btn.textContent = "Uključi obaveštenja";
+        if (!btn.classList.contains("is-working")) refreshOwnerNotificationsButtonState();
       }, 6000);
     }
   }
@@ -821,12 +852,26 @@ async function autoRefreshOwnerPushRegistration() {
   try {
     const enabled = localStorage.getItem(`citystyle_owner_notifications_enabled_${currentSalonId}`) === "1";
     if (!enabled) return;
-    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    if (!("Notification" in window) || Notification.permission !== "granted") {
+      refreshOwnerNotificationsButtonState();
+      return;
+    }
     await window.App?.registerPushForSalon?.(currentSalonId);
+    refreshOwnerNotificationsButtonState();
   } catch (err) {
     console.warn("Auto push refresh failed:", err);
   }
 }
+
+window.addEventListener("focus", () => {
+  try { refreshOwnerNotificationsButtonState(); } catch (err) {}
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    try { refreshOwnerNotificationsButtonState(); } catch (err) {}
+  }
+});
 
 function getOwnerSourceLink(source = "") {
   if (!currentSalon?.slug) return "";
@@ -2323,7 +2368,7 @@ function renderSalonDashboard() {
   });
   const ownerPanelName = "Instaliraj panel";
   document.getElementById("salon-install-btn").textContent = ownerPanelName;
-  document.getElementById("salon-notifications-btn").textContent = "Uključi obaveštenja";
+  refreshOwnerNotificationsButtonState();
   document.getElementById("salon-logout-btn").textContent = "Odjava";
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
   const expired = isPaymentExpired(currentSalon.paid_until);
