@@ -100,7 +100,7 @@ async function salonLogin(email, code) {
 
   if (error) {
     console.error("Salon login query error:", error);
-    window.App.showMessage("Greška pri proveri login-a. Proverite internet ili RLS/policy za tabelu salons.", "error");
+    window.App.showMessage("Greška pri proveri login-a. Proverite internet i pokušajte ponovo.", "error");
     return null;
   }
 

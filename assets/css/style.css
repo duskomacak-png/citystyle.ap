@@ -9618,50 +9618,6 @@ body.owner-sound-ready #salon-notifications-btn{
   }
 }
 
-/* v221_keep_push_active: one-click owner push setup */
-.owner-notification-onboarding{z-index:10020 !important;}
-.owner-notification-onboarding-card{max-width:460px;text-align:left;padding:22px;background:linear-gradient(180deg,#14141c,#0b0b10);}
-.owner-notification-onboarding-card h2{font-size:24px;line-height:1.15;margin:6px 0 10px;text-align:center;}
-.owner-notification-onboarding-card > .muted{text-align:center;font-size:14px;}
-.owner-notification-onboarding-icon{width:58px;height:58px;margin:0 auto 8px;border-radius:18px;display:grid;place-items:center;background:rgba(220,38,38,.18);border:1px solid rgba(255,255,255,.12);font-size:28px;}
-.owner-notification-steps{display:grid;gap:10px;margin:16px 0;}
-.owner-notification-steps div{display:flex;gap:10px;align-items:center;padding:12px;border-radius:14px;background:rgba(255,255,255,.045);border:1px solid var(--line);}
-.owner-notification-steps strong{width:28px;height:28px;display:grid;place-items:center;border-radius:999px;background:var(--red);color:#fff;flex:0 0 auto;}
-.owner-notification-steps span{font-size:14px;color:#e4e4e7;}
-.owner-notification-onboarding-actions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px;}
-.owner-notification-onboarding-actions .btn{width:100%;min-height:50px;white-space:normal;}
-.owner-notification-onboarding .notification-note{text-align:center;}
-@media(min-width:560px){.owner-notification-onboarding-actions{grid-template-columns:1fr auto}.owner-notification-onboarding-actions .btn-dark{min-width:110px}}
 
 
-/* v221_keep_push_active: no automatic notification wall, simple owner setup flow */
-.owner-setup-flow-card{
-  border:1px solid rgba(255,255,255,.10);
-  background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.025));
-  margin:12px 0 16px;
-}
-.owner-setup-flow-head strong{display:block;font-size:18px;margin-bottom:4px;color:#fff;}
-.owner-setup-flow-head p{margin:0;}
-.owner-setup-flow-steps{display:grid;gap:10px;margin-top:14px;}
-.owner-setup-step{
-  display:grid;
-  grid-template-columns:34px 1fr auto;
-  gap:12px;
-  align-items:center;
-  padding:12px;
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.10);
-  background:rgba(0,0,0,.18);
-}
-.owner-setup-step > span{
-  width:34px;height:34px;border-radius:999px;display:grid;place-items:center;
-  font-weight:900;background:#dc2626;color:#fff;
-}
-.owner-setup-step.done > span{background:#16a34a;}
-.owner-setup-step b{display:block;color:#fff;font-size:15px;}
-.owner-setup-step small{display:block;color:#a1a1aa;line-height:1.35;margin-top:2px;}
-.owner-setup-step em{font-style:normal;color:#86efac;font-weight:800;font-size:13px;}
-@media(max-width:560px){
-  .owner-setup-step{grid-template-columns:34px 1fr;}
-  .owner-setup-step .btn,.owner-setup-step em{grid-column:2;justify-self:start;margin-top:4px;}
-}
+

@@ -159,7 +159,7 @@ async function insertSalonWithBusinessType(payload) {
     delete fallback.max_images_per_listing;
     const retry = await window.db.from("salons").insert(fallback).select().single();
     if (!retry.error) {
-      window.App.showMessage("Profil je dodat. Pokrenite SQL za business_type da bi se vrsta profila trajno čuvala.", "info");
+      window.App.showMessage("Profil je dodat.", "info");
     }
     return retry;
   }
@@ -178,7 +178,7 @@ async function updateSalonWithBusinessType(id, payload) {
     delete fallback.max_images_per_listing;
     const retry = await window.db.from("salons").update(fallback).eq("id", id).select("*").single();
     if (!retry.error) {
-      window.App.showMessage("Profil je izmenjen. Pokrenite SQL za business_type da bi se vrsta profila trajno čuvala.", "info");
+      window.App.showMessage("Profil je izmenjen.", "info");
     }
     return retry;
   }
@@ -465,7 +465,7 @@ function showPlatformHomeImagesModal() {
         <input id="platform-home-images-input" type="file" accept="image/jpeg,image/png,image/webp" multiple>
         <label for="platform-home-caption-input">Kratak natpis za slike</label>
         <input id="platform-home-caption-input" type="text" maxlength="80" placeholder="npr. Galerija biznisa, Katalog proizvoda, Garaža ponuda...">
-        <p class="muted">Dozvoljeno: JPG, PNG, WEBP. Maksimalno 5 MB po slici. Prvo treba pokrenuti SQL za tabelu <b>platform_home_images</b>.</p>
+        <p class="muted">Dozvoljeno: JPG, PNG, WEBP. Maksimalno 5 MB po slici.</p>
         <div class="card-actions">
           <button class="btn btn-primary" type="button" onclick="uploadPlatformHomeImages()">Upload slika</button>
         </div>
@@ -499,7 +499,7 @@ async function loadPlatformHomeImagesForAdmin() {
 
     if (error) {
       console.error(error);
-      status.innerHTML = `<span class="error-text">Tabela platform_home_images nije dostupna ili SQL nije pokrenut. Pokreni SQL koji sam ti dao ispod poruke, pa probaj ponovo.</span>`;
+      status.innerHTML = `<span class="error-text">Slike početne strane trenutno nisu dostupne. Pokušajte ponovo kasnije.</span>`;
       grid.innerHTML = "";
       return;
     }
@@ -595,7 +595,7 @@ async function uploadPlatformHomeImages() {
     const { error } = await window.db.from("platform_home_images").insert(rows);
     if (error) {
       console.error(error);
-      window.App.showMessage("Upload slika je uspeo, ali upis u tabelu nije. Proveri SQL/RLS.", "error");
+      window.App.showMessage("Upload slika je uspeo, ali slika nije sačuvana u bazu. Pokušajte ponovo.", "error");
       return;
     }
 

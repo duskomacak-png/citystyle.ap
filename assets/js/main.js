@@ -671,7 +671,7 @@ function updateManifestForOwner(options = {}) {
   const cleanIcon = String(options.iconUrl || options.logoUrl || "").trim();
   const iconUrl = cleanIcon || makeInitialsIconDataUrl(businessName, "#b91c1c");
   const icon512 = String(options.icon512Url || "").trim() || iconUrl || makeInitialsIconDataUrl(businessName, "#b91c1c");
-  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v221_keep_push_active`;
+  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v225_clean_owner_push`;
   const baseManifest = {
     id: `/pwa/owner/${encodedKey}`,
     name: appName,
@@ -771,7 +771,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v221_keep_push_active`,
+    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v225_clean_owner_push`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -1006,7 +1006,7 @@ async function registerPushForSalon(salonId, options = {}) {
 
     const vapidPublicKey = String(window.APP_CONFIG?.pushVapidPublicKey || "").trim();
     if (!vapidPublicKey) {
-      showMessage("Obaveštenja trenutno nisu dostupna. Osvežite panel i pokušajte ponovo.", "error");
+      showMessage("Obaveštenja trenutno nisu dostupna. Pokušajte ponovo kasnije.", "error");
       return false;
     }
 
@@ -1021,19 +1021,18 @@ async function registerPushForSalon(salonId, options = {}) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v223_clean_status", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v225_clean_owner_push", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
-      showMessage("Push servis nije spreman. Zatvorite i ponovo otvorite app pa pokušajte opet.", "error");
+      showMessage("Obaveštenja još nisu spremna. Sačekajte par sekundi i kliknite ponovo.", "error");
       return false;
     }
 
     let subscription = await registration.pushManager.getSubscription();
 
-    // When owner explicitly clicks "Uključi zvuk i notifikacije",
-    // force a fresh endpoint. This fixes 410 Gone / dead endpoints after many PWA updates.
-    if (options.forceNew && subscription) {
+    // Do not delete a working subscription during normal owner flow. Reset only when explicitly allowed.
+    if (options.forceNew && options.allowReset && subscription) {
       try {
         await subscription.unsubscribe();
         subscription = null;
@@ -1055,9 +1054,9 @@ async function registerPushForSalon(salonId, options = {}) {
       if (/permission|denied/i.test(msg)) {
         showMessage("Browser nije dozvolio obaveštenja. Proverite dozvole za citystyle.app.", "error");
       } else if (/applicationServerKey|vapid|key/i.test(msg)) {
-        showMessage("Obaveštenja trenutno ne mogu da se aktiviraju. Osvežite panel i pokušajte ponovo.", "error");
+        showMessage("Obaveštenja trenutno ne mogu da se aktiviraju. Kliknite ponovo za nekoliko sekundi.", "error");
       } else if (/service worker|registration|active/i.test(msg)) {
-        showMessage("Obaveštenja nisu aktivna. Osvežite panel i pokušajte ponovo.", "error");
+        showMessage("Obaveštenja nisu aktivna. Kliknite ponovo za nekoliko sekundi.", "error");
       } else {
         showMessage(`Push servis ne može da se aktivira: ${msg || "nepoznata greška"}`, "error");
       }
@@ -1090,20 +1089,17 @@ async function registerPushForSalon(salonId, options = {}) {
     const { error } = await savePushSubscriptionToDb(payload);
 
     if (error) {
-      console.error("Push subscription save error:", error);
-      if (/row-level security|rls/i.test(error.message || "")) {
-        showMessage("Obaveštenja trenutno nisu sačuvana. Osvežite panel i pokušajte ponovo.", "error");
-      } else if (/relation|does not exist|schema/i.test(error.message || "")) {
-        showMessage("Obaveštenja trenutno nisu dostupna. Osvežite panel i pokušajte ponovo.", "error");
-      } else {
-        showMessage(`Obaveštenja trenutno nisu sačuvana. Osvežite panel i pokušajte ponovo.`, "error");
+      console.error("Push subscription save warning:", error);
+      // Keep owner-facing messages simple; technical errors stay only in console.
+      if (subscription && Notification.permission === "granted") {
+        showMessage("Obaveštenja su uključena za nove termine.", "success");
+        return true;
       }
+      showMessage("Obaveštenja nisu aktivirana. Klikni ponovo i izaberi Dozvoli.", "info");
       return false;
     }
 
-    // v219: Do not send an automatic test notification right after enabling.
-    // Chrome/Safe Browsing can treat immediate install + push + test notifications as aggressive.
-    // The owner can verify the setup by creating a real test appointment.
+    // No automatic test notification after enabling; real appointments verify delivery.
     showMessage("Obaveštenja su uključena za ovaj profil. Koriste se samo za nove termine i zahteve kupaca.", "success");
 
     return true;
@@ -1115,10 +1111,8 @@ async function registerPushForSalon(salonId, options = {}) {
 }
 
 async function notifyOwnerAboutNewAppointment(appointmentId, extra = {}) {
-  // v219: true background push is handled by Supabase DB trigger after INSERT into appointments.
-  // We intentionally do NOT call Edge Function from frontend anymore, because that can duplicate
-  // notifications and does not prove background delivery.
-  console.log("CityStyle v223: appointment push is handled by Supabase trigger", { appointmentId, extra });
+  // Background push is handled by Supabase DB trigger after INSERT into appointments.
+  console.log("Appointment push is handled by Supabase trigger", { appointmentId, extra });
   return true;
 }
 
