@@ -719,7 +719,7 @@ function renderSalonDashboardLegacyDisabled() {
   });
   const ownerPanelName = "Instaliraj panel";
   document.getElementById("salon-install-btn").textContent = ownerPanelName;
-  document.getElementById("salon-notifications-btn").textContent = "Resetuj i uključi notifikacije";
+  document.getElementById("salon-notifications-btn").textContent = "Uključi obaveštenja";
   document.getElementById("salon-logout-btn").textContent = "Odjava";
 
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
@@ -2315,7 +2315,7 @@ function renderSalonDashboard() {
   });
   const ownerPanelName = "Instaliraj panel";
   document.getElementById("salon-install-btn").textContent = ownerPanelName;
-  document.getElementById("salon-notifications-btn").textContent = "Resetuj i uključi notifikacije";
+  document.getElementById("salon-notifications-btn").textContent = "Uključi obaveštenja";
   document.getElementById("salon-logout-btn").textContent = "Odjava";
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
   const expired = isPaymentExpired(currentSalon.paid_until);

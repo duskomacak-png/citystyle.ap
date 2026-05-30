@@ -9559,3 +9559,33 @@ body.owner-has-new-appointment #salon-tabs button[data-section="appointments"]{
 body.owner-sound-ready #salon-notifications-btn{
   background: linear-gradient(135deg,#16a34a,#22c55e) !important;
 }
+
+
+/* v210 SAFE FIX - salon notifications button text stays inside button */
+.salon-panel .panel-header-actions #salon-notifications-btn{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  white-space:normal !important;
+  word-break:break-word !important;
+  overflow-wrap:anywhere !important;
+  line-height:1.14 !important;
+  padding:10px 14px !important;
+  overflow:hidden !important;
+}
+@media (max-width: 720px){
+  .salon-panel .panel-header-actions #salon-notifications-btn{
+    min-height:48px !important;
+    font-size:13px !important;
+    padding:10px 12px !important;
+  }
+}
+@media (max-width: 420px){
+  .salon-panel .panel-header-actions #salon-notifications-btn{
+    min-height:46px !important;
+    font-size:12.5px !important;
+    line-height:1.08 !important;
+    padding:9px 10px !important;
+  }
+}
