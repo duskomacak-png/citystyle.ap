@@ -671,7 +671,7 @@ function updateManifestForOwner(options = {}) {
   const cleanIcon = String(options.iconUrl || options.logoUrl || "").trim();
   const iconUrl = cleanIcon || makeInitialsIconDataUrl(businessName, "#b91c1c");
   const icon512 = String(options.icon512Url || "").trim() || iconUrl || makeInitialsIconDataUrl(businessName, "#b91c1c");
-  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v216_notification_button_state`;
+  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v219_safe_notification_flow`;
   const baseManifest = {
     id: `/pwa/owner/${encodedKey}`,
     name: appName,
@@ -771,7 +771,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v216_notification_button_state`,
+    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v219_safe_notification_flow`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -1021,7 +1021,7 @@ async function registerPushForSalon(salonId, options = {}) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v218_owner_notification_onboarding", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v219_safe_notification_flow", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
@@ -1101,24 +1101,10 @@ async function registerPushForSalon(salonId, options = {}) {
       return false;
     }
 
-    try {
-      await registration.showNotification("CityStyle obaveštenja rade ✅", {
-        body: "Test obaveštenje: novi termini treba da se prikažu i kada aplikacija nije otvorena.",
-        icon: "/assets/icons/icon-192.png",
-        badge: "/assets/icons/icon-192.png",
-        tag: `citystyle-owner-push-test-${Date.now()}`,
-        renotify: false,
-        requireInteraction: false,
-        silent: false,
-        vibrate: [220, 80, 220],
-        data: { url: "/salon/?section=appointments&from_push=1" },
-        actions: [{ action: "open-appointments", title: "Otvori termine" }]
-      });
-    } catch (err) {
-      console.warn("Owner test system notification failed:", err);
-    }
-
-    showMessage("Obaveštenja su uključena za ovaj profil. Poslato je i test obaveštenje.", "success");
+    // v219: Do not send an automatic test notification right after enabling.
+    // Chrome/Safe Browsing can treat immediate install + push + test notifications as aggressive.
+    // The owner can verify the setup by creating a real test appointment.
+    showMessage("Obaveštenja su uključena za ovaj profil. Koriste se samo za nove termine i zahteve kupaca.", "success");
 
     return true;
   } catch (err) {
@@ -1129,10 +1115,10 @@ async function registerPushForSalon(salonId, options = {}) {
 }
 
 async function notifyOwnerAboutNewAppointment(appointmentId, extra = {}) {
-  // v217: true background push is handled by Supabase DB trigger after INSERT into appointments.
+  // v219: true background push is handled by Supabase DB trigger after INSERT into appointments.
   // We intentionally do NOT call Edge Function from frontend anymore, because that can duplicate
   // notifications and does not prove background delivery.
-  console.log("CityStyle v217: appointment push is handled by Supabase trigger", { appointmentId, extra });
+  console.log("CityStyle v219: appointment push is handled by Supabase trigger", { appointmentId, extra });
   return true;
 }
 

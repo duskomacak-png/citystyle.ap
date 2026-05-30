@@ -743,16 +743,16 @@ function showOwnerNotificationOnboarding(force = false) {
     <div class="modal-card owner-notification-onboarding-card" role="dialog" aria-modal="true" aria-labelledby="owner-notification-onboarding-title">
       <div class="owner-notification-onboarding-icon">🔔</div>
       <h2 id="owner-notification-onboarding-title">Uključi obaveštenja za nove termine</h2>
-      <p class="muted">Da vlasnik odmah vidi novi termin, telefon mora jednom da dozvoli obaveštenja za CityStyle.</p>
+      <p class="muted">Obaveštenja služe samo za nove termine i zahteve kupaca. Ne šaljemo reklame, spam ni promotivne poruke.</p>
       <div class="owner-notification-steps">
         <div><strong>1</strong><span>Klikni dugme ispod.</span></div>
         <div><strong>2</strong><span>Kad Android/Chrome pita, izaberi <b>Dozvoli</b>.</span></div>
-        <div><strong>3</strong><span>App će sama upisati telefon i poslati test obaveštenje.</span></div>
+        <div><strong>3</strong><span>App će upisati ovaj telefon za prijem obaveštenja.</span></div>
       </div>
       ${blocked ? `<div class="warning-box">Obaveštenja su blokirana u browseru. Moraće ručno da se dozvole u podešavanjima Chrome-a za citystyle.app.</div>` : ""}
       ${unsupported ? `<div class="warning-box">Ovaj browser ne podržava web push obaveštenja.</div>` : ""}
       <div class="modal-actions owner-notification-onboarding-actions">
-        <button class="btn btn-primary" type="button" id="owner-onboarding-enable-btn" ${blocked || unsupported ? "disabled" : ""}>SLAŽEM SE — UKLJUČI OBAVEŠTENJA</button>
+        <button class="btn btn-primary" type="button" id="owner-onboarding-enable-btn" ${blocked || unsupported ? "disabled" : ""}>UKLJUČI OBAVEŠTENJA ZA TERMINE</button>
         <button class="btn btn-dark" type="button" id="owner-onboarding-later-btn">Kasnije</button>
       </div>
       <p class="notification-note">Bez ovoga će vlasnik često videti termin tek kada otvori prečicu.</p>
@@ -848,7 +848,7 @@ async function enableOwnerNotifications() {
       btn.textContent = "Uključujem...";
     }
 
-    window.App?.showMessage?.("Pokrećem zvuk i push notifikacije...", "info");
+    window.App?.showMessage?.("Uključujem obaveštenja za nove termine...", "info");
 
     // This must happen immediately after the button click, before long awaits,
     // otherwise Android/Chrome can block audio.
@@ -882,20 +882,10 @@ async function enableOwnerNotifications() {
 
     const pushReady = await window.App.registerPushForSalon(currentSalonId, { forceNew: true });
 
-    try {
-      renderOwnerAppointmentAlert({
-        id: `test-${Date.now()}`,
-        client_name: "Test obaveštenje",
-        service_name_snapshot: "Zvuk i notifikacije su uključeni",
-        appointment_date: new Date().toISOString().slice(0, 10),
-        appointment_time: "00:00"
-      });
-    } catch (err) {}
-
     if (pushReady) {
       if (btn) btn.textContent = "Obaveštenja uključena";
       refreshOwnerNotificationsButtonState();
-      window.App.showMessage("Obaveštenja su uključena. Sada testiraj pravim zakazivanjem termina.", "success");
+      window.App.showMessage("Obaveštenja su uključena. Novi termini treba da stižu i kada panel nije otvoren.", "success");
     } else {
       try { localStorage.removeItem(`citystyle_owner_notifications_enabled_${currentSalonId}`); } catch (err) {}
       if (btn) btn.textContent = "Pokušaj ponovo";
