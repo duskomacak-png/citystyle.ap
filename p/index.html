@@ -6,9 +6,9 @@
   <title>Instalacija profila - CityStyle</title>
   <meta name="theme-color" content="#0b0b0f">
   <link rel="apple-touch-icon" href="../assets/icons/icon-192.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=v202_manifest_id_maskable">
+  <link rel="stylesheet" href="../assets/css/style.css?v=v203_aggressive_icon_safe_zone">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../assets/js/config.js?v=v202_manifest_id_maskable"></script>
+  <script src="../assets/js/config.js?v=v203_aggressive_icon_safe_zone"></script>
   <style>
     body{min-height:100vh;margin:0;background:#0b0b0f;color:#fff;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:flex;align-items:center;justify-content:center;padding:18px;}
     .pwa-gateway{width:min(520px,100%);background:rgba(20,20,26,.94);border:1px solid rgba(255,255,255,.12);box-shadow:0 24px 80px rgba(0,0,0,.45);border-radius:28px;padding:24px;text-align:center;}
@@ -48,7 +48,7 @@
 
   <script>
   (function profileInstallGateway(){
-    const VERSION = "v202_manifest_id_maskable";
+    const VERSION = "v203_aggressive_icon_safe_zone";
     const FALLBACK_192 = "/assets/icons/icon-192-maskable.png";
     const FALLBACK_512 = "/assets/icons/icon-512-maskable.png";
     const params = new URLSearchParams(location.search || "");
@@ -148,14 +148,19 @@ function setIconPreview(src, name){
         ctx.fillStyle = grad;
         ctx.fillRect(0,0,targetSize,targetSize);
 
+        // Keep lower-right area intentionally clean for the Android/Chrome badge.
+        ctx.fillStyle = "#0b0b0f";
+        const badgeZone = Math.round(targetSize * 0.38);
+        ctx.fillRect(targetSize - badgeZone, targetSize - badgeZone, badgeZone, badgeZone);
+
         const iw = img.naturalWidth || targetSize;
         const ih = img.naturalHeight || targetSize;
-        const safe = Math.round(targetSize * 0.66);
+        const safe = Math.round(targetSize * 0.52);
         const scale = Math.min(safe / iw, safe / ih);
         const dw = Math.max(1, Math.round(iw * scale));
         const dh = Math.max(1, Math.round(ih * scale));
-        const dx = Math.round((targetSize - dw) / 2);
-        const dy = Math.round((targetSize - dh) / 2 - targetSize * 0.03);
+        const dx = Math.round((targetSize - dw) / 2 - targetSize * 0.06);
+        const dy = Math.round((targetSize - dh) / 2 - targetSize * 0.08);
 
         // Soft shadow to make light logos readable on dark background
         ctx.save();
