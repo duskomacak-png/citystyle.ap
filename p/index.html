@@ -6,9 +6,9 @@
   <title>Instalacija profila - CityStyle</title>
   <meta name="theme-color" content="#0b0b0f">
   <link rel="apple-touch-icon" href="../assets/icons/icon-192.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=v201_multi_install_gateway">
+  <link rel="stylesheet" href="../assets/css/style.css?v=v202_manifest_id_maskable">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../assets/js/config.js?v=v201_multi_install_gateway"></script>
+  <script src="../assets/js/config.js?v=v202_manifest_id_maskable"></script>
   <style>
     body{min-height:100vh;margin:0;background:#0b0b0f;color:#fff;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:flex;align-items:center;justify-content:center;padding:18px;}
     .pwa-gateway{width:min(520px,100%);background:rgba(20,20,26,.94);border:1px solid rgba(255,255,255,.12);box-shadow:0 24px 80px rgba(0,0,0,.45);border-radius:28px;padding:24px;text-align:center;}
@@ -48,9 +48,9 @@
 
   <script>
   (function profileInstallGateway(){
-    const VERSION = "v201_multi_install_gateway";
-    const FALLBACK_192 = "/assets/icons/icon-192.png";
-    const FALLBACK_512 = "/assets/icons/icon-512.png";
+    const VERSION = "v202_manifest_id_maskable";
+    const FALLBACK_192 = "/assets/icons/icon-192-maskable.png";
+    const FALLBACK_512 = "/assets/icons/icon-512-maskable.png";
     const params = new URLSearchParams(location.search || "");
     const rawProfile = params.get("profile") || params.get("salon") || "";
     const isPanel = params.get("panel") === "1";
@@ -105,12 +105,14 @@ function setIconPreview(src, name){
       try {
         const canvas = document.createElement("canvas"); canvas.width = 512; canvas.height = 512;
         const ctx = canvas.getContext("2d");
-        ctx.fillStyle = bg; ctx.fillRect(0,0,512,512);
-        const grad = ctx.createRadialGradient(160,90,20,256,256,430);
-        grad.addColorStop(0,"rgba(255,255,255,.26)"); grad.addColorStop(1,"rgba(0,0,0,.25)");
+        ctx.fillStyle = "#0b0b0f"; ctx.fillRect(0,0,512,512);
+        const grad = ctx.createRadialGradient(360,80,40,256,256,430);
+        grad.addColorStop(0,"rgba(239,68,68,.34)");
+        grad.addColorStop(.55,"rgba(127,29,29,.18)");
+        grad.addColorStop(1,"rgba(0,0,0,.10)");
         ctx.fillStyle = grad; ctx.fillRect(0,0,512,512);
-        ctx.fillStyle = "#fff"; ctx.font = "900 178px Arial, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        ctx.fillText(initials(name),256,270);
+        ctx.fillStyle = "#fff"; ctx.font = "900 146px Arial, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(initials(name),256,245);
         return canvas.toDataURL("image/png");
       } catch (err) { return FALLBACK_512; }
     }
@@ -134,23 +136,34 @@ function setIconPreview(src, name){
         canvas.height = targetSize;
         const ctx = canvas.getContext("2d");
 
-        // Solid background + safe padding. This is more reliable for Android maskable icons
-        // than sending an arbitrary uploaded photo/logo directly to the manifest.
+        // PWA-safe icon: dark background, content inside central safe zone.
+        // Chrome badge stays in the lower-right corner; this keeps the important logo away from it.
         ctx.fillStyle = "#0b0b0f";
         ctx.fillRect(0, 0, targetSize, targetSize);
 
+        const grad = ctx.createRadialGradient(targetSize*.75, targetSize*.10, targetSize*.05, targetSize*.5, targetSize*.5, targetSize*.75);
+        grad.addColorStop(0, "rgba(239,68,68,.25)");
+        grad.addColorStop(.55, "rgba(127,29,29,.14)");
+        grad.addColorStop(1, "rgba(0,0,0,.0)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0,0,targetSize,targetSize);
+
         const iw = img.naturalWidth || targetSize;
         const ih = img.naturalHeight || targetSize;
-        const padding = Math.round(targetSize * 0.10);
-        const maxW = targetSize - padding * 2;
-        const maxH = targetSize - padding * 2;
-        const scale = Math.min(maxW / iw, maxH / ih);
+        const safe = Math.round(targetSize * 0.66);
+        const scale = Math.min(safe / iw, safe / ih);
         const dw = Math.max(1, Math.round(iw * scale));
         const dh = Math.max(1, Math.round(ih * scale));
         const dx = Math.round((targetSize - dw) / 2);
-        const dy = Math.round((targetSize - dh) / 2);
+        const dy = Math.round((targetSize - dh) / 2 - targetSize * 0.03);
 
+        // Soft shadow to make light logos readable on dark background
+        ctx.save();
+        ctx.shadowColor = "rgba(0,0,0,.35)";
+        ctx.shadowBlur = Math.round(targetSize * .035);
         ctx.drawImage(img, dx, dy, dw, dh);
+        ctx.restore();
+
         return canvas.toDataURL("image/png");
       } catch (err) {
         console.warn("Logo nije mogao u PWA ikonicu, koristi se fallback:", err);
@@ -163,7 +176,7 @@ function setIconPreview(src, name){
       const appName = isPanel ? `${state.name} Panel` : state.name;
       const shortName = appName.length > 18 ? appName.slice(0,18).trim() : appName;
       const manifest = {
-        id: `/pwa/${isPanel ? "owner" : "profile"}/${encoded}`,
+        id: isPanel ? `/pwa/owner/${encoded}` : `/pwa/profile/${encoded}`,
         name: appName,
         short_name: shortName || "Profil",
         description: isPanel ? `Panel vlasnika za ${state.name}.` : `Prečica za direktan ulaz u profil: ${state.name}.`,
@@ -171,11 +184,13 @@ function setIconPreview(src, name){
         scope: "/",
         display: "standalone",
         background_color: "#0b0b0f",
-        theme_color: "#b91c1c",
+        theme_color: "#0b0b0f",
         orientation: "portrait",
         icons: [
-          { src: state.icon192 || FALLBACK_192, sizes: "192x192", type: "image/png", purpose: "any maskable" },
-          { src: state.icon512 || state.icon192 || FALLBACK_512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+          { src: state.icon192 || FALLBACK_192, sizes: "192x192", type: "image/png", purpose: "maskable" },
+          { src: state.icon512 || state.icon192 || FALLBACK_512, sizes: "512x512", type: "image/png", purpose: "maskable" },
+          { src: state.icon192 || FALLBACK_192, sizes: "192x192", type: "image/png", purpose: "any" },
+          { src: state.icon512 || state.icon192 || FALLBACK_512, sizes: "512x512", type: "image/png", purpose: "any" }
         ]
       };
       const blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });

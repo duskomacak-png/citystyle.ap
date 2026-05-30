@@ -671,9 +671,9 @@ function updateManifestForOwner(options = {}) {
   const cleanIcon = String(options.iconUrl || options.logoUrl || "").trim();
   const iconUrl = cleanIcon || makeInitialsIconDataUrl(businessName, "#b91c1c");
   const icon512 = String(options.icon512Url || "").trim() || iconUrl || makeInitialsIconDataUrl(businessName, "#b91c1c");
-  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v201_multi_install_gateway`;
+  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v202_manifest_id_maskable`;
   const baseManifest = {
-    id: `${getAppBaseUrl()}pwa/owner/${encodedKey}`,
+    id: `/pwa/owner/${encodedKey}`,
     name: appName,
     short_name: shortName || "Panel",
     description: `Panel vlasnika za ${businessName}.`,
@@ -681,11 +681,13 @@ function updateManifestForOwner(options = {}) {
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
-    theme_color: theme,
+    theme_color: "#0b0b0f",
     orientation: "portrait",
     icons: [
-      { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "any maskable" },
-      { src: icon512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+      { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "maskable" },
+      { src: icon512, sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: icon512, sizes: "512x512", type: "image/png", purpose: "any" }
     ]
   };
   try {
@@ -762,22 +764,24 @@ function updateManifestForSalon(slug, options = {}) {
   const profileCode = String(options.profileCode || options.publicProfileCode || slug || "").trim();
   const encodedSlug = encodeURIComponent(slug);
   const encodedProfile = encodeURIComponent(profileCode || slug);
-  const manifestId = `${getAppBaseUrl()}pwa/profile/${encodedProfile}`;
+  const manifestId = `/pwa/profile/${encodedProfile}`;
   const startParam = profileCode ? `profile=${encodedProfile}` : `salon=${encodedSlug}`;
   const baseManifest = {
     id: manifestId,
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v201_multi_install_gateway`,
+    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v202_manifest_id_maskable`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
-    theme_color: theme,
+    theme_color: "#0b0b0f",
     orientation: "portrait",
     icons: [
-      { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "any maskable" },
-      { src: icon512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+      { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "maskable" },
+      { src: icon512, sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: icon512, sizes: "512x512", type: "image/png", purpose: "any" }
     ]
   };
   try {
@@ -964,7 +968,7 @@ async function registerPushForSalon(salonId) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v201_multi_install_gateway", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v202_manifest_id_maskable", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
