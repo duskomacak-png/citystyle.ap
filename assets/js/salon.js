@@ -542,6 +542,7 @@ function renderSalonDashboardLegacyDisabled() {
   document.getElementById("salon-tabs").classList.remove("hidden");
   document.getElementById("salon-logout-btn").classList.toggle("hidden", adminOwnerPreviewMode);
   document.getElementById("salon-install-btn")?.classList.toggle("hidden", adminOwnerPreviewMode);
+  document.getElementById("salon-notifications-btn")?.classList.toggle("hidden", adminOwnerPreviewMode || shop);
   applyAdminOwnerPreviewHeader();
 }
 
@@ -2075,6 +2076,8 @@ function renderSalonDashboard() {
   removeOwnerLoginCards();
   setOwnerPanelLoggedInUI(true);
   const shop = ownerIsShopProfile();
+  document.body.classList.toggle("owner-shop-profile", !!shop);
+  document.body.classList.toggle("owner-salon-profile", !shop);
   const labels = shop ? {
     products: "Proizvodi",
     analytics: "Statistika",
