@@ -9589,3 +9589,31 @@ body.owner-sound-ready #salon-notifications-btn{
     padding:9px 10px !important;
   }
 }
+
+
+/* v211 SAFE FIX - owner notification button feedback and no overflow */
+.salon-panel .panel-header-actions #salon-notifications-btn{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  white-space:normal !important;
+  overflow:hidden !important;
+  word-break:normal !important;
+  overflow-wrap:break-word !important;
+  line-height:1.12 !important;
+  max-width:100% !important;
+}
+.salon-panel .panel-header-actions #salon-notifications-btn.is-working,
+.salon-panel .panel-header-actions #salon-notifications-btn:disabled{
+  opacity:.78 !important;
+  cursor:wait !important;
+  transform:none !important;
+}
+@media(max-width:720px){
+  .salon-panel .panel-header-actions #salon-notifications-btn{
+    min-height:46px !important;
+    font-size:12.5px !important;
+    padding:9px 10px !important;
+  }
+}

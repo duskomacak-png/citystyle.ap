@@ -1,6 +1,6 @@
 // sw.js
 // CityStyle aggressive owner appointment push service worker
-const CACHE_NAME = "citystyle-v209_force_fresh_push";
+const CACHE_NAME = "citystyle-v211_notifications_button_feedback";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

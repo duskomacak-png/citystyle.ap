@@ -993,7 +993,7 @@ async function registerPushForSalon(salonId, options = {}) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v209_force_fresh_push", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v211_notifications_button_feedback", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
@@ -1073,11 +1073,15 @@ async function registerPushForSalon(salonId, options = {}) {
 
     // Local visible proof that browser notification permission and SW work.
     try {
-      await registration.showNotification("CityStyle obaveštenja uključena", {
-        body: "Ako vidite ovo, telefon/laptop prima obaveštenja za ovaj profil.",
+      await registration.showNotification("✅ CityStyle obaveštenja uključena", {
+        body: "Test notifikacija radi. Novi termini će otvarati sekciju Termini.",
         icon: "/assets/icons/icon-192.png",
         badge: "/assets/icons/icon-192.png",
-        tag: "citystyle-push-test"
+        tag: "citystyle-push-test",
+        requireInteraction: true,
+        silent: false,
+        vibrate: [180, 80, 180],
+        data: { url: "/salon/?section=appointments&from_push=1" }
       });
     } catch (err) {
       console.warn("Test notification failed:", err);

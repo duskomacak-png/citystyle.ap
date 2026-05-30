@@ -763,50 +763,81 @@ async function showSectionLegacyDisabled(section) {
 async function enableOwnerNotifications() {
   if (stopAdminOwnerPreviewEdit()) return;
 
-  // This must happen immediately after the button click, before long awaits,
-  // otherwise Android/Chrome can block audio.
-  ownerNotificationUnlocked = true;
-  ownerNotificationSoundEnabled = true;
-  storeOwnerSoundEnabled(true);
-  await ensureOwnerAudioContext();
-  await testOwnerNotificationSound();
-
-  try { localStorage.setItem(`citystyle_owner_notifications_enabled_${currentSalonId}`, "1"); } catch (err) {}
-  ownerNotificationStartedAt = new Date().toISOString();
-  setupOwnerAppointmentRealtime();
-  startOwnerAppointmentPolling();
-
-  let permissionOk = true;
-  if ("Notification" in window) {
-    if (Notification.permission === "default") {
-      const permission = await Notification.requestPermission();
-      permissionOk = permission === "granted";
-    } else if (Notification.permission === "denied") {
-      permissionOk = false;
-    }
-  }
-
-  const pushReady = await window.App.registerPushForSalon(currentSalonId, { forceNew: true });
+  const btn = document.getElementById("salon-notifications-btn");
+  const oldText = btn?.textContent || "Uključi obaveštenja";
 
   try {
-    renderOwnerAppointmentAlert({
-      id: `test-${Date.now()}`,
-      client_name: "Test obaveštenje",
-      service_name_snapshot: "Zvuk i notifikacije su uključeni",
-      appointment_date: new Date().toISOString().slice(0, 10),
-      appointment_time: "00:00"
-    });
-  } catch (err) {}
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add("is-working");
+      btn.textContent = "Uključujem...";
+    }
 
-  if (pushReady) {
-    window.App.showMessage("Zvuk i obaveštenja su uključeni. Subscription je upisan u bazu; kada stigne termin telefon treba da prikaže push i otvori Termine.", "success");
-  } else if (permissionOk) {
-    window.App.showMessage("Zvuk i lokalni signal rade dok je panel otvoren. Za pozadinske push notifikacije proveri VAPID/Edge Function.", "info");
-  } else {
-    window.App.showMessage("Zvuk u panelu je uključen, ali browser notifikacije su blokirane. Dozvoli Notifications za citystyle.app.", "error");
+    window.App?.showMessage?.("Pokrećem zvuk i push notifikacije...", "info");
+
+    // This must happen immediately after the button click, before long awaits,
+    // otherwise Android/Chrome can block audio.
+    ownerNotificationUnlocked = true;
+    ownerNotificationSoundEnabled = true;
+    storeOwnerSoundEnabled(true);
+    await ensureOwnerAudioContext();
+    await testOwnerNotificationSound();
+
+    try { localStorage.setItem(`citystyle_owner_notifications_enabled_${currentSalonId}`, "1"); } catch (err) {}
+    ownerNotificationStartedAt = new Date().toISOString();
+    setupOwnerAppointmentRealtime();
+    startOwnerAppointmentPolling();
+
+    let permissionOk = true;
+    if ("Notification" in window) {
+      if (Notification.permission === "default") {
+        const permission = await Notification.requestPermission();
+        permissionOk = permission === "granted";
+      } else if (Notification.permission === "denied") {
+        permissionOk = false;
+      }
+    }
+
+    if (!permissionOk) {
+      if (btn) btn.textContent = "Dozvola blokirana";
+      window.App.showMessage("Browser blokira notifikacije. Otvori Chrome podešavanja za citystyle.app i dozvoli Notifications.", "error");
+      return;
+    }
+
+    const pushReady = await window.App.registerPushForSalon(currentSalonId, { forceNew: true });
+
+    try {
+      renderOwnerAppointmentAlert({
+        id: `test-${Date.now()}`,
+        client_name: "Test obaveštenje",
+        service_name_snapshot: "Zvuk i notifikacije su uključeni",
+        appointment_date: new Date().toISOString().slice(0, 10),
+        appointment_time: "00:00"
+      });
+    } catch (err) {}
+
+    if (pushReady) {
+      if (btn) btn.textContent = "Obaveštenja uključena";
+      window.App.showMessage("Obaveštenja su uključena. Ako se pojavila test notifikacija, telefon prima push.", "success");
+    } else {
+      if (btn) btn.textContent = "Pokušaj ponovo";
+      window.App.showMessage("Notifikacije nisu upisane u bazu. Proveri push_subscriptions SQL i VAPID ključeve.", "error");
+    }
+  } catch (err) {
+    console.error("enableOwnerNotifications failed:", err);
+    if (btn) btn.textContent = "Greška - ponovi";
+    window.App?.showMessage?.(`Greška pri uključivanju: ${err.message || "nepoznata greška"}`, "error");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove("is-working");
+      // Leave success/error state visible a bit, then return to short safe text.
+      setTimeout(() => {
+        if (!btn.classList.contains("is-working")) btn.textContent = "Uključi obaveštenja";
+      }, 6000);
+    }
   }
 }
-
 
 async function autoRefreshOwnerPushRegistration() {
   if (!currentSalonId || adminOwnerPreviewMode || ownerIsShopProfile()) return;
