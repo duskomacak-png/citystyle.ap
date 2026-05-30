@@ -893,38 +893,63 @@ async function clearAppBadgeCount() {
 }
 
 async function savePushSubscriptionToDb(payload) {
-  const table = window.db.from("push_subscriptions");
+  if (!window.db) return { error: { message: "Supabase nije učitan." } };
 
-  // First try the clean path: one active row per endpoint.
-  let result = await table.upsert(payload, { onConflict: "endpoint" });
+  const endpointPayload = {
+    salon_id: payload.salon_id,
+    endpoint: payload.endpoint,
+    p256dh: payload.p256dh,
+    auth: payload.auth,
+    expiration_time: payload.expiration_time,
+    user_agent: payload.user_agent,
+    is_active: true,
+    updated_at: payload.updated_at
+  };
+
+  const jsonPayload = {
+    salon_id: payload.salon_id,
+    endpoint: payload.endpoint,
+    subscription: payload.subscription,
+    user_agent: payload.user_agent,
+    is_active: true,
+    updated_at: payload.updated_at
+  };
+
+  // Schema A: separate endpoint/p256dh/auth columns.
+  let result = await window.db.from("push_subscriptions").upsert(endpointPayload, { onConflict: "endpoint" });
   if (!result.error) return result;
 
-  console.warn("Push upsert failed, trying fallback insert/update:", result.error);
+  const firstError = result.error;
+  console.warn("Push save separate-column path failed, trying JSONB path:", firstError);
 
-  // Fallback for projects where endpoint does not have a unique index yet.
-  result = await window.db.from("push_subscriptions").insert(payload);
+  // Schema B: subscription JSONB column.
+  result = await window.db.from("push_subscriptions").upsert(jsonPayload, { onConflict: "endpoint" });
   if (!result.error) return result;
 
-  // Fallback for duplicate endpoint rows.
+  console.warn("Push save JSONB path failed, trying insert fallback:", result.error);
+
+  // Fallback insert for projects without unique endpoint, then update by endpoint.
+  result = await window.db.from("push_subscriptions").insert(endpointPayload);
+  if (!result.error) return result;
+
   if (/duplicate|unique/i.test(result.error.message || "")) {
-    result = await window.db
-      .from("push_subscriptions")
-      .update({
-        salon_id: payload.salon_id,
-        p256dh: payload.p256dh,
-        auth: payload.auth,
-        expiration_time: payload.expiration_time,
-        user_agent: payload.user_agent,
-        is_active: true,
-        updated_at: payload.updated_at
-      })
-      .eq("endpoint", payload.endpoint);
+    result = await window.db.from("push_subscriptions").update({
+      salon_id: payload.salon_id,
+      p256dh: payload.p256dh,
+      auth: payload.auth,
+      expiration_time: payload.expiration_time,
+      user_agent: payload.user_agent,
+      is_active: true,
+      updated_at: payload.updated_at
+    }).eq("endpoint", payload.endpoint);
+    if (!result.error) return result;
   }
 
-  return result;
+  // Return the first structural error if it explains missing columns better.
+  return result.error ? result : { error: firstError };
 }
 
-async function registerPushForSalon(salonId) {
+async function registerPushForSalon(salonId, options = {}) {
   try {
     if (!salonId) {
       showMessage("Profil nije učitan.", "error");
@@ -968,7 +993,7 @@ async function registerPushForSalon(salonId) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v207_sound_unlock_push", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v209_force_fresh_push", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
@@ -977,6 +1002,18 @@ async function registerPushForSalon(salonId) {
     }
 
     let subscription = await registration.pushManager.getSubscription();
+
+    // When owner explicitly clicks "Uključi zvuk i notifikacije",
+    // force a fresh endpoint. This fixes 410 Gone / dead endpoints after many PWA updates.
+    if (options.forceNew && subscription) {
+      try {
+        await subscription.unsubscribe();
+        subscription = null;
+        console.log("Old push subscription removed; creating fresh one.");
+      } catch (err) {
+        console.warn("Could not unsubscribe old push subscription, continuing:", err);
+      }
+    }
 
     if (!subscription) {
       try {
@@ -1011,6 +1048,7 @@ async function registerPushForSalon(salonId) {
       endpoint: json.endpoint,
       p256dh: json.keys.p256dh,
       auth: json.keys.auth,
+      subscription: json,
       expiration_time: json.expirationTime || null,
       user_agent: navigator.userAgent,
       is_active: true,

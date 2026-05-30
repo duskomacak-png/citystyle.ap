@@ -1,6 +1,6 @@
 // sw.js
 // CityStyle aggressive owner appointment push service worker
-const CACHE_NAME = "citystyle-v207_sound_unlock_push";
+const CACHE_NAME = "citystyle-v209_force_fresh_push";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
