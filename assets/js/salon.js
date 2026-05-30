@@ -542,7 +542,6 @@ function renderSalonDashboardLegacyDisabled() {
   document.getElementById("salon-tabs").classList.remove("hidden");
   document.getElementById("salon-logout-btn").classList.toggle("hidden", adminOwnerPreviewMode);
   document.getElementById("salon-install-btn")?.classList.toggle("hidden", adminOwnerPreviewMode);
-  document.getElementById("salon-notifications-btn")?.classList.toggle("hidden", adminOwnerPreviewMode || shop);
   applyAdminOwnerPreviewHeader();
 }
 
