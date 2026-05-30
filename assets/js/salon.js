@@ -831,7 +831,7 @@ async function ensureOwnerPushIsActive(reason = "panel-open") {
 
     if ("serviceWorker" in navigator) {
       try {
-        await navigator.serviceWorker.register("/sw.js?v=v226_sw_display_repair", { scope: "/", updateViaCache: "none" });
+        await navigator.serviceWorker.register("/sw.js?v=v227_native_test_notification", { scope: "/", updateViaCache: "none" });
         const registration = await navigator.serviceWorker.ready;
         if (registration?.update) {
           registration.update().catch(() => {});

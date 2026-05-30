@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle v226 - robust background push display repair
-const CACHE_NAME = "citystyle-v226_sw_display_repair";
+// CityStyle v227 - native system notification test repair
+const CACHE_NAME = "citystyle-v227_native_test_notification";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
