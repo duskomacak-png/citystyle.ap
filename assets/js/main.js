@@ -1006,7 +1006,7 @@ async function registerPushForSalon(salonId, options = {}) {
 
     const vapidPublicKey = String(window.APP_CONFIG?.pushVapidPublicKey || "").trim();
     if (!vapidPublicKey) {
-      showMessage("Push ključ nije podešen u aplikaciji.", "error");
+      showMessage("Obaveštenja trenutno nisu dostupna. Osvežite panel i pokušajte ponovo.", "error");
       return false;
     }
 
@@ -1021,7 +1021,7 @@ async function registerPushForSalon(salonId, options = {}) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v221_keep_push_active", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v223_clean_status", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
@@ -1055,9 +1055,9 @@ async function registerPushForSalon(salonId, options = {}) {
       if (/permission|denied/i.test(msg)) {
         showMessage("Browser nije dozvolio obaveštenja. Proverite dozvole za citystyle.app.", "error");
       } else if (/applicationServerKey|vapid|key/i.test(msg)) {
-        showMessage("Push ključ ne odgovara. Proveri VAPID public/private key par.", "error");
+        showMessage("Obaveštenja trenutno ne mogu da se aktiviraju. Osvežite panel i pokušajte ponovo.", "error");
       } else if (/service worker|registration|active/i.test(msg)) {
-        showMessage("Push servis nije aktivan. Osvežite stranicu ili ponovo instalirajte PWA.", "error");
+        showMessage("Obaveštenja nisu aktivna. Osvežite panel i pokušajte ponovo.", "error");
       } else {
         showMessage(`Push servis ne može da se aktivira: ${msg || "nepoznata greška"}`, "error");
       }
@@ -1092,11 +1092,11 @@ async function registerPushForSalon(salonId, options = {}) {
     if (error) {
       console.error("Push subscription save error:", error);
       if (/row-level security|rls/i.test(error.message || "")) {
-        showMessage("Push nije sačuvan: Supabase RLS blokira push_subscriptions.", "error");
+        showMessage("Obaveštenja trenutno nisu sačuvana. Osvežite panel i pokušajte ponovo.", "error");
       } else if (/relation|does not exist|schema/i.test(error.message || "")) {
-        showMessage("Push tabela ne postoji: pokreni SQL za push_subscriptions.", "error");
+        showMessage("Obaveštenja trenutno nisu dostupna. Osvežite panel i pokušajte ponovo.", "error");
       } else {
-        showMessage(`Obaveštenja nisu sačuvana u bazi: ${error.message || "greška"}`, "error");
+        showMessage(`Obaveštenja trenutno nisu sačuvana. Osvežite panel i pokušajte ponovo.`, "error");
       }
       return false;
     }
@@ -1118,7 +1118,7 @@ async function notifyOwnerAboutNewAppointment(appointmentId, extra = {}) {
   // v219: true background push is handled by Supabase DB trigger after INSERT into appointments.
   // We intentionally do NOT call Edge Function from frontend anymore, because that can duplicate
   // notifications and does not prove background delivery.
-  console.log("CityStyle v219: appointment push is handled by Supabase trigger", { appointmentId, extra });
+  console.log("CityStyle v223: appointment push is handled by Supabase trigger", { appointmentId, extra });
   return true;
 }
 

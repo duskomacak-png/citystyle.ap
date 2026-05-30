@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle true background push service worker - v222 askcreate-style clean notifications
-const CACHE_NAME = "citystyle-v222_clean_push";
+// CityStyle true background push service worker - v223 askcreate-style clean notifications
+const CACHE_NAME = "citystyle-v223_clean_push";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

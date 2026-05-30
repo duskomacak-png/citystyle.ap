@@ -713,12 +713,35 @@ function garagePackageLabel() {
 
 function getOwnerNotificationsEnabled() {
   try {
-    return !!currentSalonId
-      && localStorage.getItem(`citystyle_owner_notifications_enabled_${currentSalonId}`) === "1"
-      && (typeof Notification === "undefined" || Notification.permission !== "denied");
+    if (!currentSalonId) return false;
+    const saved = localStorage.getItem(`citystyle_owner_notifications_enabled_${currentSalonId}`) === "1";
+    const confirmed = localStorage.getItem(`citystyle_owner_push_confirmed_${currentSalonId}`) === "1";
+    const permissionOk = (typeof Notification === "undefined") || Notification.permission === "granted";
+    return (saved || confirmed) && permissionOk;
   } catch (err) {
     return false;
   }
+}
+
+async function ownerHasBrowserPushSubscription() {
+  try {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
+    if ("Notification" in window && Notification.permission !== "granted") return false;
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    return !!subscription;
+  } catch (err) {
+    console.warn("Owner push subscription check failed:", err);
+    return false;
+  }
+}
+
+function markOwnerNotificationsEnabled() {
+  if (!currentSalonId) return;
+  try {
+    localStorage.setItem(`citystyle_owner_notifications_enabled_${currentSalonId}`, "1");
+    localStorage.setItem(`citystyle_owner_push_confirmed_${currentSalonId}`, "1");
+  } catch (err) {}
 }
 
 function refreshOwnerNotificationsButtonState() {
@@ -726,10 +749,10 @@ function refreshOwnerNotificationsButtonState() {
   if (!btn) return;
 
   if (getOwnerNotificationsEnabled()) {
-    btn.textContent = "Obaveštenja aktivna";
+    btn.textContent = "✅ Obaveštenja uključena";
     btn.classList.add("is-enabled");
     btn.setAttribute("aria-pressed", "true");
-    btn.title = "Obaveštenja su uključena za ovaj profil. Klik može ponovo osvežiti push vezu.";
+    btn.title = "Obaveštenja su uključena za nove termine.";
   } else {
     btn.textContent = "2. Uključi obaveštenja";
     btn.classList.remove("is-enabled");
@@ -760,52 +783,9 @@ function closeOwnerNotificationOnboarding(markSeen = true) {
 }
 
 function showOwnerNotificationOnboarding(force = false) {
-  if (!force && !shouldShowOwnerNotificationOnboarding()) return;
-  if (document.getElementById("owner-notification-onboarding")) return;
-
-  const permission = (typeof Notification !== "undefined") ? Notification.permission : "unsupported";
-  const blocked = permission === "denied";
-  const unsupported = permission === "unsupported";
-
-  const backdrop = document.createElement("div");
-  backdrop.id = "owner-notification-onboarding";
-  backdrop.className = "modal-backdrop owner-notification-onboarding";
-  backdrop.innerHTML = `
-    <div class="modal-card owner-notification-onboarding-card" role="dialog" aria-modal="true" aria-labelledby="owner-notification-onboarding-title">
-      <div class="owner-notification-onboarding-icon">🔔</div>
-      <h2 id="owner-notification-onboarding-title">Uključi obaveštenja za nove termine</h2>
-      <p class="muted">Obaveštenja služe samo za nove termine i zahteve kupaca. Ne šaljemo reklame, spam ni promotivne poruke.</p>
-      <div class="owner-notification-steps">
-        <div><strong>1</strong><span>Klikni dugme ispod.</span></div>
-        <div><strong>2</strong><span>Kad Android/Chrome pita, izaberi <b>Dozvoli</b>.</span></div>
-        <div><strong>3</strong><span>App će upisati ovaj telefon za prijem obaveštenja.</span></div>
-      </div>
-      ${blocked ? `<div class="warning-box">Obaveštenja su blokirana u browseru. Moraće ručno da se dozvole u podešavanjima Chrome-a za citystyle.app.</div>` : ""}
-      ${unsupported ? `<div class="warning-box">Ovaj browser ne podržava web push obaveštenja.</div>` : ""}
-      <div class="modal-actions owner-notification-onboarding-actions">
-        <button class="btn btn-primary" type="button" id="owner-onboarding-enable-btn" ${blocked || unsupported ? "disabled" : ""}>UKLJUČI OBAVEŠTENJA ZA TERMINE</button>
-        <button class="btn btn-dark" type="button" id="owner-onboarding-later-btn">Kasnije</button>
-      </div>
-      <p class="notification-note">Bez ovoga će vlasnik često videti termin tek kada otvori prečicu.</p>
-    </div>
-  `;
-  document.body.appendChild(backdrop);
-
-  document.getElementById("owner-onboarding-later-btn")?.addEventListener("click", () => closeOwnerNotificationOnboarding(true));
-  document.getElementById("owner-onboarding-enable-btn")?.addEventListener("click", async () => {
-    const btn = document.getElementById("owner-onboarding-enable-btn");
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "Uključujem...";
-    }
-    await enableOwnerNotifications();
-    if (getOwnerNotificationsEnabled()) {
-      closeOwnerNotificationOnboarding(true);
-    } else if (btn) {
-      btn.disabled = false;
-      btn.textContent = "Pokušaj ponovo";
-    }
-  });
+  // v223: no automatic notification wall. Owner uses the normal panel buttons:
+  // 1. Skini app -> 2. Uključi obaveštenja.
+  return;
 }
 
 function renderSalonDashboardLegacyDisabled() {
@@ -889,7 +869,7 @@ async function enableOwnerNotifications() {
     await ensureOwnerAudioContext();
     await testOwnerNotificationSound();
 
-    try { localStorage.setItem(`citystyle_owner_notifications_enabled_${currentSalonId}`, "1"); } catch (err) {}
+    markOwnerNotificationsEnabled()
     ownerNotificationStartedAt = new Date().toISOString();
     setupOwnerAppointmentRealtime();
     startOwnerAppointmentPolling();
@@ -913,14 +893,18 @@ async function enableOwnerNotifications() {
 
     const pushReady = await window.App.registerPushForSalon(currentSalonId, { forceNew: true });
 
-    if (pushReady) {
-      if (btn) btn.textContent = "Obaveštenja aktivna";
+    const hasBrowserPush = await ownerHasBrowserPushSubscription();
+
+    if (pushReady || hasBrowserPush) {
+      markOwnerNotificationsEnabled();
+      if (btn) btn.textContent = "✅ Obaveštenja uključena";
       refreshOwnerNotificationsButtonState();
-      window.App.showMessage("Obaveštenja su uključena. Novi termini treba da stižu i kada panel nije otvoren.", "success");
+      window.App.showMessage("Obaveštenja su uključena za nove termine.", "success");
     } else {
       try { localStorage.removeItem(`citystyle_owner_notifications_enabled_${currentSalonId}`); } catch (err) {}
+      try { localStorage.removeItem(`citystyle_owner_push_confirmed_${currentSalonId}`); } catch (err) {}
       if (btn) btn.textContent = "Pokušaj ponovo";
-      window.App.showMessage("Notifikacije nisu upisane u bazu. Proveri push_subscriptions SQL i VAPID ključeve.", "error");
+      window.App.showMessage("Obaveštenja nisu uključena. Zatvori i ponovo otvori panel, pa pokušaj još jednom.", "error");
     }
   } catch (err) {
     console.error("enableOwnerNotifications failed:", err);
@@ -955,7 +939,7 @@ async function ensureOwnerPushIsActive(reason = "panel-open") {
 
     if ("serviceWorker" in navigator) {
       try {
-        await navigator.serviceWorker.register("/sw.js?v=v221_keep_push_active", { scope: "/" });
+        await navigator.serviceWorker.register("/sw.js?v=v223_clean_status", { scope: "/" });
         const registration = await navigator.serviceWorker.ready;
         if (registration?.update) {
           registration.update().catch(() => {});
@@ -967,8 +951,10 @@ async function ensureOwnerPushIsActive(reason = "panel-open") {
     }
 
     const ok = await window.App?.registerPushForSalon?.(currentSalonId, { forceNew: false, reason });
+    const hasBrowserPush = await ownerHasBrowserPushSubscription();
+    if (ok || hasBrowserPush) markOwnerNotificationsEnabled();
     refreshOwnerNotificationsButtonState();
-    return !!ok;
+    return !!(ok || hasBrowserPush);
   } catch (err) {
     console.warn("Owner push ensure failed:", err);
     refreshOwnerNotificationsButtonState();
