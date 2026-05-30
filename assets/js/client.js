@@ -1382,7 +1382,15 @@ async function submitAppointment() {
   }
 
   if (insertedAppointment?.id) {
-    window.App.notifyOwnerAboutNewAppointment(insertedAppointment.id);
+    window.App.notifyOwnerAboutNewAppointment(insertedAppointment.id, {
+      salon_id: currentSalon.id,
+      salon_name: currentSalon.salon_name || currentSalon.name || "",
+      service_name: selectedService.name,
+      client_name: name,
+      client_phone: phone,
+      appointment_date: selectedDate,
+      appointment_time: selectedTime
+    });
   }
 
   document.getElementById("booking-box").innerHTML = `

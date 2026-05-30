@@ -170,7 +170,7 @@ function renderOwnerAppointmentAlert(appointment = {}) {
 async function showOwnerAppointmentBrowserNotification(appointment = {}) {
   try {
     if (!("Notification" in window) || Notification.permission !== "granted") return;
-    const title = "Novi termin - CityStyle";
+    const title = "🔔 Novi termin - CityStyle";
     const body = `${appointment.client_name || "Klijent"} • ${appointment.service_name_snapshot || "Usluga"} • ${String(appointment.appointment_time || "").slice(0,5)}`;
     const options = {
       body,
@@ -178,7 +178,15 @@ async function showOwnerAppointmentBrowserNotification(appointment = {}) {
       badge: "/assets/icons/icon-192.png",
       data: { url: `/salon/?section=appointments&from_push=1&appointment_id=${encodeURIComponent(appointment.id || "")}` },
       tag: `citystyle-owner-${appointment.id || Date.now()}`,
-      renotify: true
+      renotify: true,
+      requireInteraction: true,
+      silent: false,
+      vibrate: [220, 90, 220, 90, 360],
+      timestamp: Date.now(),
+      actions: [
+        { action: "open-appointments", title: "Otvori termine" },
+        { action: "close", title: "Kasnije" }
+      ]
     };
     const reg = await navigator.serviceWorker?.ready?.catch?.(() => null);
     if (reg?.showNotification) {

@@ -9522,3 +9522,34 @@ body.owner-has-new-appointment #salon-tabs button[data-section="appointments"]::
     width:100%;
   }
 }
+
+
+/* v206 aggressive owner signal */
+body.owner-has-new-appointment #salon-tabs button[data-section="appointments"]{
+  animation: ownerTabDangerPulse 1.05s infinite !important;
+}
+
+@keyframes ownerTabDangerPulse{
+  0%,100%{
+    transform: translateY(0);
+    box-shadow: 0 0 0 1px rgba(239,68,68,.55), 0 0 18px rgba(239,68,68,.30) !important;
+  }
+  50%{
+    transform: translateY(-1px);
+    box-shadow: 0 0 0 2px rgba(239,68,68,.85), 0 0 34px rgba(239,68,68,.55) !important;
+  }
+}
+
+.owner-live-alert-card{
+  animation: ownerLiveAlertDrop .22s ease-out, ownerLiveAlertGlow 1.15s infinite !important;
+}
+
+@keyframes ownerLiveAlertDrop{
+  from{ transform: translateY(-18px); opacity:0; }
+  to{ transform: translateY(0); opacity:1; }
+}
+
+@keyframes ownerLiveAlertGlow{
+  0%,100%{ box-shadow:0 22px 55px rgba(0,0,0,.45),0 0 0 1px rgba(239,68,68,.16); }
+  50%{ box-shadow:0 22px 55px rgba(0,0,0,.45),0 0 0 4px rgba(239,68,68,.22),0 0 38px rgba(239,68,68,.35); }
+}

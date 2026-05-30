@@ -968,7 +968,7 @@ async function registerPushForSalon(salonId) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v205_owner_notifications", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v206_aggressive_owner_notifications", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
@@ -1061,15 +1061,30 @@ async function registerPushForSalon(salonId) {
   }
 }
 
-async function notifyOwnerAboutNewAppointment(appointmentId) {
-  if (!appointmentId || !window.db?.functions?.invoke) return;
-  try {
-    await window.db.functions.invoke("send-appointment-push", {
-      body: { appointment_id: appointmentId }
-    });
-  } catch (err) {
-    console.warn("Push notifikacija nije poslata:", err);
+async function notifyOwnerAboutNewAppointment(appointmentId, extra = {}) {
+  if (!appointmentId || !window.db?.functions?.invoke) return false;
+
+  const payload = {
+    appointment_id: appointmentId,
+    appointmentId,
+    urgent: true,
+    open_url: `/salon/?section=appointments&from_push=1&appointment_id=${encodeURIComponent(appointmentId)}`,
+    ...extra
+  };
+
+  // Aggressive but safe: try a few times because phone push is the critical part.
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const { error } = await window.db.functions.invoke("send-appointment-push", { body: payload });
+      if (!error) return true;
+      console.warn("Push attempt error:", error);
+    } catch (err) {
+      console.warn(`Push pokušaj ${attempt} nije uspeo:`, err);
+    }
+    await new Promise(resolve => setTimeout(resolve, attempt * 900));
   }
+
+  return false;
 }
 
 window.App = {
