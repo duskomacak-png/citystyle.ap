@@ -1,6 +1,6 @@
 // sw.js
 // CityStyle true background push service worker - v217 trigger push fix
-const CACHE_NAME = "citystyle-v217_true_background_push";
+const CACHE_NAME = "citystyle-v218_owner_notification_onboarding";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

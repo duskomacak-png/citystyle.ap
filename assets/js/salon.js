@@ -707,6 +707,76 @@ function refreshOwnerNotificationsButtonState() {
   }
 }
 
+
+function ownerNotificationOnboardingKey() {
+  return currentSalonId ? `citystyle_owner_notification_onboarding_seen_${currentSalonId}` : "citystyle_owner_notification_onboarding_seen";
+}
+
+function shouldShowOwnerNotificationOnboarding() {
+  if (!currentSalonId || adminOwnerPreviewMode || ownerIsShopProfile()) return false;
+  if (getOwnerNotificationsEnabled()) return false;
+  try {
+    if (sessionStorage.getItem(ownerNotificationOnboardingKey()) === "1") return false;
+  } catch (err) {}
+  return true;
+}
+
+function closeOwnerNotificationOnboarding(markSeen = true) {
+  document.getElementById("owner-notification-onboarding")?.remove();
+  if (markSeen) {
+    try { sessionStorage.setItem(ownerNotificationOnboardingKey(), "1"); } catch (err) {}
+  }
+}
+
+function showOwnerNotificationOnboarding(force = false) {
+  if (!force && !shouldShowOwnerNotificationOnboarding()) return;
+  if (document.getElementById("owner-notification-onboarding")) return;
+
+  const permission = (typeof Notification !== "undefined") ? Notification.permission : "unsupported";
+  const blocked = permission === "denied";
+  const unsupported = permission === "unsupported";
+
+  const backdrop = document.createElement("div");
+  backdrop.id = "owner-notification-onboarding";
+  backdrop.className = "modal-backdrop owner-notification-onboarding";
+  backdrop.innerHTML = `
+    <div class="modal-card owner-notification-onboarding-card" role="dialog" aria-modal="true" aria-labelledby="owner-notification-onboarding-title">
+      <div class="owner-notification-onboarding-icon">🔔</div>
+      <h2 id="owner-notification-onboarding-title">Uključi obaveštenja za nove termine</h2>
+      <p class="muted">Da vlasnik odmah vidi novi termin, telefon mora jednom da dozvoli obaveštenja za CityStyle.</p>
+      <div class="owner-notification-steps">
+        <div><strong>1</strong><span>Klikni dugme ispod.</span></div>
+        <div><strong>2</strong><span>Kad Android/Chrome pita, izaberi <b>Dozvoli</b>.</span></div>
+        <div><strong>3</strong><span>App će sama upisati telefon i poslati test obaveštenje.</span></div>
+      </div>
+      ${blocked ? `<div class="warning-box">Obaveštenja su blokirana u browseru. Moraće ručno da se dozvole u podešavanjima Chrome-a za citystyle.app.</div>` : ""}
+      ${unsupported ? `<div class="warning-box">Ovaj browser ne podržava web push obaveštenja.</div>` : ""}
+      <div class="modal-actions owner-notification-onboarding-actions">
+        <button class="btn btn-primary" type="button" id="owner-onboarding-enable-btn" ${blocked || unsupported ? "disabled" : ""}>SLAŽEM SE — UKLJUČI OBAVEŠTENJA</button>
+        <button class="btn btn-dark" type="button" id="owner-onboarding-later-btn">Kasnije</button>
+      </div>
+      <p class="notification-note">Bez ovoga će vlasnik često videti termin tek kada otvori prečicu.</p>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+
+  document.getElementById("owner-onboarding-later-btn")?.addEventListener("click", () => closeOwnerNotificationOnboarding(true));
+  document.getElementById("owner-onboarding-enable-btn")?.addEventListener("click", async () => {
+    const btn = document.getElementById("owner-onboarding-enable-btn");
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Uključujem...";
+    }
+    await enableOwnerNotifications();
+    if (getOwnerNotificationsEnabled()) {
+      closeOwnerNotificationOnboarding(true);
+    } else if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Pokušaj ponovo";
+    }
+  });
+}
+
 function renderSalonDashboardLegacyDisabled() {
   const labels = {
     appointments: S("tabAppointments", "Termini"),
@@ -866,6 +936,8 @@ async function autoRefreshOwnerPushRegistration() {
 window.addEventListener("focus", () => {
   try { refreshOwnerNotificationsButtonState(); } catch (err) {}
 });
+
+window.showOwnerNotificationOnboarding = showOwnerNotificationOnboarding;
 
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {
@@ -2377,6 +2449,7 @@ function renderSalonDashboard() {
   document.getElementById("salon-logout-btn").classList.toggle("hidden", adminOwnerPreviewMode);
   document.getElementById("salon-install-btn")?.classList.toggle("hidden", adminOwnerPreviewMode);
   applyAdminOwnerPreviewHeader();
+  setTimeout(() => showOwnerNotificationOnboarding(false), 450);
 }
 
 async function showSection(section) {

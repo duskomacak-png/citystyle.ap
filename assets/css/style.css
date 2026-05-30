@@ -9617,3 +9617,18 @@ body.owner-sound-ready #salon-notifications-btn{
     padding:9px 10px !important;
   }
 }
+
+/* v218_owner_notification_onboarding: one-click owner push setup */
+.owner-notification-onboarding{z-index:10020 !important;}
+.owner-notification-onboarding-card{max-width:460px;text-align:left;padding:22px;background:linear-gradient(180deg,#14141c,#0b0b10);}
+.owner-notification-onboarding-card h2{font-size:24px;line-height:1.15;margin:6px 0 10px;text-align:center;}
+.owner-notification-onboarding-card > .muted{text-align:center;font-size:14px;}
+.owner-notification-onboarding-icon{width:58px;height:58px;margin:0 auto 8px;border-radius:18px;display:grid;place-items:center;background:rgba(220,38,38,.18);border:1px solid rgba(255,255,255,.12);font-size:28px;}
+.owner-notification-steps{display:grid;gap:10px;margin:16px 0;}
+.owner-notification-steps div{display:flex;gap:10px;align-items:center;padding:12px;border-radius:14px;background:rgba(255,255,255,.045);border:1px solid var(--line);}
+.owner-notification-steps strong{width:28px;height:28px;display:grid;place-items:center;border-radius:999px;background:var(--red);color:#fff;flex:0 0 auto;}
+.owner-notification-steps span{font-size:14px;color:#e4e4e7;}
+.owner-notification-onboarding-actions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px;}
+.owner-notification-onboarding-actions .btn{width:100%;min-height:50px;white-space:normal;}
+.owner-notification-onboarding .notification-note{text-align:center;}
+@media(min-width:560px){.owner-notification-onboarding-actions{grid-template-columns:1fr auto}.owner-notification-onboarding-actions .btn-dark{min-width:110px}}

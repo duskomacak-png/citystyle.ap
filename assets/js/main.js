@@ -1021,7 +1021,7 @@ async function registerPushForSalon(salonId, options = {}) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v217_true_background_push", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v218_owner_notification_onboarding", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
@@ -1101,7 +1101,24 @@ async function registerPushForSalon(salonId, options = {}) {
       return false;
     }
 
-    showMessage("Obaveštenja su uključena za ovaj profil. Testiraj ih zakazivanjem novog termina.", "success");
+    try {
+      await registration.showNotification("CityStyle obaveštenja rade ✅", {
+        body: "Test obaveštenje: novi termini treba da se prikažu i kada aplikacija nije otvorena.",
+        icon: "/assets/icons/icon-192.png",
+        badge: "/assets/icons/icon-192.png",
+        tag: `citystyle-owner-push-test-${Date.now()}`,
+        renotify: false,
+        requireInteraction: false,
+        silent: false,
+        vibrate: [220, 80, 220],
+        data: { url: "/salon/?section=appointments&from_push=1" },
+        actions: [{ action: "open-appointments", title: "Otvori termine" }]
+      });
+    } catch (err) {
+      console.warn("Owner test system notification failed:", err);
+    }
+
+    showMessage("Obaveštenja su uključena za ovaj profil. Poslato je i test obaveštenje.", "success");
 
     return true;
   } catch (err) {
