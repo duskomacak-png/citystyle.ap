@@ -737,15 +737,6 @@ function setActiveTab(section) {
   document.querySelectorAll("#salon-tabs button").forEach(btn => btn.classList.toggle("active", btn.dataset.section === section));
 }
 
-async function testOwnerSystemNotification() {
-  if (stopAdminOwnerPreviewEdit()) return;
-  if (!window.App?.sendNativeSystemTestNotification) {
-    window.App?.showMessage?.("Test sistemske notifikacije nije dostupan u ovoj verziji. Osveži app/GitHub cache.", "error");
-    return;
-  }
-  await window.App.sendNativeSystemTestNotification();
-}
-window.testOwnerSystemNotification = testOwnerSystemNotification;
 
 async function enableOwnerNotifications() {
   if (stopAdminOwnerPreviewEdit()) return;
@@ -841,7 +832,7 @@ async function ensureOwnerPushIsActive(reason = "panel-open") {
 
     if ("serviceWorker" in navigator) {
       try {
-        await navigator.serviceWorker.register("/sw.js?v=v229_sw_message_native_test", { scope: "/", updateViaCache: "none" });
+        await navigator.serviceWorker.register("/sw.js?v=v230_final_push_clean", { scope: "/", updateViaCache: "none" });
         const registration = await navigator.serviceWorker.ready;
         if (registration?.update) {
           registration.update().catch(() => {});
@@ -2159,7 +2150,7 @@ function renderSalonDashboard() {
   document.getElementById("salon-logout-btn").textContent = "Odjava";
   document.getElementById("salon-name").textContent = currentSalon.salon_name || "Panel vlasnika biznisa";
   const expired = isPaymentExpired(currentSalon.paid_until);
-  document.getElementById("salon-status-text").innerHTML = adminOwnerPreviewMode ? `Admin pregled vlasničkog panela • izmene su zaključane` : expired ? `Aktivan profil • <span class="danger-text">Uplata istekla</span>` : (shop ? `Aktivna prodavnica patika • v228` : `Aktivan salon • v229`);
+  document.getElementById("salon-status-text").innerHTML = adminOwnerPreviewMode ? `Admin pregled vlasničkog panela • izmene su zaključane` : expired ? `Aktivan profil • <span class="danger-text">Uplata istekla</span>` : (shop ? `Aktivna prodavnica patika • v230` : `Aktivan salon • v230`);
   document.getElementById("salon-tabs").classList.remove("hidden");
   document.getElementById("salon-logout-btn").classList.toggle("hidden", adminOwnerPreviewMode);
   document.getElementById("salon-install-btn")?.classList.toggle("hidden", adminOwnerPreviewMode);

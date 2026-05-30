@@ -671,7 +671,7 @@ function updateManifestForOwner(options = {}) {
   const cleanIcon = String(options.iconUrl || options.logoUrl || "").trim();
   const iconUrl = cleanIcon || makeInitialsIconDataUrl(businessName, "#b91c1c");
   const icon512 = String(options.icon512Url || "").trim() || iconUrl || makeInitialsIconDataUrl(businessName, "#b91c1c");
-  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v229_sw_message_native_test`;
+  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v230_final_push_clean`;
   const baseManifest = {
     id: `/pwa/owner/${encodedKey}`,
     name: appName,
@@ -771,7 +771,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v229_sw_message_native_test`,
+    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v230_final_push_clean`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -1021,7 +1021,7 @@ async function registerPushForSalon(salonId, options = {}) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v229_sw_message_native_test", { scope: "/", updateViaCache: "none" });
+    await navigator.serviceWorker.register("/sw.js?v=v230_final_push_clean", { scope: "/", updateViaCache: "none" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
@@ -1109,7 +1109,7 @@ async function registerPushForSalon(salonId, options = {}) {
         }
 
         await registration.showNotification("CityStyle obaveštenja aktivna", {
-          body: "Ovo je prava sistemska test notifikacija. Novi termini treba da stižu ovde.",
+          body: "Test radi. Kada klijent zakaže termin, notifikacija stiže ovde.",
           icon: "/assets/icons/icon-192.png",
           badge: "/assets/icons/icon-192.png",
           tag: `citystyle-owner-native-test-${Date.now()}`,
@@ -1119,7 +1119,7 @@ async function registerPushForSalon(salonId, options = {}) {
           data: { url: "/salon/?section=appointments&from_push=1", test: true }
         });
 
-        showMessage("Prava sistemska test notifikacija je poslata. Povuci obaveštenja odozgo i proveri da li je vidiš.", "success");
+        showMessage("Obaveštenja su uključena. Proveri Android obaveštenja odozgo.", "success");
       } catch (testErr) {
         console.error("Owner native test system notification failed:", testErr);
         showMessage(`Sistemska test notifikacija nije prikazana: ${testErr?.message || testErr}`, "error");
@@ -1142,74 +1142,8 @@ async function notifyOwnerAboutNewAppointment(appointmentId, extra = {}) {
   return true;
 }
 
-async function sendNativeSystemTestNotification() {
-  try {
-    if (!("serviceWorker" in navigator)) {
-      showMessage("Service Worker nije podržan u ovom browseru.", "error");
-      return false;
-    }
-    if (!("Notification" in window)) {
-      showMessage("Ovaj browser ne podržava sistemska obaveštenja.", "error");
-      return false;
-    }
-    if (Notification.permission === "denied") {
-      showMessage("Sistemska obaveštenja su BLOKIRANA za ovaj sajt/app. Otvori podešavanja i dozvoli Notifications.", "error");
-      return false;
-    }
-    const permission = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
-    if (permission !== "granted") {
-      showMessage("Nisi dozvolio sistemska obaveštenja.", "error");
-      return false;
-    }
-
-    const registration = await navigator.serviceWorker.register("/sw.js?v=v229_sw_message_native_test", { scope: "/", updateViaCache: "none" });
-    try { await registration.update(); } catch (err) { console.warn("SW update warning", err); }
-    const ready = await navigator.serviceWorker.ready;
-
-    // Najčistiji test: tražimo da SAM sw.js prikaže notifikaciju.
-    // Ako ovo ne izbaci Android notifikaciju sa naslovom "CITYSTYLE SW TEST",
-    // nije problem Supabase nego SW/native notification prikaz na uređaju.
-    const swTarget = ready.active || navigator.serviceWorker.controller;
-    if (!swTarget || typeof swTarget.postMessage !== "function") {
-      showMessage("Service Worker nije aktivan/kontrolisan. Zatvori app, otvori ponovo i klikni TEST SISTEMSKA.", "error");
-      return false;
-    }
-
-    const result = await new Promise((resolve) => {
-      let done = false;
-      const timer = setTimeout(() => {
-        if (!done) resolve({ ok: false, timeout: true, error: "SW nije vratio odgovor za 4 sekunde" });
-      }, 4000);
-
-      function onMessage(event) {
-        const data = event.data || {};
-        if (data.type !== "CITYSTYLE_FORCE_NATIVE_TEST_RESULT") return;
-        done = true;
-        clearTimeout(timer);
-        navigator.serviceWorker.removeEventListener("message", onMessage);
-        resolve(data);
-      }
-
-      navigator.serviceWorker.addEventListener("message", onMessage);
-      swTarget.postMessage({ type: "CITYSTYLE_FORCE_NATIVE_TEST", ts: Date.now() });
-    });
-
-    if (!result.ok) {
-      showMessage(`SW test sistemska NIJE uspela: ${result.error || "nema odgovora"}.`, "error");
-      return false;
-    }
-
-    showMessage("SW je poslao sistemsku notifikaciju. Povuci Android obaveštenja odozgo i traži: CITYSTYLE SW TEST.", "success");
-    return true;
-  } catch (err) {
-    console.error("sendNativeSystemTestNotification failed", err);
-    showMessage(`Sistemska test notifikacija NIJE uspela: ${err?.message || err}`, "error");
-    return false;
-  }
-}
 
 window.App = {
-  sendNativeSystemTestNotification,
   getUrlParam,
   saveLocal,
   getLocal,

@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle v229 - SW message native notification test
-const CACHE_NAME = "citystyle-v229_sw_message_native_test";
+// CityStyle v230 - final clean owner push display
+const CACHE_NAME = "citystyle-v230_final_push_clean";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -16,7 +16,7 @@ self.addEventListener("activate", (event) => {
   })());
 });
 
-// Network-first only. Do not cache app code while we are repairing PWA/push behavior.
+// Network-first only. Do not cache app code while PWA/push is actively used.
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
@@ -61,14 +61,20 @@ async function showOwnerAppointmentNotification(data = {}) {
   const appointmentId = data.appointment_id || data.appointmentId || Date.now();
   const service = safeText(data.service_name || data.service_name_snapshot || data.service, "Usluga");
   const clientName = safeText(data.client_name || data.clientName, "Klijent");
+  const phone = safeText(data.client_phone || data.clientPhone || data.phone, "");
+  const date = safeText(data.appointment_date || data.date, "");
   const time = String(data.appointment_time || data.time || "").slice(0, 5);
-  const title = safeText(data.title, "Novi termin");
-  const body = safeText(data.body, `${clientName} • ${service}${time ? " • " + time : ""}`);
+  const title = safeText(data.title, "Novi termin je stigao");
+  const body = safeText(
+    data.body,
+    `${clientName} • ${service}${date ? " • " + date : ""}${time ? " u " + time : ""}${phone ? " • " + phone : ""}`
+  );
 
-  const fullOptions = {
+  const options = {
     body,
     icon: data.icon || "/assets/icons/icon-192.png",
     badge: data.badge || "/assets/icons/icon-192.png",
+    image: data.image || undefined,
     data: {
       url: buildAppointmentUrl(data),
       badgeCount: data.badgeCount || 1,
@@ -86,58 +92,26 @@ async function showOwnerAppointmentNotification(data = {}) {
   };
 
   try {
-    await self.registration.showNotification(title, fullOptions);
-    return;
+    await self.registration.showNotification(title, options);
+    return true;
   } catch (err) {
-    // Some Android/WebView combinations can reject optional fields. Fall back to the smallest valid notification.
     try {
       await self.registration.showNotification(title, {
         body,
         icon: "/assets/icons/icon-192.png",
-        data: fullOptions.data,
+        badge: "/assets/icons/icon-192.png",
+        data: options.data,
         tag: `citystyle-owner-appointment-${appointmentId}-fallback`,
-        silent: false
+        silent: false,
+        requireInteraction: true
       });
+      return true;
     } catch (fallbackErr) {
       console.error("CityStyle showNotification failed", fallbackErr);
+      return false;
     }
   }
 }
-
-
-
-self.addEventListener("message", (event) => {
-  const data = event.data || {};
-  if (!data || data.type !== "CITYSTYLE_FORCE_NATIVE_TEST") return;
-
-  event.waitUntil((async () => {
-    let ok = false;
-    let errorMessage = "";
-    try {
-      await self.registration.showNotification("CITYSTYLE SW TEST", {
-        body: "Ovo je prava sistemska notifikacija pokrenuta direktno iz sw.js.",
-        icon: "/assets/icons/icon-192.png",
-        badge: "/assets/icons/icon-192.png",
-        tag: `citystyle-sw-message-test-${Date.now()}`,
-        requireInteraction: true,
-        renotify: true,
-        silent: false,
-        vibrate: [300, 120, 300, 120, 300],
-        data: { url: "/salon/?section=appointments&from_sw_test=1", diagnostic: true }
-      });
-      ok = true;
-    } catch (err) {
-      errorMessage = err && err.message ? err.message : String(err || "unknown error");
-      console.error("CITYSTYLE_FORCE_NATIVE_TEST failed", err);
-    }
-
-    try {
-      if (event.source && event.source.postMessage) {
-        event.source.postMessage({ type: "CITYSTYLE_FORCE_NATIVE_TEST_RESULT", ok, error: errorMessage });
-      }
-    } catch (replyErr) {}
-  })());
-});
 
 self.addEventListener("push", (event) => {
   const data = normalizePushData(event);
@@ -179,7 +153,7 @@ self.addEventListener("message", (event) => {
   if (data && data.type === "CITYSTYLE_TEST_NOTIFICATION") {
     event.waitUntil(showOwnerAppointmentNotification({
       title: "CityStyle obaveštenja aktivna",
-      body: "Test poruka radi. Novi termini će stići ovde.",
+      body: "Ovo je prava sistemska test notifikacija. Novi termini treba da stižu ovde.",
       appointment_id: `test-${Date.now()}`,
       url: "/salon/?section=appointments&from_push=1"
     }));
