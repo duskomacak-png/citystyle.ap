@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle owner appointment push service worker - v215 background push fix
-const CACHE_NAME = "citystyle-v214_clean_notification_fix";
+// CityStyle true background push service worker - v217 trigger push fix
+const CACHE_NAME = "citystyle-v217_true_background_push";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -64,7 +64,7 @@ async function showOwnerAppointmentNotification(data = {}, suffix = "") {
 
 self.addEventListener("push", (event) => {
   let data = {};
-  try { data = event.data ? event.data.json() : {}; } catch (err) { data = {}; }
+  try { data = event.data ? event.data.json() : {}; } catch (err) { data = { body: event.data ? event.data.text() : "" }; }
 
   event.waitUntil((async () => {
     await setOwnerBadge(data.badgeCount || 1);

@@ -1021,7 +1021,7 @@ async function registerPushForSalon(salonId, options = {}) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v216_notification_button_state", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v217_true_background_push", { scope: "/" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
@@ -1112,29 +1112,11 @@ async function registerPushForSalon(salonId, options = {}) {
 }
 
 async function notifyOwnerAboutNewAppointment(appointmentId, extra = {}) {
-  if (!appointmentId || !window.db?.functions?.invoke) return false;
-
-  const payload = {
-    appointment_id: appointmentId,
-    appointmentId,
-    urgent: true,
-    open_url: `/salon/?section=appointments&from_push=1&appointment_id=${encodeURIComponent(appointmentId)}`,
-    ...extra
-  };
-
-  // Aggressive but safe: try a few times because phone push is the critical part.
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
-    try {
-      const { error } = await window.db.functions.invoke("send-appointment-push", { body: payload });
-      if (!error) return true;
-      console.warn("Push attempt error:", error);
-    } catch (err) {
-      console.warn(`Push pokušaj ${attempt} nije uspeo:`, err);
-    }
-    await new Promise(resolve => setTimeout(resolve, attempt * 900));
-  }
-
-  return false;
+  // v217: true background push is handled by Supabase DB trigger after INSERT into appointments.
+  // We intentionally do NOT call Edge Function from frontend anymore, because that can duplicate
+  // notifications and does not prove background delivery.
+  console.log("CityStyle v217: appointment push is handled by Supabase trigger", { appointmentId, extra });
+  return true;
 }
 
 window.App = {
