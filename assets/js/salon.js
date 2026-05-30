@@ -8,6 +8,9 @@ let adminOwnerPreviewMode = false;
 let ownerAppointmentChannel = null;
 let ownerAppointmentPollTimer = null;
 let ownerNotificationUnlocked = false;
+let ownerNotificationSoundEnabled = false;
+let ownerAudioCtx = null;
+let ownerAudioMaster = null;
 let ownerNotificationLastId = "";
 let ownerNotificationStartedAt = new Date().toISOString();
 
