@@ -1101,23 +1101,7 @@ async function registerPushForSalon(salonId, options = {}) {
       return false;
     }
 
-    showMessage("Obaveštenja su uključena za ovaj profil.", "success");
-
-    // Local visible proof that browser notification permission and SW work.
-    try {
-      await registration.showNotification("✅ CityStyle obaveštenja uključena", {
-        body: "Test notifikacija radi. Novi termini će otvarati sekciju Termini.",
-        icon: "/assets/icons/icon-192.png",
-        badge: "/assets/icons/icon-192.png",
-        tag: "citystyle-push-test",
-        requireInteraction: true,
-        silent: false,
-        vibrate: [180, 80, 180],
-        data: { url: "/salon/?section=appointments&from_push=1" }
-      });
-    } catch (err) {
-      console.warn("Test notification failed:", err);
-    }
+    showMessage("Obaveštenja su uključena za ovaj profil. Testiraj ih zakazivanjem novog termina.", "success");
 
     return true;
   } catch (err) {

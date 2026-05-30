@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle owner appointment push service worker - v213 tank push fix
-const CACHE_NAME = "citystyle-v213_tank_push_fix";
+// CityStyle owner appointment push service worker - v214 clean notification fix
+const CACHE_NAME = "citystyle-v214_clean_notification_fix";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -36,7 +36,7 @@ async function showOwnerAppointmentNotification(data = {}, suffix = "") {
   const service = data.service_name || data.service_name_snapshot || data.service || "Usluga";
   const clientName = data.client_name || data.clientName || "Klijent";
   const time = String(data.appointment_time || data.time || "").slice(0, 5);
-  const title = data.title || "🔔 NOVI TERMIN";
+  const title = data.title || "Novi termin";
   const body = data.body || `${clientName} • ${service}${time ? " • " + time : ""}`;
 
   const options = {
@@ -49,14 +49,13 @@ async function showOwnerAppointmentNotification(data = {}, suffix = "") {
       appointment_id: appointmentId
     },
     tag: suffix ? `citystyle-owner-appointment-${appointmentId}-${suffix}` : `citystyle-owner-appointment-${appointmentId}`,
-    renotify: true,
-    requireInteraction: true,
+    renotify: false,
+    requireInteraction: false,
     silent: false,
-    vibrate: [300, 100, 300, 100, 500, 120, 300],
+    vibrate: [220, 80, 220],
     timestamp: Date.now(),
     actions: [
-      { action: "open-appointments", title: "Otvori termine" },
-      { action: "close", title: "Kasnije" }
+      { action: "open-appointments", title: "Otvori termine" }
     ]
   };
 

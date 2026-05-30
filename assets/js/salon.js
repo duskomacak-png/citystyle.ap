@@ -244,37 +244,10 @@ function renderOwnerAppointmentAlert(appointment = {}) {
 }
 
 async function showOwnerAppointmentBrowserNotification(appointment = {}) {
-  try {
-    if (!("Notification" in window) || Notification.permission !== "granted") return;
-    const title = "🔔 Novi termin - CityStyle";
-    const body = `${appointment.client_name || "Klijent"} • ${appointment.service_name_snapshot || "Usluga"} • ${String(appointment.appointment_time || "").slice(0,5)}`;
-    const options = {
-      body,
-      icon: "/assets/icons/icon-192.png",
-      badge: "/assets/icons/icon-192.png",
-      data: { url: `/salon/?section=appointments&from_push=1&appointment_id=${encodeURIComponent(appointment.id || "")}` },
-      tag: `citystyle-owner-${appointment.id || Date.now()}`,
-      renotify: true,
-      requireInteraction: true,
-      silent: false,
-      vibrate: [220, 90, 220, 90, 360],
-      timestamp: Date.now(),
-      actions: [
-        { action: "open-appointments", title: "Otvori termine" },
-        { action: "close", title: "Kasnije" }
-      ]
-    };
-    const reg = await navigator.serviceWorker?.ready?.catch?.(() => null);
-    if (reg?.showNotification) {
-      await reg.showNotification(title, options);
-    } else {
-      new Notification(title, options);
-    }
-  } catch (err) {
-    console.warn("Local browser notification failed:", err);
-  }
+  // v214: disabled local duplicate system notification.
+  // Real Android notification comes from the Edge Function push.
+  return;
 }
-
 async function handleOwnerNewAppointment(appointment = {}) {
   if (!appointment?.id || String(appointment.id) === String(ownerNotificationLastId)) return;
   ownerNotificationLastId = String(appointment.id);
@@ -285,8 +258,9 @@ async function handleOwnerNewAppointment(appointment = {}) {
   await playOwnerAppointmentSound();
   setTimeout(() => playOwnerAppointmentSound(), 1400);
   renderOwnerAppointmentAlert(appointment);
-  showOwnerAppointmentBrowserNotification(appointment);
-  window.App?.showMessage?.("🔔 Stigao je novi termin. Kliknite na obaveštenje ili dugme Termini.", "success");
+  // Browser/system push notification is sent by Supabase Edge Function.
+  // Here we keep only in-panel visual alert + sound, to avoid duplicate Chrome warnings.
+  window.App?.showMessage?.("Stigao je novi termin. Otvorite sekciju Termini.", "success");
   window.App?.setAppBadgeCount?.(count || 1);
 
   if (currentSection === "appointments") await renderAppointments();
