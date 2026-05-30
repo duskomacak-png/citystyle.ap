@@ -6,9 +6,9 @@
   <title>Instalacija profila - CityStyle</title>
   <meta name="theme-color" content="#0b0b0f">
   <link rel="apple-touch-icon" href="../assets/icons/icon-192.png">
-  <link rel="stylesheet" href="../assets/css/style.css?v=v221_keep_push_active">
+  <link rel="stylesheet" href="../assets/css/style.css?v=v226_sw_display_repair">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../assets/js/config.js?v=v221_keep_push_active"></script>
+  <script src="../assets/js/config.js?v=v226_sw_display_repair"></script>
   <style>
     body{min-height:100vh;margin:0;background:#0b0b0f;color:#fff;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:flex;align-items:center;justify-content:center;padding:18px;}
     .pwa-gateway{width:min(520px,100%);background:rgba(20,20,26,.94);border:1px solid rgba(255,255,255,.12);box-shadow:0 24px 80px rgba(0,0,0,.45);border-radius:28px;padding:24px;text-align:center;}
@@ -48,7 +48,7 @@
 
   <script>
   (function profileInstallGateway(){
-    const VERSION = "v215_background_push_fix";
+    const VERSION = "v226_sw_display_repair";
     const FALLBACK_192 = "/assets/icons/icon-192-maskable.png";
     const FALLBACK_512 = "/assets/icons/icon-512-maskable.png";
     const params = new URLSearchParams(location.search || "");
@@ -242,7 +242,7 @@ function setIconPreview(src, name){
     async function ensureServiceWorker() {
       if (!("serviceWorker" in navigator)) return;
       try {
-        const reg = await navigator.serviceWorker.register("/sw.js?v=" + VERSION, { scope: "/" });
+        const reg = await navigator.serviceWorker.register("/sw.js?v=" + VERSION, { scope: "/", updateViaCache: "none" });
         await navigator.serviceWorker.ready;
         return reg;
       } catch (err) { console.warn("SW nije spreman:", err); }

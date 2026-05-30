@@ -671,7 +671,7 @@ function updateManifestForOwner(options = {}) {
   const cleanIcon = String(options.iconUrl || options.logoUrl || "").trim();
   const iconUrl = cleanIcon || makeInitialsIconDataUrl(businessName, "#b91c1c");
   const icon512 = String(options.icon512Url || "").trim() || iconUrl || makeInitialsIconDataUrl(businessName, "#b91c1c");
-  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v225_clean_owner_push`;
+  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v226_sw_display_repair`;
   const baseManifest = {
     id: `/pwa/owner/${encodedKey}`,
     name: appName,
@@ -771,7 +771,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v225_clean_owner_push`,
+    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v226_sw_display_repair`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -1021,7 +1021,7 @@ async function registerPushForSalon(salonId, options = {}) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v225_clean_owner_push", { scope: "/" });
+    await navigator.serviceWorker.register("/sw.js?v=v226_sw_display_repair", { scope: "/", updateViaCache: "none" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {
@@ -1099,8 +1099,30 @@ async function registerPushForSalon(salonId, options = {}) {
       return false;
     }
 
-    // No automatic test notification after enabling; real appointments verify delivery.
-    showMessage("Obaveštenja su uključena za ovaj profil. Koriste se samo za nove termine i zahteve kupaca.", "success");
+    // After explicit owner click, show one local system test notification.
+    // This proves that Android/Chrome permission + active Service Worker can display notifications.
+    if (options.showTestNotification) {
+      try {
+        if (navigator.serviceWorker?.controller) {
+          navigator.serviceWorker.controller.postMessage({ type: "CITYSTYLE_TEST_NOTIFICATION" });
+        } else if (registration?.showNotification) {
+          await registration.showNotification("CityStyle obaveštenja aktivna", {
+            body: "Test poruka radi. Novi termini će stići ovde.",
+            icon: "/assets/icons/icon-192.png",
+            badge: "/assets/icons/icon-192.png",
+            tag: `citystyle-owner-test-${Date.now()}`,
+            requireInteraction: true,
+            silent: false,
+            vibrate: [220, 80, 220],
+            data: { url: "/salon/?section=appointments&from_push=1" }
+          });
+        }
+      } catch (testErr) {
+        console.warn("Owner test system notification failed:", testErr);
+      }
+    }
+
+    showMessage("Obaveštenja su uključena za ovaj profil. Test poruka treba da se pojavi na telefonu.", "success");
 
     return true;
   } catch (err) {

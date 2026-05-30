@@ -782,7 +782,7 @@ async function enableOwnerNotifications() {
       return;
     }
 
-    const pushReady = await window.App.registerPushForSalon(currentSalonId, { forceNew: false });
+    const pushReady = await window.App.registerPushForSalon(currentSalonId, { forceNew: true, allowReset: true, showTestNotification: true });
 
     const hasBrowserPush = await ownerHasBrowserPushSubscription();
 
@@ -831,7 +831,7 @@ async function ensureOwnerPushIsActive(reason = "panel-open") {
 
     if ("serviceWorker" in navigator) {
       try {
-        await navigator.serviceWorker.register("/sw.js?v=v225_clean_owner_push", { scope: "/" });
+        await navigator.serviceWorker.register("/sw.js?v=v226_sw_display_repair", { scope: "/", updateViaCache: "none" });
         const registration = await navigator.serviceWorker.ready;
         if (registration?.update) {
           registration.update().catch(() => {});
