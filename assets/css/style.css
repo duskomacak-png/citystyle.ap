@@ -9621,3 +9621,139 @@ body.owner-sound-ready #salon-notifications-btn{
 
 
 
+
+/* v1.3.5 SAFE: cleaner CityStyle product story viewer
+   - Only public product viewer visual/text polish.
+   - Does not touch Supabase, login, owner panel, booking, push, PWA install, calls or messages. */
+@media(max-width:899px){
+  .shoe-viewer::before{
+    background:linear-gradient(180deg,rgba(0,0,0,.58) 0%,rgba(0,0,0,.14) 24%,rgba(0,0,0,.06) 58%,rgba(0,0,0,.66) 100%) !important;
+  }
+  .shoe-viewer-top{
+    top:46px !important;
+    left:108px !important;
+    right:22px !important;
+    text-align:right !important;
+    justify-items:end !important;
+    gap:4px !important;
+    max-height:142px !important;
+  }
+  .shoe-viewer-top h2{
+    margin:0 !important;
+    max-width:100% !important;
+    font-size:clamp(28px,8.7vw,42px) !important;
+    line-height:1.02 !important;
+    font-weight:850 !important;
+    letter-spacing:-.035em !important;
+    text-wrap:balance;
+    color:#fff !important;
+    text-shadow:0 2px 16px rgba(0,0,0,.72) !important;
+  }
+  .shoe-viewer-top h2 span{
+    display:block !important;
+    background:transparent !important;
+    border:0 !important;
+    box-shadow:none !important;
+    padding:0 !important;
+  }
+  .shoe-viewer-subtitle,
+  .shoe-viewer-subcopy{
+    margin:0 !important;
+    max-width:100% !important;
+    font-size:clamp(14px,4.2vw,18px) !important;
+    line-height:1.16 !important;
+    font-weight:800 !important;
+    letter-spacing:-.01em !important;
+    color:rgba(255,255,255,.90) !important;
+    text-shadow:0 2px 14px rgba(0,0,0,.72) !important;
+  }
+  .shoe-viewer-subtitle{font-size:clamp(15px,4.7vw,20px) !important;text-transform:uppercase !important;}
+  .shoe-viewer-availability{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    margin-top:7px !important;
+    padding:6px 14px !important;
+    min-height:30px !important;
+    border-radius:999px !important;
+    background:rgba(0,0,0,.26) !important;
+    border:1px solid rgba(255,255,255,.18) !important;
+    color:rgba(255,255,255,.92) !important;
+    font-size:14px !important;
+    font-weight:850 !important;
+    line-height:1 !important;
+    backdrop-filter:blur(7px) !important;
+    -webkit-backdrop-filter:blur(7px) !important;
+    text-shadow:0 2px 10px rgba(0,0,0,.45) !important;
+  }
+  .shoe-viewer-close{
+    left:32px !important;
+    top:92px !important;
+    width:52px !important;
+    height:52px !important;
+    font-size:38px !important;
+    background:rgba(0,0,0,.22) !important;
+    border-color:rgba(255,255,255,.18) !important;
+  }
+  .shoe-viewer-actions{
+    left:32px !important;
+    top:248px !important;
+    width:64px !important;
+    gap:16px !important;
+  }
+  .shoe-action,.shoe-action.red,.shoe-action.blue,.shoe-action.green,.shoe-action.zoom{
+    width:54px !important;
+    min-height:70px !important;
+    gap:5px !important;
+  }
+  .shoe-action svg{
+    width:52px !important;
+    height:52px !important;
+    padding:14px !important;
+    background:rgba(0,0,0,.22) !important;
+    border-color:rgba(255,255,255,.18) !important;
+  }
+  .shoe-action span{
+    font-size:12px !important;
+    font-weight:750 !important;
+    letter-spacing:-.01em !important;
+  }
+  .shoe-viewer-powered{
+    left:32px !important;
+    bottom:28px !important;
+    color:rgba(255,255,255,.46) !important;
+    font-size:10px !important;
+    letter-spacing:.055em !important;
+    font-weight:800 !important;
+  }
+  .shoe-viewer::after{
+    content:attr(data-price) !important;
+    left:32px !important;
+    right:24px !important;
+    bottom:58px !important;
+    max-width:calc(100vw - 56px) !important;
+    font-size:clamp(24px,7.6vw,34px) !important;
+    line-height:1.05 !important;
+    font-weight:850 !important;
+    letter-spacing:-.025em !important;
+    text-shadow:0 2px 18px rgba(0,0,0,.82) !important;
+  }
+}
+@media(max-width:380px){
+  .shoe-viewer-top{left:98px !important;right:18px !important;}
+  .shoe-viewer-top h2{font-size:clamp(25px,8vw,34px) !important;}
+  .shoe-viewer-close{left:24px !important;width:50px !important;height:50px !important;}
+  .shoe-viewer-actions{left:24px !important;top:242px !important;gap:13px !important;}
+  .shoe-action svg{width:50px !important;height:50px !important;}
+  .shoe-viewer::after{left:24px !important;font-size:clamp(22px,7vw,30px) !important;}
+  .shoe-viewer-powered{left:24px !important;}
+}
+@media(min-width:900px){
+  .shoe-viewer-top h2 span{background:transparent !important;border:0 !important;box-shadow:none !important;padding:0 !important;}
+  .shoe-viewer-top h2{font-size:30px !important;line-height:1.04 !important;font-weight:850 !important;letter-spacing:-.03em !important;}
+  .shoe-viewer-subtitle{font-size:16px !important;font-weight:850 !important;text-transform:uppercase !important;}
+  .shoe-viewer-subcopy{font-size:15px !important;font-weight:750 !important;color:rgba(255,255,255,.90) !important;}
+  .shoe-viewer-availability{display:inline-flex !important;margin-top:6px !important;padding:6px 13px !important;border-radius:999px !important;background:rgba(0,0,0,.28) !important;border:1px solid rgba(255,255,255,.18) !important;font-size:13px !important;font-weight:850 !important;}
+  .shoe-viewer::after{content:attr(data-price) !important;font-size:28px !important;font-weight:850 !important;letter-spacing:-.02em !important;}
+  .shoe-viewer-powered{font-size:10px !important;color:rgba(255,255,255,.46) !important;}
+}
