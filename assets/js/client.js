@@ -1736,33 +1736,71 @@ function csGetCurrentShoeImageSrc(){
   const imgs = csProductImages(p);
   return imgs?.[csViewerState?.image || 0] || imgs?.[0] || document.querySelector("#shoeViewer .shoe-viewer-main-img")?.src || "";
 }
-function csOpenRealShoeZoom(startScale = 1.15){
-  const src = csGetCurrentShoeImageSrc();
-  if (!src) return;
+function csOpenRealShoeZoom(startScale = 1){
+  const product = currentShoeProduct();
+  const imgs = (csProductImages(product) || []).filter(Boolean);
+  if (!imgs.length) return;
+  let imageIndex = Math.max(0, Math.min(Number(csViewerState?.image || 0), imgs.length - 1));
   document.getElementById("csZoomLightbox")?.remove();
   document.documentElement.classList.add("cs-real-zoom-active");
   const box = document.createElement("div");
   box.id = "csZoomLightbox";
-  box.className = "cs-zoom-lightbox";
-  box.innerHTML = `<img class="cs-zoom-lightbox-img" src="${escapeHtml(src)}" alt="Zumirana slika proizvoda"><button class="cs-zoom-lightbox-close" type="button" aria-label="Zatvori zum">×</button><div class="cs-zoom-help">Raširi prste za zum • pomeri sliku • X zatvara</div>`;
+  box.className = "cs-zoom-lightbox cs-zoom-product-gallery";
+  box.innerHTML = `
+    <img class="cs-zoom-lightbox-img" src="${escapeHtml(imgs[imageIndex])}" alt="Zumirana slika proizvoda">
+    <button class="cs-zoom-lightbox-close" type="button" aria-label="Zatvori zum">×</button>
+    ${imgs.length > 1 ? `<button class="cs-zoom-nav cs-zoom-nav-prev" type="button" aria-label="Prethodna slika">‹</button><button class="cs-zoom-nav cs-zoom-nav-next" type="button" aria-label="Sledeća slika">›</button>` : ``}
+    ${imgs.length > 1 ? `<div class="cs-zoom-counter"></div><div class="cs-zoom-dots"></div>` : ``}
+    <div class="cs-zoom-help">Listaj slike levo/desno • raširi prste za zum • X zatvara</div>`;
   document.body.appendChild(box);
   const img = box.querySelector(".cs-zoom-lightbox-img");
   const close = box.querySelector(".cs-zoom-lightbox-close");
-  const state = { scale: Math.max(1, Math.min(Number(startScale || 1.15), 5)), panX: 0, panY: 0, startX: 0, startY: 0, startPanX: 0, startPanY: 0, pinchDistance: 0, pinchScale: 1, dragging: false };
+  const prev = box.querySelector(".cs-zoom-nav-prev");
+  const next = box.querySelector(".cs-zoom-nav-next");
+  const counter = box.querySelector(".cs-zoom-counter");
+  const dots = box.querySelector(".cs-zoom-dots");
+  const state = { scale: Math.max(1, Math.min(Number(startScale || 1), 5)), panX: 0, panY: 0, startX: 0, startY: 0, startPanX: 0, startPanY: 0, pinchDistance: 0, pinchScale: 1, dragging: false, moved: false };
   function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+  function resetZoom(){ state.scale = 1; state.panX = 0; state.panY = 0; state.dragging = false; state.moved = false; apply(); }
   function apply(){
     const maxX = Math.max(0, window.innerWidth * (state.scale - 1) * .55);
     const maxY = Math.max(0, window.innerHeight * (state.scale - 1) * .55);
     state.panX = clamp(state.panX, -maxX, maxX);
     state.panY = clamp(state.panY, -maxY, maxY);
     img.style.transform = `translate3d(${state.panX}px, ${state.panY}px, 0) scale(${state.scale})`;
+    box.classList.toggle("cs-zoom-is-scaled", state.scale > 1.01);
+  }
+  function syncChrome(){
+    if (csViewerState) csViewerState.image = imageIndex;
+    img.src = imgs[imageIndex];
+    img.alt = `${product?.name || "Proizvod"} - slika ${imageIndex + 1}`;
+    if (counter) counter.textContent = `${imageIndex + 1} / ${imgs.length}`;
+    if (dots) dots.innerHTML = imgs.map((_, i) => `<button type="button" class="${i === imageIndex ? 'active' : ''}" aria-label="Slika ${i + 1}"></button>`).join("");
+  }
+  function changeZoomImage(delta){
+    if (imgs.length < 2) return;
+    imageIndex = (imageIndex + delta + imgs.length) % imgs.length;
+    syncChrome();
+    resetZoom();
   }
   function closeZoom(){
     box.remove();
     document.documentElement.classList.remove("cs-real-zoom-active");
     csSetShoeZoomMode(false, 1);
+    if (document.getElementById("shoeViewer") && csViewerState) renderShoeViewer();
+    window.removeEventListener("mousemove", onMouseMove);
+    window.removeEventListener("mouseup", onMouseUp);
+    window.removeEventListener("keydown", onKeyDown, true);
   }
   close.addEventListener("click", e => { e.stopPropagation(); closeZoom(); });
+  prev?.addEventListener("click", e => { e.stopPropagation(); changeZoomImage(-1); });
+  next?.addEventListener("click", e => { e.stopPropagation(); changeZoomImage(1); });
+  dots?.addEventListener("click", e => {
+    const btn = e.target?.closest?.("button");
+    if (!btn) return;
+    const index = Array.from(dots.querySelectorAll("button")).indexOf(btn);
+    if (index >= 0) { e.stopPropagation(); imageIndex = index; syncChrome(); resetZoom(); }
+  });
   box.addEventListener("click", e => { if(e.target === box) closeZoom(); });
   box.addEventListener("wheel", e => {
     e.preventDefault();
@@ -1772,10 +1810,27 @@ function csOpenRealShoeZoom(startScale = 1.15){
     else if (old <= 1.01) { state.panX = 0; state.panY = 0; }
     apply();
   }, { passive:false });
-  box.addEventListener("mousedown", e => { state.dragging = true; state.startX = e.clientX; state.startY = e.clientY; state.startPanX = state.panX; state.startPanY = state.panY; e.preventDefault(); });
-  window.addEventListener("mousemove", e => { if(!state.dragging || !document.getElementById("csZoomLightbox")) return; state.panX = state.startPanX + e.clientX - state.startX; state.panY = state.startPanY + e.clientY - state.startY; apply(); });
-  window.addEventListener("mouseup", () => { state.dragging = false; });
+  box.addEventListener("mousedown", e => { state.dragging = true; state.moved = false; state.startX = e.clientX; state.startY = e.clientY; state.startPanX = state.panX; state.startPanY = state.panY; e.preventDefault(); });
+  function onMouseMove(e){
+    if(!state.dragging || !document.getElementById("csZoomLightbox")) return;
+    const dx = e.clientX - state.startX;
+    const dy = e.clientY - state.startY;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) state.moved = true;
+    if (state.scale <= 1.01) return;
+    state.panX = state.startPanX + dx;
+    state.panY = state.startPanY + dy;
+    apply();
+  }
+  function onMouseUp(e){
+    if(!state.dragging) return;
+    const dx = e.clientX - state.startX;
+    state.dragging = false;
+    if (state.scale <= 1.01 && Math.abs(dx) > 70) changeZoomImage(dx < 0 ? 1 : -1);
+  }
+  window.addEventListener("mousemove", onMouseMove);
+  window.addEventListener("mouseup", onMouseUp);
   box.addEventListener("touchstart", e => {
+    state.moved = false;
     if(e.touches.length >= 2){ state.pinchDistance = csTouchDistance(e.touches); state.pinchScale = state.scale; e.preventDefault(); return; }
     const t=e.touches[0]; state.startX=t.clientX; state.startY=t.clientY; state.startPanX=state.panX; state.startPanY=state.panY;
   }, { passive:false });
@@ -1785,15 +1840,37 @@ function csOpenRealShoeZoom(startScale = 1.15){
       if(d && state.pinchDistance){ state.scale = clamp(state.pinchScale * (d / state.pinchDistance), 1, 5); if(state.scale <= 1.01){ state.panX=0; state.panY=0; } apply(); }
       e.preventDefault(); return;
     }
+    const t=e.touches[0];
+    const dx=t.clientX-state.startX;
+    const dy=t.clientY-state.startY;
+    if(Math.abs(dx)>8 || Math.abs(dy)>8) state.moved = true;
     if(state.scale <= 1.01) return;
-    const t=e.touches[0]; state.panX=state.startPanX+t.clientX-state.startX; state.panY=state.startPanY+t.clientY-state.startY; apply(); e.preventDefault();
+    state.panX=state.startPanX+dx; state.panY=state.startPanY+dy; apply(); e.preventDefault();
+  }, { passive:false });
+  box.addEventListener("touchend", e => {
+    const t = e.changedTouches?.[0];
+    if (!t) return;
+    const dx = t.clientX - state.startX;
+    const dy = t.clientY - state.startY;
+    if (state.scale <= 1.01 && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 46) {
+      e.preventDefault();
+      changeZoomImage(dx < 0 ? 1 : -1);
+    }
   }, { passive:false });
   box.addEventListener("dblclick", e => { e.preventDefault(); state.scale = state.scale > 1.2 ? 1 : 2.8; state.panX=0; state.panY=0; apply(); });
-  apply();
+  function onKeyDown(e){
+    if (!document.getElementById("csZoomLightbox")) return;
+    if (e.key === "Escape") { e.preventDefault(); closeZoom(); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); changeZoomImage(-1); }
+    if (e.key === "ArrowRight") { e.preventDefault(); changeZoomImage(1); }
+  }
+  window.addEventListener("keydown", onKeyDown, true);
+  syncChrome();
+  resetZoom();
 }
 function csToggleShoeZoom(){
   if (!csViewerState) return;
-  csOpenRealShoeZoom(1.15);
+  csOpenRealShoeZoom(1);
 }
 function csCloseShoeZoom(){
   document.getElementById("csZoomLightbox")?.remove();
@@ -1843,7 +1920,7 @@ function renderShoeViewer() {
   viewer.ontouchstart = e => {
     if (!csViewerState) return;
     if (e.touches && e.touches.length >= 2) {
-      csOpenRealShoeZoom(1.15);
+      csOpenRealShoeZoom(1);
       e.preventDefault?.();
       return;
     }

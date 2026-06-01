@@ -1,6 +1,6 @@
 // sw.js
 // CityStyle v230 - final clean owner push display
-const CACHE_NAME = "citystyle-v234_no_laptop_white_bands";
+const CACHE_NAME = "citystyle-v235_product_zoom_gallery";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
