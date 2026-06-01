@@ -1815,6 +1815,10 @@ function renderShoeViewer() {
   }
   viewer.classList.toggle("shoe-viewer-zoomed", !!csViewerState.zoomed);
   viewer.setAttribute("data-price", csProductPrice(product));
+
+  /* v1.3.7 STORE MOBILE TITLE FIX:
+     If owner entered a generic name like "Patike", use category/model as the visible title.
+     This keeps the opened store product view readable without touching booking/login/PWA. */
   const rawProductName = String(product.name || "").trim();
   const rawCategory = csProductViewerMetaPrimary(product);
   const rawDescription = csProductViewerMetaSecondary(product);
