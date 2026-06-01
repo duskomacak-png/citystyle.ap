@@ -1815,24 +1815,14 @@ function renderShoeViewer() {
   }
   viewer.classList.toggle("shoe-viewer-zoomed", !!csViewerState.zoomed);
   viewer.setAttribute("data-price", csProductPrice(product));
-
-  /* v1.3.7 STORE MOBILE TITLE FIX:
-     If owner entered a generic name like "Patike", use category/model as the visible title.
-     This keeps the opened store product view readable without touching booking/login/PWA. */
-  const rawProductName = String(product.name || "").trim();
-  const rawCategory = csProductViewerMetaPrimary(product);
-  const rawDescription = csProductViewerMetaSecondary(product);
-  const genericNames = ["patike", "proizvod", "artikal", "model", "oglas"];
-  const isGenericProductName = genericNames.includes(rawProductName.toLowerCase());
-  const viewerTitle = (isGenericProductName && rawCategory) ? rawCategory : (rawProductName || rawCategory || "Patike");
-  const viewerMetaPrimary = (isGenericProductName && rawCategory) ? "" : rawCategory;
-  const viewerMetaSecondary = rawDescription;
+  const viewerMetaPrimary = csProductViewerMetaPrimary(product);
+  const viewerMetaSecondary = csProductViewerMetaSecondary(product);
   const viewerAvailability = csProductViewerAvailability(product);
   viewer.innerHTML = `
-    <div class="shoe-viewer-media">${img ? `<div class="shoe-viewer-media-bg" aria-hidden="true"><img src="${escapeHtml(img)}" alt=""></div><img class="shoe-viewer-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(viewerTitle || 'Patike')}" onload="csSmartCropShoeImage(this)">` : `<span>Bez slike</span>`}</div>
+    <div class="shoe-viewer-media">${img ? `<div class="shoe-viewer-media-bg" aria-hidden="true"><img src="${escapeHtml(img)}" alt=""></div><img class="shoe-viewer-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}" onload="csSmartCropShoeImage(this)">` : `<span>Bez slike</span>`}</div>
     <div class="shoe-viewer-top">
       <div class="shoe-viewer-right">
-        <h2><span>${escapeHtml(viewerTitle)}</span></h2>
+        <h2><span>${escapeHtml(product.name || "Patike")}</span></h2>
         ${viewerMetaPrimary ? `<p class="shoe-viewer-subtitle">${escapeHtml(viewerMetaPrimary)}</p>` : ``}
         ${viewerMetaSecondary ? `<p class="shoe-viewer-subcopy">${escapeHtml(viewerMetaSecondary)}</p>` : ``}
         ${viewerAvailability ? `<p class="shoe-viewer-availability">${escapeHtml(viewerAvailability)}</p>` : ``}
