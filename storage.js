@@ -1,108 +1,20 @@
-// assets/js/auth.js
+// assets/js/config.js
 
-async function getCurrentAdminUser() {
-  const { data, error } = await window.db.auth.getUser();
-  if (error || !data?.user) return null;
-  return data.user;
-}
+const SUPABASE_URL = "https://uxoovyytydnuibiwnpgx.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_FFMUyqNXSuVP0mMsUa5PbQ_ur3iwb0L";
 
-async function isPlatformAdmin() {
-  const user = await getCurrentAdminUser();
-  return !!user && user.email === window.APP_CONFIG.platformAdminEmail;
-}
-
-async function adminLogin(email, password) {
-  const cleanEmail = String(email || "").trim().toLowerCase();
-
-  if (!cleanEmail || !password) {
-    window.App.showMessage("Unesite email i lozinku.", "error");
-    return null;
-  }
-
-  if (cleanEmail !== window.APP_CONFIG.platformAdminEmail) {
-    window.App.showMessage("Samo glavni administrator može da pristupi.", "error");
-    return null;
-  }
-
-  const { data, error } = await window.db.auth.signInWithPassword({
-    email: cleanEmail,
-    password
-  });
-
-  if (error) {
-    window.App.showMessage("Pogrešan email ili lozinka.", "error");
-    return null;
-  }
-
-  if (data?.user?.email !== window.APP_CONFIG.platformAdminEmail) {
-    await window.db.auth.signOut();
-    window.App.showMessage("Ovaj nalog nema administratorski pristup.", "error");
-    return null;
-  }
-
-  return data.user;
-}
-
-async function adminLogout() {
-  await window.db.auth.signOut();
-  window.App.showMessage("Administrator je odjavljen.", "info");
-}
-
-async function salonLogin(email, code) {
-  const cleanEmail = String(email || "").trim().toLowerCase();
-  const cleanCode = String(code || "").trim();
-
-  if (!cleanEmail || !cleanCode) {
-    window.App.showMessage("Unesite email biznisa i kod firme.", "error");
-    return null;
-  }
-
-  const { data, error } = await window.db
-    .from("salons")
-    .select("*")
-    .eq("owner_email", cleanEmail)
-    .eq("company_code", cleanCode)
-    .eq("is_deleted", false)
-    .maybeSingle();
-
-  if (error || !data) {
-    window.App.showMessage("Pogrešan email ili kod firme.", "error");
-    return null;
-  }
-
-  if (data.status !== "active") {
-    window.App.showMessage("Vaš profil je trenutno blokiran. Kontaktirajte administratora.", "error");
-    return null;
-  }
-
-  const session = {
-    salon_id: data.id,
-    salon_name: data.salon_name,
-    slug: data.slug,
-    owner_email: data.owner_email,
-    status: data.status,
-    loggedAt: new Date().toISOString()
-  };
-
-  window.App.saveLocal(window.APP_CONFIG.salonSessionKey, session);
-  return data;
-}
-
-function getSalonSession() {
-  return window.App.getLocal(window.APP_CONFIG.salonSessionKey);
-}
-
-function salonLogout() {
-  window.App.removeLocal(window.APP_CONFIG.salonSessionKey);
-  window.App.showMessage("Korisnik je odjavljen.", "info");
-}
-
-window.Auth = {
-  getCurrentAdminUser,
-  isPlatformAdmin,
-  adminLogin,
-  adminLogout,
-  salonLogin,
-  getSalonSession,
-  salonLogout
+window.APP_CONFIG = {
+  appName: "CityStyle",
+  platformAdminEmail: "duskomacak@gmail.com",
+  salonStorageKey: "citystyle_saved_salon",
+  salonSessionKey: "citystyle_salon_session",
+  pushVapidPublicKey: "BNFB3Zs8op_mn7nUQgxcOQWCNco_jb7M7gdvTE__orfWVg8p5dGg6KWvJ4fM2Psg1eauWH0ybr5QnOLgjeMeQHs"
 };
+
+// Supabase CDN must be loaded before this file. Do not break the landing page if CDN is slow/blocked.
+if (window.supabase && typeof window.supabase.createClient === "function") {
+  window.db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} else {
+  console.error("Supabase CDN nije učitan. Proveri internet/CDN ili adblock.");
+  window.db = null;
+}

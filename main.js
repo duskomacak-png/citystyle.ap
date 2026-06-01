@@ -1,110 +1,157 @@
-// assets/js/booking-logic.js
+// assets/js/auth.js
+// CityStyle.app auth helpers — v1.3.5 login-safe
 
-async function getAvailableSlots(salonId, serviceDuration, selectedDate) {
-  if (!salonId || !serviceDuration || !selectedDate) return [];
+function getSafeDb() {
+  if (window.db) return window.db;
+  console.error("Supabase client nije dostupan: window.db je null.");
+  if (window.App?.showMessage) {
+    window.App.showMessage("Veza sa bazom nije učitana. Proverite internet, osvežite stranicu ili očistite cache za citystyle.app.", "error");
+  }
+  return null;
+}
 
-  const dayOfWeek = new Date(selectedDate + "T00:00:00").getDay();
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
 
-  const { data: hours, error: hoursError } = await window.db
-    .from("working_hours")
-    .select("*")
-    .eq("salon_id", salonId)
-    .eq("day_of_week", dayOfWeek)
-    .maybeSingle();
+function normalizeCompanyCode(value) {
+  return String(value || "")
+    .trim()
+    .replace(/\s+/g, "")
+    .toUpperCase();
+}
 
-  if (hoursError) {
-    console.error("Greška radno vreme:", hoursError);
-    return [];
+async function getCurrentAdminUser() {
+  const db = getSafeDb();
+  if (!db?.auth) return null;
+  const { data, error } = await db.auth.getUser();
+  if (error || !data?.user) return null;
+  return data.user;
+}
+
+async function isPlatformAdmin() {
+  const user = await getCurrentAdminUser();
+  const adminEmail = normalizeEmail(window.APP_CONFIG?.platformAdminEmail || "duskomacak@gmail.com");
+  return !!user && normalizeEmail(user.email) === adminEmail;
+}
+
+async function adminLogin(email, password) {
+  const db = getSafeDb();
+  if (!db?.auth) return null;
+
+  const cleanEmail = normalizeEmail(email);
+  const adminEmail = normalizeEmail(window.APP_CONFIG?.platformAdminEmail || "duskomacak@gmail.com");
+
+  if (!cleanEmail || !password) {
+    window.App.showMessage("Unesite email i lozinku.", "error");
+    return null;
   }
 
-  if (!hours || hours.is_closed) return [];
-
-  const openTime = String(hours.open_time || "09:00").slice(0, 5);
-  const closeTime = String(hours.close_time || "17:00").slice(0, 5);
-
-  const { data: existing, error: existingError } = await window.db
-    .from("appointments")
-    .select("appointment_time, duration_snapshot")
-    .eq("salon_id", salonId)
-    .eq("appointment_date", selectedDate)
-    .in("status", ["new", "confirmed"]);
-
-  if (existingError) {
-    console.error("Greška termini:", existingError);
-    return [];
+  if (cleanEmail !== adminEmail) {
+    window.App.showMessage("Samo glavni administrator može da pristupi.", "error");
+    return null;
   }
 
-  const allSlots = generateTimeSlots(openTime, closeTime, 30);
-  const today = getLocalDateString();
-  const nowMinutes = getCurrentMinutes();
-
-  return allSlots.filter(slot => {
-    const slotStartMinutes = timeToMinutes(slot);
-
-    // Ako je izabran današnji datum, ne nudimo termine koji su već prošli
-    // niti termin koji počinje u trenutnom minutu.
-    if (selectedDate === today && slotStartMinutes <= nowMinutes) return false;
-
-    return canFitSlot(slot, Number(serviceDuration), closeTime, existing || []);
+  const { data, error } = await db.auth.signInWithPassword({
+    email: cleanEmail,
+    password
   });
-}
 
-function canFitSlot(slotStart, serviceDuration, closeTime, existingAppointments) {
-  const start = timeToMinutes(slotStart);
-  const end = start + Number(serviceDuration);
-  const close = timeToMinutes(closeTime);
-
-  if (end > close) return false;
-
-  for (const appointment of existingAppointments) {
-    const bookedStart = timeToMinutes(String(appointment.appointment_time || "00:00").slice(0, 5));
-    const bookedDuration = Number(appointment.duration_snapshot || 30);
-    const bookedEnd = bookedStart + bookedDuration;
-    if (start < bookedEnd && end > bookedStart) return false;
+  if (error) {
+    console.error("Admin login error:", error);
+    window.App.showMessage("Pogrešan email ili lozinka.", "error");
+    return null;
   }
 
-  return true;
-}
-
-function generateTimeSlots(openTime, closeTime, stepMinutes = 30) {
-  const slots = [];
-  let current = timeToMinutes(openTime);
-  const close = timeToMinutes(closeTime);
-  while (current < close) {
-    slots.push(minutesToTime(current));
-    current += stepMinutes;
+  if (normalizeEmail(data?.user?.email) !== adminEmail) {
+    await db.auth.signOut();
+    window.App.showMessage("Ovaj nalog nema administratorski pristup.", "error");
+    return null;
   }
-  return slots;
+
+  return data.user;
 }
 
-function timeToMinutes(time) {
-  const [hours, minutes] = String(time || "00:00").split(":").map(Number);
-  return hours * 60 + minutes;
+async function adminLogout() {
+  const db = getSafeDb();
+  if (db?.auth) await db.auth.signOut();
+  window.App.showMessage("Administrator je odjavljen.", "info");
 }
 
-function minutesToTime(totalMinutes) {
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+async function salonLogin(email, code) {
+  const db = getSafeDb();
+  if (!db) return null;
+
+  const cleanEmail = normalizeEmail(email);
+  const cleanCode = normalizeCompanyCode(code);
+
+  if (!cleanEmail || !cleanCode) {
+    window.App.showMessage("Unesite email biznisa i kod firme.", "error");
+    return null;
+  }
+
+  // Login je namerno tolerantan: email mora biti isti, ali kod može biti unet malim slovima
+  // ili sa razmacima. Ovo ne menja bazu i ne dira javne/profile funkcije.
+  const { data, error } = await db
+    .from("salons")
+    .select("*")
+    .eq("owner_email", cleanEmail)
+    .eq("is_deleted", false);
+
+  if (error) {
+    console.error("Salon login query error:", error);
+    window.App.showMessage("Greška pri proveri login-a. Proverite internet i pokušajte ponovo.", "error");
+    return null;
+  }
+
+  const rows = Array.isArray(data) ? data : [];
+  const matched = rows.find((row) => normalizeCompanyCode(row.company_code) === cleanCode);
+
+  if (!matched) {
+    window.App.showMessage("Pogrešan email ili kod firme.", "error");
+    return null;
+  }
+
+  if (matched.status !== "active") {
+    window.App.showMessage("Vaš profil je trenutno blokiran. Kontaktirajte administratora.", "error");
+    return null;
+  }
+
+  const session = {
+    salon_id: matched.id,
+    salon_name: matched.salon_name,
+    slug: matched.slug,
+    owner_email: matched.owner_email,
+    status: matched.status,
+    loggedAt: new Date().toISOString()
+  };
+
+  window.App.saveLocal(window.APP_CONFIG.salonSessionKey, session);
+  window.App.showMessage("Uspešna prijava.", "success");
+  return matched;
 }
 
-function getCurrentMinutes() {
-  const now = new Date();
-  return now.getHours() * 60 + now.getMinutes();
+function getSalonSession() {
+  return window.App.getLocal(window.APP_CONFIG.salonSessionKey);
 }
 
-function getLocalDateString(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+function salonLogout() {
+  window.App.removeLocal(window.APP_CONFIG.salonSessionKey);
+  window.App.showMessage("Korisnik je odjavljen.", "info");
 }
 
-window.BookingLogic = {
-  getAvailableSlots,
-  canFitSlot,
-  generateTimeSlots,
-  timeToMinutes,
-  minutesToTime,
-  getLocalDateString
+function clearSalonSession() {
+  window.App.removeLocal(window.APP_CONFIG.salonSessionKey);
+}
+
+window.Auth = {
+  getCurrentAdminUser,
+  isPlatformAdmin,
+  adminLogin,
+  adminLogout,
+  salonLogin,
+  getSalonSession,
+  salonLogout,
+  clearSalonSession,
+  normalizeCompanyCode
 };
