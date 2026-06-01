@@ -9621,3 +9621,65 @@ body.owner-sound-ready #salon-notifications-btn{
 
 
 
+
+/* v234 SAFE FIX - remove white top/bottom bands in laptop product viewer
+   Applies to the same opened product/ad viewer used by shop and salon product sections.
+   Logic, Supabase, image upload and mobile layout are untouched. */
+@media (min-width: 900px){
+  #shoeViewer.shoe-viewer:not(.shoe-viewer-zoomed),
+  .shoe-viewer:not(.shoe-viewer-zoomed){
+    background: rgba(0,0,0,.88) !important;
+  }
+
+  #shoeViewer.shoe-viewer:not(.shoe-viewer-zoomed) .shoe-viewer-media,
+  .shoe-viewer:not(.shoe-viewer-zoomed) .shoe-viewer-media{
+    position: fixed !important;
+    left: 50% !important;
+    top: 16px !important;
+    bottom: 16px !important;
+    width: min(460px, calc(100vw - 32px)) !important;
+    height: auto !important;
+    transform: translateX(-50%) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    border-radius: 36px !important;
+    background: #000 !important;
+    box-shadow: 0 22px 70px rgba(0,0,0,.55) !important;
+  }
+
+  #shoeViewer.shoe-viewer:not(.shoe-viewer-zoomed) .shoe-viewer-media-bg,
+  .shoe-viewer:not(.shoe-viewer-zoomed) .shoe-viewer-media-bg{
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+
+  #shoeViewer.shoe-viewer:not(.shoe-viewer-zoomed) .shoe-viewer-media::before,
+  #shoeViewer.shoe-viewer:not(.shoe-viewer-zoomed) .shoe-viewer-media::after,
+  .shoe-viewer:not(.shoe-viewer-zoomed) .shoe-viewer-media::before,
+  .shoe-viewer:not(.shoe-viewer-zoomed) .shoe-viewer-media::after{
+    display: none !important;
+    content: none !important;
+    background: none !important;
+  }
+
+  #shoeViewer.shoe-viewer:not(.shoe-viewer-zoomed) .shoe-viewer-main-img,
+  .shoe-viewer:not(.shoe-viewer-zoomed) .shoe-viewer-main-img{
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    min-width: 100% !important;
+    min-height: 100% !important;
+    display: block !important;
+    object-fit: cover !important;
+    object-position: center center !important;
+    border-radius: 36px !important;
+    background: #000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
