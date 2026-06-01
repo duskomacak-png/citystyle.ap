@@ -9622,9 +9622,10 @@ body.owner-sound-ready #salon-notifications-btn{
 
 
 
-/* v1.3.5 SAFE: cleaner CityStyle product story viewer
-   - Only public product viewer visual/text polish.
-   - Does not touch Supabase, login, owner panel, booking, push, PWA install, calls or messages. */
+
+/* v1.3.6 SAFE: mobile-only CityStyle product viewer polish
+   Laptop/desktop viewer stays on original layout.
+   Only mobile viewer gets cleaner title, buttons, price and watermark placement. */
 @media(max-width:899px){
   .shoe-viewer::before{
     background:linear-gradient(180deg,rgba(0,0,0,.58) 0%,rgba(0,0,0,.14) 24%,rgba(0,0,0,.06) 58%,rgba(0,0,0,.66) 100%) !important;
@@ -9747,13 +9748,4 @@ body.owner-sound-ready #salon-notifications-btn{
   .shoe-action svg{width:50px !important;height:50px !important;}
   .shoe-viewer::after{left:24px !important;font-size:clamp(22px,7vw,30px) !important;}
   .shoe-viewer-powered{left:24px !important;}
-}
-@media(min-width:900px){
-  .shoe-viewer-top h2 span{background:transparent !important;border:0 !important;box-shadow:none !important;padding:0 !important;}
-  .shoe-viewer-top h2{font-size:30px !important;line-height:1.04 !important;font-weight:850 !important;letter-spacing:-.03em !important;}
-  .shoe-viewer-subtitle{font-size:16px !important;font-weight:850 !important;text-transform:uppercase !important;}
-  .shoe-viewer-subcopy{font-size:15px !important;font-weight:750 !important;color:rgba(255,255,255,.90) !important;}
-  .shoe-viewer-availability{display:inline-flex !important;margin-top:6px !important;padding:6px 13px !important;border-radius:999px !important;background:rgba(0,0,0,.28) !important;border:1px solid rgba(255,255,255,.18) !important;font-size:13px !important;font-weight:850 !important;}
-  .shoe-viewer::after{content:attr(data-price) !important;font-size:28px !important;font-weight:850 !important;letter-spacing:-.02em !important;}
-  .shoe-viewer-powered{font-size:10px !important;color:rgba(255,255,255,.46) !important;}
 }
