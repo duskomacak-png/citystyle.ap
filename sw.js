@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle v230 - final clean owner push display
-const CACHE_NAME = "citystyle-v235_product_zoom_gallery";
+// CityStyle v240 - viewer lock
+const CACHE_NAME = "citystyle-v240_viewer_lock";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
