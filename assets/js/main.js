@@ -671,7 +671,7 @@ function updateManifestForOwner(options = {}) {
   const cleanIcon = String(options.iconUrl || options.logoUrl || "").trim();
   const iconUrl = cleanIcon || makeInitialsIconDataUrl(businessName, "#b91c1c");
   const icon512 = String(options.icon512Url || "").trim() || iconUrl || makeInitialsIconDataUrl(businessName, "#b91c1c");
-  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v247_store_viewer_realistic_final`;
+  const start = `${getAppPath("salon/")}?pwa_owner=1&owner=${encodedKey}&v=v249_image_fit_viewer`;
   const baseManifest = {
     id: `/pwa/owner/${encodedKey}`,
     name: appName,
@@ -771,7 +771,7 @@ function updateManifestForSalon(slug, options = {}) {
     name: appName,
     short_name: shortName || "Profil",
     description: `Prečica za direktan ulaz u profil: ${appName}.`,
-    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v247_store_viewer_realistic_final`,
+    start_url: `${getAppBaseUrl()}?${startParam}&pwa_profile=${encodedProfile}&v=v249_image_fit_viewer`,
     scope: getAppBaseUrl(),
     display: "standalone",
     background_color: "#0b0b0f",
@@ -1021,7 +1021,7 @@ async function registerPushForSalon(salonId, options = {}) {
 
     // Register and wait for the ACTIVE service worker. Using the returned registration
     // while it is still installing can break push subscribe on some phones.
-    await navigator.serviceWorker.register("/sw.js?v=v247_store_viewer_realistic_final", { scope: "/", updateViaCache: "none" });
+    await navigator.serviceWorker.register("/sw.js?v=v249_image_fit_viewer", { scope: "/", updateViaCache: "none" });
     const registration = await navigator.serviceWorker.ready;
 
     if (!registration?.pushManager) {

@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle v247 - store viewer realistic final
-const CACHE_NAME = "citystyle-v247_store_viewer_realistic_final";
+// CityStyle v249 - image fit viewer
+const CACHE_NAME = "citystyle-v249_image_fit_viewer";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
