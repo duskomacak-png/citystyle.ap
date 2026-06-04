@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle v250 - clean product card viewer
-const CACHE_NAME = "citystyle-v250_clean_product_card_viewer";
+// CityStyle v251 - buttons mobile laptop fit
+const CACHE_NAME = "citystyle-v251_buttons_mobile_laptop_fit";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
