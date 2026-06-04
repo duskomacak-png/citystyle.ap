@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle v243 - store viewer green glass
-const CACHE_NAME = "citystyle-v243_store_viewer_green";
+// CityStyle v244 - store viewer fit fix
+const CACHE_NAME = "citystyle-v244_store_viewer_fit";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
