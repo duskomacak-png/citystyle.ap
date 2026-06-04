@@ -11,7 +11,7 @@ let selectedTime = null;
 let ownerPreviewMode = false;
 let adminPreviewMode = false;
 const C = (key, fallback = "") => window.App?.t ? window.App.t(key, fallback) : (fallback || key);
-const CITYSTYLE_POWERED = "powered by citystyle.app";
+const CITYSTYLE_POWERED = "powered by CityStyle.app";
 function renderCityStylePowered(className = "") {
   return `<div class="citystyle-powered ${className}">${CITYSTYLE_POWERED}</div>`;
 }
@@ -997,8 +997,9 @@ function renderClientProductsPreview() {
       </summary>
       <div class="client-services-panel-body">
         <p class="muted">Pregled proizvoda, artikala ili cenovnika koje ovaj biznis nudi. Dodir na proizvod otvara veću sliku.</p>
-        <div class="product-public-grid product-public-grid-images">
-          ${products.map((product, index) => renderPublicProductCard(product, index)).join("")}
+        ${renderProductRubricDropdown("client-rubric-filter")}
+        <div id="clientProductGrid" class="product-public-grid product-public-grid-images">
+          ${csFilteredProducts(products).map(product => renderPublicProductCard(product, csProductGlobalIndex(product))).join("")}
         </div>
       </div>
     </details>
@@ -1021,8 +1022,9 @@ function showProducts() {
         <small>${C("hideList", "Sakrij listu")}</small>
       </summary>
       <div class="client-services-panel-body">
-        <div class="product-public-grid">
-          ${products.map(product => `
+        ${renderProductRubricDropdown("client-rubric-filter")}
+        <div id="clientProductGrid" class="product-public-grid">
+          ${csFilteredProducts(products).map(product => `
             <div class="product-public-card">
               <div>
                 <strong>${escapeHtml(product.name)}</strong>
@@ -1410,6 +1412,7 @@ async function submitAppointment() {
 let csShopProductImages = {};
 let csViewerState = null;
 let csViewerWheelLock = 0;
+let selectedProductRubric = "all";
 
 function csIsShopProfile(salon = currentSalon, productCount = products.length) {
   const raw = `${salon?.business_type || ""} ${salon?.profile_type || ""} ${salon?.type || ""} ${salon?.package_type || ""}`.toLowerCase();
@@ -1444,6 +1447,51 @@ function csProductImages(product = {}) {
 function csProductPrice(product = {}) { return renderProductPrice(product); }
 function csProductStatus(product = {}) { return getProductStatusLabel(product.stock_status); }
 function csProductPublicDescription(product = {}) { return String(product.description || "").trim(); }
+function csProductRubric(product = {}) { return String(product.category || "").trim(); }
+function csProductRubrics(list = products) {
+  return Array.from(new Set((list || []).map(item => csProductRubric(item)).filter(Boolean)))
+    .sort((a, b) => a.localeCompare(b, "sr", { sensitivity: "base" }));
+}
+function csFilteredProducts(list = products) {
+  const value = String(selectedProductRubric || "all").trim();
+  if (!value || value === "all") return list || [];
+  return (list || []).filter(item => csProductRubric(item).toLowerCase() === value.toLowerCase());
+}
+function csProductGlobalIndex(product = {}) {
+  const idx = (products || []).findIndex(item => String(item.id) === String(product.id));
+  return idx >= 0 ? idx : 0;
+}
+function renderProductRubricDropdown(extraClass = "") {
+  const rubrics = csProductRubrics(products);
+  if (!rubrics.length) return "";
+  const current = String(selectedProductRubric || "all");
+  return `<div class="cs-rubric-filter ${escapeHtml(extraClass)}">
+    <label>Rubrike</label>
+    <select class="cs-rubric-select" onchange="setProductRubricFilter(this.value)">
+      <option value="all" ${current === "all" ? "selected" : ""}>Sve rubrike</option>
+      ${rubrics.map(item => `<option value="${escapeHtml(item)}" ${current.toLowerCase() === item.toLowerCase() ? "selected" : ""}>${escapeHtml(item)}</option>`).join("")}
+    </select>
+  </div>`;
+}
+function setProductRubricFilter(value = "all") {
+  const rubrics = csProductRubrics(products);
+  const clean = String(value || "all").trim();
+  selectedProductRubric = clean === "all" || rubrics.some(item => item.toLowerCase() === clean.toLowerCase()) ? clean : "all";
+  document.querySelectorAll(".cs-rubric-select").forEach(select => { select.value = selectedProductRubric; });
+  const filtered = csFilteredProducts(products);
+  const shopGrid = document.getElementById("shoeProductGrid");
+  if (shopGrid) {
+    shopGrid.innerHTML = filtered.length
+      ? filtered.map(product => renderShoeProductCard(product, csProductGlobalIndex(product))).join("")
+      : `<div class="card cs-rubric-empty"><h3>Nema proizvoda u ovoj rubrici.</h3><p class="muted">Izaberite “Sve rubrike” za celu ponudu.</p></div>`;
+  }
+  const publicGrid = document.getElementById("clientProductGrid");
+  if (publicGrid) {
+    publicGrid.innerHTML = filtered.length
+      ? filtered.map(product => renderPublicProductCard(product, csProductGlobalIndex(product))).join("")
+      : `<div class="card cs-rubric-empty"><h3>Nema proizvoda u ovoj rubrici.</h3><p class="muted">Izaberite “Sve rubrike” za celu ponudu.</p></div>`;
+  }
+}
 function csProductViewerMetaPrimary(product = {}) {
   return String(product.category || "").trim();
 }
@@ -1475,6 +1523,8 @@ async function loadProducts() {
     .order("created_at", { ascending: false });
   if (error) { console.warn("Products not available:", error); products = []; csShopProductImages = {}; return; }
   products = data || [];
+  const availableRubrics = csProductRubrics(products);
+  if (selectedProductRubric !== "all" && !availableRubrics.some(item => item.toLowerCase() === String(selectedProductRubric).toLowerCase())) selectedProductRubric = "all";
   csShopProductImages = {};
   if (products.length) {
     try {
@@ -1542,6 +1592,7 @@ function renderShoeShopHome(settings = {}) {
   const phone = settings?.phone || currentSalon?.phone || "";
   const address = settings?.address || "";
   const text = settings?.welcome_text || "";
+  const filteredProducts = csFilteredProducts(products);
   app.innerHTML = `
     <section class="shoe-shop-page">
       ${adminPreviewMode ? `<div class="owner-preview-bar admin-preview-bar"><div><strong>Admin pregled</strong><span>Ovako kupac vidi prodavnicu.</span></div><a class="btn btn-primary" href="${window.App.getAppPath('admin/')}">Nazad u admin</a></div>` : ownerPreviewMode ? `<div class="owner-preview-bar"><div><strong>Pregled javne stranice</strong><span>Ovako kupac vidi prodavnicu.</span></div><a class="btn btn-primary" href="${window.App.getAppPath('salon/')}">Nazad u panel vlasnika</a></div>` : ""}
@@ -1552,7 +1603,7 @@ function renderShoeShopHome(settings = {}) {
       </div>
       ${ownerPreviewMode ? "" : `<div class="shoe-install-row"><button class="btn btn-dark shoe-install-btn" type="button" onclick="installCurrentSalonApp()">📱 Preuzmi app prodavnice</button><small>Prečica otvara baš ovaj profil${logo ? " i koristi logo firme gde browser dozvoljava" : ""}.</small></div>`}
       <section class="shoe-products-section">
-        ${products.length ? `<div class="shoe-grid">${products.map((product, index) => renderShoeProductCard(product, index)).join("")}</div>` : `<div class="card"><h2>Još nema oglasa</h2><p class="muted">Vlasnik još nije dodao patike u katalog.</p></div>`}
+        ${products.length ? `${renderProductRubricDropdown("shoe-rubric-filter")}<div id="shoeProductGrid" class="shoe-grid">${filteredProducts.length ? filteredProducts.map(product => renderShoeProductCard(product, csProductGlobalIndex(product))).join("") : `<div class="card cs-rubric-empty"><h3>Nema proizvoda u ovoj rubrici.</h3><p class="muted">Izaberite “Sve rubrike” za celu ponudu.</p></div>`}</div>` : `<div class="card"><h2>Još nema oglasa</h2><p class="muted">Vlasnik još nije dodao proizvode u katalog.</p></div>`}
       </section>
       ${renderCityStylePowered("shoe-powered")}
     </section>`;
@@ -1589,7 +1640,7 @@ function showProducts() {
     box.innerHTML = `<div class="card"><h2>${C("productsCatalog", "Proizvodi / cenovnik")}</h2><p class="muted">Ovaj profil trenutno nema javno prikazane proizvode.</p></div>`;
     return;
   }
-  box.innerHTML = `<details class="card client-hours-panel client-products-panel" open><summary><span>${C("productsCatalog", "Proizvodi / cenovnik")}</span><small>${C("hideList", "Sakrij listu")}</small></summary><div class="client-services-panel-body"><div class="product-public-grid product-public-grid-images">${products.map((product, index) => renderPublicProductCard(product, index)).join("")}</div></div></details>`;
+  box.innerHTML = `<details class="card client-hours-panel client-products-panel" open><summary><span>${C("productsCatalog", "Proizvodi / cenovnik")}</span><small>${C("hideList", "Sakrij listu")}</small></summary><div class="client-services-panel-body">${renderProductRubricDropdown("client-rubric-filter")}<div id="clientProductGrid" class="product-public-grid product-public-grid-images">${csFilteredProducts(products).map(product => renderPublicProductCard(product, csProductGlobalIndex(product))).join("")}</div></div></details>`;
   box.scrollIntoView({ behavior: "smooth" });
 }
 

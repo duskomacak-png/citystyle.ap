@@ -2301,10 +2301,20 @@ async function showAddProductForm(productId = null) {
     product = data;
     extraImages = await getProductExtraImages(productId);
   }
+  let ownerRubricOptions = [];
+  try {
+    const { data: rubricRows } = await window.db.from("products").select("category").eq("salon_id", currentSalonId);
+    ownerRubricOptions = Array.from(new Set((rubricRows || []).map(row => String(row.category || "").trim()).filter(Boolean)))
+      .sort((a, b) => a.localeCompare(b, "sr", { sensitivity: "base" }));
+  } catch (e) { ownerRubricOptions = []; }
+  const ownerRubricDatalist = ownerRubricOptions.length
+    ? `<datalist id="product-category-suggestions">${ownerRubricOptions.map(item => `<option value="${salonEscapeHtml(item)}"></option>`).join("")}</datalist>`
+    : `<datalist id="product-category-suggestions"></datalist>`;
+
   box.innerHTML = `<div class="card product-edit-card"><h3>${product ? "Uredi oglas / proizvod" : "Novi oglas / proizvod"}</h3>
     <input id="product-edit-id" type="hidden" value="${product ? salonEscapeHtml(product.id) : ""}">
+    <label>Rubrika *</label><input id="product-category" type="text" list="product-category-suggestions" value="${product ? salonEscapeHtml(product.category || "") : ""}" placeholder="Primer: Veš mašine, Patike, Šamponi, Gume...">${ownerRubricDatalist}<p class="field-help"><strong>Primer:</strong> ako upišete “Veš mašine”, kupac će u meniju Rubrike moći da izabere “Veš mašine” i vidi samo te proizvode.</p>
     <label>Naziv proizvoda</label><input id="product-name" type="text" value="${product ? salonEscapeHtml(product.name) : ""}" placeholder="Primer: Nike Air Max"><p class="field-help">Upišite glavni naziv koji kupac prvo vidi.</p>
-    <label>Brend / kategorija</label><input id="product-category" type="text" value="${product ? salonEscapeHtml(product.category || "") : ""}" placeholder="Primer: Nike / patike"><p class="field-help">Ovde ide brend ili kategorija proizvoda.</p>
     <label>Opis / brojevi</label><textarea id="product-description" rows="3" placeholder="Primer: Brojevi od 40 do 46">${product ? salonEscapeHtml(product.description || "") : ""}</textarea><p class="field-help">Ovde napišite kratki opis, brojeve, veličine ili kratku napomenu za kupca.</p>
     <div class="grid two"><div><label>Cena</label><input id="product-price" type="text" inputmode="numeric" value="${product ? salonEscapeHtml(product.price || "") : ""}" placeholder="Primer: 4700"></div><div><label>Valuta</label><select id="product-currency"><option value="RSD" ${window.App.normalizeCurrency(product?.currency || "RSD") === "RSD" ? "selected" : ""}>RSD</option><option value="EUR" ${window.App.normalizeCurrency(product?.currency || "RSD") === "EUR" ? "selected" : ""}>EUR</option><option value="KM" ${window.App.normalizeCurrency(product?.currency || "RSD") === "KM" ? "selected" : ""}>KM</option></select></div></div>
     <label>Status dostupnosti</label><select id="product-stock-status"><option value="available" ${!product || product.stock_status === "available" ? "selected" : ""}>Na stanju</option><option value="preorder" ${product && product.stock_status === "preorder" ? "selected" : ""}>Po porudžbini</option><option value="out" ${product && product.stock_status === "out" ? "selected" : ""}>Trenutno nema</option></select><p class="field-help">Kupac u otvorenom oglasu vidi i ovaj status.</p>
@@ -2326,6 +2336,7 @@ async function saveProduct() {
   const stock_status = document.getElementById("product-stock-status")?.value || "available";
   const sort_order = Number(document.getElementById("product-sort-order")?.value || 100);
   const selectedFiles = Array.from(document.getElementById("product-images-input")?.files || []);
+  if (!category) return window.App.showMessage("Unesite rubriku oglasa. Primer: Veš mašine, Patike, Šamponi...", "error");
   if (!name) return window.App.showMessage("Unesite naziv proizvoda.", "error");
 
   let existing = null;
