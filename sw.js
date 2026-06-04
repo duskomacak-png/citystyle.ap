@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle v249 - image fit viewer
-const CACHE_NAME = "citystyle-v249_image_fit_viewer";
+// CityStyle v250 - clean product card viewer
+const CACHE_NAME = "citystyle-v250_clean_product_card_viewer";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
