@@ -9801,3 +9801,135 @@ body.owner-sound-ready #salon-notifications-btn{
   .cs-rubric-filter{align-items:flex-start;flex-direction:column;gap:8px;border-radius:14px;}
   .cs-rubric-filter select{width:100%;max-width:100%;min-width:0;}
 }
+
+/* v237 PRODUCT VIEWER LOCK: green glass product ad view
+   Scope: client product viewer only. Keeps existing actions/zoom logic. */
+.shoe-viewer-top-card,
+.shoe-viewer-price-card,
+.shoe-viewer-top-actions,
+.shoe-viewer-actions,
+.shoe-viewer-image-frame{box-sizing:border-box;}
+.shoe-viewer-top-card,
+.shoe-viewer-price-card{
+  background:linear-gradient(135deg, rgba(224,255,225,.82), rgba(78,138,82,.58)) !important;
+  border:1.5px solid rgba(153,255,159,.95) !important;
+  box-shadow:0 0 0 1px rgba(255,255,255,.20) inset, 0 0 26px rgba(101,255,111,.42), 0 18px 44px rgba(0,0,0,.38) !important;
+  backdrop-filter:blur(18px) saturate(1.14) !important;
+  -webkit-backdrop-filter:blur(18px) saturate(1.14) !important;
+  color:#050805 !important;
+}
+.shoe-viewer-top-card h2,
+.shoe-viewer-top-card p,
+.shoe-viewer-price-card strong,
+.shoe-viewer-price-card p{margin:0 !important;text-shadow:none !important;color:#050805 !important;}
+.shoe-viewer-top-card h2{font-weight:950 !important;letter-spacing:-.04em !important;line-height:.98 !important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.shoe-viewer-rubric{font-weight:900 !important;line-height:1.15 !important;}
+.shoe-viewer-subcopy{font-weight:600 !important;line-height:1.25 !important;opacity:.82 !important;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;}
+.shoe-viewer-status{display:inline-flex !important;align-items:center !important;gap:8px !important;border-radius:999px !important;background:rgba(5,10,8,.44) !important;border:1px solid rgba(255,255,255,.44) !important;color:#fff !important;font-weight:900 !important;white-space:nowrap !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.16) !important;}
+.shoe-viewer-status i{display:block;width:10px;height:10px;border-radius:999px;background:#19f254;box-shadow:0 0 12px rgba(25,242,84,.78);}
+.shoe-viewer-top-actions,.shoe-viewer-actions{background:transparent !important;border:none !important;box-shadow:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;}
+.shoe-viewer .shoe-action,
+.shoe-viewer .shoe-action.red,
+.shoe-viewer .shoe-action.blue,
+.shoe-viewer .shoe-action.green,
+.shoe-viewer .shoe-action.zoom{
+  background:rgba(2,8,6,.72) !important;
+  border:1.5px solid rgba(130,255,137,.72) !important;
+  color:#d7ffd9 !important;
+  box-shadow:0 0 22px rgba(79,255,88,.24), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  backdrop-filter:blur(12px) !important;
+  -webkit-backdrop-filter:blur(12px) !important;
+  text-transform:none !important;
+}
+.shoe-viewer .shoe-action svg{fill:none !important;stroke:currentColor !important;stroke-width:2.2 !important;stroke-linecap:round !important;stroke-linejoin:round !important;background:transparent !important;border:none !important;padding:0 !important;box-shadow:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;}
+.shoe-viewer .shoe-action span{color:#fff !important;text-shadow:0 2px 12px rgba(0,0,0,.72) !important;text-transform:none !important;font-weight:800 !important;letter-spacing:-.01em !important;}
+.shoe-viewer-image-frame{background:#f6f6f4 !important;border:1.5px solid rgba(160,255,166,.95) !important;box-shadow:0 0 24px rgba(118,255,126,.35), 0 20px 46px rgba(0,0,0,.50) !important;overflow:hidden !important;}
+.shoe-viewer-image-frame span{display:grid;place-items:center;width:100%;height:100%;color:#111;font-weight:900;}
+.shoe-viewer-price-copy{min-width:0;}
+.shoe-viewer-price-card strong{display:block;font-weight:950 !important;letter-spacing:-.06em !important;line-height:.95 !important;}
+.shoe-viewer-price-card p{font-weight:700 !important;opacity:.82 !important;line-height:1.25 !important;border-top:1px solid rgba(19,63,20,.35);padding-top:14px !important;margin-top:16px !important;}
+.shoe-viewer-shop-logo{object-fit:cover;background:#050505;border:1px solid rgba(255,255,255,.18);box-shadow:0 12px 26px rgba(0,0,0,.25);}
+.shoe-viewer-shop-logo-fallback{display:grid;place-items:center;background:#050505;color:#7cff81;font-weight:950;}
+.shoe-viewer-powered{font-size:15px !important;font-weight:750 !important;letter-spacing:.01em !important;text-transform:none !important;color:rgba(255,255,255,.42) !important;text-shadow:0 2px 12px rgba(0,0,0,.72) !important;}
+.shoe-viewer-powered::first-letter{text-transform:lowercase;}
+.shoe-viewer-powered{white-space:nowrap;}
+.shoe-viewer .shoe-dots{background:transparent !important;border:none !important;box-shadow:none !important;padding:0 !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;}
+.shoe-viewer .shoe-dots button{width:14px !important;height:14px !important;border-radius:999px !important;background:rgba(255,255,255,.62) !important;border:0 !important;padding:0 !important;box-shadow:0 0 10px rgba(0,0,0,.24) !important;}
+.shoe-viewer .shoe-dots button.active{width:14px !important;background:#9fff9f !important;box-shadow:0 0 16px rgba(116,255,119,.70) !important;}
+
+@media(max-width:899px){
+  .shoe-viewer{position:fixed !important;inset:0 !important;width:100vw !important;height:100dvh !important;overflow:hidden !important;background:radial-gradient(circle at 50% 39%, rgba(255,255,255,.30), transparent 33%), radial-gradient(circle at 0% 18%, rgba(90,255,101,.12), transparent 34%), linear-gradient(180deg,#030605 0%,#070b09 48%,#020302 100%) !important;color:#fff !important;z-index:30000 !important;}
+  .shoe-viewer::before,.shoe-viewer::after{display:none !important;content:none !important;}
+  .shoe-viewer-media-bg{display:none !important;}
+  .shoe-viewer-top-card{position:fixed !important;left:54px !important;right:54px !important;top:50px !important;min-height:128px !important;border-radius:24px !important;padding:24px 28px !important;display:grid !important;grid-template-columns:minmax(0,1fr) auto !important;align-items:end !important;gap:12px !important;z-index:9 !important;}
+  .shoe-viewer-top-card h2{font-size:clamp(34px,8.8vw,54px) !important;}
+  .shoe-viewer-rubric{font-size:clamp(18px,4.4vw,26px) !important;margin-top:10px !important;}
+  .shoe-viewer-subcopy{font-size:clamp(16px,4vw,22px) !important;margin-top:10px !important;}
+  .shoe-viewer-status{font-size:clamp(15px,3.9vw,22px) !important;padding:12px 16px !important;margin-bottom:4px !important;}
+  .shoe-viewer-top-actions{position:fixed !important;top:196px !important;left:50% !important;transform:translateX(-50%) !important;display:grid !important;grid-template-columns:1fr 1fr !important;gap:36px !important;z-index:9 !important;}
+  .shoe-viewer-top-actions .shoe-action{width:154px !important;height:54px !important;border-radius:18px !important;display:flex !important;align-items:center !important;justify-content:center !important;gap:12px !important;min-height:0 !important;padding:0 18px !important;}
+  .shoe-viewer-top-actions .shoe-action svg{width:28px !important;height:28px !important;}
+  .shoe-viewer-top-actions .shoe-action span{font-size:19px !important;}
+  .shoe-viewer .shoe-viewer-media{position:fixed !important;left:56px !important;right:56px !important;top:258px !important;bottom:238px !important;width:auto !important;height:auto !important;display:block !important;padding:0 !important;background:transparent !important;overflow:visible !important;z-index:4 !important;border:0 !important;transform:none !important;}
+  .shoe-viewer-image-frame{position:absolute !important;inset:0 !important;border-radius:24px !important;display:flex !important;align-items:center !important;justify-content:center !important;}
+  .shoe-viewer-main-img{position:relative !important;inset:auto !important;width:100% !important;height:100% !important;max-width:none !important;max-height:none !important;object-fit:contain !important;object-position:center !important;border-radius:0 !important;background:transparent !important;box-shadow:none !important;z-index:1 !important;}
+  .shoe-viewer-close{position:fixed !important;right:68px !important;top:282px !important;left:auto !important;width:66px !important;height:66px !important;border-radius:999px !important;display:grid !important;place-items:center !important;z-index:10 !important;background:#050505 !important;border:1.5px solid rgba(149,255,156,.95) !important;box-shadow:0 0 18px rgba(104,255,112,.40) !important;color:#fff !important;font-size:48px !important;line-height:1 !important;padding:0 !important;}
+  .shoe-viewer-actions{position:fixed !important;left:58px !important;right:58px !important;bottom:172px !important;display:grid !important;grid-template-columns:136px 1fr 136px !important;align-items:center !important;gap:10px !important;z-index:9 !important;padding:0 !important;}
+  .shoe-viewer-actions .shoe-action{width:136px !important;height:58px !important;min-height:0 !important;border-radius:18px !important;display:flex !important;align-items:center !important;justify-content:center !important;gap:10px !important;padding:0 14px !important;}
+  .shoe-viewer-actions .shoe-action svg{width:26px !important;height:26px !important;}
+  .shoe-viewer-actions .shoe-action span{font-size:18px !important;}
+  .shoe-viewer-actions .shoe-action.green{grid-column:3 !important;justify-self:end !important;}
+  .shoe-viewer-actions .shoe-action.blue{grid-column:1 !important;justify-self:start !important;}
+  .shoe-dots{position:fixed !important;left:50% !important;bottom:193px !important;right:auto !important;transform:translateX(-50%) !important;display:flex !important;gap:18px !important;z-index:10 !important;}
+  .shoe-viewer-price-card{position:fixed !important;left:54px !important;right:54px !important;bottom:52px !important;height:118px !important;border-radius:24px !important;padding:24px 28px !important;display:grid !important;grid-template-columns:minmax(0,1fr) 96px !important;gap:20px !important;align-items:center !important;z-index:9 !important;}
+  .shoe-viewer-price-card strong{font-size:clamp(42px,10vw,66px) !important;}
+  .shoe-viewer-price-card p{font-size:clamp(17px,4.5vw,25px) !important;}
+  .shoe-viewer-shop-logo{width:86px !important;height:86px !important;border-radius:18px !important;justify-self:end;}
+  .shoe-viewer-powered{position:fixed !important;left:50% !important;bottom:18px !important;transform:translateX(-50%) !important;width:auto !important;text-align:center !important;z-index:9 !important;}
+  .shoe-arrow{display:none !important;}
+  .shoe-viewer.shoe-viewer-zoomed .shoe-viewer-media{position:fixed !important;inset:0 !important;width:100vw !important;height:100dvh !important;left:0 !important;right:0 !important;top:0 !important;bottom:0 !important;background:#000 !important;z-index:20 !important;}
+  .shoe-viewer.shoe-viewer-zoomed .shoe-viewer-image-frame{position:fixed !important;inset:0 !important;border:0 !important;border-radius:0 !important;background:#000 !important;box-shadow:none !important;}
+  .shoe-viewer.shoe-viewer-zoomed .shoe-viewer-main-img{width:100vw !important;height:100dvh !important;object-fit:contain !important;background:#000 !important;border-radius:0 !important;}
+}
+
+@media(max-width:390px){
+  .shoe-viewer-top-card{left:42px !important;right:42px !important;top:42px !important;padding:20px 22px !important;min-height:118px !important;}
+  .shoe-viewer-top-actions{top:180px !important;gap:22px !important;}
+  .shoe-viewer-top-actions .shoe-action{width:136px !important;height:50px !important;}
+  .shoe-viewer .shoe-viewer-media{left:42px !important;right:42px !important;top:238px !important;bottom:220px !important;}
+  .shoe-viewer-close{right:54px !important;top:260px !important;width:58px !important;height:58px !important;}
+  .shoe-viewer-actions{left:42px !important;right:42px !important;bottom:158px !important;grid-template-columns:116px 1fr 116px !important;}
+  .shoe-viewer-actions .shoe-action{width:116px !important;height:52px !important;}
+  .shoe-dots{bottom:178px !important;gap:14px !important;}
+  .shoe-viewer-price-card{left:42px !important;right:42px !important;bottom:50px !important;height:104px !important;padding:18px 22px !important;grid-template-columns:minmax(0,1fr) 78px !important;}
+  .shoe-viewer-shop-logo{width:72px !important;height:72px !important;}
+}
+
+@media(min-width:900px){
+  .shoe-viewer{position:fixed !important;inset:0 !important;overflow:hidden !important;background:rgba(0,0,0,.84) !important;z-index:30000 !important;}
+  .shoe-viewer::before,.shoe-viewer::after{display:none !important;content:none !important;}
+  .shoe-viewer-top-card{position:fixed !important;left:50% !important;top:34px !important;width:420px !important;margin-left:-210px !important;min-height:118px !important;border-radius:24px !important;padding:22px 26px !important;display:grid !important;grid-template-columns:minmax(0,1fr) auto !important;align-items:end !important;gap:12px !important;z-index:9 !important;}
+  .shoe-viewer-top-card h2{font-size:38px !important;}
+  .shoe-viewer-rubric{font-size:22px !important;margin-top:8px !important;}
+  .shoe-viewer-subcopy{font-size:18px !important;margin-top:7px !important;}
+  .shoe-viewer-status{font-size:18px !important;padding:10px 15px !important;}
+  .shoe-viewer-top-actions{position:fixed !important;left:50% !important;top:170px !important;transform:translateX(-50%) !important;display:grid !important;grid-template-columns:1fr 1fr !important;gap:44px !important;z-index:9 !important;}
+  .shoe-viewer-top-actions .shoe-action{width:150px !important;height:52px !important;border-radius:18px !important;display:flex !important;align-items:center !important;justify-content:center !important;gap:12px !important;min-height:0 !important;}
+  .shoe-viewer-top-actions .shoe-action svg{width:27px !important;height:27px !important;}
+  .shoe-viewer-top-actions .shoe-action span{font-size:18px !important;}
+  .shoe-viewer .shoe-viewer-media{position:fixed !important;left:50% !important;top:242px !important;bottom:240px !important;width:420px !important;margin-left:-210px !important;height:auto !important;display:block !important;padding:0 !important;background:transparent !important;overflow:visible !important;border:0 !important;transform:none !important;}
+  .shoe-viewer-image-frame{position:absolute !important;inset:0 !important;border-radius:24px !important;display:flex !important;align-items:center !important;justify-content:center !important;}
+  .shoe-viewer-main-img{position:relative !important;inset:auto !important;width:100% !important;height:100% !important;object-fit:contain !important;object-position:center !important;border-radius:0 !important;background:transparent !important;box-shadow:none !important;}
+  .shoe-viewer-close{position:fixed !important;left:calc(50% + 140px) !important;top:262px !important;width:60px !important;height:60px !important;border-radius:999px !important;background:#050505 !important;border:1.5px solid rgba(149,255,156,.95) !important;box-shadow:0 0 18px rgba(104,255,112,.40) !important;color:#fff !important;font-size:42px !important;z-index:10 !important;}
+  .shoe-viewer-actions{position:fixed !important;left:50% !important;bottom:170px !important;width:420px !important;margin-left:-210px !important;display:grid !important;grid-template-columns:128px 1fr 128px !important;align-items:center !important;gap:8px !important;z-index:9 !important;}
+  .shoe-viewer-actions .shoe-action{width:128px !important;height:54px !important;border-radius:18px !important;display:flex !important;align-items:center !important;justify-content:center !important;gap:10px !important;min-height:0 !important;}
+  .shoe-viewer-actions .shoe-action.blue{grid-column:1 !important;}
+  .shoe-viewer-actions .shoe-action.green{grid-column:3 !important;}
+  .shoe-dots{position:fixed !important;left:50% !important;bottom:190px !important;transform:translateX(-50%) !important;display:flex !important;gap:16px !important;z-index:10 !important;}
+  .shoe-viewer-price-card{position:fixed !important;left:50% !important;bottom:48px !important;width:420px !important;margin-left:-210px !important;height:112px !important;border-radius:24px !important;padding:22px 26px !important;display:grid !important;grid-template-columns:minmax(0,1fr) 86px !important;gap:16px !important;align-items:center !important;z-index:9 !important;}
+  .shoe-viewer-price-card strong{font-size:54px !important;}
+  .shoe-viewer-price-card p{font-size:20px !important;}
+  .shoe-viewer-shop-logo{width:78px !important;height:78px !important;border-radius:16px !important;justify-self:end;}
+  .shoe-viewer-powered{position:fixed !important;left:50% !important;bottom:18px !important;transform:translateX(-50%) !important;text-align:center !important;z-index:9 !important;}
+  .shoe-arrow{display:none !important;}
+}
