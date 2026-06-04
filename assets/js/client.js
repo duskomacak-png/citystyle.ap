@@ -1938,7 +1938,7 @@ function renderShoeViewer() {
   if (!viewer) {
     viewer = document.createElement("div");
     viewer.id = "shoeViewer";
-    viewer.className = "shoe-viewer";
+    viewer.className = "shoe-viewer shoe-viewer-locked";
     document.body.appendChild(viewer);
   }
   viewer.classList.toggle("shoe-viewer-zoomed", !!csViewerState.zoomed);
@@ -1947,37 +1947,50 @@ function renderShoeViewer() {
   const viewerMetaSecondary = csProductViewerMetaSecondary(product);
   const viewerAvailability = csProductViewerAvailability(product);
   const shopLogo = currentSalon?._publicLogo || "";
-  const shopName = currentSalon?.salon_name || "Prodavnica";
+  const shopName = currentSalon?._publicName || "Prodavnica";
   viewer.innerHTML = `
-    <div class="shoe-viewer-top-card">
-      <div class="shoe-viewer-info-copy">
-        <h2>${escapeHtml(product.name || "Proizvod")}</h2>
-        ${viewerMetaPrimary ? `<p class="shoe-viewer-rubric">${escapeHtml(viewerMetaPrimary)}</p>` : ``}
-        ${viewerMetaSecondary ? `<p class="shoe-viewer-subcopy">${escapeHtml(viewerMetaSecondary)}</p>` : ``}
+    <div class="shoe-viewer-shell">
+      <button class="shoe-zoom-close" type="button" onclick="event.stopPropagation(); csCloseShoeZoom()" aria-label="Zatvori zum">×</button>
+
+      <div class="shoe-viewer-top-card">
+        <div class="shoe-viewer-top-copy">
+          <h2>${escapeHtml(product.name || "Patike")}</h2>
+          ${viewerMetaPrimary ? `<p class="shoe-viewer-subtitle">${escapeHtml(viewerMetaPrimary)}</p>` : ``}
+          ${viewerMetaSecondary ? `<p class="shoe-viewer-subcopy">${escapeHtml(viewerMetaSecondary)}</p>` : ``}
+        </div>
+        ${viewerAvailability ? `<div class="shoe-viewer-status"><span class="shoe-viewer-status-dot"></span>${escapeHtml(viewerAvailability)}</div>` : ``}
       </div>
-      ${viewerAvailability ? `<span class="shoe-viewer-status"><i></i>${escapeHtml(viewerAvailability)}</span>` : ``}
-    </div>
-    <div class="shoe-viewer-top-actions" aria-label="Podeli i zumiraj">
-      <button class="shoe-action red" type="button" onclick="shareShoeProduct(event)" aria-label="Podeli oglas" title="Podeli oglas">${csViewerShareIcon()}<span>Podeli</span></button>
-      <button class="shoe-action zoom" type="button" onclick="event.stopPropagation(); csToggleShoeZoom()" aria-label="Zumiraj sliku" title="Zumiraj sliku">${csViewerZoomIcon()}<span>Zumiraj</span></button>
-    </div>
-    <div class="shoe-viewer-media">${img ? `<div class="shoe-viewer-image-frame"><img class="shoe-viewer-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Proizvod')}"></div>` : `<div class="shoe-viewer-image-frame"><span>Bez slike</span></div>`}</div>
-    <button class="shoe-viewer-close" type="button" onclick="closeShoeViewer()" aria-label="Zatvori oglas">×</button>
-    <button class="shoe-zoom-close" type="button" onclick="event.stopPropagation(); csCloseShoeZoom()" aria-label="Zatvori zum">×</button>
-    ${imgs.length > 1 ? `<button class="shoe-arrow shoe-arrow-left" type="button" onclick="event.stopPropagation(); shoeChangeImage(-1)">‹</button><button class="shoe-arrow shoe-arrow-right" type="button" onclick="event.stopPropagation(); shoeChangeImage(1)">›</button>` : ""}
-    <div class="shoe-viewer-actions" aria-label="Kontakt akcije proizvoda">
-      <button class="shoe-action blue" type="button" onclick="askShoeProduct(event)" aria-label="Pitaj prodavca" title="Pitaj prodavca">${csViewerMessageIcon()}<span>Pitaj</span></button>
-      <button class="shoe-action green" type="button" onclick="callShoeShop(event)" aria-label="Pozovi prodavnicu" title="Pozovi prodavnicu">${csViewerPhoneIcon()}<span>Pozovi</span></button>
-    </div>
-    ${imgs.length > 1 ? `<div class="shoe-dots">${imgs.map((_,i)=>`<button class="${i===csViewerState.image?'active':''}" onclick="event.stopPropagation(); shoeSetImage(${i})" aria-label="Slika ${i + 1}"></button>`).join("")}</div>` : ""}
-    <div class="shoe-viewer-price-card">
-      <div class="shoe-viewer-price-copy">
-        <strong>${escapeHtml(csProductPrice(product))}</strong>
-        <p>Kupujte sa stilom.</p>
+
+      <div class="shoe-viewer-inline-actions shoe-viewer-inline-actions-top" aria-label="Gornje akcije proizvoda">
+        <button class="shoe-action inline" type="button" onclick="shareShoeProduct(event)" aria-label="Podeli oglas" title="Podeli oglas">${csViewerShareIcon()}<span>Podeli</span></button>
+        <button class="shoe-action inline" type="button" onclick="event.stopPropagation(); csToggleShoeZoom()" aria-label="Zumiraj sliku" title="Zumiraj sliku">${csViewerZoomIcon()}<span>Zumiraj</span></button>
       </div>
-      ${shopLogo ? `<img class="shoe-viewer-shop-logo" src="${escapeHtml(shopLogo)}" alt="${escapeHtml(shopName)} logo">` : `<div class="shoe-viewer-shop-logo shoe-viewer-shop-logo-fallback">${escapeHtml(String(shopName || "S").slice(0,1).toUpperCase())}</div>`}
-    </div>
-    <div class="shoe-viewer-powered">${CITYSTYLE_POWERED}</div>`;
+
+      <div class="shoe-viewer-media-card">
+        <button class="shoe-viewer-close" type="button" onclick="closeShoeViewer()" aria-label="Zatvori oglas">×</button>
+        <div class="shoe-viewer-media">${img ? `<img class="shoe-viewer-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Proizvod')}">` : `<span>Bez slike</span>`}</div>
+      </div>
+
+      <div class="shoe-viewer-bottom-row">
+        <div class="shoe-viewer-inline-actions shoe-viewer-inline-actions-bottom" aria-label="Donje akcije proizvoda">
+          <button class="shoe-action inline" type="button" onclick="askShoeProduct(event)" aria-label="Pošalji poruku" title="Pošalji poruku">${csViewerMessageIcon()}<span>Pitaj</span></button>
+          <button class="shoe-action inline" type="button" onclick="callShoeShop(event)" aria-label="Pozovi prodavnicu" title="Pozovi prodavnicu">${csViewerPhoneIcon()}<span>Pozovi</span></button>
+        </div>
+        ${imgs.length > 1 ? `<div class="shoe-dots">${imgs.map((_,i)=>`<button class="${i===csViewerState.image?'active':''}" onclick="event.stopPropagation(); shoeSetImage(${i})" aria-label="Slika ${i + 1}"></button>`).join("")}</div>` : `<div class="shoe-dots shoe-dots-placeholder"><button class="active" aria-hidden="true"></button></div>`}
+      </div>
+
+      <div class="shoe-viewer-bottom-card">
+        <div class="shoe-viewer-bottom-main">
+          <div class="shoe-viewer-price">${escapeHtml(csProductPrice(product))}</div>
+          <p class="shoe-viewer-note">Pošaljite upit za dostupan broj.</p>
+        </div>
+        <div class="shoe-viewer-bottom-logo">
+          ${shopLogo ? `<img src="${escapeHtml(shopLogo)}" alt="${escapeHtml(shopName)} logo">` : `<div class="shoe-viewer-bottom-logo-fallback">${escapeHtml((shopName || 'S').charAt(0).toUpperCase())}</div>`}
+        </div>
+      </div>
+
+      <div class="shoe-viewer-powered">${CITYSTYLE_POWERED}</div>
+    </div>`;
   csApplyShoePanZoom();
   viewer.ontouchstart = e => {
     if (!csViewerState) return;
