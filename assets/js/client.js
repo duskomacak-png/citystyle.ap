@@ -1929,6 +1929,19 @@ function csCloseShoeZoom(){
   csSetShoeZoomMode(false, 1);
 }
 
+
+function csViewerPriceHtml(product = {}) {
+  const currency = escapeHtml(window.App?.normalizeCurrency?.(product.currency || "RSD") || product.currency || "RSD");
+  const priceNumber = Number(product.price || 0);
+  const priceText = String(product.price_text || "").trim();
+  if (priceNumber > 0) {
+    const formatted = escapeHtml(priceNumber.toLocaleString("de-DE"));
+    return `<span class="shoe-viewer-price-number">${formatted}</span><span class="shoe-viewer-price-currency">${currency}</span>`;
+  }
+  if (priceText) return `<span class="shoe-viewer-price-number shoe-viewer-price-text-only">${escapeHtml(priceText)}</span>`;
+  return `<span class="shoe-viewer-price-number shoe-viewer-price-text-only">Cena na upit</span>`;
+}
+
 function renderShoeViewer() {
   const product = currentShoeProduct();
   if (!product) return;
@@ -1940,7 +1953,7 @@ function renderShoeViewer() {
     viewer.id = "shoeViewer";
     document.body.appendChild(viewer);
   }
-  viewer.className = "shoe-viewer shoe-viewer-locked shoe-viewer-final-v241";
+  viewer.className = "shoe-viewer shoe-viewer-locked shoe-viewer-final-v243";
   viewer.classList.toggle("shoe-viewer-zoomed", !!csViewerState.zoomed);
   viewer.setAttribute("data-price", csProductPrice(product));
   const viewerMetaPrimary = csProductViewerMetaPrimary(product);
@@ -1981,15 +1994,15 @@ function renderShoeViewer() {
 
       <div class="shoe-viewer-bottom-card">
         <div class="shoe-viewer-bottom-main">
-          <div class="shoe-viewer-price">${escapeHtml(csProductPrice(product))}</div>
-          <p class="shoe-viewer-note">Pošaljite upit za dostupan broj.</p>
+          <div class="shoe-viewer-price">${csViewerPriceHtml(product)}</div>
+          <p class="shoe-viewer-note"><span class="shoe-viewer-note-shield">✓</span> Kupujte sa stilom.</p>
         </div>
         <div class="shoe-viewer-bottom-logo">
           ${shopLogo ? `<img src="${escapeHtml(shopLogo)}" alt="${escapeHtml(shopName)} logo">` : `<div class="shoe-viewer-bottom-logo-fallback">${escapeHtml((shopName || 'S').charAt(0).toUpperCase())}</div>`}
         </div>
       </div>
 
-      <div class="shoe-viewer-powered">${CITYSTYLE_POWERED}</div>
+      <div class="shoe-viewer-powered">powered by <span>CityStyle.app</span></div>
     </div>`;
   csApplyShoePanZoom();
   viewer.ontouchstart = e => {
