@@ -1940,7 +1940,7 @@ function renderShoeViewer() {
     viewer.id = "shoeViewer";
     document.body.appendChild(viewer);
   }
-  viewer.className = "shoe-viewer shoe-viewer-locked shoe-viewer-final-v240";
+  viewer.className = "shoe-viewer shoe-viewer-locked shoe-viewer-final-v241";
   viewer.classList.toggle("shoe-viewer-zoomed", !!csViewerState.zoomed);
   viewer.setAttribute("data-price", csProductPrice(product));
   const viewerMetaPrimary = csProductViewerMetaPrimary(product);

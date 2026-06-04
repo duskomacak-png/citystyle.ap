@@ -1,6 +1,6 @@
 // sw.js
 // CityStyle v240 - viewer lock
-const CACHE_NAME = "citystyle-v240_viewer_lock";
+const CACHE_NAME = "citystyle-v241_viewer_lock";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
