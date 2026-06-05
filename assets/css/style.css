@@ -16068,3 +16068,111 @@ body.owner-sound-ready #salon-notifications-btn{
   #shoeViewer.shoe-viewer-final-v256 .shoe-viewer-price-number{font-size:clamp(36px,3.3vw,50px) !important;}
   #shoeViewer.shoe-viewer-final-v256 .shoe-viewer-price-currency{font-size:clamp(18px,1.55vw,24px) !important;}
 }
+
+
+/* === FINAL RESET v257: isolated viewer, remove legacy conflicts completely === */
+#shoeViewer.shoe-viewer-final-v257{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:30000 !important;
+  overflow:auto !important;
+  background:#040707 !important;
+  color:#fff !important;
+  -webkit-overflow-scrolling:touch !important;
+}
+#shoeViewer.shoe-viewer-final-v257,
+#shoeViewer.shoe-viewer-final-v257 *{box-sizing:border-box !important;}
+#shoeViewer.shoe-viewer-final-v257::before,
+#shoeViewer.shoe-viewer-final-v257::after,
+#shoeViewer.shoe-viewer-final-v257 .shoe-viewer-top,
+#shoeViewer.shoe-viewer-final-v257 .shoe-viewer-actions,
+#shoeViewer.shoe-viewer-final-v257 .shoe-arrow,
+#shoeViewer.shoe-viewer-final-v257 .shoe-viewer-inline-actions-top,
+#shoeViewer.shoe-viewer-final-v257 .shoe-viewer-inline-actions-bottom,
+#shoeViewer.shoe-viewer-final-v257 .shoe-viewer-bottom-row,
+#shoeViewer.shoe-viewer-final-v257 .shoe-viewer-note,
+#shoeViewer.shoe-viewer-final-v257 .shoe-viewer-subtitle,
+#shoeViewer.shoe-viewer-final-v257 .shoe-viewer-media-bg,
+#shoeViewer.shoe-viewer-final-v257 .shoe-zoom-close{display:none !important;content:none !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-shell{
+  --stack-width:min(100vw - 16px, 540px);
+  --radius:24px;
+  width:100% !important;
+  min-height:100dvh !important;
+  margin:0 auto !important;
+  padding:8px 8px calc(14px + env(safe-area-inset-bottom,0px)) !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  gap:8px !important;
+}
+#shoeViewer.shoe-viewer-final-v257 .csv257-top,
+#shoeViewer.shoe-viewer-final-v257 .csv257-dots-row,
+#shoeViewer.shoe-viewer-final-v257 .csv257-media-card,
+#shoeViewer.shoe-viewer-final-v257 .csv257-actions-grid,
+#shoeViewer.shoe-viewer-final-v257 .csv257-bottom,
+#shoeViewer.shoe-viewer-final-v257 .csv257-powered{
+  width:var(--stack-width) !important;
+  max-width:var(--stack-width) !important;
+}
+#shoeViewer.shoe-viewer-final-v257 .csv257-top,
+#shoeViewer.shoe-viewer-final-v257 .csv257-bottom{
+  border-radius:var(--radius) !important;
+  background:linear-gradient(135deg, rgba(244,250,241,.97) 0%, rgba(202,228,192,.93) 56%, rgba(139,175,131,.84) 100%) !important;
+  border:1.5px solid rgba(126,255,139,.88) !important;
+  box-shadow:0 0 0 1px rgba(126,255,139,.18), 0 0 20px rgba(92,255,116,.14), inset 0 0 14px rgba(255,255,255,.24) !important;
+  overflow:hidden !important;
+}
+#shoeViewer.shoe-viewer-final-v257 .csv257-top{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto !important;
+  align-items:center !important;
+  gap:12px !important;
+  padding:14px 16px !important;
+  min-height:132px !important;
+}
+#shoeViewer.shoe-viewer-final-v257 .csv257-kicker{margin:0 0 8px !important;color:#0b1011 !important;font-size:clamp(14px,3.8vw,20px) !important;font-weight:850 !important;line-height:1.05 !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-top-copy{min-width:0 !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-top-copy h2{margin:0 0 8px !important;color:#000 !important;font-size:clamp(30px,9vw,54px) !important;line-height:.93 !important;font-weight:950 !important;letter-spacing:-.045em !important;overflow-wrap:anywhere !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-subcopy{margin:0 !important;color:#171d1d !important;font-size:clamp(16px,4.9vw,24px) !important;line-height:1.12 !important;font-weight:760 !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-status{display:inline-flex !important;align-items:center !important;justify-content:center !important;gap:8px !important;min-width:122px !important;min-height:46px !important;padding:10px 14px !important;border-radius:999px !important;background:rgba(8,12,11,.88) !important;color:#fff !important;border:1px solid rgba(145,255,158,.28) !important;font-size:clamp(14px,4vw,19px) !important;font-weight:850 !important;white-space:nowrap !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-status-dot{width:11px !important;height:11px !important;border-radius:999px !important;background:#13ec43 !important;box-shadow:0 0 0 4px rgba(19,236,67,.13) !important;flex:0 0 auto !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-dots-row{display:flex !important;align-items:center !important;justify-content:center !important;min-height:20px !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-dots{display:flex !important;align-items:center !important;justify-content:center !important;gap:11px !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-dot{width:13px !important;height:13px !important;border-radius:999px !important;border:0 !important;padding:0 !important;background:rgba(255,255,255,.65) !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-dot.active{background:#b7ffc0 !important;box-shadow:0 0 0 4px rgba(126,255,139,.15) !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-media-card{position:relative !important;aspect-ratio:1 / 1 !important;border-radius:var(--radius) !important;border:1.5px solid rgba(126,255,139,.82) !important;box-shadow:0 0 0 1px rgba(126,255,139,.14), 0 0 16px rgba(92,255,116,.12) !important;background:#121619 !important;overflow:hidden !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-media{position:absolute !important;inset:0 !important;background:#9e0505 !important;padding:10px !important;border-radius:calc(var(--radius) - 2px) !important;overflow:hidden !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-main-img,
+#shoeViewer.shoe-viewer-final-v257 .shoe-viewer-main-img{position:absolute !important;inset:10px !important;width:calc(100% - 20px) !important;height:calc(100% - 20px) !important;object-fit:contain !important;object-position:center center !important;display:block !important;margin:0 !important;padding:0 !important;border-radius:18px !important;background:#fff !important;transform:none !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-close{position:absolute !important;top:12px !important;right:12px !important;width:58px !important;height:58px !important;z-index:4 !important;display:grid !important;place-items:center !important;border-radius:999px !important;border:1.5px solid rgba(126,255,139,.84) !important;background:rgba(4,8,7,.88) !important;color:#fff !important;font-size:40px !important;line-height:1 !important;padding:0 !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-actions-grid{display:grid !important;grid-template-columns:repeat(4,minmax(0,1fr)) !important;gap:8px !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-btn{appearance:none !important;-webkit-appearance:none !important;border:1.35px solid rgba(126,255,139,.78) !important;background:linear-gradient(180deg,rgba(7,13,12,.98),rgba(8,17,15,.94)) !important;color:#fff !important;display:flex !important;align-items:center !important;justify-content:center !important;width:100% !important;height:54px !important;min-height:54px !important;padding:8px 6px !important;border-radius:18px !important;font-size:clamp(12px,3.5vw,17px) !important;font-weight:850 !important;line-height:1 !important;box-shadow:0 0 0 1px rgba(126,255,139,.08), inset 0 0 12px rgba(109,255,153,.05) !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-btn span{display:block !important;white-space:nowrap !important;overflow:hidden !important;text-overflow:ellipsis !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-bottom{display:grid !important;grid-template-columns:minmax(0,1fr) 84px !important;align-items:center !important;gap:12px !important;padding:14px 16px !important;min-height:106px !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-price{display:flex !important;flex-wrap:wrap !important;align-items:flex-end !important;gap:9px !important;color:#000 !important;}
+#shoeViewer.shoe-viewer-final-v257 .shoe-viewer-price-number{font-size:clamp(34px,10.8vw,54px) !important;line-height:.92 !important;font-weight:950 !important;letter-spacing:-.045em !important;}
+#shoeViewer.shoe-viewer-final-v257 .shoe-viewer-price-currency{font-size:clamp(18px,5vw,26px) !important;line-height:1.05 !important;font-weight:900 !important;padding-bottom:5px !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-logo{width:84px !important;height:84px !important;border-radius:18px !important;overflow:hidden !important;background:#050608 !important;display:grid !important;place-items:center !important;border:1px solid rgba(0,0,0,.45) !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-logo img{width:100% !important;height:100% !important;object-fit:cover !important;display:block !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-logo-fallback{font-size:30px !important;font-weight:900 !important;color:#b8ffbe !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-powered{padding:2px 0 !important;text-align:center !important;color:rgba(255,255,255,.48) !important;font-size:12px !important;line-height:1.05 !important;}
+#shoeViewer.shoe-viewer-final-v257 .csv257-powered span{color:#9dffa9 !important;}
+@media (max-width:389px){
+  #shoeViewer.shoe-viewer-final-v257 .csv257-shell{--stack-width:min(100vw - 14px, 540px);padding:7px 7px calc(12px + env(safe-area-inset-bottom,0px)) !important;}
+  #shoeViewer.shoe-viewer-final-v257 .csv257-top{min-height:126px !important;padding:13px 14px !important;}
+  #shoeViewer.shoe-viewer-final-v257 .csv257-top-copy h2{font-size:clamp(28px,8.6vw,42px) !important;}
+  #shoeViewer.shoe-viewer-final-v257 .csv257-btn{height:52px !important;min-height:52px !important;font-size:11.5px !important;}
+  #shoeViewer.shoe-viewer-final-v257 .csv257-bottom{grid-template-columns:minmax(0,1fr) 78px !important;padding:13px 14px !important;}
+  #shoeViewer.shoe-viewer-final-v257 .csv257-logo{width:78px !important;height:78px !important;}
+}
+@media (min-width:768px){
+  #shoeViewer.shoe-viewer-final-v257{background:radial-gradient(circle at 50% 0%, rgba(42,80,46,.16), transparent 42%), #050707 !important;}
+  #shoeViewer.shoe-viewer-final-v257 .csv257-shell{--stack-width:520px;padding:18px 18px 20px !important;gap:10px !important;}
+  #shoeViewer.shoe-viewer-final-v257 .csv257-top{min-height:128px !important;padding:14px 18px !important;}
+  #shoeViewer.shoe-viewer-final-v257 .csv257-top-copy h2{font-size:clamp(38px,4vw,54px) !important;}
+  #shoeViewer.shoe-viewer-final-v257 .csv257-subcopy{font-size:clamp(18px,1.7vw,24px) !important;}
+  #shoeViewer.shoe-viewer-final-v257 .csv257-btn{height:50px !important;min-height:50px !important;font-size:14px !important;}
+  #shoeViewer.shoe-viewer-final-v257 .csv257-bottom{grid-template-columns:minmax(0,1fr) 80px !important;min-height:104px !important;}
+  #shoeViewer.shoe-viewer-final-v257 .csv257-logo{width:80px !important;height:80px !important;}
+}

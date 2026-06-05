@@ -1953,7 +1953,8 @@ function renderShoeViewer() {
     viewer.id = "shoeViewer";
     document.body.appendChild(viewer);
   }
-  viewer.className = "shoe-viewer shoe-viewer-locked shoe-viewer-final-v256";
+  viewer.className = "shoe-viewer shoe-viewer-final-v257";
+  viewer.style.cssText = "";
   viewer.classList.toggle("shoe-viewer-zoomed", !!csViewerState.zoomed);
   viewer.setAttribute("data-price", csProductPrice(product));
   const viewerMetaPrimary = csProductViewerMetaPrimary(product);
@@ -1962,44 +1963,42 @@ function renderShoeViewer() {
   const shopLogo = currentSalon?._publicLogo || "";
   const shopName = currentSalon?._publicName || "Prodavnica";
   viewer.innerHTML = `
-    <div class="shoe-viewer-shell">
-      <button class="shoe-zoom-close" type="button" onclick="event.stopPropagation(); csCloseShoeZoom()" aria-label="Zatvori zum">×</button>
-
-      <div class="shoe-viewer-top-card">
-        <div class="shoe-viewer-top-copy">
-          ${viewerMetaPrimary ? `<p class="shoe-viewer-kicker">${escapeHtml(viewerMetaPrimary)}</p>` : ``}
+    <div class="csv257-shell shoe-viewer-shell">
+      <div class="csv257-top shoe-viewer-top-card">
+        <div class="csv257-top-copy shoe-viewer-top-copy">
+          ${viewerMetaPrimary ? `<p class="csv257-kicker shoe-viewer-kicker">${escapeHtml(viewerMetaPrimary)}</p>` : ``}
           <h2>${escapeHtml(product.name || "Proizvod")}</h2>
-          ${viewerMetaSecondary ? `<p class="shoe-viewer-subcopy">${escapeHtml(viewerMetaSecondary)}</p>` : ``}
+          ${viewerMetaSecondary ? `<p class="csv257-subcopy shoe-viewer-subcopy">${escapeHtml(viewerMetaSecondary)}</p>` : ``}
         </div>
-        ${viewerAvailability ? `<div class="shoe-viewer-status"><span class="shoe-viewer-status-dot"></span>${escapeHtml(viewerAvailability)}</div>` : ``}
+        ${viewerAvailability ? `<div class="csv257-status shoe-viewer-status"><span class="csv257-status-dot shoe-viewer-status-dot"></span>${escapeHtml(viewerAvailability)}</div>` : ``}
       </div>
 
-      <div class="shoe-viewer-dots-row" aria-label="Oznake za više slika">
-        ${imgs.length > 1 ? `<div class="shoe-dots">${imgs.map((_,i)=>`<button class="${i===csViewerState.image?'active':''}" onclick="event.stopPropagation(); shoeSetImage(${i})" aria-label="Slika ${i + 1}"></button>`).join("")}</div>` : `<div class="shoe-dots shoe-dots-placeholder" aria-hidden="true"></div>`}
+      <div class="csv257-dots-row shoe-viewer-dots-row" aria-label="Oznake za više slika">
+        ${imgs.length > 1 ? `<div class="csv257-dots">${imgs.map((_,i)=>`<button class="csv257-dot ${i===csViewerState.image?'active':''}" type="button" onclick="event.stopPropagation(); shoeSetImage(${i})" aria-label="Slika ${i + 1}"></button>`).join("")}</div>` : ``}
       </div>
 
-      <div class="shoe-viewer-media-card">
-        <button class="shoe-viewer-close" type="button" onclick="closeShoeViewer()" aria-label="Zatvori oglas">×</button>
-        <div class="shoe-viewer-media">${img ? `<img class="shoe-viewer-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Proizvod')}">` : `<span>Bez slike</span>`}</div>
+      <div class="csv257-media-card shoe-viewer-media-card">
+        <button class="csv257-close shoe-viewer-close" type="button" onclick="closeShoeViewer()" aria-label="Zatvori oglas">×</button>
+        <div class="csv257-media shoe-viewer-media">${img ? `<img class="csv257-main-img shoe-viewer-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Proizvod')}">` : `<span>Bez slike</span>`}</div>
       </div>
 
-      <div class="shoe-viewer-actions-grid" aria-label="Akcije proizvoda">
-        <button class="shoe-action inline" type="button" onclick="askShoeProduct(event)" aria-label="Pošalji poruku" title="Pošalji poruku">${csViewerMessageIcon()}<span>Pitaj</span></button>
-        <button class="shoe-action inline" type="button" onclick="callShoeShop(event)" aria-label="Pozovi prodavnicu" title="Pozovi prodavnicu">${csViewerPhoneIcon()}<span>Pozovi</span></button>
-        <button class="shoe-action inline" type="button" onclick="shareShoeProduct(event)" aria-label="Podeli oglas" title="Podeli oglas">${csViewerShareIcon()}<span>Podeli</span></button>
-        <button class="shoe-action inline" type="button" onclick="event.stopPropagation(); csToggleShoeZoom()" aria-label="Zumiraj sliku" title="Zumiraj sliku">${csViewerZoomIcon()}<span>Zumiraj</span></button>
+      <div class="csv257-actions-grid" aria-label="Akcije proizvoda">
+        <button class="csv257-btn" type="button" onclick="askShoeProduct(event)" aria-label="Pošalji poruku" title="Pošalji poruku"><span>Pitaj</span></button>
+        <button class="csv257-btn" type="button" onclick="callShoeShop(event)" aria-label="Pozovi prodavnicu" title="Pozovi prodavnicu"><span>Pozovi</span></button>
+        <button class="csv257-btn" type="button" onclick="shareShoeProduct(event)" aria-label="Podeli oglas" title="Podeli oglas"><span>Podeli</span></button>
+        <button class="csv257-btn" type="button" onclick="event.stopPropagation(); csToggleShoeZoom()" aria-label="Zumiraj sliku" title="Zumiraj sliku"><span>Zumiraj</span></button>
       </div>
 
-      <div class="shoe-viewer-bottom-card">
-        <div class="shoe-viewer-bottom-main">
-          <div class="shoe-viewer-price">${csViewerPriceHtml(product)}</div>
+      <div class="csv257-bottom shoe-viewer-bottom-card">
+        <div class="csv257-bottom-main shoe-viewer-bottom-main">
+          <div class="csv257-price shoe-viewer-price">${csViewerPriceHtml(product)}</div>
         </div>
-        <div class="shoe-viewer-bottom-logo">
-          ${shopLogo ? `<img src="${escapeHtml(shopLogo)}" alt="${escapeHtml(shopName)} logo">` : `<div class="shoe-viewer-bottom-logo-fallback">${escapeHtml((shopName || 'S').charAt(0).toUpperCase())}</div>`}
+        <div class="csv257-logo shoe-viewer-bottom-logo">
+          ${shopLogo ? `<img src="${escapeHtml(shopLogo)}" alt="${escapeHtml(shopName)} logo">` : `<div class="csv257-logo-fallback shoe-viewer-bottom-logo-fallback">${escapeHtml((shopName || 'S').charAt(0).toUpperCase())}</div>`}
         </div>
       </div>
 
-      <div class="shoe-viewer-powered">powered by <span>CityStyle.app</span></div>
+      <div class="csv257-powered shoe-viewer-powered">powered by <span>citystyle.app</span></div>
     </div>`;
   csApplyShoePanZoom();
   viewer.ontouchstart = e => {
