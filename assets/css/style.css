@@ -17469,3 +17469,243 @@ body.owner-sound-ready #salon-notifications-btn{
     box-shadow: inset 0 0 0 8px #9e0505 !important;
   }
 }
+
+
+/* =========================================================
+   PRODUCT VIEWER v264 - premium image fill mode
+   Closer to reference screenshot: image fills square, no white inner frame.
+   Tradeoff: very bad uploaded photos may be slightly cropped.
+   ========================================================= */
+
+#shoeViewer.product-viewer-v1 {
+  --pv-max-width: min(calc(100vw - 24px), 520px);
+}
+
+/* Restore premium dark/red media look, remove white contain-box feeling */
+#shoeViewer.product-viewer-v1 .pv-media-card {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(180,0,0,.72), rgba(80,0,0,.96) 62%, rgba(14,8,8,1)) !important;
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  border: 1.5px solid rgba(126,255,139,.82) !important;
+  box-shadow: 0 0 0 1px rgba(126,255,139,.14), 0 12px 32px rgba(0,0,0,.34) !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-media-card::before {
+  display: none !important;
+  content: none !important;
+}
+
+/* Premium fill: image fills the 1:1 card. This is why it looks more like the reference. */
+#shoeViewer.product-viewer-v1 .pv-main-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center center !important;
+  padding: 0 !important;
+  background: transparent !important;
+  box-sizing: border-box !important;
+  border-radius: 21px !important;
+  display: block !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+/* Smaller clean X like the reference */
+#shoeViewer.product-viewer-v1 .pv-close {
+  width: 38px !important;
+  height: 38px !important;
+  top: 10px !important;
+  right: 10px !important;
+  font-size: 25px !important;
+  line-height: 1 !important;
+  background: rgba(4,8,7,.90) !important;
+  color: #fff !important;
+  border: 1.5px solid rgba(126,255,139,.82) !important;
+  box-shadow: 0 0 14px rgba(126,255,139,.18), 0 4px 14px rgba(0,0,0,.45) !important;
+}
+
+/* Clean line icons instead of emoji look */
+#shoeViewer.product-viewer-v1 .pv-btn {
+  height: 38px !important;
+  min-height: 38px !important;
+  border-radius: 15px !important;
+  gap: 5px !important;
+  padding: 4px 5px !important;
+  font-size: clamp(10px, 2.8vw, 13px) !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-btn-icon {
+  width: 17px !important;
+  height: 17px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-btn-icon svg {
+  width: 17px !important;
+  height: 17px !important;
+  stroke: #d9ffd4 !important;
+  fill: none !important;
+  stroke-width: 2.1 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  display: block !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-btn-text {
+  display: inline-block !important;
+  color: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+@media (max-width: 389px) {
+  #shoeViewer.product-viewer-v1 .pv-close {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 22px !important;
+    top: 9px !important;
+    right: 9px !important;
+  }
+
+  #shoeViewer.product-viewer-v1 .pv-btn {
+    height: 36px !important;
+    min-height: 36px !important;
+    font-size: 9.8px !important;
+    gap: 4px !important;
+  }
+
+  #shoeViewer.product-viewer-v1 .pv-btn-icon,
+  #shoeViewer.product-viewer-v1 .pv-btn-icon svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  #shoeViewer.product-viewer-v1 .pv-close {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 20px !important;
+    top: 8px !important;
+    right: 8px !important;
+  }
+
+  #shoeViewer.product-viewer-v1 .pv-btn {
+    height: 31px !important;
+    min-height: 31px !important;
+    font-size: 10px !important;
+    border-radius: 12px !important;
+  }
+
+  #shoeViewer.product-viewer-v1 .pv-btn-icon,
+  #shoeViewer.product-viewer-v1 .pv-btn-icon svg {
+    width: 13px !important;
+    height: 13px !important;
+  }
+}
+
+
+/* =========================================================
+   PRODUCT VIEWER v265 - STRONG NEON GLOW
+   Visual-only upgrade: stronger neon/glass light like reference screenshot.
+   ========================================================= */
+#shoeViewer.product-viewer-v1 {
+  --pv-neon: rgba(132,255,146,.96);
+  --pv-neon-soft: rgba(132,255,146,.34);
+  --pv-neon-mid: rgba(132,255,146,.20);
+}
+
+#shoeViewer.product-viewer-v1 .pv-top-card,
+#shoeViewer.product-viewer-v1 .pv-bottom-card {
+  border: 1.7px solid var(--pv-neon) !important;
+  box-shadow:
+    0 0 0 1px rgba(200,255,206,.32),
+    0 0 10px rgba(132,255,146,.42),
+    0 0 26px rgba(132,255,146,.26),
+    0 0 52px rgba(132,255,146,.14),
+    inset 0 0 18px rgba(255,255,255,.30),
+    inset 0 0 40px rgba(180,255,191,.14) !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-media-card {
+  border: 1.7px solid var(--pv-neon) !important;
+  box-shadow:
+    0 0 0 1px rgba(200,255,206,.24),
+    0 0 10px rgba(132,255,146,.28),
+    0 0 22px rgba(132,255,146,.14),
+    inset 0 0 14px rgba(255,255,255,.08) !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-status {
+  border: 1.2px solid rgba(159,255,171,.50) !important;
+  box-shadow:
+    0 0 0 1px rgba(132,255,146,.10),
+    0 0 10px rgba(132,255,146,.12),
+    inset 0 0 12px rgba(255,255,255,.04) !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-status-dot {
+  box-shadow:
+    0 0 0 4px rgba(19,236,67,.16),
+    0 0 10px rgba(19,236,67,.95),
+    0 0 22px rgba(19,236,67,.48) !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-dot {
+  background: rgba(255,255,255,.78) !important;
+  box-shadow: 0 0 7px rgba(255,255,255,.18) !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-dot.active {
+  background: #c9ffd0 !important;
+  box-shadow:
+    0 0 0 4px rgba(132,255,146,.14),
+    0 0 10px rgba(132,255,146,.80),
+    0 0 22px rgba(132,255,146,.44) !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-close {
+  border: 1.7px solid var(--pv-neon) !important;
+  box-shadow:
+    0 0 0 1px rgba(132,255,146,.10),
+    0 0 12px rgba(132,255,146,.30),
+    0 0 24px rgba(132,255,146,.14),
+    0 4px 14px rgba(0,0,0,.48) !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-btn {
+  border: 1.5px solid rgba(132,255,146,.96) !important;
+  box-shadow:
+    0 0 0 1px rgba(132,255,146,.09),
+    0 0 10px rgba(132,255,146,.22),
+    0 0 18px rgba(132,255,146,.10),
+    inset 0 0 14px rgba(132,255,146,.06),
+    inset 0 0 5px rgba(255,255,255,.04) !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-btn:hover,
+#shoeViewer.product-viewer-v1 .pv-btn:focus-visible {
+  box-shadow:
+    0 0 0 1px rgba(132,255,146,.14),
+    0 0 14px rgba(132,255,146,.30),
+    0 0 22px rgba(132,255,146,.14),
+    inset 0 0 16px rgba(132,255,146,.08) !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-btn-icon svg {
+  filter: drop-shadow(0 0 4px rgba(132,255,146,.30));
+}
+
+#shoeViewer.product-viewer-v1 .pv-powered span {
+  text-shadow:
+    0 0 7px rgba(132,255,146,.62),
+    0 0 16px rgba(132,255,146,.20) !important;
+}

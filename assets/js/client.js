@@ -1997,19 +1997,19 @@ function renderShoeViewer() {
 
       <div class="pv-actions">
         <button class="pv-btn" type="button" onclick="askShoeProduct(event)">
-          <span class="pv-btn-icon">💬</span>
+          <span class="pv-btn-icon">${csViewerMessageIcon()}</span>
           <span class="pv-btn-text">Pitaj</span>
         </button>
         <button class="pv-btn" type="button" onclick="callShoeShop(event)">
-          <span class="pv-btn-icon">📞</span>
+          <span class="pv-btn-icon">${csViewerPhoneIcon()}</span>
           <span class="pv-btn-text">Pozovi</span>
         </button>
         <button class="pv-btn" type="button" onclick="shareShoeProduct(event)">
-          <span class="pv-btn-icon">🔗</span>
+          <span class="pv-btn-icon">${csViewerShareIcon()}</span>
           <span class="pv-btn-text">Podeli</span>
         </button>
         <button class="pv-btn" type="button" onclick="event.stopPropagation(); csOpenRealShoeZoom(1)">
-          <span class="pv-btn-icon">🔍</span>
+          <span class="pv-btn-icon">${csViewerZoomIcon()}</span>
           <span class="pv-btn-text">Zumiraj</span>
         </button>
       </div>
