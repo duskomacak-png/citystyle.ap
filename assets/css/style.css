@@ -17239,3 +17239,165 @@ body.owner-sound-ready #salon-notifications-btn{
     font-size: 8px !important;
   }
 }
+
+
+/* =========================================================
+   PRODUCT VIEWER v262 - icons + better 1:1 image fit
+   Safe final UI-only patch on top of product-viewer-v1.
+   ========================================================= */
+
+#shoeViewer.product-viewer-v1 .pv-media-card {
+  aspect-ratio: 1 / 1 !important;
+  position: relative !important;
+  background: #111 !important;
+  border-radius: 22px !important;
+  overflow: hidden !important;
+  box-shadow: 0 0 0 1px rgba(126,255,139,.14), 0 12px 32px rgba(0,0,0,.30) !important;
+  border: 1.5px solid rgba(126,255,139,.82) !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-main-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  padding: 16px !important;
+  background: #111 !important;
+  image-rendering: auto !important;
+  border-radius: 18px !important;
+  display: block !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-close {
+  top: 10px !important;
+  right: 10px !important;
+  width: 38px !important;
+  height: 38px !important;
+  background: rgba(0,0,0,.82) !important;
+  color: #fff !important;
+  border: 1.5px solid rgba(126,255,139,.82) !important;
+  border-radius: 50% !important;
+  font-size: 25px !important;
+  line-height: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  z-index: 20 !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.35) !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-actions {
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-btn {
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 4px 5px !important;
+  background: linear-gradient(180deg, rgba(7,13,12,.98), rgba(8,17,15,.94)) !important;
+  color: #fff !important;
+  border: 1.35px solid rgba(126,255,139,.78) !important;
+  border-radius: 999px !important;
+  font-weight: 800 !important;
+  font-size: clamp(10px, 2.8vw, 13px) !important;
+  line-height: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  box-shadow: 0 0 0 1px rgba(126,255,139,.08), inset 0 0 12px rgba(109,255,153,.05) !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-btn-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  flex: 0 0 auto !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-btn-text {
+  display: inline-block !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  line-height: 1 !important;
+  color: inherit !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-bottom-card {
+  min-height: 82px !important;
+}
+
+#shoeViewer.product-viewer-v1 .pv-logo img {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  border-radius: inherit !important;
+  object-fit: cover !important;
+}
+
+@media (max-width: 389px) {
+  #shoeViewer.product-viewer-v1 .pv-main-img {
+    padding: 14px !important;
+  }
+
+  #shoeViewer.product-viewer-v1 .pv-close {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 23px !important;
+    top: 9px !important;
+    right: 9px !important;
+  }
+
+  #shoeViewer.product-viewer-v1 .pv-btn {
+    height: 36px !important;
+    min-height: 36px !important;
+    font-size: 9.8px !important;
+    gap: 3px !important;
+    padding: 3px 4px !important;
+  }
+
+  #shoeViewer.product-viewer-v1 .pv-btn-icon {
+    font-size: 12px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  #shoeViewer.product-viewer-v1 .pv-main-img {
+    padding: 14px !important;
+  }
+
+  #shoeViewer.product-viewer-v1 .pv-close {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 21px !important;
+    top: 8px !important;
+    right: 8px !important;
+  }
+
+  #shoeViewer.product-viewer-v1 .pv-actions {
+    gap: 5px !important;
+  }
+
+  #shoeViewer.product-viewer-v1 .pv-btn {
+    height: 32px !important;
+    min-height: 32px !important;
+    font-size: 10px !important;
+    gap: 3px !important;
+    padding: 3px 4px !important;
+  }
+
+  #shoeViewer.product-viewer-v1 .pv-btn-icon {
+    font-size: 11px !important;
+  }
+}

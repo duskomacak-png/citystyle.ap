@@ -1996,10 +1996,22 @@ function renderShoeViewer() {
       </div>
 
       <div class="pv-actions">
-        <button class="pv-btn" type="button" onclick="askShoeProduct(event)">Pitaj</button>
-        <button class="pv-btn" type="button" onclick="callShoeShop(event)">Pozovi</button>
-        <button class="pv-btn" type="button" onclick="shareShoeProduct(event)">Podeli</button>
-        <button class="pv-btn" type="button" onclick="event.stopPropagation(); csOpenRealShoeZoom(1)">Zumiraj</button>
+        <button class="pv-btn" type="button" onclick="askShoeProduct(event)">
+          <span class="pv-btn-icon">💬</span>
+          <span class="pv-btn-text">Pitaj</span>
+        </button>
+        <button class="pv-btn" type="button" onclick="callShoeShop(event)">
+          <span class="pv-btn-icon">📞</span>
+          <span class="pv-btn-text">Pozovi</span>
+        </button>
+        <button class="pv-btn" type="button" onclick="shareShoeProduct(event)">
+          <span class="pv-btn-icon">🔗</span>
+          <span class="pv-btn-text">Podeli</span>
+        </button>
+        <button class="pv-btn" type="button" onclick="event.stopPropagation(); csOpenRealShoeZoom(1)">
+          <span class="pv-btn-icon">🔍</span>
+          <span class="pv-btn-text">Zumiraj</span>
+        </button>
       </div>
 
       <div class="pv-bottom-card">
