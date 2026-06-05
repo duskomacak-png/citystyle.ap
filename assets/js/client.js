@@ -1735,8 +1735,6 @@ function csApplyShoePanZoom(){
   const viewer = document.getElementById("shoeViewer");
   if (!img) return;
 
-  // New product-viewer-v1 is intentionally isolated.
-  // Do not apply old transform zoom here; the Zumiraj button opens the real lightbox instead.
   if (viewer?.classList?.contains("product-viewer-v1")) {
     img.style.opacity = "1";
     img.style.visibility = "visible";
@@ -1979,23 +1977,22 @@ function renderShoeViewer() {
   const shopName = currentSalon?._publicName || "Prodavnica";
   viewer.innerHTML = `
     <div class="pv-shell">
-
       <div class="pv-top-card">
-        <div class="pv-top-copy">
+        <div class="pv-top-left">
           ${viewerMetaPrimary ? `<p class="pv-kicker">${escapeHtml(viewerMetaPrimary)}</p>` : ``}
-          <h2>${escapeHtml(product.name || "Proizvod")}</h2>
-          ${viewerMetaSecondary ? `<p class="pv-subcopy">${escapeHtml(viewerMetaSecondary)}</p>` : ``}
+          <h2 class="pv-title">${escapeHtml(product.name || "Proizvod")}</h2>
+          ${viewerMetaSecondary ? `<p class="pv-subtitle">${escapeHtml(viewerMetaSecondary)}</p>` : ``}
         </div>
         ${viewerAvailability ? `<div class="pv-status"><span class="pv-status-dot"></span>${escapeHtml(viewerAvailability)}</div>` : ``}
       </div>
 
-      <div class="pv-dots-row" aria-label="Oznake za više slika">
+      <div class="pv-dots-row">
         ${imgs.length > 1 ? `<div class="pv-dots">${imgs.map((_,i)=>`<button class="pv-dot ${i===csViewerState.image?'active':''}" type="button" onclick="event.stopPropagation(); shoeSetImage(${i})" aria-label="Slika ${i + 1}"></button>`).join("")}</div>` : ``}
       </div>
 
       <div class="pv-media-card">
         <button class="pv-close" type="button" onclick="closeShoeViewer()" aria-label="Zatvori oglas">×</button>
-        <div class="pv-media">${img ? `<img class="pv-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Proizvod')}">` : `<span>Bez slike</span>`}</div>
+        ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Proizvod')}" class="pv-main-img">` : `<div class="pv-no-img">Bez slike</div>`}
       </div>
 
       <div class="pv-actions">
