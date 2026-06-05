@@ -1731,9 +1731,23 @@ function csClampZoomPan(value, min, max){
 }
 function csApplyShoePanZoom(){
   if (!csViewerState) return;
-  const img = document.querySelector("#shoeViewer .shoe-viewer-main-img");
+  const img = document.querySelector("#shoeViewer .pv-main-img") || document.querySelector("#shoeViewer .shoe-viewer-main-img");
   const viewer = document.getElementById("shoeViewer");
   if (!img) return;
+
+  // New product-viewer-v1 is intentionally isolated.
+  // Do not apply old transform zoom here; the Zumiraj button opens the real lightbox instead.
+  if (viewer?.classList?.contains("product-viewer-v1")) {
+    img.style.opacity = "1";
+    img.style.visibility = "visible";
+    img.style.transform = "";
+    img.style.willChange = "auto";
+    csViewerState.zoomed = false;
+    csViewerState.zoomScale = 1;
+    document.documentElement.classList.remove("cs-zoom-active");
+    return;
+  }
+
   const scale = Number(csViewerState.zoomScale || 1);
   img.style.opacity = "1";
   img.style.visibility = "visible";
@@ -1785,7 +1799,7 @@ function csSetShoeZoomMode(zoomed, scale = 2.65){
 function csGetCurrentShoeImageSrc(){
   const p = currentShoeProduct();
   const imgs = csProductImages(p);
-  return imgs?.[csViewerState?.image || 0] || imgs?.[0] || document.querySelector("#shoeViewer .shoe-viewer-main-img")?.src || "";
+  return imgs?.[csViewerState?.image || 0] || imgs?.[0] || (document.querySelector("#shoeViewer .pv-main-img") || document.querySelector("#shoeViewer .shoe-viewer-main-img"))?.src || "";
 }
 function csOpenRealShoeZoom(startScale = 1){
   const product = currentShoeProduct();
@@ -1953,7 +1967,8 @@ function renderShoeViewer() {
     viewer.id = "shoeViewer";
     document.body.appendChild(viewer);
   }
-  viewer.className = "shoe-viewer shoe-viewer-final-v257";
+  viewer.className = "product-viewer-v1";
+  viewer.style.cssText = "";
   viewer.style.cssText = "";
   viewer.classList.toggle("shoe-viewer-zoomed", !!csViewerState.zoomed);
   viewer.setAttribute("data-price", csProductPrice(product));
@@ -1963,42 +1978,41 @@ function renderShoeViewer() {
   const shopLogo = currentSalon?._publicLogo || "";
   const shopName = currentSalon?._publicName || "Prodavnica";
   viewer.innerHTML = `
-    <div class="csv257-shell shoe-viewer-shell">
-      <div class="csv257-top shoe-viewer-top-card">
-        <div class="csv257-top-copy shoe-viewer-top-copy">
-          ${viewerMetaPrimary ? `<p class="csv257-kicker shoe-viewer-kicker">${escapeHtml(viewerMetaPrimary)}</p>` : ``}
+    <div class="pv-shell">
+
+      <div class="pv-top-card">
+        <div class="pv-top-copy">
+          ${viewerMetaPrimary ? `<p class="pv-kicker">${escapeHtml(viewerMetaPrimary)}</p>` : ``}
           <h2>${escapeHtml(product.name || "Proizvod")}</h2>
-          ${viewerMetaSecondary ? `<p class="csv257-subcopy shoe-viewer-subcopy">${escapeHtml(viewerMetaSecondary)}</p>` : ``}
+          ${viewerMetaSecondary ? `<p class="pv-subcopy">${escapeHtml(viewerMetaSecondary)}</p>` : ``}
         </div>
-        ${viewerAvailability ? `<div class="csv257-status shoe-viewer-status"><span class="csv257-status-dot shoe-viewer-status-dot"></span>${escapeHtml(viewerAvailability)}</div>` : ``}
+        ${viewerAvailability ? `<div class="pv-status"><span class="pv-status-dot"></span>${escapeHtml(viewerAvailability)}</div>` : ``}
       </div>
 
-      <div class="csv257-dots-row shoe-viewer-dots-row" aria-label="Oznake za više slika">
-        ${imgs.length > 1 ? `<div class="csv257-dots">${imgs.map((_,i)=>`<button class="csv257-dot ${i===csViewerState.image?'active':''}" type="button" onclick="event.stopPropagation(); shoeSetImage(${i})" aria-label="Slika ${i + 1}"></button>`).join("")}</div>` : ``}
+      <div class="pv-dots-row" aria-label="Oznake za više slika">
+        ${imgs.length > 1 ? `<div class="pv-dots">${imgs.map((_,i)=>`<button class="pv-dot ${i===csViewerState.image?'active':''}" type="button" onclick="event.stopPropagation(); shoeSetImage(${i})" aria-label="Slika ${i + 1}"></button>`).join("")}</div>` : ``}
       </div>
 
-      <div class="csv257-media-card shoe-viewer-media-card">
-        <button class="csv257-close shoe-viewer-close" type="button" onclick="closeShoeViewer()" aria-label="Zatvori oglas">×</button>
-        <div class="csv257-media shoe-viewer-media">${img ? `<img class="csv257-main-img shoe-viewer-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Proizvod')}">` : `<span>Bez slike</span>`}</div>
+      <div class="pv-media-card">
+        <button class="pv-close" type="button" onclick="closeShoeViewer()" aria-label="Zatvori oglas">×</button>
+        <div class="pv-media">${img ? `<img class="pv-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Proizvod')}">` : `<span>Bez slike</span>`}</div>
       </div>
 
-      <div class="csv257-actions-grid" aria-label="Akcije proizvoda">
-        <button class="csv257-btn" type="button" onclick="askShoeProduct(event)" aria-label="Pošalji poruku" title="Pošalji poruku"><span>Pitaj</span></button>
-        <button class="csv257-btn" type="button" onclick="callShoeShop(event)" aria-label="Pozovi prodavnicu" title="Pozovi prodavnicu"><span>Pozovi</span></button>
-        <button class="csv257-btn" type="button" onclick="shareShoeProduct(event)" aria-label="Podeli oglas" title="Podeli oglas"><span>Podeli</span></button>
-        <button class="csv257-btn" type="button" onclick="event.stopPropagation(); csToggleShoeZoom()" aria-label="Zumiraj sliku" title="Zumiraj sliku"><span>Zumiraj</span></button>
+      <div class="pv-actions">
+        <button class="pv-btn" type="button" onclick="askShoeProduct(event)">Pitaj</button>
+        <button class="pv-btn" type="button" onclick="callShoeShop(event)">Pozovi</button>
+        <button class="pv-btn" type="button" onclick="shareShoeProduct(event)">Podeli</button>
+        <button class="pv-btn" type="button" onclick="event.stopPropagation(); csOpenRealShoeZoom(1)">Zumiraj</button>
       </div>
 
-      <div class="csv257-bottom shoe-viewer-bottom-card">
-        <div class="csv257-bottom-main shoe-viewer-bottom-main">
-          <div class="csv257-price shoe-viewer-price">${csViewerPriceHtml(product)}</div>
-        </div>
-        <div class="csv257-logo shoe-viewer-bottom-logo">
-          ${shopLogo ? `<img src="${escapeHtml(shopLogo)}" alt="${escapeHtml(shopName)} logo">` : `<div class="csv257-logo-fallback shoe-viewer-bottom-logo-fallback">${escapeHtml((shopName || 'S').charAt(0).toUpperCase())}</div>`}
+      <div class="pv-bottom-card">
+        <div class="pv-price">${csViewerPriceHtml(product)}</div>
+        <div class="pv-logo">
+          ${shopLogo ? `<img src="${escapeHtml(shopLogo)}" alt="${escapeHtml(shopName)} logo">` : `<div class="pv-logo-fallback">${escapeHtml((shopName || 'S').charAt(0).toUpperCase())}</div>`}
         </div>
       </div>
 
-      <div class="csv257-powered shoe-viewer-powered">powered by <span>citystyle.app</span></div>
+      <div class="pv-powered">powered by <span>citystyle.app</span></div>
     </div>`;
   csApplyShoePanZoom();
   viewer.ontouchstart = e => {
