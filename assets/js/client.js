@@ -1953,7 +1953,7 @@ function renderShoeViewer() {
     viewer.id = "shoeViewer";
     document.body.appendChild(viewer);
   }
-  viewer.className = "shoe-viewer shoe-viewer-locked shoe-viewer-clean-card-v251 shoe-viewer-final-v251";
+  viewer.className = "shoe-viewer shoe-viewer-locked shoe-viewer-clean-card-v251 shoe-viewer-final-v253";
   viewer.classList.toggle("shoe-viewer-zoomed", !!csViewerState.zoomed);
   viewer.setAttribute("data-price", csProductPrice(product));
   const viewerMetaPrimary = csProductViewerMetaPrimary(product);
@@ -1974,7 +1974,7 @@ function renderShoeViewer() {
         ${viewerAvailability ? `<div class="shoe-viewer-status"><span class="shoe-viewer-status-dot"></span>${escapeHtml(viewerAvailability)}</div>` : ``}
       </div>
 
-      <div class="shoe-viewer-dots-row" aria-label="Oznake za vise slika">
+      <div class="shoe-viewer-dots-row" aria-label="Oznake za više slika">
         ${imgs.length > 1 ? `<div class="shoe-dots">${imgs.map((_,i)=>`<button class="${i===csViewerState.image?'active':''}" onclick="event.stopPropagation(); shoeSetImage(${i})" aria-label="Slika ${i + 1}"></button>`).join("")}</div>` : `<div class="shoe-dots shoe-dots-placeholder" aria-hidden="true"></div>`}
       </div>
 
@@ -1987,7 +1987,7 @@ function renderShoeViewer() {
         <button class="shoe-action inline" type="button" onclick="askShoeProduct(event)" aria-label="Pošalji poruku" title="Pošalji poruku">${csViewerMessageIcon()}<span>Pitaj</span></button>
         <button class="shoe-action inline" type="button" onclick="callShoeShop(event)" aria-label="Pozovi prodavnicu" title="Pozovi prodavnicu">${csViewerPhoneIcon()}<span>Pozovi</span></button>
         <button class="shoe-action inline" type="button" onclick="shareShoeProduct(event)" aria-label="Podeli oglas" title="Podeli oglas">${csViewerShareIcon()}<span>Podeli</span></button>
-        <button class="shoe-action inline" type="button" onclick="event.stopPropagation(); csToggleShoeZoom()" aria-label="Zumiraj sliku" title="Zumiraj sliku">${csViewerZoomIcon()}<span>Zumiraj</span></button>
+        <button class="shoe-action inline" type="button" onclick="event.stopPropagation(); csToggleShoeZoom()" aria-label="Zumiraj sliku" title="Zumiraj sliku">${csViewerZoomIcon()}<span>Zum</span></button>
       </div>
 
       <div class="shoe-viewer-bottom-card">
