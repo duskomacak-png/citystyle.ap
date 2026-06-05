@@ -16565,3 +16565,207 @@ body.owner-sound-ready #salon-notifications-btn{
     height: 80px !important;
   }
 }
+
+
+/* =========================================================
+   PRODUCT VIEWER v1 COMPACT FIT OVERRIDE v259
+   Goal: mobile + laptop without scrolling, smaller 4 buttons
+   ========================================================= */
+#shoeViewer.product-viewer-v1 {
+  --pv-stack-width: clamp(300px, calc(100dvh - 390px), calc(100vw - 24px));
+}
+#shoeViewer.product-viewer-v1 .pv-shell {
+  padding: 8px 10px calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+  gap: 7px !important;
+}
+#shoeViewer.product-viewer-v1 .pv-top-card,
+#shoeViewer.product-viewer-v1 .pv-dots-row,
+#shoeViewer.product-viewer-v1 .pv-media-card,
+#shoeViewer.product-viewer-v1 .pv-actions,
+#shoeViewer.product-viewer-v1 .pv-bottom-card,
+#shoeViewer.product-viewer-v1 .pv-powered {
+  width: var(--pv-stack-width) !important;
+  max-width: var(--pv-stack-width) !important;
+}
+#shoeViewer.product-viewer-v1 .pv-top-card {
+  min-height: 112px !important;
+  padding: 12px 14px !important;
+  gap: 10px !important;
+}
+#shoeViewer.product-viewer-v1 .pv-kicker {
+  margin: 0 0 4px !important;
+  font-size: clamp(12px, 3.2vw, 16px) !important;
+}
+#shoeViewer.product-viewer-v1 .pv-top-copy h2 {
+  margin: 0 0 4px !important;
+  font-size: clamp(26px, 7vw, 40px) !important;
+  line-height: .92 !important;
+}
+#shoeViewer.product-viewer-v1 .pv-subcopy {
+  font-size: clamp(14px, 4vw, 18px) !important;
+  line-height: 1.08 !important;
+}
+#shoeViewer.product-viewer-v1 .pv-status {
+  min-width: 108px !important;
+  min-height: 40px !important;
+  padding: 8px 12px !important;
+  font-size: clamp(13px, 3.4vw, 16px) !important;
+  gap: 7px !important;
+}
+#shoeViewer.product-viewer-v1 .pv-status-dot {
+  width: 10px !important;
+  height: 10px !important;
+}
+#shoeViewer.product-viewer-v1 .pv-dots-row {
+  min-height: 18px !important;
+}
+#shoeViewer.product-viewer-v1 .pv-dots {
+  gap: 9px !important;
+}
+#shoeViewer.product-viewer-v1 .pv-dot {
+  width: 12px !important;
+  height: 12px !important;
+}
+#shoeViewer.product-viewer-v1 .pv-media-card {
+  aspect-ratio: 1 / 1 !important;
+}
+#shoeViewer.product-viewer-v1 .pv-media {
+  padding: 10px !important;
+}
+#shoeViewer.product-viewer-v1 .pv-main-img {
+  border-radius: 16px !important;
+}
+#shoeViewer.product-viewer-v1 .pv-close {
+  top: 10px !important;
+  right: 10px !important;
+  width: 52px !important;
+  height: 52px !important;
+  font-size: 34px !important;
+}
+#shoeViewer.product-viewer-v1 .pv-actions {
+  gap: 6px !important;
+}
+#shoeViewer.product-viewer-v1 .pv-btn {
+  height: 46px !important;
+  min-height: 46px !important;
+  border-radius: 16px !important;
+  font-size: clamp(11px, 3vw, 15px) !important;
+  padding: 6px 4px !important;
+}
+#shoeViewer.product-viewer-v1 .pv-bottom-card {
+  min-height: 90px !important;
+  padding: 10px 14px !important;
+  grid-template-columns: minmax(0,1fr) 72px !important;
+  gap: 10px !important;
+}
+#shoeViewer.product-viewer-v1 .shoe-viewer-price-number {
+  font-size: clamp(28px, 8.7vw, 42px) !important;
+}
+#shoeViewer.product-viewer-v1 .shoe-viewer-price-currency {
+  font-size: clamp(16px, 4vw, 21px) !important;
+  padding-bottom: 3px !important;
+}
+#shoeViewer.product-viewer-v1 .pv-logo {
+  width: 72px !important;
+  height: 72px !important;
+  border-radius: 16px !important;
+}
+#shoeViewer.product-viewer-v1 .pv-powered {
+  font-size: 10px !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+}
+
+@media (max-width: 389px) {
+  #shoeViewer.product-viewer-v1 {
+    --pv-stack-width: clamp(286px, calc(100dvh - 382px), calc(100vw - 18px));
+  }
+  #shoeViewer.product-viewer-v1 .pv-shell {
+    padding: 7px 8px calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+    gap: 6px !important;
+  }
+  #shoeViewer.product-viewer-v1 .pv-top-card {
+    min-height: 106px !important;
+    padding: 11px 12px !important;
+  }
+  #shoeViewer.product-viewer-v1 .pv-top-copy h2 {
+    font-size: clamp(24px, 6.7vw, 34px) !important;
+  }
+  #shoeViewer.product-viewer-v1 .pv-subcopy {
+    font-size: 13px !important;
+  }
+  #shoeViewer.product-viewer-v1 .pv-status {
+    min-width: 98px !important;
+    min-height: 36px !important;
+    font-size: 12px !important;
+    padding: 7px 10px !important;
+  }
+  #shoeViewer.product-viewer-v1 .pv-btn {
+    height: 42px !important;
+    min-height: 42px !important;
+    font-size: 10.5px !important;
+  }
+  #shoeViewer.product-viewer-v1 .pv-bottom-card {
+    min-height: 82px !important;
+    padding: 9px 11px !important;
+    grid-template-columns: minmax(0,1fr) 64px !important;
+  }
+  #shoeViewer.product-viewer-v1 .pv-logo {
+    width: 64px !important;
+    height: 64px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  #shoeViewer.product-viewer-v1 {
+    --pv-stack-width: clamp(380px, calc(100dvh - 300px), 460px);
+  }
+  #shoeViewer.product-viewer-v1 .pv-shell {
+    padding: 12px 14px 14px !important;
+    gap: 8px !important;
+  }
+  #shoeViewer.product-viewer-v1 .pv-top-card {
+    min-height: 100px !important;
+    padding: 11px 14px !important;
+  }
+  #shoeViewer.product-viewer-v1 .pv-kicker {
+    font-size: 13px !important;
+  }
+  #shoeViewer.product-viewer-v1 .pv-top-copy h2 {
+    font-size: clamp(28px, 3vw, 36px) !important;
+  }
+  #shoeViewer.product-viewer-v1 .pv-subcopy {
+    font-size: 15px !important;
+  }
+  #shoeViewer.product-viewer-v1 .pv-status {
+    min-width: 102px !important;
+    min-height: 38px !important;
+    font-size: 13px !important;
+    padding: 7px 10px !important;
+  }
+  #shoeViewer.product-viewer-v1 .pv-close {
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 30px !important;
+  }
+  #shoeViewer.product-viewer-v1 .pv-btn {
+    height: 42px !important;
+    min-height: 42px !important;
+    font-size: 12px !important;
+  }
+  #shoeViewer.product-viewer-v1 .pv-bottom-card {
+    min-height: 82px !important;
+    padding: 9px 12px !important;
+    grid-template-columns: minmax(0,1fr) 66px !important;
+  }
+  #shoeViewer.product-viewer-v1 .shoe-viewer-price-number {
+    font-size: 30px !important;
+  }
+  #shoeViewer.product-viewer-v1 .shoe-viewer-price-currency {
+    font-size: 16px !important;
+  }
+  #shoeViewer.product-viewer-v1 .pv-logo {
+    width: 66px !important;
+    height: 66px !important;
+  }
+}
