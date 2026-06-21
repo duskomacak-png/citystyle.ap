@@ -11960,3 +11960,15 @@ body:has(.shoe-shop-page) .client-shell{
 .shoe-shop-page .shoe-card[hidden] {
   display: none !important;
 }
+
+
+/* === V63: Klijent ne vidi karticu/oznake Rubrike ni na mobilnom ni na laptopu ===
+   Rubrika ostaje interno polje za vlasnika/filtriranje, ali nije javno prikazana. */
+.shoe-shop-page .shoe-rubric-filter,
+.shoe-shop-page .shoe-card-rubrics,
+.shoe-shop-page #shoe-rubric-select,
+.shoe-shop-page #shoe-rubric-result-count,
+.shoe-shop-page .shoe-rubric-select-wrap {
+  display: none !important;
+  visibility: hidden !important;
+}

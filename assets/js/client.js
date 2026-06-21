@@ -1658,7 +1658,6 @@ function renderShoeProductCard(product, index) {
     <div class="shoe-card-info">
       <small>${escapeHtml(csProductCode(product))}</small>
       <strong>${escapeHtml(displayName || "Oglas")}</strong>
-      ${rubricTitle ? `<div class="shoe-card-rubrics"><span>${escapeHtml(rubricTitle)}</span></div>` : ""}
       ${desc ? `<p class="shoe-card-description">${escapeHtml(desc)}</p>` : ""}
       <div class="shoe-card-bottom"><b>${escapeHtml(csProductPrice(product))}</b><span>${escapeHtml(status)}</span></div>
     </div>
