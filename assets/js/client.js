@@ -1443,7 +1443,19 @@ function csProductImages(product = {}) {
 }
 function csProductPrice(product = {}) { return renderProductPrice(product); }
 function csProductStatus(product = {}) { return getProductStatusLabel(product.stock_status); }
-function csProductRubricTitle(product = {}) { return String(product.name || "").trim(); }
+function csNormalizePublicRubric(value = "") {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+function csProductRubricTitle(product = {}) {
+  // V46: Rubrika je ISKLJUČIVO polje "Naziv proizvoda / rubrika" iz panela vlasnika.
+  // Ne uzima brend/kategoriju, opis, cenu, status niti tekst sa slike.
+  return csNormalizePublicRubric(product.name || "");
+}
+function csProductRubricKey(value = "") {
+  return csNormalizePublicRubric(value).toLocaleLowerCase("sr");
+}
 function csProductDisplayName(product = {}) { return String(product.category || product.name || "Oglas").trim(); }
 function csProductPublicDescription(product = {}) { return String(product.description || "").trim(); }
 function csProductViewerMetaPrimary(product = {}) {
@@ -1545,26 +1557,25 @@ function csProductRubrics(product = {}) {
 }
 
 function csAllShoeRubrics() {
+  // V46: dropdown prikazuje samo jedinstvene vrednosti iz product.name (Naziv proizvoda / rubrika).
   const map = new Map();
   (products || []).forEach(product => {
-    csProductRubrics(product).forEach(r => {
-      const k = r.toLowerCase();
-      if (!map.has(k)) map.set(k, r);
-    });
+    const rubric = csProductRubricTitle(product);
+    if (!rubric) return;
+    const key = csProductRubricKey(rubric);
+    if (!map.has(key)) map.set(key, rubric);
   });
-  return Array.from(map.values()).sort((a,b)=>a.localeCompare(b, 'sr'));
+  return Array.from(map.values()).sort((a,b)=>a.localeCompare(b, 'sr', { sensitivity: 'base' }));
 }
 function csFilterShoeRubric(value = '') {
-  // V43: Padajuci meni filtrira ISKLJUCIVO po rubrici.
-  // Rubrika = staro polje "Naziv proizvoda". Ne pretrazuje opis, brend, cenu niti ostali tekst.
-  const wanted = String(value || '').trim().toLowerCase();
+  // V46: filtriranje ide samo po data-rubrics, a data-rubrics se puni samo iz product.name.
+  const wanted = csProductRubricKey(value);
   const cards = document.querySelectorAll('.shoe-shop-page .shoe-card');
   let shown = 0;
   cards.forEach(card => {
     const rubrics = String(card.dataset.rubrics || '')
-      .toLowerCase()
       .split('|')
-      .map(x => x.trim())
+      .map(x => csProductRubricKey(x))
       .filter(Boolean);
     const ok = !wanted || rubrics.includes(wanted);
     card.style.display = ok ? '' : 'none';
@@ -1572,6 +1583,21 @@ function csFilterShoeRubric(value = '') {
   });
   const label = document.getElementById('shoe-rubric-result-count');
   if (label) label.textContent = wanted ? `${shown} oglas${shown === 1 ? '' : 'a'}` : `${cards.length} oglas${cards.length === 1 ? '' : 'a'}`;
+}
+function csRefreshShoeRubricSelect() {
+  const select = document.getElementById('shoe-rubric-select');
+  if (!select) return;
+  const current = csProductRubricKey(select.value);
+  Array.from(select.options).forEach(option => {
+    if (!option.value) return;
+    option.value = csNormalizePublicRubric(option.value);
+    option.textContent = csNormalizePublicRubric(option.textContent);
+    option.dataset.rubricKey = csProductRubricKey(option.value);
+  });
+  if (current) {
+    const found = Array.from(select.options).find(o => csProductRubricKey(o.value) === current);
+    if (found) select.value = found.value;
+  }
 }
 
 function renderShoeShopHome(settings = {}) {
@@ -1612,7 +1638,7 @@ function renderShoeProductCard(product, index) {
   const displayName = csProductDisplayName(product);
   const desc = csProductPublicDescription(product);
   const rubrics = csProductRubrics(product);
-  const rubricsAttr = rubrics.map(r => r.toLowerCase()).join('|');
+  const rubricsAttr = rubrics.map(r => csNormalizePublicRubric(r)).filter(Boolean).join('|');
   const searchAttr = [csProductCode(product), rubricTitle, displayName, desc].filter(Boolean).join(' ').toLowerCase();
   return `<button class="shoe-card" type="button" data-rubrics="${escapeHtml(rubricsAttr)}" data-search="${escapeHtml(searchAttr)}" onclick="openShoeViewer(${index}); event.preventDefault();">
     <div class="shoe-card-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(displayName || 'Oglas')}">` : `<span>Bez slike</span>`}</div>

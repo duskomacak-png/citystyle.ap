@@ -10802,3 +10802,45 @@ body:has(.shoe-shop-page) .client-shell{
   .shoe-shop-page #shoe-rubric-select{font-size:15px !important;height:46px !important;}
   .shoe-shop-page .shoe-card-rubrics span{font-size:11.5px !important;padding:4px 8px !important;}
 }
+
+
+/* === V46: rubrike samo iz polja Naziv proizvoda + popravljena bela info kartica === */
+.shoe-shop-page .shoe-info-row{
+  background:#ffffff !important;
+  color:#111827 !important;
+  border:1px solid rgba(17,24,39,.08) !important;
+  box-shadow:0 14px 34px rgba(15,23,42,.12) !important;
+}
+.shoe-shop-page .shoe-info-copy h1,
+.shoe-shop-page .shoe-info-copy p{
+  color:#111827 !important;
+  opacity:1 !important;
+  text-shadow:none !important;
+}
+.shoe-shop-page .shoe-info-copy p{
+  color:#4b5563 !important;
+}
+.shoe-shop-page .shoe-meta .shoe-meta-link,
+.shoe-shop-page .shoe-meta span{
+  color:#111827 !important;
+  background:#f3f4f6 !important;
+  border:1px solid rgba(17,24,39,.12) !important;
+}
+.shoe-shop-page .shoe-rubric-filter label::after{
+  content:' — samo polje Rubrika / naziv proizvoda';
+  display:block;
+  margin-top:3px;
+  color:#9ca3af;
+  font-size:12px;
+  font-weight:700;
+}
+.shoe-shop-page .shoe-card-rubrics span{
+  background:#ecfdf5 !important;
+  border-color:rgba(34,197,94,.28) !important;
+  color:#047857 !important;
+}
+@media (max-width:720px){
+  .shoe-shop-page .shoe-info-row{
+    border-radius:22px !important;
+  }
+}
