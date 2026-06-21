@@ -9955,3 +9955,110 @@ body:has(#shoeViewer.cs-product-viewer-v33){
     padding:0 !important;
   }
 }
+
+/* === v35: MOBILNA PRODAVNICA 1 KOLONA + VIEWER PINCH ZOOM === */
+@media (max-width: 720px){
+  .shoe-shop-page .shoe-grid{
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  .shoe-shop-page .shoe-card{
+    display:grid !important;
+    grid-template-columns: 42% 1fr !important;
+    align-items:stretch !important;
+    min-height: 150px !important;
+    border-radius:22px !important;
+    background:#11151c !important;
+  }
+  .shoe-shop-page .shoe-card-media{
+    aspect-ratio: 1 / 1 !important;
+    height:100% !important;
+    min-height:150px !important;
+    background:#fff !important;
+    border-radius:22px 0 0 22px !important;
+  }
+  .shoe-shop-page .shoe-card-media img{
+    object-fit:contain !important;
+    width:100% !important;
+    height:100% !important;
+  }
+  .shoe-shop-page .shoe-card-info{
+    display:flex !important;
+    flex-direction:column !important;
+    justify-content:center !important;
+    padding:14px 16px !important;
+  }
+  .shoe-shop-page .shoe-card-info small{
+    font-size:13px !important;
+    line-height:1.25 !important;
+  }
+  .shoe-shop-page .shoe-card-info strong{
+    font-size:22px !important;
+    line-height:1.12 !important;
+    margin:6px 0 10px !important;
+  }
+  .shoe-shop-page .shoe-card-bottom{
+    margin-top:auto !important;
+    gap:8px !important;
+  }
+  .shoe-shop-page .shoe-card-bottom b{
+    color:#22c55e !important;
+    font-size:26px !important;
+    line-height:1 !important;
+    font-weight:950 !important;
+  }
+  .shoe-shop-page .shoe-card-bottom span{
+    width:max-content !important;
+    color:#fff !important;
+    background:#080b10 !important;
+    border-color:rgba(34,197,94,.35) !important;
+    padding:7px 11px !important;
+    font-size:12px !important;
+  }
+}
+
+/* viewer: uklonjen gornji share, ostaje samo dole */
+#shoeViewer.cs-product-viewer-v33 .cs-pv-share-top{display:none !important;}
+
+/* viewer: slika velika 1:1, cela vidljiva, pinch-to-zoom preko prstiju */
+#shoeViewer.cs-product-viewer-v33 .cs-pv-image-panel{
+  touch-action:none !important;
+  overflow:hidden !important;
+  background:#ffffff !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-image-panel.is-zoomed{
+  cursor:grab !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-main-img{
+  will-change:transform !important;
+  transition:transform .08s linear !important;
+  user-select:none !important;
+  -webkit-user-drag:none !important;
+}
+@media (max-width:720px){
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-phone{
+    max-width:none !important;
+    width:100vw !important;
+  }
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-image-panel{
+    width:100vw !important;
+    aspect-ratio:1 / 1 !important;
+    height:auto !important;
+    min-height:0 !important;
+    border-bottom-left-radius:22px !important;
+    border-bottom-right-radius:22px !important;
+  }
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-main-img{
+    width:100% !important;
+    height:100% !important;
+    object-fit:contain !important;
+  }
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-stock{
+    top:16px !important;
+    right:16px !important;
+  }
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-back{
+    left:16px !important;
+    top:16px !important;
+  }
+}
