@@ -1591,7 +1591,7 @@ function renderShoeShopHome(settings = {}) {
         <div class="shoe-info-copy"><h1>${escapeHtml(name)}</h1>${text ? `<p>${escapeHtml(text)}</p>` : ""}<div class="shoe-meta">${phone ? `<a class="shoe-meta-link" href="tel:${escapeHtml(csSafePhone(phone))}">📞 ${escapeHtml(phone)}</a>` : ""}${address ? renderPublicAddressLink(address) : ""}</div></div>
       </div>
       ${ownerPreviewMode ? "" : `<div class="shoe-install-row"><button class="btn btn-dark shoe-install-btn" type="button" onclick="installCurrentSalonApp()">Preuzmi app</button><small>Prečica otvara baš ovaj profil${logo ? " i koristi logo firme gde browser dozvoljava" : ""}.</small></div>`}
-      ${products.length ? `<section class="shoe-rubric-filter"><label for="shoe-rubric-select">🔍 Pregled po rubrikama</label><div class="shoe-rubric-select-wrap"><select id="shoe-rubric-select" onchange="csFilterShoeRubric(this.value)"><option value="">Sve rubrike / svi oglasi</option>${csAllShoeRubrics().map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join("")}</select></div><small id="shoe-rubric-result-count">${products.length} oglasa</small></section>` : ""}
+      ${products.length ? `<section class="shoe-rubric-filter"><label for="shoe-rubric-select">🔍 Rubrike proizvoda</label><div class="shoe-rubric-select-wrap"><select id="shoe-rubric-select" onchange="csFilterShoeRubric(this.value)"><option value="">Sve rubrike</option>${csAllShoeRubrics().map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join("")}</select></div><small id="shoe-rubric-result-count">${products.length} oglasa</small></section>` : ""}
       <section class="shoe-products-section">
         ${products.length ? `<div class="shoe-grid">${products.map((product, index) => renderShoeProductCard(product, index)).join("")}</div>` : `<div class="card"><h2>Još nema oglasa</h2><p class="muted">Vlasnik još nije dodao patike u katalog.</p></div>`}
       </section>
@@ -1617,8 +1617,9 @@ function renderShoeProductCard(product, index) {
   return `<button class="shoe-card" type="button" data-rubrics="${escapeHtml(rubricsAttr)}" data-search="${escapeHtml(searchAttr)}" onclick="openShoeViewer(${index}); event.preventDefault();">
     <div class="shoe-card-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(displayName || 'Oglas')}">` : `<span>Bez slike</span>`}</div>
     <div class="shoe-card-info">
-      <small>${escapeHtml(csProductCode(product))}${rubricTitle ? " • " + escapeHtml(rubricTitle) : ""}</small>
+      <small>${escapeHtml(csProductCode(product))}</small>
       <strong>${escapeHtml(displayName || "Oglas")}</strong>
+      ${rubricTitle ? `<div class="shoe-card-rubrics"><span>${escapeHtml(rubricTitle)}</span></div>` : ""}
       ${desc ? `<p class="shoe-card-description">${escapeHtml(desc)}</p>` : ""}
       <div class="shoe-card-bottom"><b>${escapeHtml(csProductPrice(product))}</b><span>${escapeHtml(status)}</span></div>
     </div>
