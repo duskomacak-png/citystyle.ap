@@ -11,7 +11,7 @@ let selectedTime = null;
 let ownerPreviewMode = false;
 let adminPreviewMode = false;
 const C = (key, fallback = "") => window.App?.t ? window.App.t(key, fallback) : (fallback || key);
-const CITYSTYLE_POWERED = "powered by CityStyle.app";
+const CITYSTYLE_POWERED = "powered by citystyle.app";
 function renderCityStylePowered(className = "") {
   return `<div class="citystyle-powered ${className}">${CITYSTYLE_POWERED}</div>`;
 }
@@ -467,6 +467,7 @@ function formatSalonWelcomeText(text = "") {
 }
 
 async function renderSalonHome() {
+  document.body.classList.remove("shoe-shop-white-theme");
   const app = document.getElementById("app");
   app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
 
@@ -997,9 +998,8 @@ function renderClientProductsPreview() {
       </summary>
       <div class="client-services-panel-body">
         <p class="muted">Pregled proizvoda, artikala ili cenovnika koje ovaj biznis nudi. Dodir na proizvod otvara veću sliku.</p>
-        ${renderProductRubricDropdown("client-rubric-filter")}
-        <div id="clientProductGrid" class="product-public-grid product-public-grid-images">
-          ${csFilteredProducts(products).map(product => renderPublicProductCard(product, csProductGlobalIndex(product))).join("")}
+        <div class="product-public-grid product-public-grid-images">
+          ${products.map((product, index) => renderPublicProductCard(product, index)).join("")}
         </div>
       </div>
     </details>
@@ -1022,9 +1022,8 @@ function showProducts() {
         <small>${C("hideList", "Sakrij listu")}</small>
       </summary>
       <div class="client-services-panel-body">
-        ${renderProductRubricDropdown("client-rubric-filter")}
-        <div id="clientProductGrid" class="product-public-grid">
-          ${csFilteredProducts(products).map(product => `
+        <div class="product-public-grid">
+          ${products.map(product => `
             <div class="product-public-card">
               <div>
                 <strong>${escapeHtml(product.name)}</strong>
@@ -1412,7 +1411,6 @@ async function submitAppointment() {
 let csShopProductImages = {};
 let csViewerState = null;
 let csViewerWheelLock = 0;
-let selectedProductRubric = "all";
 
 function csIsShopProfile(salon = currentSalon, productCount = products.length) {
   const raw = `${salon?.business_type || ""} ${salon?.profile_type || ""} ${salon?.type || ""} ${salon?.package_type || ""}`.toLowerCase();
@@ -1447,51 +1445,6 @@ function csProductImages(product = {}) {
 function csProductPrice(product = {}) { return renderProductPrice(product); }
 function csProductStatus(product = {}) { return getProductStatusLabel(product.stock_status); }
 function csProductPublicDescription(product = {}) { return String(product.description || "").trim(); }
-function csProductRubric(product = {}) { return String(product.category || "").trim(); }
-function csProductRubrics(list = products) {
-  return Array.from(new Set((list || []).map(item => csProductRubric(item)).filter(Boolean)))
-    .sort((a, b) => a.localeCompare(b, "sr", { sensitivity: "base" }));
-}
-function csFilteredProducts(list = products) {
-  const value = String(selectedProductRubric || "all").trim();
-  if (!value || value === "all") return list || [];
-  return (list || []).filter(item => csProductRubric(item).toLowerCase() === value.toLowerCase());
-}
-function csProductGlobalIndex(product = {}) {
-  const idx = (products || []).findIndex(item => String(item.id) === String(product.id));
-  return idx >= 0 ? idx : 0;
-}
-function renderProductRubricDropdown(extraClass = "") {
-  const rubrics = csProductRubrics(products);
-  if (!rubrics.length) return "";
-  const current = String(selectedProductRubric || "all");
-  return `<div class="cs-rubric-filter ${escapeHtml(extraClass)}">
-    <label>Rubrike</label>
-    <select class="cs-rubric-select" onchange="setProductRubricFilter(this.value)">
-      <option value="all" ${current === "all" ? "selected" : ""}>Sve rubrike</option>
-      ${rubrics.map(item => `<option value="${escapeHtml(item)}" ${current.toLowerCase() === item.toLowerCase() ? "selected" : ""}>${escapeHtml(item)}</option>`).join("")}
-    </select>
-  </div>`;
-}
-function setProductRubricFilter(value = "all") {
-  const rubrics = csProductRubrics(products);
-  const clean = String(value || "all").trim();
-  selectedProductRubric = clean === "all" || rubrics.some(item => item.toLowerCase() === clean.toLowerCase()) ? clean : "all";
-  document.querySelectorAll(".cs-rubric-select").forEach(select => { select.value = selectedProductRubric; });
-  const filtered = csFilteredProducts(products);
-  const shopGrid = document.getElementById("shoeProductGrid");
-  if (shopGrid) {
-    shopGrid.innerHTML = filtered.length
-      ? filtered.map(product => renderShoeProductCard(product, csProductGlobalIndex(product))).join("")
-      : `<div class="card cs-rubric-empty"><h3>Nema proizvoda u ovoj rubrici.</h3><p class="muted">Izaberite “Sve rubrike” za celu ponudu.</p></div>`;
-  }
-  const publicGrid = document.getElementById("clientProductGrid");
-  if (publicGrid) {
-    publicGrid.innerHTML = filtered.length
-      ? filtered.map(product => renderPublicProductCard(product, csProductGlobalIndex(product))).join("")
-      : `<div class="card cs-rubric-empty"><h3>Nema proizvoda u ovoj rubrici.</h3><p class="muted">Izaberite “Sve rubrike” za celu ponudu.</p></div>`;
-  }
-}
 function csProductViewerMetaPrimary(product = {}) {
   return String(product.category || "").trim();
 }
@@ -1523,8 +1476,6 @@ async function loadProducts() {
     .order("created_at", { ascending: false });
   if (error) { console.warn("Products not available:", error); products = []; csShopProductImages = {}; return; }
   products = data || [];
-  const availableRubrics = csProductRubrics(products);
-  if (selectedProductRubric !== "all" && !availableRubrics.some(item => item.toLowerCase() === String(selectedProductRubric).toLowerCase())) selectedProductRubric = "all";
   csShopProductImages = {};
   if (products.length) {
     try {
@@ -1585,6 +1536,7 @@ async function renderSalonHome() {
 }
 
 function renderShoeShopHome(settings = {}) {
+  document.body.classList.add("shoe-shop-white-theme");
   const app = document.getElementById("app");
   const name = settings?.welcome_title || currentSalon?.salon_name || "Prodavnica patika";
   const logo = settings?.logo_url || "";
@@ -1592,7 +1544,6 @@ function renderShoeShopHome(settings = {}) {
   const phone = settings?.phone || currentSalon?.phone || "";
   const address = settings?.address || "";
   const text = settings?.welcome_text || "";
-  const filteredProducts = csFilteredProducts(products);
   app.innerHTML = `
     <section class="shoe-shop-page">
       ${adminPreviewMode ? `<div class="owner-preview-bar admin-preview-bar"><div><strong>Admin pregled</strong><span>Ovako kupac vidi prodavnicu.</span></div><a class="btn btn-primary" href="${window.App.getAppPath('admin/')}">Nazad u admin</a></div>` : ownerPreviewMode ? `<div class="owner-preview-bar"><div><strong>Pregled javne stranice</strong><span>Ovako kupac vidi prodavnicu.</span></div><a class="btn btn-primary" href="${window.App.getAppPath('salon/')}">Nazad u panel vlasnika</a></div>` : ""}
@@ -1603,7 +1554,7 @@ function renderShoeShopHome(settings = {}) {
       </div>
       ${ownerPreviewMode ? "" : `<div class="shoe-install-row"><button class="btn btn-dark shoe-install-btn" type="button" onclick="installCurrentSalonApp()">📱 Preuzmi app prodavnice</button><small>Prečica otvara baš ovaj profil${logo ? " i koristi logo firme gde browser dozvoljava" : ""}.</small></div>`}
       <section class="shoe-products-section">
-        ${products.length ? `${renderProductRubricDropdown("shoe-rubric-filter")}<div id="shoeProductGrid" class="shoe-grid">${filteredProducts.length ? filteredProducts.map(product => renderShoeProductCard(product, csProductGlobalIndex(product))).join("") : `<div class="card cs-rubric-empty"><h3>Nema proizvoda u ovoj rubrici.</h3><p class="muted">Izaberite “Sve rubrike” za celu ponudu.</p></div>`}</div>` : `<div class="card"><h2>Još nema oglasa</h2><p class="muted">Vlasnik još nije dodao proizvode u katalog.</p></div>`}
+        ${products.length ? `<div class="shoe-grid">${products.map((product, index) => renderShoeProductCard(product, index)).join("")}</div>` : `<div class="card"><h2>Još nema oglasa</h2><p class="muted">Vlasnik još nije dodao patike u katalog.</p></div>`}
       </section>
       ${renderCityStylePowered("shoe-powered")}
     </section>`;
@@ -1640,7 +1591,7 @@ function showProducts() {
     box.innerHTML = `<div class="card"><h2>${C("productsCatalog", "Proizvodi / cenovnik")}</h2><p class="muted">Ovaj profil trenutno nema javno prikazane proizvode.</p></div>`;
     return;
   }
-  box.innerHTML = `<details class="card client-hours-panel client-products-panel" open><summary><span>${C("productsCatalog", "Proizvodi / cenovnik")}</span><small>${C("hideList", "Sakrij listu")}</small></summary><div class="client-services-panel-body">${renderProductRubricDropdown("client-rubric-filter")}<div id="clientProductGrid" class="product-public-grid product-public-grid-images">${csFilteredProducts(products).map(product => renderPublicProductCard(product, csProductGlobalIndex(product))).join("")}</div></div></details>`;
+  box.innerHTML = `<details class="card client-hours-panel client-products-panel" open><summary><span>${C("productsCatalog", "Proizvodi / cenovnik")}</span><small>${C("hideList", "Sakrij listu")}</small></summary><div class="client-services-panel-body"><div class="product-public-grid product-public-grid-images">${products.map((product, index) => renderPublicProductCard(product, index)).join("")}</div></div></details>`;
   box.scrollIntoView({ behavior: "smooth" });
 }
 
@@ -1731,21 +1682,9 @@ function csClampZoomPan(value, min, max){
 }
 function csApplyShoePanZoom(){
   if (!csViewerState) return;
-  const img = document.querySelector("#shoeViewer .pv-main-img") || document.querySelector("#shoeViewer .shoe-viewer-main-img");
+  const img = document.querySelector("#shoeViewer .shoe-viewer-main-img");
   const viewer = document.getElementById("shoeViewer");
   if (!img) return;
-
-  if (viewer?.classList?.contains("product-viewer-v1")) {
-    img.style.opacity = "1";
-    img.style.visibility = "visible";
-    img.style.transform = "";
-    img.style.willChange = "auto";
-    csViewerState.zoomed = false;
-    csViewerState.zoomScale = 1;
-    document.documentElement.classList.remove("cs-zoom-active");
-    return;
-  }
-
   const scale = Number(csViewerState.zoomScale || 1);
   img.style.opacity = "1";
   img.style.visibility = "visible";
@@ -1797,73 +1736,35 @@ function csSetShoeZoomMode(zoomed, scale = 2.65){
 function csGetCurrentShoeImageSrc(){
   const p = currentShoeProduct();
   const imgs = csProductImages(p);
-  return imgs?.[csViewerState?.image || 0] || imgs?.[0] || (document.querySelector("#shoeViewer .pv-main-img") || document.querySelector("#shoeViewer .shoe-viewer-main-img"))?.src || "";
+  return imgs?.[csViewerState?.image || 0] || imgs?.[0] || document.querySelector("#shoeViewer .shoe-viewer-main-img")?.src || "";
 }
-function csOpenRealShoeZoom(startScale = 1){
-  const product = currentShoeProduct();
-  const imgs = (csProductImages(product) || []).filter(Boolean);
-  if (!imgs.length) return;
-  let imageIndex = Math.max(0, Math.min(Number(csViewerState?.image || 0), imgs.length - 1));
+function csOpenRealShoeZoom(startScale = 1.15){
+  const src = csGetCurrentShoeImageSrc();
+  if (!src) return;
   document.getElementById("csZoomLightbox")?.remove();
   document.documentElement.classList.add("cs-real-zoom-active");
   const box = document.createElement("div");
   box.id = "csZoomLightbox";
-  box.className = "cs-zoom-lightbox cs-zoom-product-gallery";
-  box.innerHTML = `
-    <img class="cs-zoom-lightbox-img" src="${escapeHtml(imgs[imageIndex])}" alt="Zumirana slika proizvoda">
-    <button class="cs-zoom-lightbox-close" type="button" aria-label="Zatvori zum">×</button>
-    ${imgs.length > 1 ? `<button class="cs-zoom-nav cs-zoom-nav-prev" type="button" aria-label="Prethodna slika">‹</button><button class="cs-zoom-nav cs-zoom-nav-next" type="button" aria-label="Sledeća slika">›</button>` : ``}
-    ${imgs.length > 1 ? `<div class="cs-zoom-counter"></div><div class="cs-zoom-dots"></div>` : ``}
-    <div class="cs-zoom-help">Listaj slike levo/desno • raširi prste za zum • X zatvara</div>`;
+  box.className = "cs-zoom-lightbox";
+  box.innerHTML = `<img class="cs-zoom-lightbox-img" src="${escapeHtml(src)}" alt="Zumirana slika proizvoda"><button class="cs-zoom-lightbox-close" type="button" aria-label="Zatvori zum">×</button><div class="cs-zoom-help">Raširi prste za zum • pomeri sliku • X zatvara</div>`;
   document.body.appendChild(box);
   const img = box.querySelector(".cs-zoom-lightbox-img");
   const close = box.querySelector(".cs-zoom-lightbox-close");
-  const prev = box.querySelector(".cs-zoom-nav-prev");
-  const next = box.querySelector(".cs-zoom-nav-next");
-  const counter = box.querySelector(".cs-zoom-counter");
-  const dots = box.querySelector(".cs-zoom-dots");
-  const state = { scale: Math.max(1, Math.min(Number(startScale || 1), 5)), panX: 0, panY: 0, startX: 0, startY: 0, startPanX: 0, startPanY: 0, pinchDistance: 0, pinchScale: 1, dragging: false, moved: false };
+  const state = { scale: Math.max(1, Math.min(Number(startScale || 1.15), 5)), panX: 0, panY: 0, startX: 0, startY: 0, startPanX: 0, startPanY: 0, pinchDistance: 0, pinchScale: 1, dragging: false };
   function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
-  function resetZoom(){ state.scale = 1; state.panX = 0; state.panY = 0; state.dragging = false; state.moved = false; apply(); }
   function apply(){
     const maxX = Math.max(0, window.innerWidth * (state.scale - 1) * .55);
     const maxY = Math.max(0, window.innerHeight * (state.scale - 1) * .55);
     state.panX = clamp(state.panX, -maxX, maxX);
     state.panY = clamp(state.panY, -maxY, maxY);
     img.style.transform = `translate3d(${state.panX}px, ${state.panY}px, 0) scale(${state.scale})`;
-    box.classList.toggle("cs-zoom-is-scaled", state.scale > 1.01);
-  }
-  function syncChrome(){
-    if (csViewerState) csViewerState.image = imageIndex;
-    img.src = imgs[imageIndex];
-    img.alt = `${product?.name || "Proizvod"} - slika ${imageIndex + 1}`;
-    if (counter) counter.textContent = `${imageIndex + 1} / ${imgs.length}`;
-    if (dots) dots.innerHTML = imgs.map((_, i) => `<button type="button" class="${i === imageIndex ? 'active' : ''}" aria-label="Slika ${i + 1}"></button>`).join("");
-  }
-  function changeZoomImage(delta){
-    if (imgs.length < 2) return;
-    imageIndex = (imageIndex + delta + imgs.length) % imgs.length;
-    syncChrome();
-    resetZoom();
   }
   function closeZoom(){
     box.remove();
     document.documentElement.classList.remove("cs-real-zoom-active");
     csSetShoeZoomMode(false, 1);
-    if (document.getElementById("shoeViewer") && csViewerState) renderShoeViewer();
-    window.removeEventListener("mousemove", onMouseMove);
-    window.removeEventListener("mouseup", onMouseUp);
-    window.removeEventListener("keydown", onKeyDown, true);
   }
   close.addEventListener("click", e => { e.stopPropagation(); closeZoom(); });
-  prev?.addEventListener("click", e => { e.stopPropagation(); changeZoomImage(-1); });
-  next?.addEventListener("click", e => { e.stopPropagation(); changeZoomImage(1); });
-  dots?.addEventListener("click", e => {
-    const btn = e.target?.closest?.("button");
-    if (!btn) return;
-    const index = Array.from(dots.querySelectorAll("button")).indexOf(btn);
-    if (index >= 0) { e.stopPropagation(); imageIndex = index; syncChrome(); resetZoom(); }
-  });
   box.addEventListener("click", e => { if(e.target === box) closeZoom(); });
   box.addEventListener("wheel", e => {
     e.preventDefault();
@@ -1873,27 +1774,10 @@ function csOpenRealShoeZoom(startScale = 1){
     else if (old <= 1.01) { state.panX = 0; state.panY = 0; }
     apply();
   }, { passive:false });
-  box.addEventListener("mousedown", e => { state.dragging = true; state.moved = false; state.startX = e.clientX; state.startY = e.clientY; state.startPanX = state.panX; state.startPanY = state.panY; e.preventDefault(); });
-  function onMouseMove(e){
-    if(!state.dragging || !document.getElementById("csZoomLightbox")) return;
-    const dx = e.clientX - state.startX;
-    const dy = e.clientY - state.startY;
-    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) state.moved = true;
-    if (state.scale <= 1.01) return;
-    state.panX = state.startPanX + dx;
-    state.panY = state.startPanY + dy;
-    apply();
-  }
-  function onMouseUp(e){
-    if(!state.dragging) return;
-    const dx = e.clientX - state.startX;
-    state.dragging = false;
-    if (state.scale <= 1.01 && Math.abs(dx) > 70) changeZoomImage(dx < 0 ? 1 : -1);
-  }
-  window.addEventListener("mousemove", onMouseMove);
-  window.addEventListener("mouseup", onMouseUp);
+  box.addEventListener("mousedown", e => { state.dragging = true; state.startX = e.clientX; state.startY = e.clientY; state.startPanX = state.panX; state.startPanY = state.panY; e.preventDefault(); });
+  window.addEventListener("mousemove", e => { if(!state.dragging || !document.getElementById("csZoomLightbox")) return; state.panX = state.startPanX + e.clientX - state.startX; state.panY = state.startPanY + e.clientY - state.startY; apply(); });
+  window.addEventListener("mouseup", () => { state.dragging = false; });
   box.addEventListener("touchstart", e => {
-    state.moved = false;
     if(e.touches.length >= 2){ state.pinchDistance = csTouchDistance(e.touches); state.pinchScale = state.scale; e.preventDefault(); return; }
     const t=e.touches[0]; state.startX=t.clientX; state.startY=t.clientY; state.startPanX=state.panX; state.startPanY=state.panY;
   }, { passive:false });
@@ -1903,55 +1787,20 @@ function csOpenRealShoeZoom(startScale = 1){
       if(d && state.pinchDistance){ state.scale = clamp(state.pinchScale * (d / state.pinchDistance), 1, 5); if(state.scale <= 1.01){ state.panX=0; state.panY=0; } apply(); }
       e.preventDefault(); return;
     }
-    const t=e.touches[0];
-    const dx=t.clientX-state.startX;
-    const dy=t.clientY-state.startY;
-    if(Math.abs(dx)>8 || Math.abs(dy)>8) state.moved = true;
     if(state.scale <= 1.01) return;
-    state.panX=state.startPanX+dx; state.panY=state.startPanY+dy; apply(); e.preventDefault();
-  }, { passive:false });
-  box.addEventListener("touchend", e => {
-    const t = e.changedTouches?.[0];
-    if (!t) return;
-    const dx = t.clientX - state.startX;
-    const dy = t.clientY - state.startY;
-    if (state.scale <= 1.01 && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 46) {
-      e.preventDefault();
-      changeZoomImage(dx < 0 ? 1 : -1);
-    }
+    const t=e.touches[0]; state.panX=state.startPanX+t.clientX-state.startX; state.panY=state.startPanY+t.clientY-state.startY; apply(); e.preventDefault();
   }, { passive:false });
   box.addEventListener("dblclick", e => { e.preventDefault(); state.scale = state.scale > 1.2 ? 1 : 2.8; state.panX=0; state.panY=0; apply(); });
-  function onKeyDown(e){
-    if (!document.getElementById("csZoomLightbox")) return;
-    if (e.key === "Escape") { e.preventDefault(); closeZoom(); }
-    if (e.key === "ArrowLeft") { e.preventDefault(); changeZoomImage(-1); }
-    if (e.key === "ArrowRight") { e.preventDefault(); changeZoomImage(1); }
-  }
-  window.addEventListener("keydown", onKeyDown, true);
-  syncChrome();
-  resetZoom();
+  apply();
 }
 function csToggleShoeZoom(){
   if (!csViewerState) return;
-  csOpenRealShoeZoom(1);
+  csOpenRealShoeZoom(1.15);
 }
 function csCloseShoeZoom(){
   document.getElementById("csZoomLightbox")?.remove();
   document.documentElement.classList.remove("cs-real-zoom-active");
   csSetShoeZoomMode(false, 1);
-}
-
-
-function csViewerPriceHtml(product = {}) {
-  const currency = escapeHtml(window.App?.normalizeCurrency?.(product.currency || "RSD") || product.currency || "RSD");
-  const priceNumber = Number(product.price || 0);
-  const priceText = String(product.price_text || "").trim();
-  if (priceNumber > 0) {
-    const formatted = escapeHtml(priceNumber.toLocaleString("de-DE"));
-    return `<span class="shoe-viewer-price-number">${formatted}</span><span class="shoe-viewer-price-currency">${currency}</span>`;
-  }
-  if (priceText) return `<span class="shoe-viewer-price-number shoe-viewer-price-text-only">${escapeHtml(priceText)}</span>`;
-  return `<span class="shoe-viewer-price-number shoe-viewer-price-text-only">Cena na upit</span>`;
 }
 
 function renderShoeViewer() {
@@ -1963,71 +1812,40 @@ function renderShoeViewer() {
   if (!viewer) {
     viewer = document.createElement("div");
     viewer.id = "shoeViewer";
+    viewer.className = "shoe-viewer";
     document.body.appendChild(viewer);
   }
-  viewer.className = "product-viewer-v1";
-  viewer.style.cssText = "";
-  viewer.style.cssText = "";
   viewer.classList.toggle("shoe-viewer-zoomed", !!csViewerState.zoomed);
   viewer.setAttribute("data-price", csProductPrice(product));
   const viewerMetaPrimary = csProductViewerMetaPrimary(product);
   const viewerMetaSecondary = csProductViewerMetaSecondary(product);
   const viewerAvailability = csProductViewerAvailability(product);
-  const shopLogo = currentSalon?._publicLogo || "";
-  const shopName = currentSalon?._publicName || "Prodavnica";
   viewer.innerHTML = `
-    <div class="pv-shell">
-      <div class="pv-top-card">
-        <div class="pv-top-left">
-          ${viewerMetaPrimary ? `<p class="pv-kicker">${escapeHtml(viewerMetaPrimary)}</p>` : ``}
-          <h2 class="pv-title">${escapeHtml(product.name || "Proizvod")}</h2>
-          ${viewerMetaSecondary ? `<p class="pv-subtitle">${escapeHtml(viewerMetaSecondary)}</p>` : ``}
-        </div>
-        ${viewerAvailability ? `<div class="pv-status"><span class="pv-status-dot"></span>${escapeHtml(viewerAvailability)}</div>` : ``}
+    <div class="shoe-viewer-media">${img ? `<div class="shoe-viewer-media-bg" aria-hidden="true"><img src="${escapeHtml(img)}" alt=""></div><img class="shoe-viewer-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}" onload="csSmartCropShoeImage(this)">` : `<span>Bez slike</span>`}</div>
+    <div class="shoe-viewer-top">
+      <div class="shoe-viewer-right">
+        <h2><span>${escapeHtml(product.name || "Patike")}</span></h2>
+        ${viewerMetaPrimary ? `<p class="shoe-viewer-subtitle">${escapeHtml(viewerMetaPrimary)}</p>` : ``}
+        ${viewerMetaSecondary ? `<p class="shoe-viewer-subcopy">${escapeHtml(viewerMetaSecondary)}</p>` : ``}
+        ${viewerAvailability ? `<p class="shoe-viewer-availability">${escapeHtml(viewerAvailability)}</p>` : ``}
       </div>
-
-      <div class="pv-dots-row">
-        ${imgs.length > 1 ? `<div class="pv-dots">${imgs.map((_,i)=>`<button class="pv-dot ${i===csViewerState.image?'active':''}" type="button" onclick="event.stopPropagation(); shoeSetImage(${i})" aria-label="Slika ${i + 1}"></button>`).join("")}</div>` : ``}
-      </div>
-
-      <div class="pv-media-card">
-        <button class="pv-close" type="button" onclick="closeShoeViewer()" aria-label="Zatvori oglas">×</button>
-        ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Proizvod')}" class="pv-main-img">` : `<div class="pv-no-img">Bez slike</div>`}
-      </div>
-
-      <div class="pv-actions">
-        <button class="pv-btn" type="button" onclick="askShoeProduct(event)">
-          <span class="pv-btn-icon">${csViewerMessageIcon()}</span>
-          <span class="pv-btn-text">Pitaj</span>
-        </button>
-        <button class="pv-btn" type="button" onclick="callShoeShop(event)">
-          <span class="pv-btn-icon">${csViewerPhoneIcon()}</span>
-          <span class="pv-btn-text">Pozovi</span>
-        </button>
-        <button class="pv-btn" type="button" onclick="shareShoeProduct(event)">
-          <span class="pv-btn-icon">${csViewerShareIcon()}</span>
-          <span class="pv-btn-text">Podeli</span>
-        </button>
-        <button class="pv-btn" type="button" onclick="event.stopPropagation(); csOpenRealShoeZoom(1)">
-          <span class="pv-btn-icon">${csViewerZoomIcon()}</span>
-          <span class="pv-btn-text">Zumiraj</span>
-        </button>
-      </div>
-
-      <div class="pv-bottom-card">
-        <div class="pv-price">${csViewerPriceHtml(product)}</div>
-        <div class="pv-logo">
-          ${shopLogo ? `<img src="${escapeHtml(shopLogo)}" alt="${escapeHtml(shopName)} logo">` : `<div class="pv-logo-fallback">${escapeHtml((shopName || 'S').charAt(0).toUpperCase())}</div>`}
-        </div>
-      </div>
-
-      <div class="pv-powered">powered by <span>citystyle.app</span></div>
-    </div>`;
+    </div>
+    <button class="shoe-viewer-close" type="button" onclick="closeShoeViewer()" aria-label="Zatvori oglas">×</button>
+    <button class="shoe-zoom-close" type="button" onclick="event.stopPropagation(); csCloseShoeZoom()" aria-label="Zatvori zum">×</button>
+    ${imgs.length > 1 ? `<button class="shoe-arrow shoe-arrow-left" type="button" onclick="event.stopPropagation(); shoeChangeImage(-1)">‹</button><button class="shoe-arrow shoe-arrow-right" type="button" onclick="event.stopPropagation(); shoeChangeImage(1)">›</button>` : ""}
+    <div class="shoe-viewer-actions" aria-label="Akcije proizvoda">
+      <button class="shoe-action red" type="button" onclick="shareShoeProduct(event)" aria-label="Podeli oglas" title="Podeli oglas">${csViewerShareIcon()}<span>Podeli</span></button>
+      <button class="shoe-action blue" type="button" onclick="askShoeProduct(event)" aria-label="Pošalji poruku" title="Pošalji poruku">${csViewerMessageIcon()}<span>Poruka</span></button>
+      <button class="shoe-action green" type="button" onclick="callShoeShop(event)" aria-label="Pozovi prodavnicu" title="Pozovi prodavnicu">${csViewerPhoneIcon()}<span>Pozovi</span></button>
+      <button class="shoe-action zoom" type="button" onclick="event.stopPropagation(); csToggleShoeZoom()" aria-label="Zumiraj sliku" title="Zumiraj sliku">${csViewerZoomIcon()}<span>Zum</span></button>
+    </div>
+    <div class="shoe-viewer-powered">${CITYSTYLE_POWERED}</div>
+    ${imgs.length > 1 ? `<div class="shoe-dots">${imgs.map((_,i)=>`<button class="${i===csViewerState.image?'active':''}" onclick="event.stopPropagation(); shoeSetImage(${i})" aria-label="Slika ${i + 1}"></button>`).join("")}</div>` : ""}`;
   csApplyShoePanZoom();
   viewer.ontouchstart = e => {
     if (!csViewerState) return;
     if (e.touches && e.touches.length >= 2) {
-      csOpenRealShoeZoom(1);
+      csOpenRealShoeZoom(1.15);
       e.preventDefault?.();
       return;
     }

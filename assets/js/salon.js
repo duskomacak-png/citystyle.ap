@@ -832,7 +832,7 @@ async function ensureOwnerPushIsActive(reason = "panel-open") {
 
     if ("serviceWorker" in navigator) {
       try {
-        await navigator.serviceWorker.register("/sw.js?v=v230_final_push_clean", { scope: "/", updateViaCache: "none" });
+        await navigator.serviceWorker.register("/sw.js?v=v231_white_shop", { scope: "/", updateViaCache: "none" });
         const registration = await navigator.serviceWorker.ready;
         if (registration?.update) {
           registration.update().catch(() => {});
@@ -1572,17 +1572,10 @@ async function toggleProductActive(id, currentActive) {
 
 async function deleteProduct(id) {
   if (stopAdminOwnerPreviewEdit()) return;
-  if (!confirm("Obrisati proizvod iz kataloga i njegove slike? Ako ga samo trenutno nemate, bolje ga sakrijte.")) return;
-  const { data: product } = await window.db.from("products").select("image_url").eq("id", id).eq("salon_id", currentSalonId).maybeSingle();
-  const extraImages = await getProductExtraImages(id);
-  if (product?.image_url) await window.StorageHelper.deleteImage(product.image_url);
-  for (const img of extraImages) {
-    if (img?.image_url) await window.StorageHelper.deleteImage(img.image_url);
-  }
-  await window.db.from("product_images").delete().eq("product_id", id);
+  if (!confirm("Obrisati proizvod iz kataloga? Ako ga samo trenutno nemate, bolje ga sakrijte.")) return;
   const { error } = await window.db.from("products").delete().eq("id", id).eq("salon_id", currentSalonId);
   if (error) return window.App.showMessage("Greška pri brisanju proizvoda.", "error");
-  await refreshProductsAfterChange("Proizvod i njegove slike su obrisani.");
+  await loadProducts();
 }
 
 
@@ -2224,102 +2217,21 @@ async function loadProducts() {
     </div>`).join("");
 }
 
-function editProduct(productId) {
-  return showAddProductForm(productId);
-}
-
-async function refreshProductsAfterChange(successMessage = "Oglas je sačuvan.") {
-  // Soft refresh: ostaje isti vlasnički panel, ali se cela lista proizvoda ponovo učita
-  // da vlasnik odmah vidi novi/izmenjeni oglas bez ručnog osvežavanja browsera.
-  await showSection("products");
-  if (successMessage) window.App.showMessage(successMessage, "success");
-  setTimeout(() => {
-    document.getElementById("products-list")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, 80);
-}
-
-async function getProductExtraImages(productId) {
-  if (!productId) return [];
-  try {
-    const { data, error } = await window.db
-      .from("product_images")
-      .select("*")
-      .eq("product_id", productId)
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true });
-    if (error) return [];
-    return data || [];
-  } catch (e) {
-    return [];
-  }
-}
-
-function renderProductEditImages(product, extraImages = []) {
-  if (!product?.id) {
-    return `
-      <div class="card product-images-edit-box">
-        <strong>Slike oglasa</strong>
-        <p class="field-help">Kod novog oglasa možete odmah izabrati više slika odjednom. Prva izabrana slika biće glavna slika oglasa, ostale idu u galeriju oglasa.</p>
-        <input id="product-images-input" type="file" accept="image/png,image/jpeg,image/webp" multiple>
-      </div>`;
-  }
-  const cards = [];
-  if (product.image_url) {
-    cards.push(`
-      <div class="card owner-gallery-card product-edit-image-card">
-        <span class="status-pill">Glavna</span>
-        <img src="${salonEscapeHtml(product.image_url)}" alt="Glavna slika proizvoda">
-        <button class="btn btn-danger btn-small" type="button" onclick="deleteProductMainImage('${salonEscapeJs(product.id)}','${salonEscapeJs(product.image_url)}')">Obriši glavnu sliku</button>
-      </div>`);
-  }
-  extraImages.forEach((img, index) => {
-    cards.push(`
-      <div class="card owner-gallery-card product-edit-image-card">
-        <span class="status-pill">Slika ${index + 2}</span>
-        <img src="${salonEscapeHtml(img.image_url)}" alt="Slika oglasa">
-        <button class="btn btn-danger btn-small" type="button" onclick="deleteProductExtraImage('${salonEscapeJs(img.id)}','${salonEscapeJs(product.id)}','${salonEscapeJs(img.image_url)}', true)">Obriši ovu sliku</button>
-      </div>`);
-  });
-  return `
-    <div class="card product-images-edit-box">
-      <strong>Slike oglasa</strong>
-      <p class="field-help">Ovde vidite ceo oglas sa slikama. Ako je greškom ubačena pogrešna slika, obrišite samo tu sliku. Nove slike možete dodati sve odjednom.</p>
-      <div class="owner-gallery-grid product-edit-image-grid">${cards.join("") || '<p class="muted">Oglas trenutno nema slike.</p>'}</div>
-      <label>Dodaj još slika odjednom</label>
-      <input id="product-images-input" type="file" accept="image/png,image/jpeg,image/webp" multiple>
-      <p class="field-help product-upload-tip"><strong>Preporuka:</strong> koristite uspravne slike približno <strong>2:3 ili 3:4</strong>. Ako oglas nema glavnu sliku, prva nova slika postaće glavna.</p>
-    </div>`;
-}
-
 async function showAddProductForm(productId = null) {
   if (stopAdminOwnerPreviewEdit()) return;
   const box = document.getElementById("product-form-box");
   let product = null;
-  let extraImages = [];
-  if (productId) {
-    const { data } = await window.db.from("products").select("*").eq("id", productId).eq("salon_id", currentSalonId).maybeSingle();
-    product = data;
-    extraImages = await getProductExtraImages(productId);
-  }
-  let ownerRubricOptions = [];
-  try {
-    const { data: rubricRows } = await window.db.from("products").select("category").eq("salon_id", currentSalonId);
-    ownerRubricOptions = Array.from(new Set((rubricRows || []).map(row => String(row.category || "").trim()).filter(Boolean)))
-      .sort((a, b) => a.localeCompare(b, "sr", { sensitivity: "base" }));
-  } catch (e) { ownerRubricOptions = []; }
-  const ownerRubricDatalist = ownerRubricOptions.length
-    ? `<datalist id="product-category-suggestions">${ownerRubricOptions.map(item => `<option value="${salonEscapeHtml(item)}"></option>`).join("")}</datalist>`
-    : `<datalist id="product-category-suggestions"></datalist>`;
-
+  if (productId) { const { data } = await window.db.from("products").select("*").eq("id", productId).eq("salon_id", currentSalonId).maybeSingle(); product = data; }
   box.innerHTML = `<div class="card product-edit-card"><h3>${product ? "Uredi oglas / proizvod" : "Novi oglas / proizvod"}</h3>
     <input id="product-edit-id" type="hidden" value="${product ? salonEscapeHtml(product.id) : ""}">
-    <label>Rubrika *</label><input id="product-category" type="text" list="product-category-suggestions" value="${product ? salonEscapeHtml(product.category || "") : ""}" placeholder="Primer: Veš mašine, Patike, Šamponi, Gume...">${ownerRubricDatalist}<p class="field-help"><strong>Primer:</strong> ako upišete “Veš mašine”, kupac će u meniju Rubrike moći da izabere “Veš mašine” i vidi samo te proizvode.</p>
     <label>Naziv proizvoda</label><input id="product-name" type="text" value="${product ? salonEscapeHtml(product.name) : ""}" placeholder="Primer: Nike Air Max"><p class="field-help">Upišite glavni naziv koji kupac prvo vidi.</p>
+    <label>Brend / kategorija</label><input id="product-category" type="text" value="${product ? salonEscapeHtml(product.category || "") : ""}" placeholder="Primer: Nike / patike"><p class="field-help">Ovde ide brend ili kategorija proizvoda.</p>
     <label>Opis / brojevi</label><textarea id="product-description" rows="3" placeholder="Primer: Brojevi od 40 do 46">${product ? salonEscapeHtml(product.description || "") : ""}</textarea><p class="field-help">Ovde napišite kratki opis, brojeve, veličine ili kratku napomenu za kupca.</p>
     <div class="grid two"><div><label>Cena</label><input id="product-price" type="text" inputmode="numeric" value="${product ? salonEscapeHtml(product.price || "") : ""}" placeholder="Primer: 4700"></div><div><label>Valuta</label><select id="product-currency"><option value="RSD" ${window.App.normalizeCurrency(product?.currency || "RSD") === "RSD" ? "selected" : ""}>RSD</option><option value="EUR" ${window.App.normalizeCurrency(product?.currency || "RSD") === "EUR" ? "selected" : ""}>EUR</option><option value="KM" ${window.App.normalizeCurrency(product?.currency || "RSD") === "KM" ? "selected" : ""}>KM</option></select></div></div>
     <label>Status dostupnosti</label><select id="product-stock-status"><option value="available" ${!product || product.stock_status === "available" ? "selected" : ""}>Na stanju</option><option value="preorder" ${product && product.stock_status === "preorder" ? "selected" : ""}>Po porudžbini</option><option value="out" ${product && product.stock_status === "out" ? "selected" : ""}>Trenutno nema</option></select><p class="field-help">Kupac u otvorenom oglasu vidi i ovaj status.</p>
     <label>Redosled</label><input id="product-sort-order" type="number" value="${product ? Number(product.sort_order || 100) : 100}">
-    ${renderProductEditImages(product, extraImages)}
+    <label>Glavna slika proizvoda</label>${product?.image_url ? `<img class="owner-product-preview" src="${salonEscapeHtml(product.image_url)}" alt="Slika proizvoda"><p class="field-help">Ako ne izaberete novu sliku, ostaje postojeća.</p>` : ""}<input id="product-main-image" type="file" accept="image/png,image/jpeg,image/webp">
+    <p class="field-help product-upload-tip"><strong>Preporuka za najbolji prikaz:</strong> koristite uspravne slike približno <strong>2:3 ili 3:4</strong>. Proizvod neka bude u donjem/srednjem delu slike, sa čistom pozadinom i malo praznog prostora iznad za naziv, cenu i dugmad.</p>
     <div class="card-actions"><button class="btn btn-primary" type="button" onclick="saveProduct()">${product ? "Sačuvaj izmene" : "Dodaj proizvod"}</button><button class="btn btn-dark" type="button" onclick="hideProductForm()">Otkaži</button></div></div>`;
   ensureSalonCurrencyOptions("product-currency", product?.currency || "RSD");
   box.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -2335,108 +2247,26 @@ async function saveProduct() {
   const currency = window.App.normalizeCurrency(document.getElementById("product-currency")?.value || "RSD");
   const stock_status = document.getElementById("product-stock-status")?.value || "available";
   const sort_order = Number(document.getElementById("product-sort-order")?.value || 100);
-  const selectedFiles = Array.from(document.getElementById("product-images-input")?.files || []);
-  if (!category) return window.App.showMessage("Unesite rubriku oglasa. Primer: Veš mašine, Patike, Šamponi...", "error");
-  if (!name) return window.App.showMessage("Unesite naziv proizvoda.", "error");
-
   let existing = null;
-  if (id) {
-    const { data } = await window.db.from("products").select("image_url").eq("id", id).eq("salon_id", currentSalonId).maybeSingle();
-    existing = data;
-  }
+  if (id) { const { data } = await window.db.from("products").select("image_url").eq("id", id).eq("salon_id", currentSalonId).maybeSingle(); existing = data; }
   let image_url = existing?.image_url || null;
-  let filesForGallery = selectedFiles;
-  if (!image_url && selectedFiles.length) {
-    image_url = await window.StorageHelper.uploadImage(selectedFiles[0], currentSalonId, "product");
-    filesForGallery = selectedFiles.slice(1);
-  }
-
+  const file = document.getElementById("product-main-image")?.files?.[0];
+  if (file) image_url = await window.StorageHelper.uploadImage(file, currentSalonId, "product");
+  if (!name) return window.App.showMessage("Unesite naziv proizvoda.", "error");
   const payload = { name, category, description, price, currency, stock_status, sort_order, image_url, updated_at: new Date().toISOString() };
-  let savedId = id;
-  if (id) {
-    const { error } = await window.db.from("products").update(payload).eq("id", id).eq("salon_id", currentSalonId);
-    if (error) return window.App.showMessage("Proizvod nije sačuvan. Proverite da li su podaci dobro uneti i pokušajte ponovo.", "error");
-  } else {
-    const public_code = `${String(currentSalon?.slug || 'CS').replace(/[^a-z0-9]/gi,'').slice(0,3).toUpperCase() || 'CS'}-${Date.now().toString().slice(-5)}`;
-    const { data, error } = await window.db.from("products").insert({ ...payload, public_code, salon_id: currentSalonId, active: true }).select("id").single();
-    if (error) return window.App.showMessage("Proizvod nije dodat. Proverite podatke i pokušajte ponovo.", "error");
-    savedId = data?.id;
-  }
-
-  if (savedId && filesForGallery.length) {
-    await uploadProductImageFiles(savedId, filesForGallery);
-  }
-  hideProductForm();
-  await refreshProductsAfterChange(selectedFiles.length ? "Oglas i slike su sačuvani i lista je osvežena." : "Proizvod je sačuvan i lista je osvežena.");
-}
-
-async function uploadProductImageFiles(productId, files = []) {
-  const cleanFiles = Array.from(files || []).filter(Boolean).slice(0, 20);
-  if (!productId || !cleanFiles.length) return;
-  const existing = await getProductExtraImages(productId);
-  let sort = existing.length ? Math.max(...existing.map(img => Number(img.sort_order || 100))) + 10 : 100;
-  for (const file of cleanFiles) {
-    const url = await window.StorageHelper.uploadImage(file, currentSalonId, "product_extra");
-    if (url) {
-      await window.db.from("product_images").insert({ product_id: productId, image_url: url, sort_order: sort });
-      sort += 10;
-    }
-  }
+  if (id) { const { error } = await window.db.from("products").update(payload).eq("id", id).eq("salon_id", currentSalonId); if (error) return window.App.showMessage("Proizvod nije sačuvan. Proverite da li su podaci dobro uneti i pokušajte ponovo.", "error"); }
+  else { const public_code = `${String(currentSalon?.slug || 'CS').replace(/[^a-z0-9]/gi,'').slice(0,3).toUpperCase() || 'CS'}-${Date.now().toString().slice(-5)}`; const { error } = await window.db.from("products").insert({ ...payload, public_code, salon_id: currentSalonId, active: true }); if (error) return window.App.showMessage("Proizvod nije dodat. Proverite podatke i pokušajte ponovo.", "error"); }
+  hideProductForm(); await loadProducts(); window.App.showMessage("Proizvod je sačuvan.", "success");
 }
 
 async function showProductImages(productId) {
   const { data: product } = await window.db.from("products").select("*").eq("id", productId).eq("salon_id", currentSalonId).maybeSingle();
-  let imgs = await getProductExtraImages(productId);
-  const mainCard = product?.image_url ? `<div class="card owner-gallery-card"><span class="status-pill">Glavna</span><img src="${salonEscapeHtml(product.image_url)}" alt="Glavna slika"><button class="btn btn-danger btn-small" onclick="deleteProductMainImage('${salonEscapeJs(productId)}','${salonEscapeJs(product.image_url)}')">Obriši glavnu</button></div>` : "";
-  const modal = document.createElement("div");
-  modal.className = "legal-modal-backdrop";
-  modal.innerHTML = `<div class="legal-modal-card"><div class="legal-modal-head"><h2>Slike: ${salonEscapeHtml(product?.name || 'Proizvod')}</h2><button class="btn btn-dark" onclick="this.closest('.legal-modal-backdrop').remove()">Zatvori</button></div><div class="legal-modal-body"><div class="card"><label>Dodaj slike odjednom<input id="product-extra-images" type="file" accept="image/png,image/jpeg,image/webp" multiple></label><p class="field-help product-upload-tip"><strong>Preporuka:</strong> najbolje rade uspravne slike približno <strong>2:3 ili 3:4</strong>, sa proizvodom jasno dole/sredina i čistim prostorom iznad.</p><button class="btn btn-primary" onclick="uploadProductExtraImages('${salonEscapeJs(productId)}')">Sačuvaj slike</button></div><div class="owner-gallery-grid">${mainCard}${imgs.map(img => `<div class="card owner-gallery-card"><img src="${salonEscapeHtml(img.image_url)}" alt="Slika"><button class="btn btn-danger btn-small" onclick="deleteProductExtraImage('${salonEscapeJs(img.id)}','${salonEscapeJs(productId)}','${salonEscapeJs(img.image_url)}')">Obriši</button></div>`).join("") || (!mainCard ? '<p class="muted">Nema slika.</p>' : '')}</div></div></div>`;
-  document.body.appendChild(modal);
+  let imgs = [];
+  try { const { data } = await window.db.from("product_images").select("*").eq("product_id", productId).order("sort_order", { ascending:true }).order("created_at", { ascending:true }); imgs = data || []; } catch(e) {}
+  const modal = document.createElement("div"); modal.className = "legal-modal-backdrop"; modal.innerHTML = `<div class="legal-modal-card"><div class="legal-modal-head"><h2>Slike: ${salonEscapeHtml(product?.name || 'Proizvod')}</h2><button class="btn btn-dark" onclick="this.closest('.legal-modal-backdrop').remove()">Zatvori</button></div><div class="legal-modal-body"><div class="card"><label>Dodaj dodatne slike<input id="product-extra-images" type="file" accept="image/png,image/jpeg,image/webp" multiple></label><p class="field-help product-upload-tip"><strong>Preporuka:</strong> najbolje rade uspravne slike približno <strong>2:3 ili 3:4</strong>, sa proizvodom jasno dole/sredina i čistim prostorom iznad.</p><button class="btn btn-primary" onclick="uploadProductExtraImages('${productId}')">Upload slika</button></div><div class="owner-gallery-grid">${imgs.map(img => `<div class="card owner-gallery-card"><img src="${salonEscapeHtml(img.image_url)}" alt="Slika"><button class="btn btn-danger btn-small" onclick="deleteProductExtraImage('${img.id}','${productId}','${salonEscapeJs(img.image_url)}')">Obriši</button></div>`).join("") || '<p class="muted">Nema dodatnih slika.</p>'}</div></div></div>`; document.body.appendChild(modal);
 }
-async function uploadProductExtraImages(productId) {
-  const files = Array.from(document.getElementById("product-extra-images")?.files || []);
-  if (!files.length) return window.App.showMessage("Izaberite jednu ili više slika.", "error");
-  const { data: product } = await window.db.from("products").select("image_url").eq("id", productId).eq("salon_id", currentSalonId).maybeSingle();
-  if (!product?.image_url) {
-    const mainUrl = await window.StorageHelper.uploadImage(files[0], currentSalonId, "product");
-    if (mainUrl) await window.db.from("products").update({ image_url: mainUrl, updated_at: new Date().toISOString() }).eq("id", productId).eq("salon_id", currentSalonId);
-    await uploadProductImageFiles(productId, files.slice(1));
-  } else {
-    await uploadProductImageFiles(productId, files);
-  }
-  document.querySelector('.legal-modal-backdrop')?.remove();
-  await refreshProductsAfterChange("Slike su sačuvane i lista je osvežena.");
-  await showProductImages(productId);
-}
-async function deleteProductMainImage(productId, imageUrl) {
-  if (stopAdminOwnerPreviewEdit()) return;
-  if (!confirm("Obrisati glavnu sliku ovog oglasa?")) return;
-  await window.StorageHelper.deleteImage(imageUrl);
-  const { error } = await window.db.from("products").update({ image_url: null, updated_at: new Date().toISOString() }).eq("id", productId).eq("salon_id", currentSalonId);
-  if (error) return window.App.showMessage("Glavna slika nije obrisana.", "error");
-  document.querySelector('.legal-modal-backdrop')?.remove();
-  if (document.getElementById("product-edit-id")?.value === String(productId)) {
-    await showAddProductForm(productId);
-    await loadProducts();
-    return window.App.showMessage("Slika je obrisana i oglas je osvežen.", "success");
-  }
-  await refreshProductsAfterChange("Slika je obrisana i lista je osvežena.");
-}
-async function deleteProductExtraImage(imageId, productId, imageUrl, stayInEditForm = false) {
-  if (stopAdminOwnerPreviewEdit()) return;
-  if (!confirm("Obrisati ovu sliku iz oglasa?")) return;
-  await window.StorageHelper.deleteImage(imageUrl);
-  const { error } = await window.db.from("product_images").delete().eq("id", imageId);
-  if (error) return window.App.showMessage("Slika nije obrisana.", "error");
-  document.querySelector('.legal-modal-backdrop')?.remove();
-  if (stayInEditForm || document.getElementById("product-edit-id")?.value === String(productId)) {
-    await showAddProductForm(productId);
-    await loadProducts();
-    return window.App.showMessage("Slika je obrisana i oglas je osvežen.", "success");
-  }
-  await refreshProductsAfterChange("Slika je obrisana i lista je osvežena.");
-  await showProductImages(productId);
-}
+async function uploadProductExtraImages(productId) { const files = Array.from(document.getElementById("product-extra-images")?.files || []).slice(0,10); for (const file of files) { const url = await window.StorageHelper.uploadImage(file, currentSalonId, "product_extra"); if (url) await window.db.from("product_images").insert({ product_id: productId, image_url: url, sort_order: 100 }); } document.querySelector('.legal-modal-backdrop')?.remove(); await showProductImages(productId); }
+async function deleteProductExtraImage(imageId, productId, imageUrl) { await window.StorageHelper.deleteImage(imageUrl); await window.db.from("product_images").delete().eq("id", imageId); document.querySelector('.legal-modal-backdrop')?.remove(); await showProductImages(productId); }
 function copyProductLink(productId) { const code = productId; const link = `${window.App.getSalonPublicLink(currentSalon.slug)}&product=${encodeURIComponent(code)}`; navigator.clipboard.writeText(link).then(()=>window.App.showMessage("Link oglasa je kopiran.", "success")).catch(()=>prompt("Kopiraj link oglasa:", link)); }
 function previewProductAsClient(productId) { window.location.href = `${window.App.getSalonPublicLink(currentSalon.slug)}&product=${encodeURIComponent(productId)}&ownerPreview=1`; }
 

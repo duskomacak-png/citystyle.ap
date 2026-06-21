@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle v251 - buttons mobile laptop fit
-const CACHE_NAME = "citystyle-v251_buttons_mobile_laptop_fit";
+// CityStyle v230 - final clean owner push display
+const CACHE_NAME = "citystyle-v231_white_shop";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
