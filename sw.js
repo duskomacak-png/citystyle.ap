@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle v230 - final clean owner push display
-const CACHE_NAME = "citystyle-v230_final_push_clean";
+// CityStyle v248 - rubrike prvo polje only
+const CACHE_NAME = "citystyle-v248_rubrike_prvo_polje";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

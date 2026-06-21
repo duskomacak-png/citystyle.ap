@@ -1449,34 +1449,38 @@ function csNormalizePublicRubric(value = "") {
     .trim();
 }
 function csProductRubricTitle(product = {}) {
-  // V47: Rubrika za dropdown je SAMO posebno upisana rubrika u polju product.name.
-  // Zaštita: ne ubacuj ime proizvoda, opis, težinu, cenu, brend/kategoriju ni stare pogrešne vrednosti.
-  // Pravilo za vlasnika: rubriku pisati kao kratku grupu, najbolje VELIKIM slovima: PAKETI, MEŠALICE, AGREGATI...
-  let raw = csNormalizePublicRubric(product.name || "");
+  /* V48 STROGO PRAVILO RUBRIKA
+     Rubrika u padajućem meniju se uzima SAMO iz prvog polja u panelu vlasnika:
+     product.name = "Rubrika za padajući meni".
+     Ne sme da vuče brend/ime proizvoda (product.category), opis, cenu, težinu ili bilo koji drugi tekst.
+  */
+  const raw = csNormalizePublicRubric(product.name || "");
   if (!raw) return "";
 
-  // očisti česte stare unose koji su nastali pre razdvajanja rubrika / imena / opisa
   const key = raw.toLocaleLowerCase("sr");
-  const bad = new Set(["alati", "alat", "najam", "najem", "prodavac", "oglas", "proizvod", "rubrika"]);
-  if (bad.has(key)) return "";
+  const displayName = csNormalizePublicRubric(product.category || "");
+  const desc = csNormalizePublicRubric(product.description || "");
 
-  // singular koji je korisnik ranije unosio pretvori u pravu rubriku
-  if (key === "paket") raw = "PAKETI";
+  // Zaštita od starih pogrešno upisanih vrednosti i generičkih reči.
+  const blocked = new Set([
+    "alati", "alat", "najam", "najem", "prodavac", "oglas", "proizvod", "rubrika",
+    "opis", "cena", "na stanju", "dostupno"
+  ]);
+  if (blocked.has(key)) return "";
 
-  // ne dozvoli da opis/težina/cena upadnu u dropdown
+  // Ne dozvoli da opis/težina/cena uđu kao rubrika.
   if (/\d/.test(raw)) return "";
-  if (raw.length > 26) return "";
+  if (/(kg|kilogram|tezina|težina|litar|litara|sata|dan|dana|rsd|din|eur)/i.test(raw)) return "";
 
-  const display = csNormalizePublicRubric(product.category || "");
-  const descFirst = csNormalizePublicRubric(String(product.description || "").split(/\n|,|;/)[0] || "");
-  if (display && csProductRubricKey(display) === csProductRubricKey(raw)) return "";
-  if (descFirst && csProductRubricKey(descFirst) === csProductRubricKey(raw)) return "";
+  // Ako je isto kao ime proizvoda ili deo opisa, nije rubrika nego pogrešno mapirano staro polje.
+  if (displayName && csProductRubricKey(displayName) === csProductRubricKey(raw)) return "";
+  if (desc) {
+    const firstDesc = csNormalizePublicRubric(desc.split(/\n|,|;/)[0] || "");
+    if (firstDesc && csProductRubricKey(firstDesc) === csProductRubricKey(raw)) return "";
+  }
 
-  // Ako rubrika nije napisana kao jasna grupa, ne prikazuj je u dropdownu.
-  // Ovo sprečava da se imena tipa "Vibro skakavac" pojave kao rubrike.
-  const lettersOnly = raw.replace(/[\s_\-/]+/g, "");
-  if (lettersOnly && lettersOnly !== lettersOnly.toLocaleUpperCase("sr")) return "";
-
+  // Jedina automatska normalizacija: Paket -> PAKETI, ostalo ostaje kako je vlasnik upisao.
+  if (key === "paket") return "PAKETI";
   return raw;
 }
 function csProductRubricKey(value = "") {
@@ -1643,7 +1647,7 @@ function renderShoeShopHome(settings = {}) {
         <div class="shoe-info-copy"><h1>${escapeHtml(name)}</h1>${text ? `<p>${escapeHtml(text)}</p>` : ""}<div class="shoe-meta">${phone ? `<a class="shoe-meta-link" href="tel:${escapeHtml(csSafePhone(phone))}">📞 ${escapeHtml(phone)}</a>` : ""}${address ? renderPublicAddressLink(address) : ""}</div></div>
       </div>
       ${ownerPreviewMode ? "" : `<div class="shoe-install-row"><button class="btn btn-dark shoe-install-btn" type="button" onclick="installCurrentSalonApp()">Preuzmi app</button><small>Prečica otvara baš ovaj profil${logo ? " i koristi logo firme gde browser dozvoljava" : ""}.</small></div>`}
-      ${products.length ? `<section class="shoe-rubric-filter"><label for="shoe-rubric-select">🔍 Rubrike proizvoda</label><div class="shoe-rubric-select-wrap"><select id="shoe-rubric-select" onchange="csFilterShoeRubric(this.value)"><option value="">Sve rubrike</option>${csAllShoeRubrics().map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join("")}</select></div><small id="shoe-rubric-result-count">${products.length} oglasa</small></section>` : ""}
+      ${products.length ? `<section class="shoe-rubric-filter"><label for="shoe-rubric-select">Rubrike</label><div class="shoe-rubric-select-wrap"><select id="shoe-rubric-select" onchange="csFilterShoeRubric(this.value)"><option value="">Sve rubrike</option>${csAllShoeRubrics().map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join("")}</select></div><small id="shoe-rubric-result-count">${products.length} oglasa</small></section>` : ""}
       <section class="shoe-products-section">
         ${products.length ? `<div class="shoe-grid">${products.map((product, index) => renderShoeProductCard(product, index)).join("")}</div>` : `<div class="card"><h2>Još nema oglasa</h2><p class="muted">Vlasnik još nije dodao patike u katalog.</p></div>`}
       </section>

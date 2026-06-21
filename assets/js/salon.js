@@ -2224,13 +2224,13 @@ async function showAddProductForm(productId = null) {
   if (productId) { const { data } = await window.db.from("products").select("*").eq("id", productId).eq("salon_id", currentSalonId).maybeSingle(); product = data; }
   box.innerHTML = `<div class="card product-edit-card"><h3>${product ? "Uredi oglas / proizvod" : "Novi oglas / proizvod"}</h3>
     <input id="product-edit-id" type="hidden" value="${product ? salonEscapeHtml(product.id) : ""}">
-    <label>Rubrika za padajući meni</label><input id="product-name" type="text" value="${product ? salonEscapeHtml(product.name) : ""}" placeholder="Primer: PAKETI, MEŠALICE, AGREGATI"><p class="field-help">Samo ovo polje ulazi u padajući meni Rubrike. Piši kratko i jasno, najbolje velikim slovima. Ne upisuj opis, težinu ni cenu.</p>
+    <label>Rubrika</label><input id="product-name" type="text" value="${product ? salonEscapeHtml(product.name) : ""}" placeholder="Primer: PAKETI, MEŠALICE, AGREGATI"><p class="field-help"><strong>Samo ovo prvo polje se prikazuje u padajućem meniju Rubrike.</strong> Ime proizvoda, opis, cena, težina i brend se ne ubacuju u rubrike.</p>
     <label>Ime proizvoda koje mušterija vidi</label><input id="product-category" type="text" value="${product ? salonEscapeHtml(product.category || "") : ""}" placeholder="Primer: Zidarski paket, Hilti Makita, Agregat Honda"><p class="field-help">Ovo je glavni naziv oglasa koji se prikazuje kupcu.</p>
-    <label>Opis / rubrike za pretragu</label><textarea id="product-description" rows="4" placeholder="Primer:
+    <label>Opis proizvoda</label><textarea id="product-description" rows="4" placeholder="Primer:
 Mešalica 160L
 Kolica
 Produžni kabal
-Dostava po dogovoru">${product ? salonEscapeHtml(product.description || "") : ""}</textarea><p class="field-help">Svaki red ili stavka odvojena zarezom postaje rubrika koju kupac vidi i po kojoj može da filtrira oglase.</p>
+Dostava po dogovoru">${product ? salonEscapeHtml(product.description || "") : ""}</textarea><p class="field-help">Opis se prikazuje mušteriji na oglasu, ali ne ulazi u padajući meni Rubrike.</p>
     <div class="grid two"><div><label>Cena</label><input id="product-price" type="text" inputmode="numeric" value="${product ? salonEscapeHtml(product.price || "") : ""}" placeholder="Primer: 4700"></div><div><label>Valuta</label><select id="product-currency"><option value="RSD" ${window.App.normalizeCurrency(product?.currency || "RSD") === "RSD" ? "selected" : ""}>RSD</option><option value="EUR" ${window.App.normalizeCurrency(product?.currency || "RSD") === "EUR" ? "selected" : ""}>EUR</option><option value="KM" ${window.App.normalizeCurrency(product?.currency || "RSD") === "KM" ? "selected" : ""}>KM</option></select></div></div>
     <label>Status dostupnosti</label><select id="product-stock-status"><option value="available" ${!product || product.stock_status === "available" ? "selected" : ""}>Na stanju</option><option value="preorder" ${product && product.stock_status === "preorder" ? "selected" : ""}>Po porudžbini</option><option value="out" ${product && product.stock_status === "out" ? "selected" : ""}>Trenutno nema</option></select><p class="field-help">Kupac u otvorenom oglasu vidi i ovaj status.</p>
     <label>Redosled</label><input id="product-sort-order" type="number" value="${product ? Number(product.sort_order || 100) : 100}">
