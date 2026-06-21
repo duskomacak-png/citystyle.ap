@@ -10634,3 +10634,18 @@ body:has(.shoe-shop-page) .client-shell{
   #shoe-rubric-select{font-size:15px !important;}
   .shoe-card-rubrics span{font-size:10.5px !important;padding:4px 7px !important;}
 }
+
+/* === v42: javni oglas - opis proizvoda u kartici === */
+.shoe-card-description{
+  margin: 4px 0 8px !important;
+  color: #6b7280 !important;
+  font-size: 13px !important;
+  line-height: 1.35 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+.shoe-shop-page .shoe-card-info strong{
+  word-break: break-word !important;
+}

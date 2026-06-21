@@ -1443,6 +1443,8 @@ function csProductImages(product = {}) {
 }
 function csProductPrice(product = {}) { return renderProductPrice(product); }
 function csProductStatus(product = {}) { return getProductStatusLabel(product.stock_status); }
+function csProductRubricTitle(product = {}) { return String(product.name || "").trim(); }
+function csProductDisplayName(product = {}) { return String(product.category || product.name || "Oglas").trim(); }
 function csProductPublicDescription(product = {}) { return String(product.description || "").trim(); }
 function csProductViewerMetaPrimary(product = {}) {
   return String(product.category || "").trim();
@@ -1536,31 +1538,12 @@ async function renderSalonHome() {
 
 
 function csProductRubrics(product = {}) {
-  const raw = [];
-  const push = v => {
-    if (v == null) return;
-    if (Array.isArray(v)) { v.forEach(push); return; }
-    if (typeof v === 'object') { Object.values(v).forEach(push); return; }
-    String(v).split(/[\n,;|•]+/).forEach(x => {
-      const t = x.replace(/^[-–—✓✔️✅\s]+/, '').replace(/\s+/g, ' ').trim();
-      if (t && t.length <= 42) raw.push(t);
-    });
-  };
-  push(product.category);
-  push(product.tags);
-  push(product.rubrics);
-  push(product.rubrike);
-  push(product.features);
-  push(product.specs);
-  push(product.description);
-  const seen = new Set();
-  return raw.filter(t => {
-    const k = t.toLowerCase();
-    if (seen.has(k)) return false;
-    seen.add(k);
-    return true;
-  }).slice(0, 10);
+  // Rubrika je SAMO polje "Naziv proizvoda" iz panela vlasnika.
+  // Brend/kategorija se na javnoj strani koristi kao ime proizvoda, a opis ostaje opis proizvoda.
+  const title = csProductRubricTitle(product);
+  return title ? [title] : [];
 }
+
 function csAllShoeRubrics() {
   const map = new Map();
   (products || []).forEach(product => {
@@ -1620,16 +1603,18 @@ function renderShoeProductCard(product, index) {
   const imgs = csProductImages(product);
   const img = imgs[0] || "";
   const status = csProductStatus(product);
+  const rubricTitle = csProductRubricTitle(product);
+  const displayName = csProductDisplayName(product);
+  const desc = csProductPublicDescription(product);
   const rubrics = csProductRubrics(product);
   const rubricsAttr = rubrics.map(r => r.toLowerCase()).join('|');
-  const searchAttr = [csProductCode(product), product.category, product.name, product.description, ...rubrics].filter(Boolean).join(' ').toLowerCase();
-  const visibleRubrics = rubrics.slice(0, 4);
+  const searchAttr = [csProductCode(product), rubricTitle, displayName, desc].filter(Boolean).join(' ').toLowerCase();
   return `<button class="shoe-card" type="button" data-rubrics="${escapeHtml(rubricsAttr)}" data-search="${escapeHtml(searchAttr)}" onclick="openShoeViewer(${index}); event.preventDefault();">
-    <div class="shoe-card-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Oglas')}">` : `<span>Bez slike</span>`}</div>
+    <div class="shoe-card-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(displayName || 'Oglas')}">` : `<span>Bez slike</span>`}</div>
     <div class="shoe-card-info">
-      <small>${escapeHtml(csProductCode(product))}${product.category ? " • " + escapeHtml(product.category) : ""}</small>
-      <strong>${escapeHtml(product.name || "Oglas")}</strong>
-      ${visibleRubrics.length ? `<div class="shoe-card-rubrics">${visibleRubrics.map(r => `<span>${escapeHtml(r)}</span>`).join("")}</div>` : ""}
+      <small>${escapeHtml(csProductCode(product))}${rubricTitle ? " • " + escapeHtml(rubricTitle) : ""}</small>
+      <strong>${escapeHtml(displayName || "Oglas")}</strong>
+      ${desc ? `<p class="shoe-card-description">${escapeHtml(desc)}</p>` : ""}
       <div class="shoe-card-bottom"><b>${escapeHtml(csProductPrice(product))}</b><span>${escapeHtml(status)}</span></div>
     </div>
   </button>`;
@@ -1938,8 +1923,8 @@ function renderShoeViewer() {
   if (!product) return closeShoeViewer();
   const imgs = csProductImages(product);
   const img = imgs[csViewerState.image] || imgs[0] || product.image_url || "";
-  const category = product.category || "Oglas";
-  const name = product.name || "Proizvod";
+  const category = csProductRubricTitle(product) || "Oglas";
+  const name = csProductDisplayName(product) || "Proizvod";
   const price = csProductPrice(product);
   const status = csProductStatus(product) || "Na stanju";
   const desc = csProductPublicDescription(product) || product.description || "";
@@ -2044,7 +2029,7 @@ function shoeChangeImage(delta) {
   renderShoeViewer();
 }
 function shoeSetImage(i) { csViewerState.image = i; csViewerState.zoomed = false; csViewerState.zoomScale = 1; csResetShoePan(); renderShoeViewer(); }
-async function shareShoeProduct(e) { e?.stopPropagation?.(); const p=currentShoeProduct(); const url=csProductUrl(p); const text=`${p.name || 'Patike'} - ${csProductPrice(p)}`; if(navigator.share){try{await navigator.share({title:p.name||'Oglas',text,url});return;}catch(_){}} navigator.clipboard?.writeText(url); window.App.showMessage("Link oglasa je kopiran.", "success"); }
+async function shareShoeProduct(e) { e?.stopPropagation?.(); const p=currentShoeProduct(); const url=csProductUrl(p); const text=`${csProductDisplayName(p) || 'Oglas'} - ${csProductPrice(p)}`; if(navigator.share){try{await navigator.share({title:csProductDisplayName(p)||'Oglas',text,url});return;}catch(_){}} navigator.clipboard?.writeText(url); window.App.showMessage("Link oglasa je kopiran.", "success"); }
 function askShoeProduct(e) {
   e?.stopPropagation?.();
   const p = currentShoeProduct();

@@ -2224,8 +2224,8 @@ async function showAddProductForm(productId = null) {
   if (productId) { const { data } = await window.db.from("products").select("*").eq("id", productId).eq("salon_id", currentSalonId).maybeSingle(); product = data; }
   box.innerHTML = `<div class="card product-edit-card"><h3>${product ? "Uredi oglas / proizvod" : "Novi oglas / proizvod"}</h3>
     <input id="product-edit-id" type="hidden" value="${product ? salonEscapeHtml(product.id) : ""}">
-    <label>Naziv proizvoda</label><input id="product-name" type="text" value="${product ? salonEscapeHtml(product.name) : ""}" placeholder="Primer: Nike Air Max"><p class="field-help">Upišite glavni naziv koji kupac prvo vidi.</p>
-    <label>Brend / kategorija</label><input id="product-category" type="text" value="${product ? salonEscapeHtml(product.category || "") : ""}" placeholder="Primer: Nike / patike"><p class="field-help">Ovde ide brend ili kategorija proizvoda.</p>
+    <label>Naziv proizvoda / rubrika</label><input id="product-name" type="text" value="${product ? salonEscapeHtml(product.name) : ""}" placeholder="Primer: Paketi, Mešalice, Agregati"><p class="field-help">Ovo se kupcu prikazuje kao rubrika i ulazi u padajući meni za pregled po rubrikama.</p>
+    <label>Brend / ime proizvoda</label><input id="product-category" type="text" value="${product ? salonEscapeHtml(product.category || "") : ""}" placeholder="Primer: Zidarski paket, Hilti Makita, Agregat Honda"><p class="field-help">Ovo se kupcu prikazuje kao glavno ime proizvoda na oglasu.</p>
     <label>Opis / rubrike za pretragu</label><textarea id="product-description" rows="4" placeholder="Primer:
 Mešalica 160L
 Kolica
