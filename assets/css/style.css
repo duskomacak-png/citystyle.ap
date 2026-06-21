@@ -10413,3 +10413,42 @@ body:has(#shoeViewer.cs-product-viewer-v33){
   text-align:center !important;
   pointer-events:none !important;
 }
+
+
+/* === V38: Product viewer price card - profilna slika umesto teksta Prodavac === */
+.cs-pv-price-card{
+  min-height:92px !important;
+}
+.cs-pv-profile-box{
+  width:72px !important;
+  height:72px !important;
+  min-width:72px !important;
+  border-radius:18px !important;
+  overflow:hidden !important;
+  display:grid !important;
+  place-items:center !important;
+  background:#111827 !important;
+  border:2px solid rgba(34,197,94,.75) !important;
+  box-shadow:0 8px 24px rgba(0,0,0,.35) !important;
+}
+.cs-pv-profile-img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  display:block !important;
+}
+.cs-pv-profile-fallback{
+  width:100% !important;
+  height:100% !important;
+  display:grid !important;
+  place-items:center !important;
+  background:linear-gradient(135deg,#0f172a,#111827) !important;
+  color:#22c55e !important;
+  font-size:30px !important;
+  font-weight:950 !important;
+}
+@media (max-width:420px){
+  .cs-pv-price-card{padding:16px 16px !important;gap:12px !important;}
+  .cs-pv-profile-box{width:64px !important;height:64px !important;min-width:64px !important;border-radius:16px !important;}
+  .cs-pv-price{font-size:28px !important;}
+}

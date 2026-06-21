@@ -1886,6 +1886,8 @@ function renderShoeViewer() {
   const status = csProductStatus(product) || "Na stanju";
   const desc = csProductPublicDescription(product) || product.description || "";
   const salonName = currentSalon?.name || currentSalon?.title || "Prodavac";
+  const salonLogo = currentSalon?._publicLogo || currentSalon?.logo_url || currentSalon?.logo || "";
+  const salonInitial = (salonName || "P").trim().charAt(0).toUpperCase() || "P";
 
   let viewer = document.getElementById("shoeViewer");
   if (!viewer) {
@@ -1917,7 +1919,9 @@ function renderShoeViewer() {
 
         <div class="cs-pv-price-card">
           <div class="cs-pv-price">${escapeHtml(price)}</div>
-          <div class="cs-pv-seller"><strong>${escapeHtml(salonName)}</strong><small>Prodavac</small></div>
+          <div class="cs-pv-profile-box" title="${escapeHtml(salonName)}">
+            ${salonLogo ? `<img class="cs-pv-profile-img" src="${escapeHtml(salonLogo)}" alt="${escapeHtml(salonName)} profil">` : `<div class="cs-pv-profile-fallback">${escapeHtml(salonInitial)}</div>`}
+          </div>
         </div>
 
         <div class="cs-pv-benefits">
