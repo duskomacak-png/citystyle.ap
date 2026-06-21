@@ -10437,3 +10437,347 @@ html:not(.cs-zoom-active) #shoeViewer:not(.shoe-viewer-zoomed) .shoe-arrow{
     gap:10px !important;
   }
 }
+
+/* === v27 FIX: KLIK NA OGLAS - BELA FULL MOBILE KARTICA ===
+   Scope: samo client product/ad viewer (#shoeViewer). Ne dira admin ni logiku. */
+@media (max-width: 899px) {
+  #shoeViewer.shoe-viewer {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    background: #ffffff !important;
+    padding: env(safe-area-inset-top, 0px) 8px calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+    box-sizing: border-box !important;
+    touch-action: pan-y !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  #shoeViewer.shoe-viewer::before,
+  #shoeViewer.shoe-viewer::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  #shoeViewer .shoe-detail-card {
+    width: 100% !important;
+    min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 10px) !important;
+    max-width: 520px !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    background: #ffffff !important;
+    color: #050505 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Gornja kartica: naziv levo, status desno gore */
+  #shoeViewer .shoe-viewer-top {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    min-height: 128px !important;
+    padding: 24px 128px 24px 24px !important;
+    border: 4px solid #4ade80 !important;
+    border-radius: 28px !important;
+    background: linear-gradient(135deg, #f7fff8 0%, #dff7e7 100%) !important;
+    box-shadow: 0 12px 32px rgba(34,197,94,.22) !important;
+    text-shadow: none !important;
+    box-sizing: border-box !important;
+    display: block !important;
+    overflow: hidden !important;
+  }
+
+  #shoeViewer .shoe-viewer-right {
+    width: 100% !important;
+    text-align: left !important;
+  }
+
+  #shoeViewer .shoe-viewer-category,
+  #shoeViewer .shoe-viewer-top small {
+    display: block !important;
+    margin: 0 0 8px !important;
+    color: #111827 !important;
+    font-size: clamp(17px, 4.4vw, 24px) !important;
+    line-height: 1.05 !important;
+    font-weight: 950 !important;
+    text-transform: uppercase !important;
+    letter-spacing: .02em !important;
+    opacity: 1 !important;
+  }
+
+  #shoeViewer .shoe-viewer-top h2 {
+    margin: 0 !important;
+    color: #000 !important;
+    font-size: clamp(36px, 13vw, 70px) !important;
+    line-height: .95 !important;
+    font-weight: 1000 !important;
+    letter-spacing: -.05em !important;
+    max-width: 100% !important;
+  }
+
+  #shoeViewer .shoe-viewer-top h2 span {
+    display: block !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  #shoeViewer .shoe-viewer-subcopy,
+  #shoeViewer .shoe-viewer-top b {
+    display: block !important;
+    margin: 12px 0 0 !important;
+    color: #111827 !important;
+    font-size: clamp(18px, 5vw, 28px) !important;
+    line-height: 1.15 !important;
+    font-weight: 850 !important;
+  }
+
+  #shoeViewer .shoe-viewer-availability {
+    position: absolute !important;
+    top: 22px !important;
+    right: 20px !important;
+    width: auto !important;
+    min-width: 112px !important;
+    max-width: 132px !important;
+    height: 54px !important;
+    padding: 0 14px !important;
+    border-radius: 999px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    background: #07120d !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,.18) !important;
+    box-shadow: 0 10px 24px rgba(0,0,0,.20) !important;
+    font-size: clamp(14px, 3.7vw, 18px) !important;
+    font-weight: 950 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  #shoeViewer .shoe-viewer-availability span {
+    width: 14px !important;
+    height: 14px !important;
+    border-radius: 999px !important;
+    background: #00e64d !important;
+    box-shadow: 0 0 16px rgba(0,230,77,.85) !important;
+    flex: 0 0 auto !important;
+  }
+
+  /* indikator slika */
+  #shoeViewer .shoe-dots {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    height: 24px !important;
+    margin: -2px 0 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    z-index: 2 !important;
+  }
+
+  #shoeViewer .shoe-dots button {
+    width: 14px !important;
+    height: 14px !important;
+    min-width: 14px !important;
+    border-radius: 999px !important;
+    padding: 0 !important;
+    background: rgba(17,24,39,.28) !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  #shoeViewer .shoe-dots button.active {
+    width: 18px !important;
+    height: 18px !important;
+    background: #64e889 !important;
+    box-shadow: 0 0 0 14px rgba(100,232,137,.22) !important;
+  }
+
+  /* Slika oglasa: cela slika uredno, bez presecanja */
+  #shoeViewer .shoe-viewer-media {
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    padding: 8px !important;
+    border: 4px solid #4ade80 !important;
+    border-radius: 28px !important;
+    background: #ffffff !important;
+    box-shadow: 0 12px 30px rgba(34,197,94,.18) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  #shoeViewer .shoe-viewer-media-bg { display: none !important; }
+
+  #shoeViewer .shoe-viewer-main-img,
+  #shoeViewer .shoe-viewer-media > img {
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100% !important;
+    max-height: min(58dvh, 720px) !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    display: block !important;
+    border-radius: 18px !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  #shoeViewer .shoe-viewer-close {
+    position: absolute !important;
+    top: 18px !important;
+    right: 18px !important;
+    width: 66px !important;
+    height: 66px !important;
+    border-radius: 999px !important;
+    border: 4px solid #4ade80 !important;
+    background: #07120d !important;
+    color: #ffffff !important;
+    font-size: 44px !important;
+    font-weight: 950 !important;
+    line-height: 1 !important;
+    display: grid !important;
+    place-items: center !important;
+    padding: 0 0 6px !important;
+    box-shadow: 0 12px 28px rgba(0,0,0,.22) !important;
+    z-index: 5 !important;
+  }
+
+  /* Dugmad uredno na celu širinu */
+  #shoeViewer .shoe-viewer-actions {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    z-index: 3 !important;
+  }
+
+  #shoeViewer .shoe-action,
+  #shoeViewer .shoe-action.red,
+  #shoeViewer .shoe-action.blue,
+  #shoeViewer .shoe-action.green,
+  #shoeViewer .shoe-action.zoom {
+    width: 100% !important;
+    height: 78px !important;
+    min-width: 0 !important;
+    border-radius: 20px !important;
+    border: 4px solid #4ade80 !important;
+    background: #06110c !important;
+    color: #ffffff !important;
+    box-shadow: 0 10px 22px rgba(34,197,94,.18) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    padding: 6px 4px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  #shoeViewer .shoe-action svg {
+    width: 24px !important;
+    height: 24px !important;
+    flex: 0 0 auto !important;
+  }
+
+  #shoeViewer .shoe-action span {
+    display: block !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    font-size: clamp(12px, 3.5vw, 16px) !important;
+    font-weight: 950 !important;
+    line-height: 1.1 !important;
+    text-transform: none !important;
+  }
+
+  /* Cena dole */
+  #shoeViewer .shoe-viewer-price-card {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 100% !important;
+    min-height: 118px !important;
+    padding: 22px 24px !important;
+    border: 4px solid #4ade80 !important;
+    border-radius: 28px !important;
+    background: linear-gradient(135deg, #f7fff8 0%, #dff7e7 100%) !important;
+    box-shadow: 0 12px 30px rgba(34,197,94,.18) !important;
+    color: #000 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    box-sizing: border-box !important;
+  }
+
+  #shoeViewer .shoe-viewer-price-card strong {
+    color: #000 !important;
+    font-size: clamp(40px, 13vw, 68px) !important;
+    line-height: .9 !important;
+    font-weight: 1000 !important;
+    letter-spacing: -.05em !important;
+    white-space: nowrap !important;
+  }
+
+  #shoeViewer .shoe-viewer-price-card img {
+    width: 74px !important;
+    height: 74px !important;
+    object-fit: cover !important;
+    border-radius: 18px !important;
+    background: #07120d !important;
+    flex: 0 0 auto !important;
+  }
+
+  #shoeViewer .shoe-viewer-price-card span {
+    color: #111827 !important;
+    font-weight: 950 !important;
+    text-align: right !important;
+  }
+
+  #shoeViewer .shoe-viewer-powered {
+    margin: -4px 0 0 !important;
+    color: rgba(17,24,39,.55) !important;
+    text-align: center !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+  }
+}
+
+@media (max-width: 380px) {
+  #shoeViewer .shoe-viewer-top { padding-right: 112px !important; min-height: 116px !important; }
+  #shoeViewer .shoe-viewer-availability { min-width: 98px !important; max-width: 112px !important; height: 48px !important; font-size: 13px !important; }
+  #shoeViewer .shoe-viewer-close { width: 58px !important; height: 58px !important; font-size: 38px !important; }
+  #shoeViewer .shoe-action { height: 70px !important; border-radius: 18px !important; }
+  #shoeViewer .shoe-action svg { width: 21px !important; height: 21px !important; }
+}
