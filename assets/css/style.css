@@ -10452,3 +10452,58 @@ body:has(#shoeViewer.cs-product-viewer-v33){
   .cs-pv-profile-box{width:64px !important;height:64px !important;min-width:64px !important;border-radius:16px !important;}
   .cs-pv-price{font-size:28px !important;}
 }
+
+/* === V39: Isti prikaz profilne slike i na laptop/desktop viewer-u === */
+#shoeViewer.cs-product-viewer-v33 .cs-pv-price-card{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-seller{
+  display:none !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-profile-box{
+  display:grid !important;
+  place-items:center !important;
+  flex:0 0 auto !important;
+  aspect-ratio:1 / 1 !important;
+  width:72px !important;
+  height:72px !important;
+  min-width:72px !important;
+  border-radius:18px !important;
+  overflow:hidden !important;
+  background:#111827 !important;
+  border:2px solid rgba(34,197,94,.75) !important;
+  box-shadow:0 8px 24px rgba(0,0,0,.35) !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-profile-img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  display:block !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-profile-fallback{
+  width:100% !important;
+  height:100% !important;
+  display:grid !important;
+  place-items:center !important;
+  background:linear-gradient(135deg,#0f172a,#111827) !important;
+  color:#22c55e !important;
+  font-size:30px !important;
+  font-weight:950 !important;
+}
+@media (min-width:720px){
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-price-card{
+    min-height:104px !important;
+    padding:20px 24px !important;
+  }
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-profile-box{
+    width:84px !important;
+    height:84px !important;
+    min-width:84px !important;
+    border-radius:20px !important;
+  }
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-price{
+    font-size:36px !important;
+  }
+}
