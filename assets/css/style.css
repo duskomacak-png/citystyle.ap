@@ -11221,3 +11221,141 @@ body:has(.shoe-shop-page) .client-shell{
     min-height:clamp(122px, 38vw, 168px) !important;
   }
 }
+
+/* === v54: MOBILNI OGLASI - tekst/cena ne smeju prelaziti preko slike ===
+   Finalni override za listu oglasa: leva slika je fiksan 1:1 blok,
+   desni info deo ima svoj prostor, razmak i manju cenu na uskim telefonima. */
+@media (max-width:720px){
+  .shoe-shop-page .shoe-grid{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:16px !important;
+    width:100% !important;
+    max-width:430px !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+    padding-left:0 !important;
+    padding-right:0 !important;
+  }
+
+  .shoe-shop-page .shoe-card{
+    display:grid !important;
+    grid-template-columns:minmax(112px, 36%) minmax(0, 1fr) !important;
+    column-gap:14px !important;
+    align-items:center !important;
+    width:100% !important;
+    max-width:430px !important;
+    min-height:0 !important;
+    height:auto !important;
+    overflow:hidden !important;
+    box-sizing:border-box !important;
+    padding:0 !important;
+  }
+
+  .shoe-shop-page .shoe-card-media{
+    grid-column:1 !important;
+    width:100% !important;
+    height:auto !important;
+    min-width:0 !important;
+    min-height:0 !important;
+    max-width:none !important;
+    max-height:none !important;
+    aspect-ratio:1 / 1 !important;
+    align-self:center !important;
+    justify-self:stretch !important;
+    position:relative !important;
+    z-index:1 !important;
+    border-radius:20px 0 0 20px !important;
+    padding:0 !important;
+    margin:0 !important;
+    background:#fff !important;
+    overflow:hidden !important;
+  }
+
+  .shoe-shop-page .shoe-card-media img{
+    width:100% !important;
+    height:100% !important;
+    max-width:100% !important;
+    max-height:100% !important;
+    object-fit:contain !important;
+    object-position:center center !important;
+    display:block !important;
+    margin:0 !important;
+    transform:none !important;
+    background:#fff !important;
+  }
+
+  .shoe-shop-page .shoe-card-info{
+    grid-column:2 !important;
+    min-width:0 !important;
+    width:100% !important;
+    max-width:100% !important;
+    padding:12px 12px 12px 0 !important;
+    margin:0 !important;
+    position:relative !important;
+    z-index:2 !important;
+    display:flex !important;
+    flex-direction:column !important;
+    justify-content:center !important;
+    overflow:hidden !important;
+  }
+
+  .shoe-shop-page .shoe-card-info small,
+  .shoe-shop-page .shoe-card-info strong,
+  .shoe-shop-page .shoe-card-description,
+  .shoe-shop-page .shoe-card-rubrics,
+  .shoe-shop-page .shoe-card-bottom{
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    margin-left:0 !important;
+    overflow-wrap:anywhere !important;
+  }
+
+  .shoe-shop-page .shoe-card-info strong{
+    font-size:clamp(20px, 5.2vw, 25px) !important;
+    line-height:1.08 !important;
+  }
+
+  .shoe-shop-page .shoe-card-description{
+    font-size:clamp(14px, 3.8vw, 17px) !important;
+    line-height:1.28 !important;
+    margin-top:8px !important;
+  }
+
+  .shoe-shop-page .shoe-card-bottom{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    gap:8px !important;
+    margin-top:8px !important;
+  }
+
+  .shoe-shop-page .shoe-card-bottom b{
+    display:block !important;
+    width:100% !important;
+    max-width:100% !important;
+    font-size:clamp(21px, 5.8vw, 26px) !important;
+    line-height:1.05 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    margin:0 !important;
+    padding:0 !important;
+  }
+
+  .shoe-shop-page .shoe-card-bottom span{
+    align-self:flex-start !important;
+    white-space:nowrap !important;
+  }
+}
+
+@media (max-width:390px){
+  .shoe-shop-page .shoe-card{
+    grid-template-columns:110px minmax(0, 1fr) !important;
+    column-gap:12px !important;
+  }
+  .shoe-shop-page .shoe-card-info{padding-right:10px !important;}
+  .shoe-shop-page .shoe-card-info strong{font-size:20px !important;}
+  .shoe-shop-page .shoe-card-bottom b{font-size:21px !important;}
+}
