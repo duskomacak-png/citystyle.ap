@@ -2018,7 +2018,7 @@ function renderShoeViewer() {
       <section class="cs-pv-sheet">
         <div class="cs-pv-heading-row">
           <div class="cs-pv-category">${escapeHtml(category)}</div>
-          <div class="cs-pv-stock cs-pv-stock-inline"><span></span>${escapeHtml(status)}</div>
+          <div class="cs-pv-status-inline"><span></span>${escapeHtml(status)}</div>
         </div>
         <h1>${escapeHtml(name)}</h1>
         ${desc ? `<p class="cs-pv-subtitle">${escapeHtml(desc)}</p>` : `<p class="cs-pv-subtitle">${escapeHtml(category)} • ${escapeHtml(salonName)}</p>`}
