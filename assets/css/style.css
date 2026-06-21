@@ -10062,3 +10062,207 @@ body:has(#shoeViewer.cs-product-viewer-v33){
     top:16px !important;
   }
 }
+
+/* === v36 REAL FIX: mobilni oglasi bez preklapanja + stabilan fullscreen zoom === */
+@media (max-width: 720px){
+  .shoe-shop-page{
+    padding-left:10px !important;
+    padding-right:10px !important;
+    overflow-x:hidden !important;
+  }
+  .shoe-shop-page .shoe-products-section,
+  .shoe-shop-page .shoe-grid{
+    width:100% !important;
+    max-width:100% !important;
+  }
+  .shoe-shop-page .shoe-grid{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:14px !important;
+  }
+  .shoe-shop-page .shoe-card{
+    width:100% !important;
+    max-width:100% !important;
+    min-height:154px !important;
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:stretch !important;
+    overflow:hidden !important;
+    border-radius:22px !important;
+    background:#10151c !important;
+    border:1px solid rgba(255,255,255,.10) !important;
+    box-shadow:0 12px 26px rgba(0,0,0,.22) !important;
+    text-align:left !important;
+  }
+  .shoe-shop-page .shoe-card-media{
+    flex:0 0 44% !important;
+    width:44% !important;
+    max-width:44% !important;
+    min-width:132px !important;
+    min-height:154px !important;
+    height:auto !important;
+    aspect-ratio:1 / 1 !important;
+    border-radius:22px 0 0 22px !important;
+    background:#ffffff !important;
+    overflow:hidden !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    position:relative !important;
+    z-index:1 !important;
+  }
+  .shoe-shop-page .shoe-card-media img{
+    position:static !important;
+    display:block !important;
+    width:100% !important;
+    height:100% !important;
+    max-width:100% !important;
+    max-height:100% !important;
+    object-fit:contain !important;
+    object-position:center center !important;
+    transform:none !important;
+  }
+  .shoe-shop-page .shoe-card-info{
+    flex:1 1 auto !important;
+    min-width:0 !important;
+    width:auto !important;
+    display:flex !important;
+    flex-direction:column !important;
+    justify-content:center !important;
+    align-items:flex-start !important;
+    padding:14px 14px 14px 16px !important;
+    overflow:hidden !important;
+    position:relative !important;
+    z-index:2 !important;
+  }
+  .shoe-shop-page .shoe-card-info small{
+    max-width:100% !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+    font-size:12.5px !important;
+    color:#a8b0bc !important;
+  }
+  .shoe-shop-page .shoe-card-info strong{
+    max-width:100% !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+    font-size:22px !important;
+    line-height:1.12 !important;
+    margin:7px 0 11px !important;
+    color:#ffffff !important;
+  }
+  .shoe-shop-page .shoe-card-bottom{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    justify-content:flex-start !important;
+    gap:10px !important;
+    width:100% !important;
+    min-width:0 !important;
+    margin:0 !important;
+  }
+  .shoe-shop-page .shoe-card-bottom b{
+    display:block !important;
+    width:100% !important;
+    max-width:100% !important;
+    overflow:visible !important;
+    white-space:nowrap !important;
+    color:#22c55e !important;
+    font-size:clamp(22px,7vw,30px) !important;
+    line-height:1 !important;
+    font-weight:950 !important;
+    letter-spacing:-.035em !important;
+  }
+  .shoe-shop-page .shoe-card-bottom span{
+    display:inline-flex !important;
+    width:auto !important;
+    max-width:100% !important;
+    white-space:nowrap !important;
+    color:#fff !important;
+    background:#080b10 !important;
+    border:1px solid rgba(34,197,94,.45) !important;
+    border-radius:999px !important;
+    padding:8px 12px !important;
+    font-size:12px !important;
+    font-weight:900 !important;
+  }
+}
+
+@media (max-width: 380px){
+  .shoe-shop-page .shoe-card-media{
+    flex-basis:41% !important;
+    width:41% !important;
+    max-width:41% !important;
+    min-width:122px !important;
+  }
+  .shoe-shop-page .shoe-card-info{padding-left:12px !important;padding-right:10px !important;}
+  .shoe-shop-page .shoe-card-info strong{font-size:20px !important;}
+  .shoe-shop-page .shoe-card-bottom b{font-size:clamp(20px,6.4vw,26px) !important;}
+}
+
+/* Viewer preko celog ekrana: nazad vraca na listu, slika se zumira prstima */
+#shoeViewer.cs-product-viewer-v33{
+  overscroll-behavior:contain !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-phone{
+  min-height:100dvh !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-share-top{display:none !important;}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-image-panel{
+  touch-action:none !important;
+  overflow:hidden !important;
+  background:#ffffff !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-main-img{
+  touch-action:none !important;
+  user-select:none !important;
+  -webkit-user-select:none !important;
+  -webkit-user-drag:none !important;
+  will-change:transform !important;
+  transition:transform .06s linear !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-back{
+  font-size:0 !important;
+  padding:0 !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-back::before{
+  content:"←";
+  font-size:28px !important;
+  line-height:1 !important;
+  font-weight:900 !important;
+}
+@media (max-width:720px){
+  #shoeViewer.cs-product-viewer-v33{
+    width:100vw !important;
+    height:100dvh !important;
+    overflow:auto !important;
+    background:#f4f5f7 !important;
+  }
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-phone{
+    width:100vw !important;
+    max-width:none !important;
+    margin:0 !important;
+    background:#f4f5f7 !important;
+  }
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-image-panel{
+    width:100vw !important;
+    aspect-ratio:1 / 1 !important;
+    height:auto !important;
+    min-height:0 !important;
+    border-radius:0 0 24px 24px !important;
+  }
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-main-img{
+    width:100% !important;
+    height:100% !important;
+    object-fit:contain !important;
+    object-position:center center !important;
+    background:#ffffff !important;
+  }
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-sheet{
+    margin-top:-14px !important;
+    border-top-left-radius:26px !important;
+    border-top-right-radius:26px !important;
+  }
+}
