@@ -9622,37 +9622,220 @@ body.owner-sound-ready #salon-notifications-btn{
 
 
 
-
-/* v20 SAFE FIX: client shop list only - white background + readable cards.
-   Scope is only .shoe-shop-page (public shop/home/cards).
-   Fullscreen opened advert .shoe-viewer is intentionally untouched. */
+/* v216 SAFE: client shop white background + product click viewer like rounded card layout, with white base */
 .shoe-shop-page{
   background:#ffffff !important;
-  color:#111827 !important;
+  color:#0b0b0f !important;
 }
-.shoe-shop-page .shoe-info-row{
+.shoe-info-row,
+.shoe-install-row{
   background:#ffffff !important;
-  border:1px solid rgba(17,24,39,.12) !important;
-  box-shadow:0 10px 28px rgba(17,24,39,.08) !important;
+  color:#0b0b0f !important;
+  border:1px solid rgba(15,23,42,.12) !important;
+  box-shadow:0 10px 26px rgba(15,23,42,.08) !important;
 }
-.shoe-shop-page .shoe-info-copy h1{color:#111827 !important;}
-.shoe-shop-page .shoe-info-copy p{color:#374151 !important;}
-.shoe-shop-page .shoe-meta .shoe-meta-link,
-.shoe-shop-page .shoe-meta span{
-  background:#f9fafb !important;
-  border:1px solid rgba(17,24,39,.10) !important;
-  color:#111827 !important;
+.shoe-info-copy p,.shoe-card-info small{color:#4b5563 !important;}
+.shoe-meta span,.shoe-meta .shoe-meta-link{
+  background:#f8fafc !important;
+  border:1px solid rgba(15,23,42,.12) !important;
+  color:#0b0b0f !important;
 }
-.shoe-shop-page .shoe-install-row small{color:#6b7280 !important;}
-.shoe-shop-page .shoe-card{
+.shoe-card{
   background:#ffffff !important;
-  color:#111827 !important;
-  border:1px solid rgba(17,24,39,.12) !important;
-  box-shadow:0 10px 26px rgba(17,24,39,.08) !important;
+  color:#0b0b0f !important;
+  border:1px solid rgba(15,23,42,.12) !important;
+  box-shadow:0 12px 26px rgba(15,23,42,.08) !important;
 }
-.shoe-shop-page .shoe-card-info small{color:#6b7280 !important;}
-.shoe-shop-page .shoe-cover{
-  background:#ffffff !important;
-  border:1px solid rgba(17,24,39,.10) !important;
-  box-shadow:0 10px 28px rgba(17,24,39,.08) !important;
+.shoe-card-media{background:#f3f4f6 !important;}
+.shoe-install-btn{white-space:nowrap !important;}
+
+.shoe-viewer-shell{display:contents;}
+.cs-price-card{display:none;}
+.cs-status-pill{display:none;}
+
+@media(max-width:899px){
+  .shoe-viewer{
+    overflow:auto !important;
+    touch-action:auto !important;
+    background:#ffffff !important;
+    padding:16px 14px calc(18px + env(safe-area-inset-bottom,0px)) !important;
+    box-sizing:border-box !important;
+  }
+  .shoe-viewer::before,.shoe-viewer::after{display:none !important;}
+  .shoe-viewer-shell{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:14px !important;
+    min-height:100% !important;
+    box-sizing:border-box !important;
+  }
+  .shoe-viewer-top.cs-product-header-card{
+    position:relative !important;
+    left:auto !important;right:auto !important;top:auto !important;
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) auto !important;
+    align-items:center !important;
+    gap:12px !important;
+    width:100% !important;
+    padding:22px 20px !important;
+    margin:0 !important;
+    border-radius:34px !important;
+    background:#f2fff4 !important;
+    color:#050505 !important;
+    border:3px solid #65f284 !important;
+    box-shadow:0 0 0 1px rgba(34,197,94,.15), 0 12px 30px rgba(34,197,94,.16) !important;
+    text-shadow:none !important;
+    z-index:2 !important;
+  }
+  .cs-viewer-category{display:block !important;color:#111827 !important;font-size:17px !important;line-height:1.1 !important;font-weight:900 !important;margin:0 0 5px !important;}
+  .shoe-viewer-top h2{margin:0 !important;line-height:.96 !important;}
+  .shoe-viewer-top h2 span{display:block !important;background:transparent !important;border:0 !important;box-shadow:none !important;padding:0 !important;color:#000 !important;font-size:clamp(36px,11.5vw,58px) !important;font-weight:950 !important;letter-spacing:-2px !important;line-height:.96 !important;}
+  .shoe-viewer-subtitle{margin:10px 0 0 !important;color:#1f2937 !important;font-size:clamp(20px,6vw,31px) !important;font-weight:900 !important;line-height:1.05 !important;}
+  .shoe-viewer-subcopy,.shoe-viewer-availability{display:none !important;}
+  .cs-status-pill{
+    display:inline-flex !important;
+    align-items:center !important;
+    gap:10px !important;
+    min-height:60px !important;
+    padding:0 18px !important;
+    border-radius:999px !important;
+    background:#101411 !important;
+    color:#fff !important;
+    font-weight:950 !important;
+    font-size:clamp(17px,5vw,25px) !important;
+    white-space:nowrap !important;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.08) !important;
+  }
+  .cs-status-pill i{width:23px;height:23px;border-radius:999px;background:#16e64a;box-shadow:0 0 18px rgba(22,230,74,.72);flex:0 0 auto;}
+  .shoe-dots.cs-viewer-dots{
+    position:relative !important;
+    left:auto !important;right:auto !important;bottom:auto !important;top:auto !important;
+    transform:none !important;
+    display:flex !important;
+    justify-content:center !important;
+    align-items:center !important;
+    gap:18px !important;
+    width:100% !important;
+    padding:0 !important;
+    margin:0 !important;
+    background:transparent !important;
+    border:0 !important;
+    box-shadow:none !important;
+    z-index:2 !important;
+  }
+  .shoe-dots.cs-viewer-dots button{width:20px !important;height:20px !important;border-radius:999px !important;background:#cfd8cf !important;opacity:1 !important;border:0 !important;padding:0 !important;}
+  .shoe-dots.cs-viewer-dots button.active{width:28px !important;height:28px !important;background:#bff6ca !important;box-shadow:0 0 14px rgba(34,197,94,.45) !important;}
+  .shoe-viewer .shoe-viewer-media.cs-product-image-card{
+    position:relative !important;
+    inset:auto !important;
+    display:grid !important;
+    place-items:center !important;
+    width:100% !important;
+    min-height:0 !important;
+    padding:0 !important;
+    margin:0 !important;
+    overflow:hidden !important;
+    aspect-ratio:1 / 1.02 !important;
+    border-radius:34px !important;
+    background:#f8fafc !important;
+    border:3px solid #65f284 !important;
+    box-shadow:0 12px 28px rgba(15,23,42,.10), 0 0 0 1px rgba(34,197,94,.14) !important;
+    z-index:1 !important;
+  }
+  .shoe-viewer-media-bg{display:none !important;}
+  .shoe-viewer-main-img{
+    width:100% !important;
+    height:100% !important;
+    max-width:none !important;
+    max-height:none !important;
+    object-fit:contain !important;
+    border-radius:0 !important;
+    background:#f8fafc !important;
+    box-shadow:none !important;
+  }
+  .shoe-viewer-close{
+    position:fixed !important;
+    top:calc(24px + env(safe-area-inset-top,0px)) !important;
+    right:28px !important;
+    width:62px !important;
+    height:62px !important;
+    border-radius:999px !important;
+    border:3px solid #65f284 !important;
+    background:#0b0f0c !important;
+    color:#fff !important;
+    font-size:44px !important;
+    font-weight:900 !important;
+    line-height:1 !important;
+    display:grid !important;
+    place-items:center !important;
+    box-shadow:0 8px 22px rgba(0,0,0,.18), 0 0 18px rgba(34,197,94,.25) !important;
+    z-index:10 !important;
+  }
+  .shoe-viewer-actions{
+    position:relative !important;
+    left:auto !important;right:auto !important;top:auto !important;bottom:auto !important;
+    display:grid !important;
+    grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+    gap:10px !important;
+    z-index:2 !important;
+    width:100% !important;
+  }
+  .shoe-action,.shoe-action.red,.shoe-action.blue,.shoe-action.green,.shoe-action.zoom{
+    width:auto !important;
+    min-width:0 !important;
+    height:64px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:7px !important;
+    padding:0 8px !important;
+    border-radius:22px !important;
+    background:#0b0f0c !important;
+    color:#fff !important;
+    border:3px solid #65f284 !important;
+    box-shadow:0 8px 18px rgba(15,23,42,.12), 0 0 12px rgba(34,197,94,.18) !important;
+    font-weight:950 !important;
+    font-size:clamp(13px,4vw,18px) !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+  .shoe-action svg{width:22px !important;height:22px !important;stroke:#dffff0 !important;stroke-width:2.7 !important;flex:0 0 auto;}
+  .shoe-action span{display:inline !important;overflow:hidden !important;text-overflow:ellipsis !important;white-space:nowrap !important;}
+  .cs-price-card{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    gap:14px !important;
+    width:100% !important;
+    padding:22px 20px !important;
+    box-sizing:border-box !important;
+    border-radius:34px !important;
+    background:#f2fff4 !important;
+    border:3px solid #65f284 !important;
+    box-shadow:0 12px 30px rgba(34,197,94,.14) !important;
+    color:#000 !important;
+  }
+  .cs-price-card strong{font-size:clamp(36px,10.5vw,58px) !important;font-weight:950 !important;letter-spacing:-2px !important;line-height:1 !important;}
+  .cs-price-card img{width:86px !important;height:86px !important;border-radius:24px !important;object-fit:cover !important;background:#111 !important;box-shadow:0 6px 16px rgba(0,0,0,.18) !important;}
+  .shoe-viewer-powered{
+    position:relative !important;
+    left:auto !important;right:auto !important;bottom:auto !important;
+    width:100% !important;
+    text-align:center !important;
+    color:#6b7280 !important;
+    font-weight:800 !important;
+    padding:0 0 2px !important;
+    z-index:2 !important;
+  }
+  .shoe-viewer-powered b,.shoe-viewer-powered strong,.shoe-viewer-powered a{color:#16a34a !important;}
+  .shoe-arrow{display:none !important;}
+}
+
+@media(max-width:380px){
+  .shoe-viewer{padding-left:10px !important;padding-right:10px !important;}
+  .shoe-viewer-actions{gap:7px !important;}
+  .shoe-action,.shoe-action.red,.shoe-action.blue,.shoe-action.green,.shoe-action.zoom{height:58px !important;padding:0 5px !important;font-size:12px !important;border-radius:19px !important;}
+  .shoe-action svg{width:19px !important;height:19px !important;}
+  .cs-status-pill{min-height:52px !important;padding:0 12px !important;}
+  .cs-status-pill i{width:19px;height:19px;}
 }
