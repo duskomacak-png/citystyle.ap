@@ -1550,7 +1550,7 @@ function renderShoeShopHome(settings = {}) {
         ${logo ? `<img class="shoe-logo" src="${escapeHtml(logo)}" alt="${escapeHtml(name)} logo">` : `<div class="shoe-logo shoe-logo-fallback">${escapeHtml(name.charAt(0).toUpperCase())}</div>`}
         <div class="shoe-info-copy"><h1>${escapeHtml(name)}</h1>${text ? `<p>${escapeHtml(text)}</p>` : ""}<div class="shoe-meta">${phone ? `<a class="shoe-meta-link" href="tel:${escapeHtml(csSafePhone(phone))}">📞 ${escapeHtml(phone)}</a>` : ""}${address ? renderPublicAddressLink(address) : ""}</div></div>
       </div>
-      ${ownerPreviewMode ? "" : `<div class="shoe-install-row"><button class="btn btn-dark shoe-install-btn" type="button" onclick="installCurrentSalonApp()">📱 Preuzmi app prodavnice</button><small>Prečica otvara baš ovaj profil${logo ? " i koristi logo firme gde browser dozvoljava" : ""}.</small></div>`}
+      ${ownerPreviewMode ? "" : `<div class="shoe-install-row"><button class="btn btn-dark shoe-install-btn" type="button" onclick="installCurrentSalonApp()">Preuzmi app</button><small>Prečica otvara baš ovaj profil${logo ? " i koristi logo firme gde browser dozvoljava" : ""}.</small></div>`}
       <section class="shoe-products-section">
         ${products.length ? `<div class="shoe-grid">${products.map((product, index) => renderShoeProductCard(product, index)).join("")}</div>` : `<div class="card"><h2>Još nema oglasa</h2><p class="muted">Vlasnik još nije dodao patike u katalog.</p></div>`}
       </section>
@@ -1565,15 +1565,14 @@ function renderShoeShopHome(settings = {}) {
 
 function renderShoeProductCard(product, index) {
   const imgs = csProductImages(product);
-  const img = imgs[0] || product.image_url || "";
+  const img = imgs[0] || "";
   const status = csProductStatus(product);
-  return `<button class="shoe-card" type="button" onclick="openShoeViewer(${index}); event.preventDefault(); event.stopImmediatePropagation?.();">
-    <div class="shoe-card-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Oglas')}">` : `<span>Bez slike</span>`}</div>
+  return `<button class="shoe-card" type="button" onclick="openShoeViewer(${index})">
+    <div class="shoe-card-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}">` : `<span>Bez slike</span>`}</div>
     <div class="shoe-card-info">
-      <small>${escapeHtml(csProductCode(product))}</small>
-      <strong>${escapeHtml(product.name || "Oglas")}</strong>
-      ${product.category ? `<span class="shoe-card-category">${escapeHtml(product.category)}</span>` : ""}
-      <div class="shoe-card-bottom"><b>${escapeHtml(csProductPrice(product))}</b><span class="status-pill ${escapeHtml(product.stock_status || 'available')}">${escapeHtml(status)}</span></div>
+      <small>${escapeHtml(csProductCode(product))}${product.category ? " • " + escapeHtml(product.category) : ""}</small>
+      <strong>${escapeHtml(product.name || "Patike")}</strong>
+      <div class="shoe-card-bottom"><b>${escapeHtml(csProductPrice(product))}</b><span>${escapeHtml(status)}</span></div>
     </div>
   </button>`;
 }
@@ -1803,59 +1802,89 @@ function csCloseShoeZoom(){
 }
 
 function renderShoeViewer() {
-  if (!csViewerState) return;
   const product = currentShoeProduct();
   if (!product) return closeShoeViewer();
-
   const imgs = csProductImages(product);
-  const currentImgUrl = imgs[csViewerState.image] || product.image_url || "";
-  const category = product.category || "Paketi / alati";
-  const subtitle = csProductViewerMetaPrimary(product) || csProductViewerMetaSecondary(product) || "";
+  const img = imgs[csViewerState.image] || imgs[0] || product.image_url || "";
+  const category = product.category || "Oglas";
+  const name = product.name || "Proizvod";
+  const price = csProductPrice(product);
   const status = csProductStatus(product) || "Na stanju";
-  const shopName = currentSalon?.business_name || currentSalon?.name || "City Style";
+  const desc = csProductPublicDescription(product) || product.description || "";
+  const salonName = currentSalon?.name || currentSalon?.title || "Prodavac";
 
-  const html = `
-    <div id="shoeViewer" class="shoe-viewer-fullscreen">
-      <div class="viewer-backdrop" onclick="closeShoeViewer()"></div>
-      <div class="viewer-container">
-        <div class="viewer-header">
-          <div class="viewer-category">${escapeHtml(category)}</div>
-          <div class="viewer-status-pill">● ${escapeHtml(status)}</div>
+  let viewer = document.getElementById("shoeViewer");
+  if (!viewer) {
+    viewer = document.createElement("div");
+    viewer.id = "shoeViewer";
+    document.body.appendChild(viewer);
+  }
+
+  viewer.className = "cs-product-viewer-v33";
+  viewer.innerHTML = `
+    <div class="cs-pv-phone">
+      <section class="cs-pv-image-panel">
+        ${img ? `<img class="cs-pv-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(name)}">` : `<div class="cs-pv-no-img">Bez slike</div>`}
+
+        <button class="cs-pv-round cs-pv-back" type="button" onclick="closeShoeViewer()" aria-label="Nazad">‹</button>
+        <button class="cs-pv-round cs-pv-share-top" type="button" onclick="shareShoeProduct(event)" aria-label="Podeli">${csViewerShareIcon()}</button>
+        <div class="cs-pv-stock"><span></span>${escapeHtml(status)}</div>
+
+        ${imgs.length > 1 ? `<button class="cs-pv-arrow cs-pv-arrow-left" type="button" onclick="event.stopPropagation(); shoeChangeImage(-1)">‹</button><button class="cs-pv-arrow cs-pv-arrow-right" type="button" onclick="event.stopPropagation(); shoeChangeImage(1)">›</button>` : ``}
+
+        ${imgs.length > 1 ? `<div class="cs-pv-counter">${csViewerState.image + 1} / ${imgs.length}</div>` : ``}
+        ${imgs.length > 1 ? `<div class="cs-pv-thumbs">${imgs.map((src, i) => `<button type="button" class="${i === csViewerState.image ? 'active' : ''}" onclick="event.stopPropagation(); shoeSetImage(${i})"><img src="${escapeHtml(src)}" alt="Slika ${i + 1}"></button>`).join("")}</div>` : ``}
+      </section>
+
+      <section class="cs-pv-sheet">
+        <div class="cs-pv-category">${escapeHtml(category)}</div>
+        <h1>${escapeHtml(name)}</h1>
+        ${desc ? `<p class="cs-pv-subtitle">${escapeHtml(desc)}</p>` : `<p class="cs-pv-subtitle">${escapeHtml(category)} • ${escapeHtml(salonName)}</p>`}
+
+        <div class="cs-pv-price-card">
+          <div class="cs-pv-price">${escapeHtml(price)}</div>
+          <div class="cs-pv-seller"><strong>${escapeHtml(salonName)}</strong><small>Prodavac</small></div>
         </div>
 
-        <button class="viewer-close-btn" type="button" onclick="closeShoeViewer()" aria-label="Zatvori oglas">×</button>
-
-        <div class="viewer-image-container">
-          ${currentImgUrl ? `<img src="${escapeHtml(currentImgUrl)}" class="viewer-main-image" alt="${escapeHtml(product.name || 'Oglas')}" onload="csSmartCropShoeImage(this)">` : `<div class="viewer-no-image">Bez slike</div>`}
+        <div class="cs-pv-benefits">
+          <span>✓ Dostupno</span>
+          <span>✓ Brz dogovor</span>
+          <span>✓ Direktan kontakt</span>
         </div>
 
-        <div class="viewer-info">
-          <h1 class="viewer-title">${escapeHtml(product.name || 'Oglas')}</h1>
-          ${subtitle ? `<p class="viewer-subtitle">${escapeHtml(subtitle)}</p>` : ""}
-          <div class="viewer-price-box">
-            <div class="big-price">${escapeHtml(csProductPrice(product))}</div>
-            <div class="seller-name">${escapeHtml(shopName)}</div>
-          </div>
-
-          <div class="viewer-actions-grid">
-            <button onclick="askShoeProduct(event)" class="action-btn whatsapp-btn" type="button">💬 Pitaj</button>
-            <button onclick="callShoeShop(event)" class="action-btn call-btn" type="button">📞 Pozovi</button>
-            <button onclick="shareShoeProduct(event)" class="action-btn share-btn" type="button">🔗 Podeli</button>
-          </div>
+        <div class="cs-pv-actions">
+          <button class="cs-pv-action cs-pv-whatsapp" type="button" onclick="askShoeProduct(event)">${csViewerMessageIcon()}<span><b>Pitaj</b><small>WhatsApp</small></span></button>
+          <button class="cs-pv-action" type="button" onclick="callShoeShop(event)">${csViewerPhoneIcon()}<span><b>Pozovi</b><small>Poziv</small></span></button>
+          <button class="cs-pv-action" type="button" onclick="shareShoeProduct(event)">${csViewerShareIcon()}<span><b>Podeli</b><small>Oglas</small></span></button>
         </div>
 
-        ${imgs.length > 1 ? `
-        <div class="viewer-image-nav">
-          <button onclick="event.stopPropagation(); prevShoeImage()" class="nav-arrow" type="button">‹</button>
-          <span class="image-counter">${csViewerState.image + 1} / ${imgs.length}</span>
-          <button onclick="event.stopPropagation(); nextShoeImage()" class="nav-arrow" type="button">›</button>
-        </div>` : ""}
-      </div>
+        <div class="cs-pv-description">
+          <h2>Opis proizvoda</h2>
+          <p>${escapeHtml(desc || `Zanima vas ${name}? Pošaljite poruku ili pozovite prodavca za više informacija.`)}</p>
+        </div>
+      </section>
     </div>`;
 
-  document.getElementById("shoeViewer")?.remove();
-  document.body.insertAdjacentHTML("beforeend", html);
-  setupShoeViewerGestures?.();
+  viewer.ontouchstart = e => {
+    if (!csViewerState || !e.changedTouches?.length) return;
+    const t = e.changedTouches[0];
+    csViewerState.startX = t.clientX;
+    csViewerState.startY = t.clientY;
+  };
+  viewer.ontouchend = e => {
+    if (!csViewerState || !e.changedTouches?.length) return;
+    if (e.target?.closest?.("button, a")) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - csViewerState.startX;
+    const dy = t.clientY - csViewerState.startY;
+    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) shoeChangeImage(dx < 0 ? 1 : -1);
+  };
+  document.onkeydown = e => {
+    if (!document.getElementById("shoeViewer")) return;
+    if (e.key === "Escape") closeShoeViewer();
+    if (e.key === "ArrowLeft") shoeChangeImage(-1);
+    if (e.key === "ArrowRight") shoeChangeImage(1);
+  };
 }
 function shoeChangeProduct(delta) {
   if (!csViewerState) return;
@@ -1865,21 +1894,6 @@ function shoeChangeProduct(delta) {
   csViewerState.image = 0;
   csViewerState.zoomed = false;
   csResetShoePan();
-  renderShoeViewer();
-}
-
-
-function prevShoeImage() {
-  if (!csViewerState) return;
-  const total = csProductImages(currentShoeProduct()).length || 1;
-  csViewerState.image = (csViewerState.image - 1 + total) % total;
-  renderShoeViewer();
-}
-
-function nextShoeImage() {
-  if (!csViewerState) return;
-  const total = csProductImages(currentShoeProduct()).length || 1;
-  csViewerState.image = (csViewerState.image + 1) % total;
   renderShoeViewer();
 }
 function shoeChangeImage(delta) {
