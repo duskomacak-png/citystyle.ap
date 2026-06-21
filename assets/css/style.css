@@ -10844,3 +10844,81 @@ body:has(.shoe-shop-page) .client-shell{
     border-radius:22px !important;
   }
 }
+
+
+/* === FIX v50: javni/laptop prikaz - slike se NE SEKU ===
+   Problem: cover slike su bile object-fit: cover + fiksna visina.
+   Rešenje: na javnoj prodavnici slika koristi object-fit: contain/auto height,
+   da se vidi cela gornja i donja strana slike.
+*/
+.shoe-shop-page .shoe-cover{
+  width:100% !important;
+  height:auto !important;
+  max-height:none !important;
+  min-height:0 !important;
+  aspect-ratio:auto !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  overflow:visible !important;
+  background:#ffffff !important;
+  border-radius:24px !important;
+}
+
+.shoe-shop-page .shoe-cover img{
+  display:block !important;
+  width:100% !important;
+  height:auto !important;
+  max-width:100% !important;
+  max-height:none !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+  border-radius:24px !important;
+  background:#ffffff !important;
+}
+
+/* Ako neki raniji fix ubaci slajder/gornju galeriju u javni pregled,
+   i tu forsiramo da cela slika stane u okvir bez cropovanja. */
+.shoe-shop-page .cs-phone-gallery-card,
+.shoe-shop-page .cs-phone-gallery-slides{
+  height:auto !important;
+  min-height:0 !important;
+  max-height:none !important;
+  aspect-ratio:auto !important;
+  overflow:visible !important;
+  background:#ffffff !important;
+}
+
+.shoe-shop-page .cs-phone-gallery-card img,
+.shoe-shop-page .cs-phone-gallery-slides img,
+.shoe-shop-page .cs-phone-slide{
+  position:static !important;
+  display:block !important;
+  width:100% !important;
+  height:auto !important;
+  max-height:none !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+  opacity:1 !important;
+  transform:none !important;
+  background:#ffffff !important;
+}
+
+/* Laptop/desktop dodatno: čuvamo širinu kartice, ali bez sečenja slike. */
+@media (min-width: 721px){
+  .shoe-shop-page .shoe-cover{
+    max-width:900px !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+  }
+}
+
+/* Mobilni: isto cela slika, samo prati širinu ekrana. */
+@media (max-width: 720px){
+  .shoe-shop-page .shoe-cover{
+    border-radius:20px !important;
+  }
+  .shoe-shop-page .shoe-cover img{
+    border-radius:20px !important;
+  }
+}
