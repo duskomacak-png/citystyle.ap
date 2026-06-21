@@ -10922,3 +10922,86 @@ body:has(.shoe-shop-page) .client-shell{
     border-radius:20px !important;
   }
 }
+
+/* === v51: MOBILNI OGLASI - slika u kartici uvek cista 1:1 ===
+   Fix: na telefonu slika ne sme da se rastegne po visini kartice niti da ostane beli prazan blok.
+   Leva slika je fiksan kvadrat, info desno se prilagodjava tekstu. */
+@media (max-width: 720px){
+  .shoe-shop-page .shoe-grid{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:14px !important;
+    width:100% !important;
+    max-width:430px !important;
+    margin:0 auto !important;
+  }
+
+  .shoe-shop-page .shoe-card{
+    display:grid !important;
+    grid-template-columns:clamp(138px, 39vw, 168px) minmax(0, 1fr) !important;
+    align-items:stretch !important;
+    width:100% !important;
+    max-width:430px !important;
+    min-height:0 !important;
+    height:auto !important;
+    overflow:hidden !important;
+  }
+
+  .shoe-shop-page .shoe-card-media{
+    width:clamp(138px, 39vw, 168px) !important;
+    height:clamp(138px, 39vw, 168px) !important;
+    min-width:clamp(138px, 39vw, 168px) !important;
+    min-height:clamp(138px, 39vw, 168px) !important;
+    max-width:168px !important;
+    max-height:168px !important;
+    aspect-ratio:1 / 1 !important;
+    align-self:center !important;
+    justify-self:start !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    background:#ffffff !important;
+    border-radius:20px 0 0 20px !important;
+    overflow:hidden !important;
+    padding:0 !important;
+  }
+
+  .shoe-shop-page .shoe-card-media img{
+    width:100% !important;
+    height:100% !important;
+    max-width:100% !important;
+    max-height:100% !important;
+    object-fit:contain !important;
+    object-position:center center !important;
+    display:block !important;
+    background:#ffffff !important;
+  }
+
+  .shoe-shop-page .shoe-card-info{
+    min-width:0 !important;
+    padding:14px 12px !important;
+    display:flex !important;
+    flex-direction:column !important;
+    justify-content:center !important;
+    overflow:hidden !important;
+  }
+
+  .shoe-shop-page .shoe-card-info small,
+  .shoe-shop-page .shoe-card-info strong,
+  .shoe-shop-page .shoe-card-description,
+  .shoe-shop-page .shoe-card-bottom{
+    max-width:100% !important;
+  }
+}
+
+@media (max-width: 380px){
+  .shoe-shop-page .shoe-card{
+    grid-template-columns:128px minmax(0, 1fr) !important;
+  }
+  .shoe-shop-page .shoe-card-media{
+    width:128px !important;
+    height:128px !important;
+    min-width:128px !important;
+    min-height:128px !important;
+  }
+}
