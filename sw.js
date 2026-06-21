@@ -1,6 +1,6 @@
 // sw.js
 // CityStyle v230 - final clean owner push display
-const CACHE_NAME = "citystyle-v138_final_white_card";
+const CACHE_NAME = "citystyle-v230_final_push_clean";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
