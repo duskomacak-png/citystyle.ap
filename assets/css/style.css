@@ -10319,3 +10319,121 @@ html:not(.cs-zoom-active) #shoeViewer:not(.shoe-viewer-zoomed) .shoe-arrow{
   #shoeViewer.shoe-viewer:not(.shoe-viewer-zoomed) .shoe-action span{font-size:12px !important;}
   #shoeViewer.shoe-viewer:not(.shoe-viewer-zoomed) .shoe-action svg{width:18px !important;height:18px !important;}
 }
+
+/* === v26 PRODAVNICA - ČIST PRIKAZ KARTICA OGLASA (samo lista proizvoda, ne viewer) === */
+.shoe-shop-page {
+  background:#ffffff !important;
+  color:#111827 !important;
+}
+.shoe-products-section,
+.shoe-grid {
+  background:transparent !important;
+}
+.shoe-card {
+  display:flex !important;
+  flex-direction:column !important;
+  height:100% !important;
+  background:#ffffff !important;
+  color:#111827 !important;
+  border:1px solid rgba(17,24,39,.12) !important;
+  box-shadow:0 10px 28px rgba(17,24,39,.10) !important;
+  border-radius:22px !important;
+  overflow:hidden !important;
+}
+.shoe-card-media {
+  aspect-ratio:3/4 !important;
+  background:#ffffff !important;
+  padding:12px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  border-bottom:1px solid rgba(17,24,39,.08) !important;
+  overflow:hidden !important;
+}
+.shoe-card-media img {
+  width:100% !important;
+  height:100% !important;
+  max-height:100% !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+  background:#ffffff !important;
+  display:block !important;
+}
+.shoe-card-info {
+  padding:12px 10px 14px !important;
+  flex:1 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  min-height:116px !important;
+}
+.shoe-card-info strong {
+  font-size:17px !important;
+  line-height:1.25 !important;
+  margin:4px 0 !important;
+  color:#111827 !important;
+  display:-webkit-box !important;
+  -webkit-line-clamp:2 !important;
+  -webkit-box-orient:vertical !important;
+  overflow:hidden !important;
+}
+.shoe-card-info small {
+  font-size:13px !important;
+  color:#71717a !important;
+  margin-bottom:6px !important;
+  display:block !important;
+}
+.shoe-card-info b,
+.shoe-card-bottom b {
+  font-size:19px !important;
+  font-weight:950 !important;
+  color:#ef4444 !important;
+  line-height:1.05 !important;
+  white-space:nowrap !important;
+}
+.shoe-card-bottom {
+  margin-top:auto !important;
+  padding-top:8px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:8px !important;
+}
+.shoe-card-bottom span {
+  font-size:11px !important;
+  font-weight:900 !important;
+  color:#16a34a !important;
+  background:rgba(22,163,74,.10) !important;
+  border:1px solid rgba(22,163,74,.20) !important;
+  padding:4px 7px !important;
+  border-radius:999px !important;
+  white-space:nowrap !important;
+}
+.shoe-meta {
+  gap:6px !important;
+  margin:8px 0 !important;
+}
+.shoe-meta span,
+.shoe-meta .shoe-meta-link {
+  font-size:12.5px !important;
+  padding:4px 9px !important;
+  color:#111827 !important;
+  background:#f4f4f5 !important;
+  border:1px solid rgba(17,24,39,.10) !important;
+}
+@media (max-width:720px) {
+  .shoe-card-media {
+    padding:10px !important;
+    aspect-ratio:4/3.5 !important;
+  }
+  .shoe-card-info strong {
+    font-size:16px !important;
+  }
+  .shoe-card-info b,
+  .shoe-card-bottom b {
+    font-size:18px !important;
+  }
+  .shoe-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:10px !important;
+  }
+}
