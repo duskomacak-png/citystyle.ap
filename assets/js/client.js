@@ -1534,6 +1534,58 @@ async function renderSalonHome() {
     </section>`;
 }
 
+
+function csProductRubrics(product = {}) {
+  const raw = [];
+  const push = v => {
+    if (v == null) return;
+    if (Array.isArray(v)) { v.forEach(push); return; }
+    if (typeof v === 'object') { Object.values(v).forEach(push); return; }
+    String(v).split(/[\n,;|•]+/).forEach(x => {
+      const t = x.replace(/^[-–—✓✔️✅\s]+/, '').replace(/\s+/g, ' ').trim();
+      if (t && t.length <= 42) raw.push(t);
+    });
+  };
+  push(product.category);
+  push(product.tags);
+  push(product.rubrics);
+  push(product.rubrike);
+  push(product.features);
+  push(product.specs);
+  push(product.description);
+  const seen = new Set();
+  return raw.filter(t => {
+    const k = t.toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  }).slice(0, 10);
+}
+function csAllShoeRubrics() {
+  const map = new Map();
+  (products || []).forEach(product => {
+    csProductRubrics(product).forEach(r => {
+      const k = r.toLowerCase();
+      if (!map.has(k)) map.set(k, r);
+    });
+  });
+  return Array.from(map.values()).sort((a,b)=>a.localeCompare(b, 'sr'));
+}
+function csFilterShoeRubric(value = '') {
+  const wanted = String(value || '').trim().toLowerCase();
+  const cards = document.querySelectorAll('.shoe-shop-page .shoe-card');
+  let shown = 0;
+  cards.forEach(card => {
+    const rubrics = String(card.dataset.rubrics || '').toLowerCase();
+    const text = String(card.dataset.search || card.textContent || '').toLowerCase();
+    const ok = !wanted || rubrics.split('|').includes(wanted) || text.includes(wanted);
+    card.style.display = ok ? '' : 'none';
+    if (ok) shown += 1;
+  });
+  const label = document.getElementById('shoe-rubric-result-count');
+  if (label) label.textContent = wanted ? `${shown} oglas${shown === 1 ? '' : 'a'}` : `${cards.length} oglas${cards.length === 1 ? '' : 'a'}`;
+}
+
 function renderShoeShopHome(settings = {}) {
   const app = document.getElementById("app");
   const name = settings?.welcome_title || currentSalon?.salon_name || "Prodavnica patika";
@@ -1551,6 +1603,7 @@ function renderShoeShopHome(settings = {}) {
         <div class="shoe-info-copy"><h1>${escapeHtml(name)}</h1>${text ? `<p>${escapeHtml(text)}</p>` : ""}<div class="shoe-meta">${phone ? `<a class="shoe-meta-link" href="tel:${escapeHtml(csSafePhone(phone))}">📞 ${escapeHtml(phone)}</a>` : ""}${address ? renderPublicAddressLink(address) : ""}</div></div>
       </div>
       ${ownerPreviewMode ? "" : `<div class="shoe-install-row"><button class="btn btn-dark shoe-install-btn" type="button" onclick="installCurrentSalonApp()">Preuzmi app</button><small>Prečica otvara baš ovaj profil${logo ? " i koristi logo firme gde browser dozvoljava" : ""}.</small></div>`}
+      ${products.length ? `<section class="shoe-rubric-filter"><label for="shoe-rubric-select">🔍 Pregled po rubrikama</label><div class="shoe-rubric-select-wrap"><select id="shoe-rubric-select" onchange="csFilterShoeRubric(this.value)"><option value="">Sve rubrike / svi oglasi</option>${csAllShoeRubrics().map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join("")}</select></div><small id="shoe-rubric-result-count">${products.length} oglasa</small></section>` : ""}
       <section class="shoe-products-section">
         ${products.length ? `<div class="shoe-grid">${products.map((product, index) => renderShoeProductCard(product, index)).join("")}</div>` : `<div class="card"><h2>Još nema oglasa</h2><p class="muted">Vlasnik još nije dodao patike u katalog.</p></div>`}
       </section>
@@ -1567,11 +1620,16 @@ function renderShoeProductCard(product, index) {
   const imgs = csProductImages(product);
   const img = imgs[0] || "";
   const status = csProductStatus(product);
-  return `<button class="shoe-card" type="button" onclick="openShoeViewer(${index})">
-    <div class="shoe-card-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}">` : `<span>Bez slike</span>`}</div>
+  const rubrics = csProductRubrics(product);
+  const rubricsAttr = rubrics.map(r => r.toLowerCase()).join('|');
+  const searchAttr = [csProductCode(product), product.category, product.name, product.description, ...rubrics].filter(Boolean).join(' ').toLowerCase();
+  const visibleRubrics = rubrics.slice(0, 4);
+  return `<button class="shoe-card" type="button" data-rubrics="${escapeHtml(rubricsAttr)}" data-search="${escapeHtml(searchAttr)}" onclick="openShoeViewer(${index}); event.preventDefault();">
+    <div class="shoe-card-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Oglas')}">` : `<span>Bez slike</span>`}</div>
     <div class="shoe-card-info">
       <small>${escapeHtml(csProductCode(product))}${product.category ? " • " + escapeHtml(product.category) : ""}</small>
-      <strong>${escapeHtml(product.name || "Patike")}</strong>
+      <strong>${escapeHtml(product.name || "Oglas")}</strong>
+      ${visibleRubrics.length ? `<div class="shoe-card-rubrics">${visibleRubrics.map(r => `<span>${escapeHtml(r)}</span>`).join("")}</div>` : ""}
       <div class="shoe-card-bottom"><b>${escapeHtml(csProductPrice(product))}</b><span>${escapeHtml(status)}</span></div>
     </div>
   </button>`;

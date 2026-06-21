@@ -2226,7 +2226,11 @@ async function showAddProductForm(productId = null) {
     <input id="product-edit-id" type="hidden" value="${product ? salonEscapeHtml(product.id) : ""}">
     <label>Naziv proizvoda</label><input id="product-name" type="text" value="${product ? salonEscapeHtml(product.name) : ""}" placeholder="Primer: Nike Air Max"><p class="field-help">Upišite glavni naziv koji kupac prvo vidi.</p>
     <label>Brend / kategorija</label><input id="product-category" type="text" value="${product ? salonEscapeHtml(product.category || "") : ""}" placeholder="Primer: Nike / patike"><p class="field-help">Ovde ide brend ili kategorija proizvoda.</p>
-    <label>Opis / brojevi</label><textarea id="product-description" rows="3" placeholder="Primer: Brojevi od 40 do 46">${product ? salonEscapeHtml(product.description || "") : ""}</textarea><p class="field-help">Ovde napišite kratki opis, brojeve, veličine ili kratku napomenu za kupca.</p>
+    <label>Opis / rubrike za pretragu</label><textarea id="product-description" rows="4" placeholder="Primer:
+Mešalica 160L
+Kolica
+Produžni kabal
+Dostava po dogovoru">${product ? salonEscapeHtml(product.description || "") : ""}</textarea><p class="field-help">Svaki red ili stavka odvojena zarezom postaje rubrika koju kupac vidi i po kojoj može da filtrira oglase.</p>
     <div class="grid two"><div><label>Cena</label><input id="product-price" type="text" inputmode="numeric" value="${product ? salonEscapeHtml(product.price || "") : ""}" placeholder="Primer: 4700"></div><div><label>Valuta</label><select id="product-currency"><option value="RSD" ${window.App.normalizeCurrency(product?.currency || "RSD") === "RSD" ? "selected" : ""}>RSD</option><option value="EUR" ${window.App.normalizeCurrency(product?.currency || "RSD") === "EUR" ? "selected" : ""}>EUR</option><option value="KM" ${window.App.normalizeCurrency(product?.currency || "RSD") === "KM" ? "selected" : ""}>KM</option></select></div></div>
     <label>Status dostupnosti</label><select id="product-stock-status"><option value="available" ${!product || product.stock_status === "available" ? "selected" : ""}>Na stanju</option><option value="preorder" ${product && product.stock_status === "preorder" ? "selected" : ""}>Po porudžbini</option><option value="out" ${product && product.stock_status === "out" ? "selected" : ""}>Trenutno nema</option></select><p class="field-help">Kupac u otvorenom oglasu vidi i ovaj status.</p>
     <label>Redosled</label><input id="product-sort-order" type="number" value="${product ? Number(product.sort_order || 100) : 100}">

@@ -10537,3 +10537,100 @@ body:has(.shoe-shop-page) .client-shell{
 #csZoomLightbox{
   background:initial;
 }
+
+/* === V41: Prodavnica - bela podloga, rubrike i padajuci meni === */
+.shoe-shop-page .shoe-info-row{
+  background:#ffffff !important;
+  color:#111827 !important;
+  border:1px solid rgba(17,24,39,.08) !important;
+  box-shadow:0 16px 36px rgba(15,23,42,.10) !important;
+}
+.shoe-shop-page .shoe-info-copy h1,
+.shoe-shop-page .shoe-info-copy p,
+.shoe-shop-page .shoe-meta,
+.shoe-shop-page .shoe-meta a{
+  color:#111827 !important;
+  opacity:1 !important;
+  text-shadow:none !important;
+}
+.shoe-shop-page .shoe-info-copy p{color:#4b5563 !important;}
+.shoe-shop-page .shoe-meta-link,
+.shoe-shop-page .shoe-meta a{
+  background:#f3f4f6 !important;
+  color:#111827 !important;
+  border:1px solid rgba(17,24,39,.10) !important;
+}
+.shoe-rubric-filter{
+  margin:18px 0 16px !important;
+  padding:16px !important;
+  background:#ffffff !important;
+  border:1px solid rgba(17,24,39,.10) !important;
+  border-radius:22px !important;
+  box-shadow:0 12px 28px rgba(15,23,42,.08) !important;
+  color:#111827 !important;
+}
+.shoe-rubric-filter label{
+  display:block !important;
+  margin:0 0 9px !important;
+  color:#111827 !important;
+  font-size:15px !important;
+  font-weight:900 !important;
+}
+.shoe-rubric-select-wrap{position:relative !important;}
+.shoe-rubric-select-wrap::after{
+  content:"⌄";
+  position:absolute;
+  right:15px;
+  top:50%;
+  transform:translateY(-50%);
+  color:#111827;
+  font-size:20px;
+  pointer-events:none;
+}
+#shoe-rubric-select{
+  width:100% !important;
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  background:#f9fafb !important;
+  color:#111827 !important;
+  border:1px solid rgba(17,24,39,.16) !important;
+  border-radius:16px !important;
+  padding:14px 44px 14px 14px !important;
+  font-weight:850 !important;
+  outline:none !important;
+}
+#shoe-rubric-select:focus{
+  border-color:#22c55e !important;
+  box-shadow:0 0 0 4px rgba(34,197,94,.16) !important;
+}
+#shoe-rubric-result-count{
+  display:block !important;
+  margin-top:8px !important;
+  color:#6b7280 !important;
+  font-weight:800 !important;
+}
+.shoe-card-rubrics{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  gap:6px !important;
+  margin:8px 0 4px !important;
+}
+.shoe-card-rubrics span{
+  display:inline-flex !important;
+  align-items:center !important;
+  max-width:100% !important;
+  padding:4px 8px !important;
+  border-radius:999px !important;
+  background:rgba(34,197,94,.10) !important;
+  color:#d1fae5 !important;
+  border:1px solid rgba(34,197,94,.24) !important;
+  font-size:11px !important;
+  line-height:1.1 !important;
+  font-weight:850 !important;
+  white-space:normal !important;
+}
+@media (max-width:720px){
+  .shoe-rubric-filter{margin:16px 0 14px !important;padding:14px !important;border-radius:20px !important;}
+  #shoe-rubric-select{font-size:15px !important;}
+  .shoe-card-rubrics span{font-size:10.5px !important;padding:4px 7px !important;}
+}
