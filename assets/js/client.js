@@ -1448,17 +1448,23 @@ function csNormalizePublicRubric(value = "") {
     .replace(/\s+/g, " ")
     .trim();
 }
+function csRubricCanonicalLabel(value = "") {
+  const raw = csNormalizePublicRubric(value);
+  const key = raw.toLocaleLowerCase("sr");
+  if (!key) return "";
+  /* V61: rubrike se i dalje uzimaju SAMO iz prvog polja (product.name),
+     ali iste rubrike moraju da se grupišu zajedno za kupca.
+     Primer: alati/ALATI => ALATI, Paket/Paketi/PAKETI => PAKETI.
+     Ne čitamo opis, cenu, brend/kategoriju, status, šifru ili tekst sa slike. */
+  if (key === "alat" || key === "alati") return "ALATI";
+  if (key === "paket" || key === "paketi") return "PAKETI";
+  return raw;
+}
 function csProductRubricTitle(product = {}) {
-  /* V60 STROGO PRAVILO:
-     Rubrika za dropdown i filtriranje je SAMO tekst iz prvog polja forme
-     koje vlasnik popunjava kao "Rubrika / naziv proizvoda" (tehnički product.name).
-     Ne čitamo opis, cenu, brend/kategoriju, status, šifru ili tekst sa slike.
-     Ne filtriramo ručno vrednosti: ako je vlasnik tu upisao "alati", to je rubrika.
-  */
-  return csNormalizePublicRubric(product.name || "");
+  return csRubricCanonicalLabel(product.name || "");
 }
 function csProductRubricKey(value = "") {
-  return csNormalizePublicRubric(value).toLocaleLowerCase("sr");
+  return csRubricCanonicalLabel(value).toLocaleLowerCase("sr");
 }
 function csProductDisplayName(product = {}) { return String(product.category || product.name || "Oglas").trim(); }
 function csProductPublicDescription(product = {}) { return String(product.description || "").trim(); }
@@ -1561,7 +1567,7 @@ function csProductRubrics(product = {}) {
 }
 
 function csAllShoeRubrics() {
-  // V46: dropdown prikazuje samo jedinstvene vrednosti iz product.name (Naziv proizvoda / rubrika).
+  // V61: dropdown prikazuje jedinstvene rubrike iz product.name, grupisane po istom značenju (alati/ALATI, paket/PAKETI).
   const map = new Map();
   (products || []).forEach(product => {
     const rubric = csProductRubricTitle(product);
@@ -1572,8 +1578,8 @@ function csAllShoeRubrics() {
   return Array.from(map.values()).sort((a,b)=>a.localeCompare(b, 'sr', { sensitivity: 'base' }));
 }
 function csFilterShoeRubric(value = '') {
-  // V60: kad kupac izabere rubriku, ostaju samo oglasi čije prvo polje (product.name)
-  // tačno odgovara toj rubrici. Ne koristimo opis, cenu, kategoriju ni ostali tekst.
+  // V61: kad kupac izabere rubriku, prikazuju se svi oglasi pod tom rubrikom.
+  // Primer: ALATI prikazuje sve oglase sa rubrikom alati/ALATI; PAKETI prikazuje Paket/Paketi/PAKETI.
   const wanted = csProductRubricKey(value);
   const cards = document.querySelectorAll('.shoe-shop-page .shoe-card');
   let shown = 0;
