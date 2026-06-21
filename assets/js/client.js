@@ -1449,37 +1449,36 @@ function csNormalizePublicRubric(value = "") {
     .trim();
 }
 function csProductRubricTitle(product = {}) {
-  /* V48 STROGO PRAVILO RUBRIKA
-     Rubrika u padajućem meniju se uzima SAMO iz prvog polja u panelu vlasnika:
-     product.name = "Rubrika za padajući meni".
-     Ne sme da vuče brend/ime proizvoda (product.category), opis, cenu, težinu ili bilo koji drugi tekst.
+  /* V49 STROGO PRAVILO:
+     U padajućem meniju Rubrike sme da se pojavi SAMO tekst koji je vlasnik uneo
+     u prvo polje forme: "Rubrika" (tehnički: product.name).
+     Ne čitamo product.category, product.description, cenu, status, sliku ili bilo koji drugi tekst.
   */
   const raw = csNormalizePublicRubric(product.name || "");
   if (!raw) return "";
 
-  const key = raw.toLocaleLowerCase("sr");
-  const displayName = csNormalizePublicRubric(product.category || "");
-  const desc = csNormalizePublicRubric(product.description || "");
+  const key = csProductRubricKey(raw);
 
-  // Zaštita od starih pogrešno upisanih vrednosti i generičkih reči.
+  // Stare / pogrešno mapirane vrednosti koje nisu rubrike ne prikazujemo u meniju.
   const blocked = new Set([
-    "alati", "alat", "najam", "najem", "prodavac", "oglas", "proizvod", "rubrika",
-    "opis", "cena", "na stanju", "dostupno"
+    "alati", "alat", "najam", "najem", "prodavac", "oglas", "proizvod",
+    "rubrika", "opis", "cena", "na stanju", "dostupno", "brend", "ime proizvoda"
   ]);
   if (blocked.has(key)) return "";
 
-  // Ne dozvoli da opis/težina/cena uđu kao rubrika.
+  // Rubrika ne sme biti opis sa brojkom / merom / cenom.
   if (/\d/.test(raw)) return "";
-  if (/(kg|kilogram|tezina|težina|litar|litara|sata|dan|dana|rsd|din|eur)/i.test(raw)) return "";
+  if (/(kg|kilogram|tezina|težina|litar|litara|sata|sat|dan|dana|rsd|din|eur|kom|metar|m2|m3)/i.test(raw)) return "";
 
-  // Ako je isto kao ime proizvoda ili deo opisa, nije rubrika nego pogrešno mapirano staro polje.
-  if (displayName && csProductRubricKey(displayName) === csProductRubricKey(raw)) return "";
+  // Ako se prvo polje slučajno poklapa sa imenom proizvoda ili opisom, tretiraj kao star pogrešan zapis.
+  const productTitle = csNormalizePublicRubric(product.category || "");
+  const desc = csNormalizePublicRubric(product.description || "");
+  if (productTitle && csProductRubricKey(productTitle) === key) return "";
   if (desc) {
-    const firstDesc = csNormalizePublicRubric(desc.split(/\n|,|;/)[0] || "");
-    if (firstDesc && csProductRubricKey(firstDesc) === csProductRubricKey(raw)) return "";
+    const descPieces = desc.split(/\n|,|;|•|\|/).map(x => csNormalizePublicRubric(x)).filter(Boolean);
+    if (descPieces.some(x => csProductRubricKey(x) === key)) return "";
   }
 
-  // Jedina automatska normalizacija: Paket -> PAKETI, ostalo ostaje kako je vlasnik upisao.
   if (key === "paket") return "PAKETI";
   return raw;
 }

@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle v248 - rubrike prvo polje only
-const CACHE_NAME = "citystyle-v248_rubrike_prvo_polje";
+// CityStyle v249 - samo polje rubrika dropdown
+const CACHE_NAME = "citystyle-v249_samo_polje_rubrika_dropdown";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
