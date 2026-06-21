@@ -2241,6 +2241,11 @@ Dostava po dogovoru">${product ? salonEscapeHtml(product.description || "") : ""
   box.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+async function editProduct(productId) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  await showAddProductForm(productId);
+}
+
 async function saveProduct() {
   if (stopAdminOwnerPreviewEdit()) return;
   const id = document.getElementById("product-edit-id")?.value || "";
@@ -2322,7 +2327,7 @@ async function uploadCoverImage() {
   await loadCurrentSettings(); window.App.showMessage("Početna slika je postavljena. Panel prečica će je koristiti samo ako nema logo/sliku profila. Galerijske slike se ne koriste za prečicu.", "success");
 }
 
-Object.assign(window, { showProductImages, uploadProductExtraImages, deleteProductExtraImage, copyProductLink, previewProductAsClient, uploadCoverImage, ensureOwnerPushIsActive });
+Object.assign(window, { editProduct, showAddProductForm, saveProduct, hideProductForm, showProductImages, uploadProductExtraImages, deleteProductExtraImage, copyProductLink, previewProductAsClient, uploadCoverImage, ensureOwnerPushIsActive });
 
 
 // Safety patch: if an older browser/service-worker leaves a select with only RSD, repopulate currencies.
