@@ -11005,3 +11005,165 @@ body:has(.shoe-shop-page) .client-shell{
     min-height:128px !important;
   }
 }
+
+/* === V52: SLIKE OGLASA UVEK LEPO 1:1 - MOBILNI + LAPTOP ===
+   Cilj: svaka slika oglasa bude kvadrat, cela vidljiva, bez sečenja, bez rastezanja,
+   i da kartica ne zavisi od visine teksta desno. */
+.shoe-shop-page .shoe-card,
+.shoe-shop-page .product-public-card,
+.shoe-shop-page .product-public-card-with-image{
+  box-sizing:border-box !important;
+}
+
+.shoe-shop-page .shoe-card-media,
+.product-public-card .product-public-image-wrap,
+.product-public-card-with-image .product-public-image-wrap{
+  aspect-ratio:1 / 1 !important;
+  background:#ffffff !important;
+  overflow:hidden !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  flex:0 0 auto !important;
+}
+
+.shoe-shop-page .shoe-card-media img,
+.product-public-card .product-public-image,
+.product-public-card-with-image .product-public-image{
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+  display:block !important;
+  background:#ffffff !important;
+}
+
+/* Laptop / desktop: kartice mogu biti mreža, ali slika ostaje uredan kvadrat gore/levo. */
+@media (min-width:721px){
+  .shoe-shop-page .shoe-grid{
+    align-items:start !important;
+  }
+
+  .shoe-shop-page .shoe-card{
+    overflow:hidden !important;
+  }
+
+  .shoe-shop-page .shoe-card-media{
+    width:100% !important;
+    height:auto !important;
+    min-height:0 !important;
+    max-height:none !important;
+    aspect-ratio:1 / 1 !important;
+    padding:0 !important;
+  }
+
+  .shoe-shop-page .shoe-card-media img{
+    width:100% !important;
+    height:100% !important;
+    object-fit:contain !important;
+  }
+
+  .product-public-card-with-image{
+    display:grid !important;
+    grid-template-columns:140px minmax(0,1fr) auto !important;
+    align-items:center !important;
+  }
+
+  .product-public-card .product-public-image-wrap,
+  .product-public-card-with-image .product-public-image-wrap{
+    width:140px !important;
+    height:140px !important;
+    min-width:140px !important;
+    min-height:140px !important;
+  }
+}
+
+/* Mobilni: jedan oglas ispod drugog, slika je stabilan kvadrat levo. */
+@media (max-width:720px){
+  .shoe-shop-page .shoe-grid{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:14px !important;
+    width:100% !important;
+    max-width:430px !important;
+    margin:0 auto !important;
+  }
+
+  .shoe-shop-page .shoe-card{
+    display:grid !important;
+    grid-template-columns:minmax(132px, 42vw) minmax(0,1fr) !important;
+    align-items:center !important;
+    width:100% !important;
+    max-width:430px !important;
+    min-height:0 !important;
+    height:auto !important;
+    overflow:hidden !important;
+  }
+
+  .shoe-shop-page .shoe-card-media{
+    width:100% !important;
+    height:auto !important;
+    min-height:0 !important;
+    max-height:none !important;
+    aspect-ratio:1 / 1 !important;
+    align-self:center !important;
+    justify-self:stretch !important;
+    border-radius:20px 0 0 20px !important;
+    padding:0 !important;
+  }
+
+  .shoe-shop-page .shoe-card-media img{
+    width:100% !important;
+    height:100% !important;
+    object-fit:contain !important;
+  }
+
+  .shoe-shop-page .shoe-card-info{
+    min-width:0 !important;
+    max-width:100% !important;
+    overflow:hidden !important;
+    padding:12px 12px !important;
+  }
+
+  .shoe-shop-page .shoe-card-info small,
+  .shoe-shop-page .shoe-card-info strong,
+  .shoe-shop-page .shoe-card-description,
+  .shoe-shop-page .shoe-card-rubrics,
+  .shoe-shop-page .shoe-card-bottom{
+    max-width:100% !important;
+    min-width:0 !important;
+    overflow-wrap:break-word !important;
+  }
+
+  .shoe-shop-page .shoe-card-bottom b{
+    font-size:clamp(21px, 6vw, 28px) !important;
+    white-space:normal !important;
+    line-height:1.05 !important;
+  }
+
+  .product-public-card-with-image{
+    display:grid !important;
+    grid-template-columns:118px minmax(0,1fr) !important;
+    gap:10px !important;
+    align-items:center !important;
+  }
+
+  .product-public-card .product-public-image-wrap,
+  .product-public-card-with-image .product-public-image-wrap{
+    width:118px !important;
+    height:118px !important;
+    min-width:118px !important;
+    min-height:118px !important;
+  }
+}
+
+@media (max-width:380px){
+  .shoe-shop-page .shoe-card{
+    grid-template-columns:122px minmax(0,1fr) !important;
+  }
+  .shoe-shop-page .shoe-card-bottom b{
+    font-size:20px !important;
+  }
+}
