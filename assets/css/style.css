@@ -9622,229 +9622,87 @@ body.owner-sound-ready #salon-notifications-btn{
 
 
 
-/* === v29 RECOVERY: prodavnica bela + klik na oglas kao stabilna mobilna kartica === */
+
+/* === v216 SAFE: samo prodavnica kod klijenta - bela pozadina + uredne kartice ===
+   Ne dira shoe-viewer / prikaz kada se klikne na oglas. */
 .shoe-shop-page{
   background:#ffffff !important;
-  color:#0b0f19 !important;
+  color:#0f172a !important;
+  min-height:100vh !important;
 }
-.shoe-install-btn{font-size:0 !important;}
-.shoe-install-btn::after{content:"Preuzmi app";font-size:18px;font-weight:900;}
-.shoe-card{
+.shoe-shop-page .shoe-cover,
+.shoe-shop-page .shoe-info-row,
+.shoe-shop-page .shoe-install-row,
+.shoe-shop-page .shoe-card{
   background:#ffffff !important;
-  color:#111827 !important;
-  border:1px solid rgba(34,197,94,.22) !important;
-  box-shadow:0 12px 28px rgba(15,23,42,.08) !important;
+  color:#0f172a !important;
+  border-color:rgba(34,197,94,.28) !important;
+  box-shadow:0 12px 30px rgba(15,23,42,.08) !important;
 }
-.shoe-card-media{
-  background:#ffffff !important;
-  padding:12px !important;
-  aspect-ratio:3/4 !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
+.shoe-shop-page .shoe-info-copy p,
+.shoe-shop-page .shoe-card-info small{
+  color:#64748b !important;
 }
-.shoe-card-media img{
-  width:100% !important;
-  height:100% !important;
-  object-fit:contain !important;
-  object-position:center !important;
-  background:#ffffff !important;
+.shoe-shop-page .shoe-meta span,
+.shoe-shop-page .shoe-meta .shoe-meta-link{
+  background:#f8fafc !important;
+  color:#0f172a !important;
+  border-color:rgba(34,197,94,.18) !important;
 }
-.shoe-card-info small{color:#6b7280 !important;}
-.shoe-card-info strong{color:#111827 !important;}
-.shoe-card-bottom b,
-.shoe-card-info b{color:#111827 !important;font-weight:950 !important;}
-
-html.cs-shoe-viewer-open,
-html.cs-shoe-viewer-open body{overflow:hidden !important;}
-.shoe-viewer{
-  position:fixed !important;
-  inset:0 !important;
-  width:100vw !important;
-  height:100dvh !important;
-  z-index:30000 !important;
-  overflow-y:auto !important;
-  overflow-x:hidden !important;
-  background:#ffffff !important;
-  color:#030712 !important;
-  padding:0 !important;
-  touch-action:auto !important;
-  -webkit-overflow-scrolling:touch !important;
-}
-.shoe-viewer::before,
-.shoe-viewer::after{display:none !important;content:none !important;}
-.shoe-detail-shell{
-  width:min(720px,100%) !important;
-  min-height:100dvh !important;
-  margin:0 auto !important;
-  padding:14px 10px calc(18px + env(safe-area-inset-bottom,0px)) !important;
+.shoe-shop-page .shoe-card{
   display:flex !important;
   flex-direction:column !important;
-  gap:14px !important;
-  background:#ffffff !important;
-  box-sizing:border-box !important;
-}
-.shoe-detail-header{
-  position:relative !important;
-  display:flex !important;
-  align-items:flex-start !important;
-  justify-content:space-between !important;
-  gap:14px !important;
-  min-height:132px !important;
-  padding:26px 18px !important;
-  border:4px solid #4ade80 !important;
-  border-radius:34px !important;
-  background:linear-gradient(135deg,#f7fff9 0%,#dcfce7 100%) !important;
-  box-shadow:0 12px 30px rgba(34,197,94,.18) !important;
+  height:100% !important;
+  border-radius:22px !important;
   overflow:hidden !important;
 }
-.shoe-detail-title{text-align:left !important;min-width:0 !important;flex:1 1 auto !important;}
-.shoe-detail-title p{margin:0 0 6px !important;font-size:20px !important;font-weight:950 !important;letter-spacing:.02em !important;text-transform:uppercase !important;color:#111827 !important;line-height:1.1 !important;}
-.shoe-detail-title h2{margin:0 !important;font-size:clamp(42px,13vw,70px) !important;font-weight:1000 !important;line-height:.94 !important;color:#000 !important;text-shadow:0 6px 18px rgba(0,0,0,.18) !important;word-break:break-word !important;}
-.shoe-detail-title span{display:block !important;margin-top:10px !important;font-size:clamp(18px,5vw,28px) !important;font-weight:800 !important;line-height:1.18 !important;color:#111827 !important;}
-.shoe-detail-status{
-  flex:0 0 auto !important;
-  position:absolute !important;
-  right:18px !important;
-  top:18px !important;
-  display:inline-flex !important;
-  align-items:center !important;
-  gap:10px !important;
-  padding:12px 18px !important;
-  border-radius:999px !important;
-  background:#08110d !important;
-  color:#ffffff !important;
-  font-size:20px !important;
-  font-weight:950 !important;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),0 10px 26px rgba(0,0,0,.22) !important;
-  white-space:nowrap !important;
-}
-.shoe-detail-status i{width:18px !important;height:18px !important;border-radius:50% !important;background:#00e749 !important;box-shadow:0 0 18px rgba(0,231,73,.8) !important;}
-.shoe-detail-dots,
-.shoe-detail-one-dot{
-  position:static !important;
-  display:flex !important;
-  justify-content:center !important;
-  align-items:center !important;
-  gap:14px !important;
-  height:28px !important;
-  margin:0 !important;
-}
-.shoe-detail-one-dot::before{content:"";width:18px;height:18px;border-radius:50%;background:#86efac;box-shadow:0 0 0 18px rgba(134,239,172,.25);}
-.shoe-detail-dots button{width:13px !important;height:13px !important;border:0 !important;border-radius:999px !important;background:#d1d5db !important;padding:0 !important;}
-.shoe-detail-dots button.active{width:18px !important;background:#86efac !important;box-shadow:0 0 0 16px rgba(134,239,172,.22) !important;}
-.shoe-viewer .shoe-detail-media,
-.shoe-viewer-media.shoe-detail-media{
-  position:relative !important;
-  inset:auto !important;
-  width:100% !important;
-  aspect-ratio:1/1 !important;
-  height:auto !important;
-  min-height:0 !important;
-  padding:10px !important;
+.shoe-shop-page .shoe-card-media{
+  aspect-ratio:3/4 !important;
+  background:#ffffff !important;
+  padding:12px !important;
   display:flex !important;
   align-items:center !important;
   justify-content:center !important;
-  border:4px solid #4ade80 !important;
-  border-radius:34px !important;
-  background:#ffffff !important;
-  box-shadow:0 16px 36px rgba(34,197,94,.14) !important;
-  overflow:hidden !important;
-  box-sizing:border-box !important;
+  border-bottom:1px solid rgba(15,23,42,.08) !important;
 }
-.shoe-viewer .shoe-detail-media img.shoe-viewer-main-img{
+.shoe-shop-page .shoe-card-media img{
   width:100% !important;
   height:100% !important;
-  max-width:100% !important;
   max-height:100% !important;
   object-fit:contain !important;
-  object-position:center !important;
-  display:block !important;
-  transform:none !important;
+  object-position:center center !important;
   background:#ffffff !important;
 }
-.shoe-viewer-close{
-  position:absolute !important;
-  right:16px !important;
-  top:16px !important;
-  width:72px !important;
-  height:72px !important;
-  border-radius:999px !important;
-  border:5px solid #4ade80 !important;
-  background:#07110d !important;
-  color:#ffffff !important;
-  font-size:54px !important;
-  line-height:1 !important;
-  z-index:10 !important;
+.shoe-shop-page .shoe-card-info{
+  padding:12px 10px 14px !important;
+  flex:1 !important;
   display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  box-shadow:0 12px 28px rgba(34,197,94,.28) !important;
+  flex-direction:column !important;
 }
-.shoe-zoom-close{display:none !important;}
-.shoe-detail-actions,
-.shoe-viewer-actions.shoe-detail-actions{
-  position:static !important;
-  left:auto !important;
-  right:auto !important;
-  top:auto !important;
-  bottom:auto !important;
-  z-index:auto !important;
-  width:100% !important;
-  display:grid !important;
-  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
-  gap:10px !important;
-  padding:0 !important;
-  margin:0 !important;
-}
-.shoe-detail-actions .shoe-action{
-  width:auto !important;
-  height:82px !important;
-  min-width:0 !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  gap:8px !important;
-  border:4px solid #4ade80 !important;
-  border-radius:22px !important;
-  background:#07110d !important;
-  color:#ffffff !important;
-  font-size:18px !important;
-  font-weight:950 !important;
-  box-shadow:0 10px 22px rgba(34,197,94,.18) !important;
+.shoe-shop-page .shoe-card-info strong{
+  font-size:17px !important;
+  line-height:1.25 !important;
+  margin-bottom:4px !important;
+  color:#0f172a !important;
+  display:-webkit-box !important;
+  -webkit-line-clamp:2 !important;
+  -webkit-box-orient:vertical !important;
   overflow:hidden !important;
 }
-.shoe-detail-actions .shoe-action svg{width:24px !important;height:24px !important;stroke:currentColor !important;fill:none !important;stroke-width:2.4 !important;flex:0 0 auto !important;}
-.shoe-detail-actions .shoe-action span{display:inline !important;max-width:68px !important;overflow:hidden !important;text-overflow:ellipsis !important;white-space:nowrap !important;}
-.shoe-detail-price-card{
-  width:100% !important;
-  min-height:126px !important;
-  padding:20px 18px !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:space-between !important;
-  gap:16px !important;
-  border:4px solid #4ade80 !important;
-  border-radius:34px !important;
-  background:linear-gradient(135deg,#ffffff 0%,#dcfce7 100%) !important;
-  box-shadow:0 14px 32px rgba(34,197,94,.16) !important;
-  box-sizing:border-box !important;
+.shoe-shop-page .shoe-card-info b{
+  font-size:19px !important;
+  font-weight:900 !important;
+  color:#111827 !important;
+  margin-top:auto !important;
+  padding-top:6px !important;
 }
-.shoe-detail-price-card b{font-size:clamp(42px,12vw,70px) !important;line-height:1 !important;font-weight:1000 !important;color:#000 !important;letter-spacing:-.04em !important;}
-.shoe-detail-price-card img{width:88px !important;height:88px !important;object-fit:cover !important;border-radius:20px !important;background:#111 !important;box-shadow:0 10px 20px rgba(0,0,0,.18) !important;}
-.shoe-detail-price-card strong{font-size:20px !important;font-weight:950 !important;text-align:right !important;color:#111827 !important;}
-.shoe-viewer-powered{position:static !important;text-align:center !important;color:#6b7280 !important;font-size:16px !important;font-weight:800 !important;margin:0 0 4px !important;}
-.shoe-arrow{position:fixed !important;top:50% !important;transform:translateY(-50%) !important;z-index:20 !important;}
-.shoe-arrow-left{left:12px !important;}
-.shoe-arrow-right{right:12px !important;left:auto !important;}
-@media(max-width:390px){
-  .shoe-detail-shell{padding-left:7px !important;padding-right:7px !important;gap:12px !important;}
-  .shoe-detail-header{padding:22px 14px !important;border-radius:28px !important;}
-  .shoe-detail-status{right:12px !important;top:12px !important;font-size:16px !important;padding:10px 12px !important;}
-  .shoe-detail-title h2{font-size:42px !important;}
-  .shoe-viewer-close{width:60px !important;height:60px !important;font-size:46px !important;right:12px !important;top:12px !important;}
-  .shoe-detail-actions{gap:8px !important;}
-  .shoe-detail-actions .shoe-action{height:74px !important;border-radius:18px !important;font-size:15px !important;gap:5px !important;}
-  .shoe-detail-actions .shoe-action svg{width:20px !important;height:20px !important;}
-  .shoe-detail-actions .shoe-action span{max-width:52px !important;}
+.shoe-shop-page .shoe-install-btn{
+  width:100% !important;
+  justify-content:center !important;
+}
+@media(max-width:720px){
+  .shoe-shop-page{padding:10px 8px 24px !important;}
+  .shoe-shop-page .shoe-card-media{padding:10px !important;aspect-ratio:4/3.5 !important;}
+  .shoe-shop-page .shoe-card-info strong{font-size:16px !important;}
+  .shoe-shop-page .shoe-card-info b{font-size:18px !important;}
 }

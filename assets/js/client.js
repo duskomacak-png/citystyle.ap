@@ -1550,7 +1550,7 @@ function renderShoeShopHome(settings = {}) {
         ${logo ? `<img class="shoe-logo" src="${escapeHtml(logo)}" alt="${escapeHtml(name)} logo">` : `<div class="shoe-logo shoe-logo-fallback">${escapeHtml(name.charAt(0).toUpperCase())}</div>`}
         <div class="shoe-info-copy"><h1>${escapeHtml(name)}</h1>${text ? `<p>${escapeHtml(text)}</p>` : ""}<div class="shoe-meta">${phone ? `<a class="shoe-meta-link" href="tel:${escapeHtml(csSafePhone(phone))}">📞 ${escapeHtml(phone)}</a>` : ""}${address ? renderPublicAddressLink(address) : ""}</div></div>
       </div>
-      ${ownerPreviewMode ? "" : `<div class="shoe-install-row"><button class="btn btn-dark shoe-install-btn" type="button" onclick="installCurrentSalonApp()">Preuzmi app</button><small>Prečica otvara baš ovaj profil${logo ? " i koristi logo firme gde browser dozvoljava" : ""}.</small></div>`}
+      ${ownerPreviewMode ? "" : `<div class="shoe-install-row"><button class="btn btn-dark shoe-install-btn" type="button" onclick="installCurrentSalonApp()">Preuzmi app</button></div>`}
       <section class="shoe-products-section">
         ${products.length ? `<div class="shoe-grid">${products.map((product, index) => renderShoeProductCard(product, index)).join("")}</div>` : `<div class="card"><h2>Još nema oglasa</h2><p class="muted">Vlasnik još nije dodao patike u katalog.</p></div>`}
       </section>
@@ -1597,9 +1597,8 @@ function openShoeViewer(index = 0) {
   if (!products.length) return;
   csViewerState = { index: Math.max(0, Math.min(index, products.length - 1)), image: 0, startX: 0, startY: 0, startPanX: 0, startPanY: 0, panX: 0, panY: 0, didPan: false, lastTap: 0, lastTapX: 0, lastTapY: 0, zoomed: false, zoomScale: 1, pinchStartDistance: 0, pinchStartScale: 1, isPinching: false };
   renderShoeViewer();
-  document.documentElement.classList.add("cs-shoe-viewer-open");
 }
-function closeShoeViewer() { document.getElementById("shoeViewer")?.remove(); document.documentElement.classList.remove("cs-shoe-viewer-open"); csViewerState = null; }
+function closeShoeViewer() { document.getElementById("shoeViewer")?.remove(); csViewerState = null; }
 function currentShoeProduct() { return products[csViewerState?.index || 0]; }
 function csViewerShareIcon(){
   return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 16L16.5 7.5"></path><path d="M10 7.5H16.5V14"></path></svg>';
@@ -1819,39 +1818,27 @@ function renderShoeViewer() {
   const viewerMetaPrimary = csProductViewerMetaPrimary(product);
   const viewerMetaSecondary = csProductViewerMetaSecondary(product);
   const viewerAvailability = csProductViewerAvailability(product);
-  const viewerTitle = product.name || "Oglas";
-  const viewerCode = product.category || viewerMetaPrimary || "";
-  const viewerText = viewerMetaSecondary || csProductPublicDescription(product) || "";
-  const shopLogo = currentSalon?._publicLogo || currentSalon?.logo_url || "";
-  const shopName = currentSalon?._publicName || currentSalon?.salon_name || "CityStyle";
   viewer.innerHTML = `
-    <div class="shoe-detail-shell">
-      <div class="shoe-detail-header">
-        <div class="shoe-detail-title">
-          ${viewerCode ? `<p>${escapeHtml(viewerCode)}</p>` : ``}
-          <h2>${escapeHtml(viewerTitle)}</h2>
-          ${viewerText ? `<span>${escapeHtml(viewerText)}</span>` : ``}
-        </div>
-        <div class="shoe-detail-status"><i></i>${escapeHtml(viewerAvailability || csProductStatus(product) || "Na stanju")}</div>
+    <div class="shoe-viewer-media">${img ? `<div class="shoe-viewer-media-bg" aria-hidden="true"><img src="${escapeHtml(img)}" alt=""></div><img class="shoe-viewer-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}" onload="csSmartCropShoeImage(this)">` : `<span>Bez slike</span>`}</div>
+    <div class="shoe-viewer-top">
+      <div class="shoe-viewer-right">
+        <h2><span>${escapeHtml(product.name || "Patike")}</span></h2>
+        ${viewerMetaPrimary ? `<p class="shoe-viewer-subtitle">${escapeHtml(viewerMetaPrimary)}</p>` : ``}
+        ${viewerMetaSecondary ? `<p class="shoe-viewer-subcopy">${escapeHtml(viewerMetaSecondary)}</p>` : ``}
+        ${viewerAvailability ? `<p class="shoe-viewer-availability">${escapeHtml(viewerAvailability)}</p>` : ``}
       </div>
-      ${imgs.length > 1 ? `<div class="shoe-dots shoe-detail-dots">${imgs.map((_,i)=>`<button class="${i===csViewerState.image?'active':''}" onclick="event.stopPropagation(); shoeSetImage(${i})" aria-label="Slika ${i + 1}"></button>`).join("")}</div>` : `<div class="shoe-detail-one-dot"></div>`}
-      <div class="shoe-viewer-media shoe-detail-media">
-        ${img ? `<img class="shoe-viewer-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(viewerTitle)}">` : `<span>Bez slike</span>`}
-        <button class="shoe-viewer-close" type="button" onclick="closeShoeViewer()" aria-label="Zatvori oglas">×</button>
-      </div>
-      ${imgs.length > 1 ? `<button class="shoe-arrow shoe-arrow-left" type="button" onclick="event.stopPropagation(); shoeChangeImage(-1)">‹</button><button class="shoe-arrow shoe-arrow-right" type="button" onclick="event.stopPropagation(); shoeChangeImage(1)">›</button>` : ""}
-      <div class="shoe-viewer-actions shoe-detail-actions" aria-label="Akcije proizvoda">
-        <button class="shoe-action" type="button" onclick="askShoeProduct(event)" aria-label="Pošalji poruku" title="Pošalji poruku">${csViewerMessageIcon()}<span>Pitaj</span></button>
-        <button class="shoe-action" type="button" onclick="callShoeShop(event)" aria-label="Pozovi prodavnicu" title="Pozovi prodavnicu">${csViewerPhoneIcon()}<span>Pozovi</span></button>
-        <button class="shoe-action" type="button" onclick="shareShoeProduct(event)" aria-label="Podeli oglas" title="Podeli oglas">${csViewerShareIcon()}<span>Podeli</span></button>
-        <button class="shoe-action zoom" type="button" onclick="event.stopPropagation(); csToggleShoeZoom()" aria-label="Zumiraj sliku" title="Zumiraj sliku">${csViewerZoomIcon()}<span>Zumiraj</span></button>
-      </div>
-      <div class="shoe-detail-price-card">
-        <b>${escapeHtml(csProductPrice(product))}</b>
-        ${shopLogo ? `<img src="${escapeHtml(shopLogo)}" alt="${escapeHtml(shopName)} logo">` : `<strong>${escapeHtml(shopName)}</strong>`}
-      </div>
-      <div class="shoe-viewer-powered">${CITYSTYLE_POWERED}</div>
-    </div>`;
+    </div>
+    <button class="shoe-viewer-close" type="button" onclick="closeShoeViewer()" aria-label="Zatvori oglas">×</button>
+    <button class="shoe-zoom-close" type="button" onclick="event.stopPropagation(); csCloseShoeZoom()" aria-label="Zatvori zum">×</button>
+    ${imgs.length > 1 ? `<button class="shoe-arrow shoe-arrow-left" type="button" onclick="event.stopPropagation(); shoeChangeImage(-1)">‹</button><button class="shoe-arrow shoe-arrow-right" type="button" onclick="event.stopPropagation(); shoeChangeImage(1)">›</button>` : ""}
+    <div class="shoe-viewer-actions" aria-label="Akcije proizvoda">
+      <button class="shoe-action red" type="button" onclick="shareShoeProduct(event)" aria-label="Podeli oglas" title="Podeli oglas">${csViewerShareIcon()}<span>Podeli</span></button>
+      <button class="shoe-action blue" type="button" onclick="askShoeProduct(event)" aria-label="Pošalji poruku" title="Pošalji poruku">${csViewerMessageIcon()}<span>Poruka</span></button>
+      <button class="shoe-action green" type="button" onclick="callShoeShop(event)" aria-label="Pozovi prodavnicu" title="Pozovi prodavnicu">${csViewerPhoneIcon()}<span>Pozovi</span></button>
+      <button class="shoe-action zoom" type="button" onclick="event.stopPropagation(); csToggleShoeZoom()" aria-label="Zumiraj sliku" title="Zumiraj sliku">${csViewerZoomIcon()}<span>Zum</span></button>
+    </div>
+    <div class="shoe-viewer-powered">${CITYSTYLE_POWERED}</div>
+    ${imgs.length > 1 ? `<div class="shoe-dots">${imgs.map((_,i)=>`<button class="${i===csViewerState.image?'active':''}" onclick="event.stopPropagation(); shoeSetImage(${i})" aria-label="Slika ${i + 1}"></button>`).join("")}</div>` : ""}`;
   csApplyShoePanZoom();
   viewer.ontouchstart = e => {
     if (!csViewerState) return;
