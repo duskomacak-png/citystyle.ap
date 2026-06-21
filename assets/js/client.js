@@ -1449,9 +1449,35 @@ function csNormalizePublicRubric(value = "") {
     .trim();
 }
 function csProductRubricTitle(product = {}) {
-  // V46: Rubrika je ISKLJUČIVO polje "Naziv proizvoda / rubrika" iz panela vlasnika.
-  // Ne uzima brend/kategoriju, opis, cenu, status niti tekst sa slike.
-  return csNormalizePublicRubric(product.name || "");
+  // V47: Rubrika za dropdown je SAMO posebno upisana rubrika u polju product.name.
+  // Zaštita: ne ubacuj ime proizvoda, opis, težinu, cenu, brend/kategoriju ni stare pogrešne vrednosti.
+  // Pravilo za vlasnika: rubriku pisati kao kratku grupu, najbolje VELIKIM slovima: PAKETI, MEŠALICE, AGREGATI...
+  let raw = csNormalizePublicRubric(product.name || "");
+  if (!raw) return "";
+
+  // očisti česte stare unose koji su nastali pre razdvajanja rubrika / imena / opisa
+  const key = raw.toLocaleLowerCase("sr");
+  const bad = new Set(["alati", "alat", "najam", "najem", "prodavac", "oglas", "proizvod", "rubrika"]);
+  if (bad.has(key)) return "";
+
+  // singular koji je korisnik ranije unosio pretvori u pravu rubriku
+  if (key === "paket") raw = "PAKETI";
+
+  // ne dozvoli da opis/težina/cena upadnu u dropdown
+  if (/\d/.test(raw)) return "";
+  if (raw.length > 26) return "";
+
+  const display = csNormalizePublicRubric(product.category || "");
+  const descFirst = csNormalizePublicRubric(String(product.description || "").split(/\n|,|;/)[0] || "");
+  if (display && csProductRubricKey(display) === csProductRubricKey(raw)) return "";
+  if (descFirst && csProductRubricKey(descFirst) === csProductRubricKey(raw)) return "";
+
+  // Ako rubrika nije napisana kao jasna grupa, ne prikazuj je u dropdownu.
+  // Ovo sprečava da se imena tipa "Vibro skakavac" pojave kao rubrike.
+  const lettersOnly = raw.replace(/[\s_\-/]+/g, "");
+  if (lettersOnly && lettersOnly !== lettersOnly.toLocaleUpperCase("sr")) return "";
+
+  return raw;
 }
 function csProductRubricKey(value = "") {
   return csNormalizePublicRubric(value).toLocaleLowerCase("sr");
