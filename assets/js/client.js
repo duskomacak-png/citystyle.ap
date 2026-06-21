@@ -1898,7 +1898,8 @@ function renderShoeViewer() {
   viewer.innerHTML = `
     <div class="cs-pv-phone">
       <section class="cs-pv-image-panel">
-        ${img ? `<img class="cs-pv-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(name)}">` : `<div class="cs-pv-no-img">Bez slike</div>`}
+        ${img ? `<img class="cs-pv-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(name)}" onclick="event.stopPropagation(); csToggleShoeZoom()" ondblclick="event.stopPropagation(); csToggleShoeZoom()">` : `<div class="cs-pv-no-img">Bez slike</div>`}
+        ${img ? `<button class="cs-pv-zoom-chip" type="button" onclick="event.stopPropagation(); csToggleShoeZoom()">🔍 Zum</button>` : ``}
 
         <button class="cs-pv-round cs-pv-back" type="button" onclick="closeShoeViewer()" aria-label="Nazad">‹</button>
         <div class="cs-pv-stock"><span></span>${escapeHtml(status)}</div>
