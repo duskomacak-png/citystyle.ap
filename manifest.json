@@ -1,38 +1,26 @@
 {
-  "name": "CityStyle.app - QR mini aplikacija za biznis",
-  "short_name": "CityStyle",
-  "description": "CityStyle.app je QR mini aplikacija za biznise. Javni profili koriste poseban PWA identitet kada ih kupac instalira.",
-  "start_url": "./?platform=1&v=v230_final_push_clean",
+  "name": "AskCreate.app",
+  "short_name": "AskCreate",
+  "description": "Terenski izveštaji bez papira, poziva i ručnog prepisivanja u Excel.",
+  "id": "./",
+  "start_url": "./?source=pwa",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0b0b0f",
-  "theme_color": "#0b0b0f",
-  "orientation": "portrait",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#eef5ef",
+  "theme_color": "#39b54a",
   "icons": [
     {
-      "src": "assets/icons/icon-192-maskable.png",
+      "src": "icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     },
     {
-      "src": "assets/icons/icon-512-maskable.png",
+      "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "assets/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "assets/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
-  ],
-  "id": "/pwa/platform/citystyle"
+  ]
 }
