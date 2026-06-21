@@ -1449,38 +1449,13 @@ function csNormalizePublicRubric(value = "") {
     .trim();
 }
 function csProductRubricTitle(product = {}) {
-  /* V49 STROGO PRAVILO:
-     U padajućem meniju Rubrike sme da se pojavi SAMO tekst koji je vlasnik uneo
-     u prvo polje forme: "Rubrika" (tehnički: product.name).
-     Ne čitamo product.category, product.description, cenu, status, sliku ili bilo koji drugi tekst.
+  /* V60 STROGO PRAVILO:
+     Rubrika za dropdown i filtriranje je SAMO tekst iz prvog polja forme
+     koje vlasnik popunjava kao "Rubrika / naziv proizvoda" (tehnički product.name).
+     Ne čitamo opis, cenu, brend/kategoriju, status, šifru ili tekst sa slike.
+     Ne filtriramo ručno vrednosti: ako je vlasnik tu upisao "alati", to je rubrika.
   */
-  const raw = csNormalizePublicRubric(product.name || "");
-  if (!raw) return "";
-
-  const key = csProductRubricKey(raw);
-
-  // Stare / pogrešno mapirane vrednosti koje nisu rubrike ne prikazujemo u meniju.
-  const blocked = new Set([
-    "alati", "alat", "najam", "najem", "prodavac", "oglas", "proizvod",
-    "rubrika", "opis", "cena", "na stanju", "dostupno", "brend", "ime proizvoda"
-  ]);
-  if (blocked.has(key)) return "";
-
-  // Rubrika ne sme biti opis sa brojkom / merom / cenom.
-  if (/\d/.test(raw)) return "";
-  if (/(kg|kilogram|tezina|težina|litar|litara|sata|sat|dan|dana|rsd|din|eur|kom|metar|m2|m3)/i.test(raw)) return "";
-
-  // Ako se prvo polje slučajno poklapa sa imenom proizvoda ili opisom, tretiraj kao star pogrešan zapis.
-  const productTitle = csNormalizePublicRubric(product.category || "");
-  const desc = csNormalizePublicRubric(product.description || "");
-  if (productTitle && csProductRubricKey(productTitle) === key) return "";
-  if (desc) {
-    const descPieces = desc.split(/\n|,|;|•|\|/).map(x => csNormalizePublicRubric(x)).filter(Boolean);
-    if (descPieces.some(x => csProductRubricKey(x) === key)) return "";
-  }
-
-  if (key === "paket") return "PAKETI";
-  return raw;
+  return csNormalizePublicRubric(product.name || "");
 }
 function csProductRubricKey(value = "") {
   return csNormalizePublicRubric(value).toLocaleLowerCase("sr");
@@ -1597,7 +1572,8 @@ function csAllShoeRubrics() {
   return Array.from(map.values()).sort((a,b)=>a.localeCompare(b, 'sr', { sensitivity: 'base' }));
 }
 function csFilterShoeRubric(value = '') {
-  // V46: filtriranje ide samo po data-rubrics, a data-rubrics se puni samo iz product.name.
+  // V60: kad kupac izabere rubriku, ostaju samo oglasi čije prvo polje (product.name)
+  // tačno odgovara toj rubrici. Ne koristimo opis, cenu, kategoriju ni ostali tekst.
   const wanted = csProductRubricKey(value);
   const cards = document.querySelectorAll('.shoe-shop-page .shoe-card');
   let shown = 0;
@@ -1607,7 +1583,9 @@ function csFilterShoeRubric(value = '') {
       .map(x => csProductRubricKey(x))
       .filter(Boolean);
     const ok = !wanted || rubrics.includes(wanted);
-    card.style.display = ok ? '' : 'none';
+    card.classList.toggle('cs-rubric-hidden', !ok);
+    card.hidden = !ok;
+    card.setAttribute('aria-hidden', ok ? 'false' : 'true');
     if (ok) shown += 1;
   });
   const label = document.getElementById('shoe-rubric-result-count');

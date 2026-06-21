@@ -11954,3 +11954,9 @@ body:has(.shoe-shop-page) .client-shell{
     object-fit:contain !important;
   }
 }
+
+/* V60 - Rubrike filter: izabrana rubrika prikazuje samo odgovarajuće oglase */
+.shoe-shop-page .shoe-card.cs-rubric-hidden,
+.shoe-shop-page .shoe-card[hidden] {
+  display: none !important;
+}
