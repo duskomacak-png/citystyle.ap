@@ -9902,3 +9902,56 @@ body:has(#shoeViewer.cs-product-viewer-v33){
   .cs-pv-action b{font-size:14px !important;}
   .cs-pv-action small{font-size:11px !important;}
 }
+
+/* === v34 - KLIK NA OGLAS: VECA 1:1 SLIKA U VIEWER-U === */
+#shoeViewer.cs-product-viewer-v33 .cs-pv-image-panel{
+  width:100% !important;
+  height:auto !important;
+  min-height:0 !important;
+  aspect-ratio:1 / 1 !important;
+  padding:0 !important;
+  background:#ffffff !important;
+  border-bottom-left-radius:24px !important;
+  border-bottom-right-radius:24px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-main-img{
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+  border-radius:0 !important;
+  background:#ffffff !important;
+  box-shadow:none !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-sheet{
+  margin-top:-10px !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-round{
+  top:16px !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-stock{
+  top:72px !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-arrow{
+  top:50% !important;
+  transform:translateY(-50%) !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-counter{
+  bottom:80px !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-thumbs{
+  bottom:12px !important;
+}
+@media(max-width:380px){
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-image-panel{
+    height:auto !important;
+    min-height:0 !important;
+    aspect-ratio:1 / 1 !important;
+    padding:0 !important;
+  }
+}
