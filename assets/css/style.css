@@ -10507,3 +10507,33 @@ body:has(#shoeViewer.cs-product-viewer-v33){
     font-size:36px !important;
   }
 }
+
+/* === V40: Prodavnica - bela pozadina na svakoj strani/podstrani ===
+   Menja samo podlogu prodavnice za posetioce. Ne dira viewer, admin ni funkcije. */
+body:has(.shoe-shop-page){
+  background:#ffffff !important;
+}
+.shoe-shop-page,
+.shoe-shop-page::before,
+.shoe-shop-page::after{
+  background:#ffffff !important;
+  background-image:none !important;
+}
+.shoe-products-section,
+.shoe-shop-page .shop-section,
+.shoe-shop-page .page-section,
+.shoe-shop-page .client-section{
+  background:transparent !important;
+}
+/* kada je prodavnica otvorena preko /p ili /salon rute */
+body:has(.shoe-shop-page) main,
+body:has(.shoe-shop-page) #app,
+body:has(.shoe-shop-page) .app-shell,
+body:has(.shoe-shop-page) .client-shell{
+  background:#ffffff !important;
+}
+/* Viewer ostaje svoj fullscreen prikaz, bez forsiranja bele pozadine preko slike */
+#shoeViewer,
+#csZoomLightbox{
+  background:initial;
+}
