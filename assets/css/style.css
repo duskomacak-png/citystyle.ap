@@ -11801,3 +11801,93 @@ body:has(.shoe-shop-page) .client-shell{
     font-size:16.5px !important;
   }
 }
+
+/* === V58: viewer status moved into info card + desktop image not over-zoomed === */
+#shoeViewer.cs-product-viewer-v33 .cs-pv-image-panel > .cs-pv-stock{
+  display:none !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-heading-row{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:12px !important;
+  width:100% !important;
+  margin:0 0 8px !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-heading-row .cs-pv-category{
+  margin:0 !important;
+  flex:1 1 auto !important;
+  min-width:0 !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-stock-inline{
+  position:static !important;
+  display:inline-flex !important;
+  flex:0 0 auto !important;
+  min-height:34px !important;
+  padding:8px 12px !important;
+  border-radius:999px !important;
+  background:#06090d !important;
+  color:#fff !important;
+  align-items:center !important;
+  gap:8px !important;
+  font-weight:900 !important;
+  font-size:13px !important;
+  line-height:1 !important;
+  box-shadow:0 8px 20px rgba(0,0,0,.18) !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-stock-inline span{
+  width:11px !important;
+  height:11px !important;
+  border-radius:50% !important;
+  background:#22c55e !important;
+  box-shadow:0 0 12px rgba(34,197,94,.85) !important;
+  flex:0 0 auto !important;
+}
+@media (min-width:721px){
+  #shoeViewer.cs-product-viewer-v33{
+    background:#eef0f4 !important;
+  }
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-phone{
+    max-width:min(980px, 96vw) !important;
+    width:min(980px, 96vw) !important;
+    margin:0 auto !important;
+  }
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-image-panel{
+    height:min(64vh, 680px) !important;
+    min-height:420px !important;
+    padding:66px 38px 32px !important;
+    border-radius:0 0 28px 28px !important;
+    background:#fff !important;
+  }
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-main-img{
+    width:auto !important;
+    height:auto !important;
+    max-width:100% !important;
+    max-height:100% !important;
+    object-fit:contain !important;
+    object-position:center center !important;
+  }
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-sheet{
+    max-width:880px !important;
+    margin:18px auto 32px !important;
+    border-radius:28px !important;
+  }
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-back{
+    left:26px !important;
+    top:22px !important;
+  }
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-zoom-chip{
+    right:28px !important;
+    bottom:24px !important;
+  }
+}
+@media (max-width:420px){
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-heading-row{
+    align-items:flex-start !important;
+  }
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-stock-inline{
+    font-size:12px !important;
+    padding:7px 10px !important;
+    min-height:30px !important;
+  }
+}

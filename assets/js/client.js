@@ -2008,7 +2008,6 @@ function renderShoeViewer() {
         ${img ? `<button class="cs-pv-zoom-chip" type="button" onclick="event.stopPropagation(); csToggleShoeZoom()">🔍 Zum</button>` : ``}
 
         <button class="cs-pv-round cs-pv-back" type="button" onclick="closeShoeViewer()" aria-label="Nazad">‹</button>
-        <div class="cs-pv-stock"><span></span>${escapeHtml(status)}</div>
 
         ${imgs.length > 1 ? `<button class="cs-pv-arrow cs-pv-arrow-left" type="button" onclick="event.stopPropagation(); shoeChangeImage(-1)">‹</button><button class="cs-pv-arrow cs-pv-arrow-right" type="button" onclick="event.stopPropagation(); shoeChangeImage(1)">›</button>` : ``}
 
@@ -2017,7 +2016,10 @@ function renderShoeViewer() {
       </section>
 
       <section class="cs-pv-sheet">
-        <div class="cs-pv-category">${escapeHtml(category)}</div>
+        <div class="cs-pv-heading-row">
+          <div class="cs-pv-category">${escapeHtml(category)}</div>
+          <div class="cs-pv-stock cs-pv-stock-inline"><span></span>${escapeHtml(status)}</div>
+        </div>
         <h1>${escapeHtml(name)}</h1>
         ${desc ? `<p class="cs-pv-subtitle">${escapeHtml(desc)}</p>` : `<p class="cs-pv-subtitle">${escapeHtml(category)} • ${escapeHtml(salonName)}</p>`}
 
