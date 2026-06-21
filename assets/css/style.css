@@ -11359,3 +11359,103 @@ body:has(.shoe-shop-page) .client-shell{
   .shoe-shop-page .shoe-card-info strong{font-size:20px !important;}
   .shoe-shop-page .shoe-card-bottom b{font-size:21px !important;}
 }
+
+/* === v55: UNIVERZALAN MOBILNI VIEWER - dugmad se vise ne seku ===
+   Samo detalj oglasa kada musterija klikne na oglas. Ne dira admin i listu oglasa. */
+#shoeViewer.cs-product-viewer-v33,
+#shoeViewer.cs-product-viewer-v33 .cs-pv-phone,
+#shoeViewer.cs-product-viewer-v33 .cs-pv-sheet{
+  max-width:100vw !important;
+  overflow-x:hidden !important;
+  box-sizing:border-box !important;
+}
+
+#shoeViewer.cs-product-viewer-v33 .cs-pv-sheet{
+  width:100% !important;
+}
+
+#shoeViewer.cs-product-viewer-v33 .cs-pv-actions{
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+}
+
+#shoeViewer.cs-product-viewer-v33 .cs-pv-action{
+  min-width:0 !important;
+  max-width:100% !important;
+  overflow:hidden !important;
+  box-sizing:border-box !important;
+}
+
+#shoeViewer.cs-product-viewer-v33 .cs-pv-action span,
+#shoeViewer.cs-product-viewer-v33 .cs-pv-action b,
+#shoeViewer.cs-product-viewer-v33 .cs-pv-action small{
+  min-width:0 !important;
+  max-width:100% !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+@media (max-width:430px){
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-sheet{
+    padding-left:14px !important;
+    padding-right:14px !important;
+    padding-bottom:max(18px, env(safe-area-inset-bottom)) !important;
+  }
+
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-actions{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+    gap:10px !important;
+  }
+
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-action{
+    min-height:68px !important;
+    border-radius:18px !important;
+    padding:10px 8px !important;
+    gap:8px !important;
+  }
+
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-action:nth-child(3){
+    grid-column:1 / -1 !important;
+    min-height:62px !important;
+  }
+
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-action svg{
+    width:24px !important;
+    height:24px !important;
+    flex:0 0 24px !important;
+  }
+
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-action b{
+    font-size:15px !important;
+    line-height:1.05 !important;
+  }
+
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-action small{
+    font-size:11px !important;
+    line-height:1.05 !important;
+  }
+}
+
+@media (max-width:340px){
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-sheet{
+    padding-left:12px !important;
+    padding-right:12px !important;
+  }
+
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-actions{
+    grid-template-columns:1fr !important;
+    gap:9px !important;
+  }
+
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-action:nth-child(3){
+    grid-column:auto !important;
+  }
+
+  #shoeViewer.cs-product-viewer-v33 .cs-pv-action{
+    min-height:58px !important;
+  }
+}
