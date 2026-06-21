@@ -832,7 +832,7 @@ async function ensureOwnerPushIsActive(reason = "panel-open") {
 
     if ("serviceWorker" in navigator) {
       try {
-        await navigator.serviceWorker.register("/sw.js?v=v231_white_shop", { scope: "/", updateViaCache: "none" });
+        await navigator.serviceWorker.register("/sw.js?v=v230_final_push_clean", { scope: "/", updateViaCache: "none" });
         const registration = await navigator.serviceWorker.ready;
         if (registration?.update) {
           registration.update().catch(() => {});

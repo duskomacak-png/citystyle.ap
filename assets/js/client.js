@@ -467,7 +467,6 @@ function formatSalonWelcomeText(text = "") {
 }
 
 async function renderSalonHome() {
-  document.body.classList.remove("shoe-shop-white-theme");
   const app = document.getElementById("app");
   app.innerHTML = `<div class="loading-box">${C("loadingProfile", "Učitavanje profila...")}</div>`;
 
@@ -1536,7 +1535,6 @@ async function renderSalonHome() {
 }
 
 function renderShoeShopHome(settings = {}) {
-  document.body.classList.add("shoe-shop-white-theme");
   const app = document.getElementById("app");
   const name = settings?.welcome_title || currentSalon?.salon_name || "Prodavnica patika";
   const logo = settings?.logo_url || "";
@@ -1552,7 +1550,7 @@ function renderShoeShopHome(settings = {}) {
         ${logo ? `<img class="shoe-logo" src="${escapeHtml(logo)}" alt="${escapeHtml(name)} logo">` : `<div class="shoe-logo shoe-logo-fallback">${escapeHtml(name.charAt(0).toUpperCase())}</div>`}
         <div class="shoe-info-copy"><h1>${escapeHtml(name)}</h1>${text ? `<p>${escapeHtml(text)}</p>` : ""}<div class="shoe-meta">${phone ? `<a class="shoe-meta-link" href="tel:${escapeHtml(csSafePhone(phone))}">📞 ${escapeHtml(phone)}</a>` : ""}${address ? renderPublicAddressLink(address) : ""}</div></div>
       </div>
-      ${ownerPreviewMode ? "" : `<div class="shoe-install-row"><button class="btn btn-dark shoe-install-btn" type="button" onclick="installCurrentSalonApp()">📱 Preuzmi app prodavnice</button><small>Prečica otvara baš ovaj profil${logo ? " i koristi logo firme gde browser dozvoljava" : ""}.</small></div>`}
+      ${ownerPreviewMode ? "" : `<div class="shoe-install-row"><button class="btn btn-dark shoe-install-btn" type="button" onclick="installCurrentSalonApp()">Preuzmi app</button><small>Prečica otvara baš ovaj profil${logo ? " i koristi logo firme gde browser dozvoljava" : ""}.</small></div>`}
       <section class="shoe-products-section">
         ${products.length ? `<div class="shoe-grid">${products.map((product, index) => renderShoeProductCard(product, index)).join("")}</div>` : `<div class="card"><h2>Još nema oglasa</h2><p class="muted">Vlasnik još nije dodao patike u katalog.</p></div>`}
       </section>
