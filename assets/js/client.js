@@ -1555,13 +1555,18 @@ function csAllShoeRubrics() {
   return Array.from(map.values()).sort((a,b)=>a.localeCompare(b, 'sr'));
 }
 function csFilterShoeRubric(value = '') {
+  // V43: Padajuci meni filtrira ISKLJUCIVO po rubrici.
+  // Rubrika = staro polje "Naziv proizvoda". Ne pretrazuje opis, brend, cenu niti ostali tekst.
   const wanted = String(value || '').trim().toLowerCase();
   const cards = document.querySelectorAll('.shoe-shop-page .shoe-card');
   let shown = 0;
   cards.forEach(card => {
-    const rubrics = String(card.dataset.rubrics || '').toLowerCase();
-    const text = String(card.dataset.search || card.textContent || '').toLowerCase();
-    const ok = !wanted || rubrics.split('|').includes(wanted) || text.includes(wanted);
+    const rubrics = String(card.dataset.rubrics || '')
+      .toLowerCase()
+      .split('|')
+      .map(x => x.trim())
+      .filter(Boolean);
+    const ok = !wanted || rubrics.includes(wanted);
     card.style.display = ok ? '' : 'none';
     if (ok) shown += 1;
   });

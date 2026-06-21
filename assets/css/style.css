@@ -10649,3 +10649,66 @@ body:has(.shoe-shop-page) .client-shell{
 .shoe-shop-page .shoe-card-info strong{
   word-break: break-word !important;
 }
+
+
+/* === V43: Rubrike samo iz Naziv proizvoda + zatezanje laptop prikaza === */
+.shoe-shop-page .shoe-rubric-filter{
+  width:min(980px, 100%) !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+.shoe-shop-page .shoe-rubric-filter option{
+  color:#111827 !important;
+  background:#ffffff !important;
+}
+.shoe-shop-page .shoe-card-description{
+  color:#6b7280 !important;
+}
+/* desktop/laptop: preglednije kartice, bez sabijanja i bez lutanja širine */
+@media (min-width: 721px){
+  .shoe-shop-page{
+    padding-left:24px !important;
+    padding-right:24px !important;
+  }
+  .shoe-shop-page .shoe-products-section,
+  .shoe-shop-page .shoe-grid{
+    width:min(980px, 100%) !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+  }
+  .shoe-shop-page .shoe-grid{
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+    gap:18px !important;
+  }
+  .shoe-shop-page .shoe-card{
+    min-height:230px !important;
+  }
+  .shoe-shop-page .shoe-card-media{
+    min-height:220px !important;
+  }
+  .shoe-shop-page .shoe-card-info small{
+    white-space:normal !important;
+  }
+  .shoe-shop-page .shoe-card-info strong{
+    font-size:22px !important;
+    line-height:1.12 !important;
+  }
+  .shoe-shop-page .shoe-card-description{
+    font-size:14px !important;
+    -webkit-line-clamp:3 !important;
+  }
+  .shoe-shop-page .shoe-card-bottom b{
+    font-size:28px !important;
+  }
+}
+/* mobilni: rubrike ostaju jedna ispod druge i filter ne dira ostali tekst */
+@media (max-width:720px){
+  .shoe-shop-page .shoe-card-info small{
+    font-size:13px !important;
+    line-height:1.25 !important;
+  }
+  .shoe-shop-page .shoe-card-description{
+    font-size:12.5px !important;
+    -webkit-line-clamp:2 !important;
+  }
+}
