@@ -1550,7 +1550,7 @@ function renderShoeShopHome(settings = {}) {
         ${logo ? `<img class="shoe-logo" src="${escapeHtml(logo)}" alt="${escapeHtml(name)} logo">` : `<div class="shoe-logo shoe-logo-fallback">${escapeHtml(name.charAt(0).toUpperCase())}</div>`}
         <div class="shoe-info-copy"><h1>${escapeHtml(name)}</h1>${text ? `<p>${escapeHtml(text)}</p>` : ""}<div class="shoe-meta">${phone ? `<a class="shoe-meta-link" href="tel:${escapeHtml(csSafePhone(phone))}">📞 ${escapeHtml(phone)}</a>` : ""}${address ? renderPublicAddressLink(address) : ""}</div></div>
       </div>
-      ${ownerPreviewMode ? "" : `<div class="shoe-install-row"><button class="btn btn-dark shoe-install-btn" type="button" onclick="installCurrentSalonApp()">Preuzmi app</button><small>Prečica otvara baš ovaj profil${logo ? " i koristi logo firme gde browser dozvoljava" : ""}.</small></div>`}
+      ${ownerPreviewMode ? "" : `<div class="shoe-install-row"><button class="btn btn-dark shoe-install-btn" type="button" onclick="installCurrentSalonApp()">📱 Preuzmi app prodavnice</button><small>Prečica otvara baš ovaj profil${logo ? " i koristi logo firme gde browser dozvoljava" : ""}.</small></div>`}
       <section class="shoe-products-section">
         ${products.length ? `<div class="shoe-grid">${products.map((product, index) => renderShoeProductCard(product, index)).join("")}</div>` : `<div class="card"><h2>Još nema oglasa</h2><p class="muted">Vlasnik još nije dodao patike u katalog.</p></div>`}
       </section>
@@ -1565,14 +1565,15 @@ function renderShoeShopHome(settings = {}) {
 
 function renderShoeProductCard(product, index) {
   const imgs = csProductImages(product);
-  const img = imgs[0] || "";
+  const img = imgs[0] || product.image_url || "";
   const status = csProductStatus(product);
-  return `<button class="shoe-card" type="button" onclick="openShoeViewer(${index})">
-    <div class="shoe-card-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Patike')}">` : `<span>Bez slike</span>`}</div>
+  return `<button class="shoe-card" type="button" onclick="openShoeViewer(${index}); event.preventDefault(); event.stopImmediatePropagation?.();">
+    <div class="shoe-card-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Oglas')}">` : `<span>Bez slike</span>`}</div>
     <div class="shoe-card-info">
-      <small>${escapeHtml(csProductCode(product))}${product.category ? " • " + escapeHtml(product.category) : ""}</small>
-      <strong>${escapeHtml(product.name || "Patike")}</strong>
-      <div class="shoe-card-bottom"><b>${escapeHtml(csProductPrice(product))}</b><span>${escapeHtml(status)}</span></div>
+      <small>${escapeHtml(csProductCode(product))}</small>
+      <strong>${escapeHtml(product.name || "Oglas")}</strong>
+      ${product.category ? `<span class="shoe-card-category">${escapeHtml(product.category)}</span>` : ""}
+      <div class="shoe-card-bottom"><b>${escapeHtml(csProductPrice(product))}</b><span class="status-pill ${escapeHtml(product.stock_status || 'available')}">${escapeHtml(status)}</span></div>
     </div>
   </button>`;
 }
@@ -1802,139 +1803,60 @@ function csCloseShoeZoom(){
 }
 
 function renderShoeViewer() {
+  if (!csViewerState) return;
   const product = currentShoeProduct();
-  if (!product) return;
+  if (!product) return closeShoeViewer();
+
   const imgs = csProductImages(product);
-  const img = imgs[csViewerState.image] || imgs[0] || "";
-  const price = csProductPrice(product);
-  const category = product.category || csProductCode(product) || "Paket / alati";
-  const status = csProductViewerAvailability(product) || csProductStatus(product) || "Na stanju";
-  const description = csProductPublicDescription(product) || csProductViewerMetaSecondary(product) || "";
-  const storeName = currentSalon?.business_name || currentSalon?.name || "CityStyle";
-  let viewer = document.getElementById("shoeViewer");
-  if (!viewer) {
-    viewer = document.createElement("div");
-    viewer.id = "shoeViewer";
-    document.body.appendChild(viewer);
-  }
-  viewer.className = "shoe-viewer cs-product-detail-view";
-  viewer.classList.toggle("shoe-viewer-zoomed", !!csViewerState.zoomed);
-  viewer.setAttribute("data-price", price);
-  viewer.innerHTML = `
-    <div class="cs-product-detail-card">
-      <div class="cs-product-detail-header">
-        <div class="cs-product-category">${escapeHtml(category)}</div>
-        <div class="cs-product-stock"><span></span>${escapeHtml(status)}</div>
+  const currentImgUrl = imgs[csViewerState.image] || product.image_url || "";
+  const category = product.category || "Paketi / alati";
+  const subtitle = csProductViewerMetaPrimary(product) || csProductViewerMetaSecondary(product) || "";
+  const status = csProductStatus(product) || "Na stanju";
+  const shopName = currentSalon?.business_name || currentSalon?.name || "City Style";
+
+  const html = `
+    <div id="shoeViewer" class="shoe-viewer-fullscreen">
+      <div class="viewer-backdrop" onclick="closeShoeViewer()"></div>
+      <div class="viewer-container">
+        <div class="viewer-header">
+          <div class="viewer-category">${escapeHtml(category)}</div>
+          <div class="viewer-status-pill">● ${escapeHtml(status)}</div>
+        </div>
+
+        <button class="viewer-close-btn" type="button" onclick="closeShoeViewer()" aria-label="Zatvori oglas">×</button>
+
+        <div class="viewer-image-container">
+          ${currentImgUrl ? `<img src="${escapeHtml(currentImgUrl)}" class="viewer-main-image" alt="${escapeHtml(product.name || 'Oglas')}" onload="csSmartCropShoeImage(this)">` : `<div class="viewer-no-image">Bez slike</div>`}
+        </div>
+
+        <div class="viewer-info">
+          <h1 class="viewer-title">${escapeHtml(product.name || 'Oglas')}</h1>
+          ${subtitle ? `<p class="viewer-subtitle">${escapeHtml(subtitle)}</p>` : ""}
+          <div class="viewer-price-box">
+            <div class="big-price">${escapeHtml(csProductPrice(product))}</div>
+            <div class="seller-name">${escapeHtml(shopName)}</div>
+          </div>
+
+          <div class="viewer-actions-grid">
+            <button onclick="askShoeProduct(event)" class="action-btn whatsapp-btn" type="button">💬 Pitaj</button>
+            <button onclick="callShoeShop(event)" class="action-btn call-btn" type="button">📞 Pozovi</button>
+            <button onclick="shareShoeProduct(event)" class="action-btn share-btn" type="button">🔗 Podeli</button>
+          </div>
+        </div>
+
+        ${imgs.length > 1 ? `
+        <div class="viewer-image-nav">
+          <button onclick="event.stopPropagation(); prevShoeImage()" class="nav-arrow" type="button">‹</button>
+          <span class="image-counter">${csViewerState.image + 1} / ${imgs.length}</span>
+          <button onclick="event.stopPropagation(); nextShoeImage()" class="nav-arrow" type="button">›</button>
+        </div>` : ""}
       </div>
-
-      <div class="shoe-viewer-media cs-product-detail-media">
-        ${img ? `<img class="shoe-viewer-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(product.name || 'Oglas')}" onload="csSmartCropShoeImage(this)">` : `<span>Bez slike</span>`}
-        <button class="cs-product-zoom-btn" type="button" onclick="event.stopPropagation(); csToggleShoeZoom()" aria-label="Zumiraj sliku">${csViewerZoomIcon()}</button>
-      </div>
-
-      ${imgs.length > 1 ? `<div class="cs-product-dots">${imgs.map((_,i)=>`<button class="${i===csViewerState.image?'active':''}" onclick="event.stopPropagation(); shoeSetImage(${i})" aria-label="Slika ${i + 1}"></button>`).join("")}</div>` : ""}
-
-      <div class="shoe-viewer-top cs-product-detail-info">
-        <h2>${escapeHtml(product.name || "Oglas")}</h2>
-        ${description ? `<p>${escapeHtml(description)}</p>` : ""}
-      </div>
-
-      <div class="cs-product-price-row">
-        <div><strong>${escapeHtml(price)}</strong></div>
-        <small>${escapeHtml(storeName)}</small>
-      </div>
-
-      <div class="shoe-viewer-actions cs-product-actions" aria-label="Akcije proizvoda">
-        <button class="shoe-action blue" type="button" onclick="askShoeProduct(event)" aria-label="Pošalji poruku">${csViewerMessageIcon()}<span>Pitaj</span></button>
-        <button class="shoe-action green" type="button" onclick="callShoeShop(event)" aria-label="Pozovi prodavnicu">${csViewerPhoneIcon()}<span>Pozovi</span></button>
-        <button class="shoe-action red" type="button" onclick="shareShoeProduct(event)" aria-label="Podeli oglas">${csViewerShareIcon()}<span>Podeli</span></button>
-        <button class="shoe-action zoom" type="button" onclick="event.stopPropagation(); csToggleShoeZoom()" aria-label="Zumiraj sliku">${csViewerZoomIcon()}<span>Zum</span></button>
-      </div>
-
-      ${imgs.length > 1 ? `<button class="shoe-arrow shoe-arrow-left" type="button" onclick="event.stopPropagation(); shoeChangeImage(-1)">‹</button><button class="shoe-arrow shoe-arrow-right" type="button" onclick="event.stopPropagation(); shoeChangeImage(1)">›</button>` : ""}
-      <button class="shoe-viewer-close" type="button" onclick="closeShoeViewer()" aria-label="Zatvori oglas">×</button>
-      <button class="shoe-zoom-close" type="button" onclick="event.stopPropagation(); csCloseShoeZoom()" aria-label="Zatvori zum">×</button>
     </div>`;
-  csApplyShoePanZoom();
-  viewer.ontouchstart = e => {
-    if (!csViewerState) return;
-    if (e.touches && e.touches.length >= 2) {
-      csOpenRealShoeZoom(1.15);
-      e.preventDefault?.();
-      return;
-    }
-    const t = e.changedTouches[0];
-    csViewerState.startX = t.clientX;
-    csViewerState.startY = t.clientY;
-    csViewerState.startPanX = csViewerState.panX || 0;
-    csViewerState.startPanY = csViewerState.panY || 0;
-    csViewerState.didPan = false;
-  };
-  viewer.ontouchmove = e => {
-    if (!csViewerState) return;
-    if (e.touches && e.touches.length >= 2) {
-      csOpenRealShoeZoom(1.15);
-      e.preventDefault?.();
-      return;
-    }
-    if (!csViewerState.zoomed) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - csViewerState.startX;
-    const dy = t.clientY - csViewerState.startY;
-    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) csViewerState.didPan = true;
-    e.preventDefault?.();
-    const scale = Number(csViewerState.zoomScale || 2.65);
-    const maxX = Math.max(120, Math.round(window.innerWidth * (scale - 1) * 0.42));
-    const maxY = Math.max(160, Math.round(window.innerHeight * (scale - 1) * 0.38));
-    csViewerState.panX = csClampZoomPan((csViewerState.startPanX || 0) + dx, -maxX, maxX);
-    csViewerState.panY = csClampZoomPan((csViewerState.startPanY || 0) + dy, -maxY, maxY);
-    csApplyShoePanZoom();
-  };
-  viewer.ontouchend = e => {
-    if (!csViewerState) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - csViewerState.startX;
-    const dy = t.clientY - csViewerState.startY;
-    const moved = Math.abs(dx) > 14 || Math.abs(dy) > 14 || !!csViewerState.didPan;
-    const tappedImage = !!e.target?.closest?.(".shoe-viewer-main-img");
-    if (!moved && tappedImage) {
-      const now = Date.now();
-      const dist = Math.hypot((t.clientX || 0) - (csViewerState.lastTapX || 0), (t.clientY || 0) - (csViewerState.lastTapY || 0));
-      if (now - (csViewerState.lastTap || 0) < 330 && dist < 42) {
-        e.preventDefault?.();
-        csViewerState.lastTap = 0;
-        csToggleShoeZoom();
-        return;
-      }
-      csViewerState.lastTap = now;
-      csViewerState.lastTapX = t.clientX;
-      csViewerState.lastTapY = t.clientY;
-      return;
-    }
-    if (csViewerState.zoomed) return;
-    if (Math.abs(dx) > 42) shoeChangeImage(dx < 0 ? 1 : -1);
-  };
-  viewer.onwheel = e => {
-    e.preventDefault();
-    if (e.ctrlKey || e.metaKey || csViewerState?.zoomed) {
-      const current = Number(csViewerState.zoomScale || 1);
-      const next = csClampZoomPan(current + (e.deltaY < 0 ? 0.22 : -0.22), 1, 4.25);
-      csViewerState.zoomed = next > 1.05;
-      csViewerState.zoomScale = next;
-      csApplyShoePanZoom();
-      return;
-    }
-    const now=Date.now(); if(now-csViewerWheelLock<450) return; csViewerWheelLock=now; shoeChangeImage(e.deltaY > 0 ? 1 : -1);
-  };
-  document.onkeydown = e => {
-    if (!document.getElementById("shoeViewer")) return;
-    if (e.key === "Escape") closeShoeViewer();
-    if (e.key === "ArrowLeft") shoeChangeImage(-1);
-    if (e.key === "ArrowRight") shoeChangeImage(1);
-    if (String(e.key || "").toLowerCase() === "z") csToggleShoeZoom();
-  };
-}
 
+  document.getElementById("shoeViewer")?.remove();
+  document.body.insertAdjacentHTML("beforeend", html);
+  setupShoeViewerGestures?.();
+}
 function shoeChangeProduct(delta) {
   if (!csViewerState) return;
   const next = csViewerState.index + delta;
@@ -1943,6 +1865,21 @@ function shoeChangeProduct(delta) {
   csViewerState.image = 0;
   csViewerState.zoomed = false;
   csResetShoePan();
+  renderShoeViewer();
+}
+
+
+function prevShoeImage() {
+  if (!csViewerState) return;
+  const total = csProductImages(currentShoeProduct()).length || 1;
+  csViewerState.image = (csViewerState.image - 1 + total) % total;
+  renderShoeViewer();
+}
+
+function nextShoeImage() {
+  if (!csViewerState) return;
+  const total = csProductImages(currentShoeProduct()).length || 1;
+  csViewerState.image = (csViewerState.image + 1) % total;
   renderShoeViewer();
 }
 function shoeChangeImage(delta) {
