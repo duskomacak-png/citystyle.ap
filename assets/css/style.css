@@ -11167,3 +11167,57 @@ body:has(.shoe-shop-page) .client-shell{
     font-size:20px !important;
   }
 }
+
+/* === v53: oglasi - sve slike u 1:1 okviru, bez sečenja i rastezanja === */
+.shoe-shop-page .shoe-card-media,
+.product-public-card .product-public-image-wrap,
+.product-public-card-with-image .product-public-image-wrap,
+.owner-product-thumb,
+.owner-product-preview,
+.owner-gallery-card img{
+  aspect-ratio:1 / 1 !important;
+  background:#fff !important;
+  overflow:hidden !important;
+}
+
+.shoe-shop-page .shoe-card-media img,
+.product-public-card .product-public-image,
+.product-public-card-with-image .product-public-image,
+.owner-product-thumb,
+.owner-product-preview,
+.owner-gallery-card img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+  background:#fff !important;
+}
+
+.shoe-product-viewer-v2 .viewer-hero,
+.shoe-product-viewer-v2 .viewer-hero-stage,
+.shoe-product-viewer-v2 .viewer-image-square,
+.viewer-image-container,
+.viewer-product-image-frame{
+  background:#fff !important;
+  overflow:hidden !important;
+}
+
+.shoe-product-viewer-v2 .viewer-hero img,
+.shoe-product-viewer-v2 .viewer-hero-stage img,
+.shoe-product-viewer-v2 .viewer-image-square img,
+.viewer-main-image,
+.viewer-product-image-frame img{
+  max-width:100% !important;
+  max-height:100% !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+}
+
+@media (max-width:720px){
+  .shoe-shop-page .shoe-card-media{
+    width:clamp(122px, 38vw, 168px) !important;
+    height:clamp(122px, 38vw, 168px) !important;
+    min-width:clamp(122px, 38vw, 168px) !important;
+    min-height:clamp(122px, 38vw, 168px) !important;
+  }
+}
