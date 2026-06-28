@@ -12,11 +12,6 @@ function storageIsProductImage(type) {
   return t === "product" || t === "product_extra" || t.includes("product");
 }
 
-function storageIsShopPortraitImage(type) {
-  const t = String(type || "").toLowerCase();
-  return t.includes("shop_product_9x16") || t.includes("shop_product") || t.includes("shop_extra_9x16");
-}
-
 function storageLoadImageFromFile(file) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -35,36 +30,6 @@ function storageLoadImageFromFile(file) {
 
 function storageCanvasToBlob(canvas, type, quality) {
   return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
-}
-
-async function normalizeProductImageToPortrait(file, options = {}) {
-  const width = Number(options.width || 1080);
-  const height = Number(options.height || 1920);
-  const outputType = options.type || "image/webp";
-  const quality = Number(options.quality || 0.86);
-  const img = await storageLoadImageFromFile(file);
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, width, height);
-
-  const srcW = img.naturalWidth || img.width;
-  const srcH = img.naturalHeight || img.height;
-  const scale = Math.min(width / srcW, height / srcH);
-  const drawW = Math.round(srcW * scale);
-  const drawH = Math.round(srcH * scale);
-  const dx = Math.round((width - drawW) / 2);
-  const dy = Math.round((height - drawH) / 2);
-  ctx.drawImage(img, dx, dy, drawW, drawH);
-
-  const blob = await storageCanvasToBlob(canvas, outputType, quality);
-  if (!blob) throw new Error("Ne mogu da obradim sliku.");
-  const base = String(file.name || "slika").replace(/\.[^.]+$/, "").replace(/[^a-z0-9_-]+/gi, "_").slice(0, 40) || "slika";
-  return new File([blob], `${base}_9x16.webp`, { type: outputType, lastModified: Date.now() });
 }
 
 async function normalizeProductImageToSquare(file, options = {}) {
@@ -123,16 +88,9 @@ async function uploadImage(file, salonId, type = "home") {
   let uploadFile = file;
   const safeType = String(type || "home").toLowerCase().replace(/[^a-z0-9_-]/g, "");
 
-  // Prodavnica koristi 9:16 slike za mobilni fullscreen prikaz.
-  // Salon proizvodi ostaju na starom 1:1 režimu da se salon ne dira.
-  if (storageIsShopPortraitImage(safeType)) {
-    try {
-      uploadFile = await normalizeProductImageToPortrait(file, { width: 1080, height: 1920, type: "image/webp", quality: 0.86 });
-    } catch (err) {
-      console.warn("Automatska 9:16 obrada slike nije uspela, uploadujem original.", err);
-      uploadFile = file;
-    }
-  } else if (storageIsProductImage(safeType)) {
+  // Slike oglasa se automatski pretvaraju u lagani 1:1 WEBP.
+  // Time bilo koji odnos stranica lepo staje u okvir oglasa i brže se učitava.
+  if (storageIsProductImage(safeType)) {
     try {
       uploadFile = await normalizeProductImageToSquare(file, { size: 1200, type: "image/webp", quality: 0.82 });
     } catch (err) {
@@ -141,7 +99,7 @@ async function uploadImage(file, salonId, type = "home") {
     }
   }
 
-  const fileExt = (storageIsProductImage(safeType) || storageIsShopPortraitImage(safeType)) ? "webp" : storageImageExtensionFromMime(uploadFile.type) || (uploadFile.name.split(".").pop() || "jpg").toLowerCase();
+  const fileExt = storageIsProductImage(safeType) ? "webp" : storageImageExtensionFromMime(uploadFile.type) || (uploadFile.name.split(".").pop() || "jpg").toLowerCase();
   const fileName = `${salonId}/${safeType}_${Date.now()}.${fileExt}`;
 
   const { error } = await window.db.storage
@@ -174,4 +132,4 @@ async function deleteImage(imageUrl) {
   return true;
 }
 
-window.StorageHelper = { uploadImage, deleteImage, normalizeProductImageToSquare, normalizeProductImageToPortrait };
+window.StorageHelper = { uploadImage, deleteImage, normalizeProductImageToSquare };
