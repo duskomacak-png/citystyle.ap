@@ -13033,3 +13033,108 @@ body:has(.shoe-shop-page) #app{
     display: block !important;
   }
 }
+
+/* =========================================================
+   v257 MOBILE SHOP VIEWER HEIGHT FIX - ONLY mobile shop/viewer
+   Goal: action buttons stay visible at the bottom; image fills the
+   remaining phone height above them. Does not target /salon or desktop.
+   ========================================================= */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  body:not(.salon-page) #shoeViewer.cs-product-viewer-v33.cs-simple-viewer,
+  body:not(.salon-page) #shoeViewer.cs-simple-viewer {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-width: 100vw !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+    background: #fff !important;
+  }
+
+  body:not(.salon-page) #shoeViewer.cs-product-viewer-v33.cs-simple-viewer .cs-pv-phone.cs-simple-viewer-phone,
+  body:not(.salon-page) #shoeViewer.cs-simple-viewer .cs-pv-phone.cs-simple-viewer-phone,
+  body:not(.salon-page) #shoeViewer.cs-simple-viewer .cs-simple-viewer-phone {
+    width: 100vw !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background: #fff !important;
+    overflow: hidden !important;
+  }
+
+  body:not(.salon-page) #shoeViewer.cs-product-viewer-v33.cs-simple-viewer .cs-pv-image-panel.cs-simple-viewer-image,
+  body:not(.salon-page) #shoeViewer.cs-simple-viewer .cs-pv-image-panel.cs-simple-viewer-image,
+  body:not(.salon-page) #shoeViewer.cs-simple-viewer .cs-simple-viewer-image {
+    flex: 1 1 auto !important;
+    width: 100vw !important;
+    min-width: 100vw !important;
+    max-width: 100vw !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+
+  body:not(.salon-page) #shoeViewer.cs-product-viewer-v33.cs-simple-viewer .cs-pv-image-panel.cs-simple-viewer-image > img.cs-pv-main-img,
+  body:not(.salon-page) #shoeViewer.cs-simple-viewer .cs-pv-image-panel.cs-simple-viewer-image > img.cs-pv-main-img,
+  body:not(.salon-page) #shoeViewer.cs-simple-viewer img.cs-pv-main-img {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    object-fit: cover !important;
+    object-position: center center !important;
+    background: #fff !important;
+  }
+
+  body:not(.salon-page) #shoeViewer.cs-simple-viewer .cs-simple-viewer-actions-sheet {
+    flex: 0 0 auto !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+
+  body:not(.salon-page) #shoeViewer.cs-simple-viewer .cs-simple-viewer-actions,
+  body:not(.salon-page) #shoeViewer.cs-simple-viewer .cs-simple-ad-actions.cs-simple-viewer-actions {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 8px !important;
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+    margin: 0 !important;
+    background: #fff !important;
+    box-sizing: border-box !important;
+  }
+
+  body:not(.salon-page) #shoeViewer.cs-simple-viewer .cs-simple-action {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 58px !important;
+  }
+}
