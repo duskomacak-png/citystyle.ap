@@ -2047,7 +2047,6 @@ function renderShoeViewer() {
   viewer.className = "cs-product-viewer-v33 cs-simple-viewer";
   viewer.innerHTML = `
     <div class="cs-pv-phone cs-simple-viewer-phone">
-      <button class="cs-pv-round cs-viewer-close-x" type="button" onclick="closeShoeViewer()" aria-label="Zatvori">×</button>
       <section class="cs-pv-image-panel cs-simple-viewer-image">
         ${img ? `<img class="cs-pv-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(name)}">` : `<div class="cs-pv-no-img">Bez slike</div>`}
         ${imgs.length > 1 ? `<button class="cs-pv-arrow cs-pv-arrow-left" type="button" onclick="event.stopPropagation(); shoeChangeImage(-1)">‹</button><button class="cs-pv-arrow cs-pv-arrow-right" type="button" onclick="event.stopPropagation(); shoeChangeImage(1)">›</button>` : ``}
@@ -2057,6 +2056,7 @@ function renderShoeViewer() {
           <button class="cs-simple-action cs-simple-share" type="button" onclick="shareShoeProduct(event)">${csViewerShareIcon()}<span>PODELI</span></button>
           <button class="cs-simple-action cs-simple-message" type="button" onclick="askShoeProduct(event)">${csViewerMessageIcon()}<span>POŠALJI<br>PORUKU</span></button>
           <button class="cs-simple-action cs-simple-call" type="button" onclick="callShoeShop(event)">${csViewerPhoneIcon()}<span>POZOVI</span></button>
+          <button class="cs-simple-action cs-simple-back-action" type="button" onclick="closeShoeViewer()" aria-label="Nazad"><span class="cs-back-action-x">×</span><span>NAZAD</span></button>
         </div>
       </section>
     </div>`;
