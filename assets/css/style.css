@@ -13245,3 +13245,20 @@ body:has(.shoe-shop-page) #app{
     text-shadow: 0 1px 2px rgba(0,0,0,.28) !important;
   }
 }
+
+
+/* =========================================================
+   v262 MOBILE SHOP ONLY - green thin border on blue glass Preuzmi app button
+   Menja samo okvir dugmeta Preuzmi app u prodavnici na mobilnom.
+   Salon i laptop nisu dirani.
+   ========================================================= */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  body:not(.salon-page) .shoe-shop-page .shoe-install-row .shoe-install-btn,
+  body:not(.salon-page) .shoe-shop-page button.shoe-install-btn {
+    border: 2px solid #22c55e !important;
+    border-radius: 12px !important;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.34), rgba(255,255,255,.07)) padding-box,
+      linear-gradient(135deg, #38bdf8, #0284c7 48%, #075985) border-box !important;
+  }
+}
