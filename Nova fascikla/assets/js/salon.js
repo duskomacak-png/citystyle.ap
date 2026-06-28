@@ -2269,13 +2269,119 @@ async function saveProduct() {
 }
 
 async function showProductImages(productId) {
+  if (stopAdminOwnerPreviewEdit()) return;
   const { data: product } = await window.db.from("products").select("*").eq("id", productId).eq("salon_id", currentSalonId).maybeSingle();
   let imgs = [];
-  try { const { data } = await window.db.from("product_images").select("*").eq("product_id", productId).order("sort_order", { ascending:true }).order("created_at", { ascending:true }); imgs = data || []; } catch(e) {}
-  const modal = document.createElement("div"); modal.className = "legal-modal-backdrop"; modal.innerHTML = `<div class="legal-modal-card"><div class="legal-modal-head"><h2>Slike: ${salonEscapeHtml(product?.name || 'Proizvod')}</h2><button class="btn btn-dark" onclick="this.closest('.legal-modal-backdrop').remove()">Zatvori</button></div><div class="legal-modal-body"><div class="card"><label>Dodaj dodatne slike<input id="product-extra-images" type="file" accept="image/png,image/jpeg,image/webp" multiple></label><p class="field-help product-upload-tip"><strong>Preporuka:</strong> najbolje rade uspravne slike približno <strong>2:3 ili 3:4</strong>, sa proizvodom jasno dole/sredina i čistim prostorom iznad.</p><button class="btn btn-primary" onclick="uploadProductExtraImages('${productId}')">Upload slika</button></div><div class="owner-gallery-grid">${imgs.map(img => `<div class="card owner-gallery-card"><img src="${salonEscapeHtml(img.image_url)}" alt="Slika"><button class="btn btn-danger btn-small" onclick="deleteProductExtraImage('${img.id}','${productId}','${salonEscapeJs(img.image_url)}')">Obriši</button></div>`).join("") || '<p class="muted">Nema dodatnih slika.</p>'}</div></div></div>`; document.body.appendChild(modal);
+  try {
+    const { data } = await window.db.from("product_images").select("*").eq("product_id", productId).order("sort_order", { ascending:true }).order("created_at", { ascending:true });
+    imgs = data || [];
+  } catch(e) { imgs = []; }
+
+  const mainImage = product?.image_url ? { id: "__main__", image_url: product.image_url, isMain: true, sort_order: 0 } : null;
+  const gallery = [mainImage, ...imgs.filter(img => img?.image_url && img.image_url !== product?.image_url)].filter(Boolean);
+  const modal = document.createElement("div");
+  modal.className = "legal-modal-backdrop shop-images-modal";
+  modal.innerHTML = `
+    <div class="legal-modal-card shop-images-card">
+      <div class="legal-modal-head shop-images-head">
+        <div>
+          <h2>Slike oglasa</h2>
+          <p class="muted">${salonEscapeHtml(product?.category || product?.name || "Oglas")}</p>
+        </div>
+        <button class="btn btn-dark" onclick="this.closest('.legal-modal-backdrop').remove()">Zatvori</button>
+      </div>
+      <div class="legal-modal-body shop-images-layout">
+        <section class="card shop-images-upload-card">
+          <h3>Dodaj slike 9:16</h3>
+          <p class="field-help"><strong>Najbolji format za prikaz u aplikaciji:</strong> 9:16, npr. <strong>1080 × 1920 px</strong>. Možeš dodati više slika za isti oglas.</p>
+          <label class="shop-images-file-label">Dodaj sliku / više slika
+            <input id="product-extra-images" type="file" accept="image/png,image/jpeg,image/webp" multiple>
+          </label>
+          <button class="btn btn-primary shop-images-upload-btn" onclick="uploadProductExtraImages('${productId}')">Dodaj slike</button>
+        </section>
+        <aside class="card shop-images-help-card">
+          <h3>Uputstvo</h3>
+          <p>Opis proizvoda nemoj kucati sitnim slovima u aplikaciji. Najbolje je da se <strong>opis, cena i paket naprave direktno na slici</strong> uz ChatGPT.</p>
+          <p>Primer: pošalješ sliku alata i kažeš: „Napravi oglas 9:16, gore START WORK INŽENJERING, dole cena i naziv paketa.”</p>
+          <p>Posle ovde samo dodaš gotove slike. Možeš obrisati svaku sliku posebno i označiti koja se prva prikazuje.</p>
+        </aside>
+        <section class="shop-images-gallery-wrap">
+          <h3>Slike u oglasu</h3>
+          <div class="owner-gallery-grid shop-images-gallery">
+            ${gallery.map((img, index) => `
+              <div class="card owner-gallery-card shop-image-card ${img.isMain ? "is-main" : ""}">
+                <div class="shop-image-badge">${img.isMain ? "Prva slika" : `Slika ${index + 1}`}</div>
+                <img src="${salonEscapeHtml(img.image_url)}" alt="Slika oglasa ${index + 1}">
+                <div class="shop-image-actions">
+                  ${img.isMain ? `<button class="btn btn-small btn-dark" type="button" disabled>Već je prva</button>` : `<button class="btn btn-small btn-success" type="button" onclick="setProductFirstImage('${productId}','${img.id}','${salonEscapeJs(img.image_url)}')">Postavi prvu</button>`}
+                  <button class="btn btn-danger btn-small" type="button" onclick="deleteProductExtraImage('${img.id}','${productId}','${salonEscapeJs(img.image_url)}')">Obriši</button>
+                </div>
+              </div>`).join("") || '<p class="muted">Još nema slika u ovom oglasu.</p>'}
+          </div>
+        </section>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
 }
-async function uploadProductExtraImages(productId) { const files = Array.from(document.getElementById("product-extra-images")?.files || []).slice(0,10); for (const file of files) { const url = await window.StorageHelper.uploadImage(file, currentSalonId, "product_extra"); if (url) await window.db.from("product_images").insert({ product_id: productId, image_url: url, sort_order: 100 }); } document.querySelector('.legal-modal-backdrop')?.remove(); await showProductImages(productId); }
-async function deleteProductExtraImage(imageId, productId, imageUrl) { await window.StorageHelper.deleteImage(imageUrl); await window.db.from("product_images").delete().eq("id", imageId); document.querySelector('.legal-modal-backdrop')?.remove(); await showProductImages(productId); }
+
+async function uploadProductExtraImages(productId) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  const input = document.getElementById("product-extra-images");
+  const files = Array.from(input?.files || []).slice(0, 15);
+  if (!files.length) return window.App.showMessage("Izaberite jednu ili više slika.", "error");
+  const { data: product } = await window.db.from("products").select("image_url").eq("id", productId).eq("salon_id", currentSalonId).maybeSingle();
+  let hasMain = !!product?.image_url;
+  let sort = 100;
+  for (const file of files) {
+    const url = await window.StorageHelper.uploadImage(file, currentSalonId, "product_extra");
+    if (!url) continue;
+    if (!hasMain) {
+      await window.db.from("products").update({ image_url: url, updated_at: new Date().toISOString() }).eq("id", productId).eq("salon_id", currentSalonId);
+      hasMain = true;
+    } else {
+      await window.db.from("product_images").insert({ product_id: productId, image_url: url, sort_order: sort });
+      sort += 10;
+    }
+  }
+  document.querySelector('.legal-modal-backdrop')?.remove();
+  await showProductImages(productId);
+  await loadProducts();
+  window.App.showMessage("Slike su dodate.", "success");
+}
+
+async function setProductFirstImage(productId, imageId, imageUrl) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  const { data: product } = await window.db.from("products").select("image_url").eq("id", productId).eq("salon_id", currentSalonId).maybeSingle();
+  const oldMain = product?.image_url || null;
+  await window.db.from("products").update({ image_url: imageUrl, updated_at: new Date().toISOString() }).eq("id", productId).eq("salon_id", currentSalonId);
+  if (imageId && imageId !== "__main__") await window.db.from("product_images").delete().eq("id", imageId).eq("product_id", productId);
+  if (oldMain && oldMain !== imageUrl) await window.db.from("product_images").insert({ product_id: productId, image_url: oldMain, sort_order: 100 });
+  document.querySelector('.legal-modal-backdrop')?.remove();
+  await showProductImages(productId);
+  await loadProducts();
+  window.App.showMessage("Prva slika je promenjena.", "success");
+}
+
+async function deleteProductExtraImage(imageId, productId, imageUrl) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  if (!confirm("Obrisati ovu sliku iz oglasa?")) return;
+  if (imageId === "__main__") {
+    let next = null;
+    try {
+      const { data } = await window.db.from("product_images").select("*").eq("product_id", productId).order("sort_order", { ascending:true }).order("created_at", { ascending:true }).limit(1);
+      next = data?.[0] || null;
+    } catch(e) { next = null; }
+    await window.db.from("products").update({ image_url: next?.image_url || null, updated_at: new Date().toISOString() }).eq("id", productId).eq("salon_id", currentSalonId);
+    if (next?.id) await window.db.from("product_images").delete().eq("id", next.id).eq("product_id", productId);
+  } else {
+    await window.db.from("product_images").delete().eq("id", imageId).eq("product_id", productId);
+  }
+  try { await window.StorageHelper.deleteImage(imageUrl); } catch (err) { console.warn(err); }
+  document.querySelector('.legal-modal-backdrop')?.remove();
+  await showProductImages(productId);
+  await loadProducts();
+  window.App.showMessage("Slika je obrisana.", "success");
+}
 function copyProductLink(productId) { const code = productId; const link = `${window.App.getSalonPublicLink(currentSalon.slug)}&product=${encodeURIComponent(code)}`; navigator.clipboard.writeText(link).then(()=>window.App.showMessage("Link oglasa je kopiran.", "success")).catch(()=>prompt("Kopiraj link oglasa:", link)); }
 function previewProductAsClient(productId) { window.location.href = `${window.App.getSalonPublicLink(currentSalon.slug)}&product=${encodeURIComponent(productId)}&ownerPreview=1`; }
 
