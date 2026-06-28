@@ -12706,3 +12706,15 @@ body:has(.shoe-shop-page) #app{
   #shoeViewer.cs-simple-viewer .cs-simple-viewer-actions{gap:6px !important; padding:7px 2px 0 !important;}
   #shoeViewer.cs-simple-viewer .cs-simple-back{width:50px !important; height:50px !important; left:12px !important;}
 }
+
+/* === V254: viewer prikazuje CELU sliku bez secenja ===
+   Problem: object-fit: cover je punio ekran, ali je sekao poster levo/desno/gore/dole.
+   Ovo menja samo zumirani shop viewer. Dugmad i TikTok/slider logika ostaju ista. */
+#shoeViewer.cs-simple-viewer .cs-simple-viewer-image .cs-pv-main-img{
+  object-fit:contain !important;
+  object-position:center center !important;
+  background:#fff !important;
+}
+#shoeViewer.cs-simple-viewer .cs-simple-viewer-image{
+  background:#fff !important;
+}
