@@ -11972,3 +11972,216 @@ body:has(.shoe-shop-page) .client-shell{
   display: none !important;
   visibility: hidden !important;
 }
+
+/* v_citystyle_rental_buttons_only_shop
+   Menja se samo shop/prodavnica prikaz (.shoe-shop-page i #shoeViewer).
+   Salon stranice i salon.js nisu dirani. */
+.shoe-shop-page{
+  background:#f5f5f7 !important;
+  color:#111827 !important;
+}
+.shoe-shop-page .shoe-cover,
+.shoe-shop-page .shoe-info-row,
+.shoe-shop-page .shoe-install-row,
+.shoe-shop-page .shoe-powered{
+  display:none !important;
+}
+.shoe-shop-page .shoe-products-section{
+  width:min(560px,100%) !important;
+  margin:0 auto !important;
+  padding:10px 8px 28px !important;
+}
+.shoe-shop-page .shoe-grid{
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  gap:18px !important;
+}
+.shoe-shop-page .shoe-card.cs-rental-card{
+  display:block !important;
+  width:100% !important;
+  border:0 !important;
+  border-radius:26px !important;
+  padding:0 !important;
+  overflow:hidden !important;
+  background:#fff !important;
+  box-shadow:0 14px 40px rgba(15,23,42,.13) !important;
+  color:#111827 !important;
+  text-align:left !important;
+}
+.shoe-shop-page .cs-rental-photo{
+  position:relative !important;
+  display:block !important;
+  width:100% !important;
+  aspect-ratio:1/1 !important;
+  min-height:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  background:#e5e7eb !important;
+  overflow:hidden !important;
+  border-radius:24px 24px 8px 8px !important;
+}
+.shoe-shop-page .cs-rental-photo img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  object-position:center !important;
+  display:block !important;
+}
+.shoe-shop-page .cs-rental-rubric,
+.shoe-shop-page .cs-rental-stock,
+.shoe-shop-page .cs-rental-price-badge{
+  position:absolute !important;
+  z-index:2 !important;
+  pointer-events:none !important;
+}
+.shoe-shop-page .cs-rental-rubric{
+  top:14px !important;
+  left:14px !important;
+  background:#e30613 !important;
+  color:#fff !important;
+  font-weight:950 !important;
+  font-size:14px !important;
+  line-height:1 !important;
+  padding:8px 11px !important;
+  border-radius:10px !important;
+  text-transform:uppercase !important;
+  box-shadow:0 4px 14px rgba(0,0,0,.18) !important;
+}
+.shoe-shop-page .cs-rental-stock{
+  top:14px !important;
+  right:14px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:6px !important;
+  background:#fff !important;
+  color:#129447 !important;
+  font-weight:950 !important;
+  font-size:14px !important;
+  padding:8px 11px !important;
+  border-radius:10px !important;
+  box-shadow:0 4px 14px rgba(0,0,0,.14) !important;
+}
+.shoe-shop-page .cs-rental-stock i{
+  width:11px !important;
+  height:11px !important;
+  border-radius:999px !important;
+  background:#12b85a !important;
+  display:block !important;
+}
+.shoe-shop-page .cs-rental-price-badge{
+  left:14px !important;
+  bottom:14px !important;
+  min-width:170px !important;
+  border-radius:11px !important;
+  overflow:hidden !important;
+  background:#fff !important;
+  box-shadow:0 8px 22px rgba(0,0,0,.22) !important;
+}
+.shoe-shop-page .cs-rental-price-badge em{
+  display:inline-block !important;
+  background:#e30613 !important;
+  color:#fff !important;
+  font-style:normal !important;
+  font-weight:950 !important;
+  font-size:17px !important;
+  padding:8px 12px !important;
+  border-radius:0 0 10px 0 !important;
+  text-transform:uppercase !important;
+}
+.shoe-shop-page .cs-rental-price-badge b{
+  display:block !important;
+  background:#ffd91a !important;
+  color:#000 !important;
+  font-weight:1000 !important;
+  font-size:clamp(34px,11vw,56px) !important;
+  letter-spacing:-2px !important;
+  line-height:.95 !important;
+  padding:8px 12px 6px !important;
+  white-space:nowrap !important;
+}
+.shoe-shop-page .cs-rental-price-badge small{
+  display:block !important;
+  background:#fff !important;
+  color:#111 !important;
+  font-weight:950 !important;
+  font-size:14px !important;
+  line-height:1 !important;
+  padding:8px 12px !important;
+  text-align:center !important;
+}
+.shoe-shop-page .cs-rental-actions,
+#shoeViewer.cs-product-viewer-v33 .cs-rental-viewer-actions{
+  display:grid !important;
+  grid-template-columns:1fr 1fr 1fr !important;
+  gap:10px !important;
+  padding:12px !important;
+  background:#fff !important;
+}
+.shoe-shop-page .cs-rental-action,
+#shoeViewer.cs-product-viewer-v33 .cs-rental-viewer-actions .cs-pv-action{
+  min-width:0 !important;
+  min-height:66px !important;
+  border:0 !important;
+  border-radius:14px !important;
+  color:#fff !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:8px !important;
+  padding:8px 9px !important;
+  font-weight:950 !important;
+  font-size:14px !important;
+  line-height:1.05 !important;
+  text-align:center !important;
+  box-shadow:0 8px 18px rgba(15,23,42,.16) !important;
+  cursor:pointer !important;
+}
+.shoe-shop-page .cs-rental-action svg,
+#shoeViewer.cs-product-viewer-v33 .cs-rental-viewer-actions .cs-pv-action svg{
+  width:26px !important;
+  height:26px !important;
+  stroke:#fff !important;
+  flex:0 0 auto !important;
+}
+.shoe-shop-page .cs-rental-action span,
+#shoeViewer.cs-product-viewer-v33 .cs-rental-viewer-actions .cs-pv-action span{
+  color:#fff !important;
+  display:block !important;
+  font-weight:950 !important;
+  align-items:center !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-rental-viewer-actions .cs-pv-action b{
+  color:#fff !important;
+  font-size:14px !important;
+}
+#shoeViewer.cs-product-viewer-v33 .cs-rental-viewer-actions .cs-pv-action small{display:none !important;}
+.shoe-shop-page .cs-rental-share,
+#shoeViewer.cs-product-viewer-v33 .cs-rental-share{background:linear-gradient(135deg,#08a84f,#12c765) !important;}
+.shoe-shop-page .cs-rental-message,
+#shoeViewer.cs-product-viewer-v33 .cs-rental-message{background:linear-gradient(135deg,#0457e7,#0877ff) !important;}
+.shoe-shop-page .cs-rental-call,
+#shoeViewer.cs-product-viewer-v33 .cs-rental-call{background:linear-gradient(135deg,#df0610,#f01822) !important;}
+#shoeViewer.cs-product-viewer-v33 .cs-pv-sheet .cs-pv-heading-row,
+#shoeViewer.cs-product-viewer-v33 .cs-pv-sheet h1,
+#shoeViewer.cs-product-viewer-v33 .cs-pv-sheet .cs-pv-subtitle,
+#shoeViewer.cs-product-viewer-v33 .cs-pv-sheet .cs-pv-price-card,
+#shoeViewer.cs-product-viewer-v33 .cs-pv-sheet .cs-pv-benefits,
+#shoeViewer.cs-product-viewer-v33 .cs-pv-sheet .cs-pv-description{
+  display:none !important;
+}
+@media(max-width:430px){
+  .shoe-shop-page .shoe-products-section{padding-left:6px !important;padding-right:6px !important;}
+  .shoe-shop-page .cs-rental-actions,
+  #shoeViewer.cs-product-viewer-v33 .cs-rental-viewer-actions{gap:8px !important;padding:10px !important;}
+  .shoe-shop-page .cs-rental-action,
+  #shoeViewer.cs-product-viewer-v33 .cs-rental-viewer-actions .cs-pv-action{min-height:58px !important;font-size:12px !important;gap:5px !important;padding:6px !important;}
+  .shoe-shop-page .cs-rental-action svg,
+  #shoeViewer.cs-product-viewer-v33 .cs-rental-viewer-actions .cs-pv-action svg{width:22px !important;height:22px !important;}
+  .shoe-shop-page .cs-rental-price-badge{min-width:142px !important;left:10px !important;bottom:10px !important;}
+  .shoe-shop-page .cs-rental-price-badge em{font-size:14px !important;padding:7px 10px !important;}
+  .shoe-shop-page .cs-rental-price-badge small{font-size:12px !important;padding:7px 10px !important;}
+  .shoe-shop-page .cs-rental-rubric,
+  .shoe-shop-page .cs-rental-stock{top:10px !important;font-size:12px !important;padding:7px 9px !important;}
+  .shoe-shop-page .cs-rental-rubric{left:10px !important;}
+  .shoe-shop-page .cs-rental-stock{right:10px !important;}
+}

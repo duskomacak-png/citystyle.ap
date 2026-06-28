@@ -1005,6 +1005,42 @@ function renderClientProductsPreview() {
   `;
 }
 
+function csGetProductForAction(index) {
+  const n = Number(index);
+  if (Number.isFinite(n) && products[n]) return products[n];
+  return currentShoeProduct();
+}
+async function shareShoeProductByIndex(e, index) {
+  e?.preventDefault?.();
+  e?.stopPropagation?.();
+  const p = csGetProductForAction(index);
+  const url = csProductUrl(p);
+  const text = `${csProductDisplayName(p) || 'Oglas'} - ${csProductPrice(p)}`;
+  if (navigator.share) {
+    try { await navigator.share({ title: csProductDisplayName(p) || 'Oglas', text, url }); return; } catch (_) {}
+  }
+  try { await navigator.clipboard?.writeText(url); } catch (_) {}
+  window.App?.showMessage?.("Link oglasa je kopiran.", "success");
+}
+function askShoeProductByIndex(e, index) {
+  e?.preventDefault?.();
+  e?.stopPropagation?.();
+  const p = csGetProductForAction(index);
+  const phone = csWhatsAppPhone(currentSalon._publicPhone || currentSalon?.phone || "");
+  if (!phone) return window.App.showMessage("Vlasnik nije upisao WhatsApp/telefon.", "error");
+  const lines = [
+    "Zdravo, zanima me ovaj oglas:",
+    "",
+    `Oglas: ${csProductCode(p)}`,
+    `Naziv: ${csProductDisplayName(p) || p.name || 'Oglas'}`,
+    `Cena: ${csProductPrice(p)}`,
+    `Status: ${csProductStatus(p)}`,
+    csProductPublicDescription(p) ? `Opis: ${csProductPublicDescription(p)}` : "",
+    `Link: ${csProductUrl(p)}`
+  ].filter(Boolean);
+  window.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(lines.join("\n"))}`;
+}
+
 function showProducts() {
   const box = document.getElementById("client-extra");
   if (!box) return;
@@ -1621,6 +1657,9 @@ function renderShoeShopHome(settings = {}) {
   const phone = settings?.phone || currentSalon?.phone || "";
   const address = settings?.address || "";
   const text = settings?.welcome_text || "";
+  currentSalon._publicPhone = phone;
+  currentSalon._publicLogo = logo;
+  currentSalon._publicName = name;
   app.innerHTML = `
     <section class="shoe-shop-page">
       ${adminPreviewMode ? `<div class="owner-preview-bar admin-preview-bar"><div><strong>Admin pregled</strong><span>Ovako kupac vidi prodavnicu.</span></div><a class="btn btn-primary" href="${window.App.getAppPath('admin/')}">Nazad u admin</a></div>` : ownerPreviewMode ? `<div class="owner-preview-bar"><div><strong>Pregled javne stranice</strong><span>Ovako kupac vidi prodavnicu.</span></div><a class="btn btn-primary" href="${window.App.getAppPath('salon/')}">Nazad u panel vlasnika</a></div>` : ""}
@@ -1653,15 +1692,57 @@ function renderShoeProductCard(product, index) {
   const rubrics = csProductRubrics(product);
   const rubricsAttr = rubrics.map(r => csNormalizePublicRubric(r)).filter(Boolean).join('|');
   const searchAttr = [csProductCode(product), rubricTitle, displayName, desc].filter(Boolean).join(' ').toLowerCase();
-  return `<button class="shoe-card" type="button" data-rubrics="${escapeHtml(rubricsAttr)}" data-search="${escapeHtml(searchAttr)}" onclick="openShoeViewer(${index}); event.preventDefault();">
-    <div class="shoe-card-media">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(displayName || 'Oglas')}">` : `<span>Bez slike</span>`}</div>
-    <div class="shoe-card-info">
-      <small>${escapeHtml(csProductCode(product))}</small>
-      <strong>${escapeHtml(displayName || "Oglas")}</strong>
-      ${desc ? `<p class="shoe-card-description">${escapeHtml(desc)}</p>` : ""}
-      <div class="shoe-card-bottom"><b>${escapeHtml(csProductPrice(product))}</b><span>${escapeHtml(status)}</span></div>
+  const code = csProductCode(product);
+  const price = csProductPrice(product);
+  return `<article class="shoe-card cs-rental-card" data-rubrics="${escapeHtml(rubricsAttr)}" data-search="${escapeHtml(searchAttr)}">
+    <button class="cs-rental-photo" type="button" onclick="openShoeViewer(${index}); event.preventDefault();" aria-label="Otvori oglas ${escapeHtml(code)}">
+      ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(displayName || 'Oglas')}">` : `<span>Bez slike</span>`}
+      ${rubricTitle ? `<span class="cs-rental-rubric">${escapeHtml(rubricTitle)}</span>` : ``}
+      <span class="cs-rental-stock"><i></i>${escapeHtml(status)}</span>
+      <span class="cs-rental-price-badge"><em>${escapeHtml(code)}</em><b>${escapeHtml(price)}</b><small>CENA NA DAN</small></span>
+    </button>
+    <div class="cs-rental-actions">
+      <button class="cs-rental-action cs-rental-share" type="button" onclick="shareShoeProductByIndex(event, ${index})">${csViewerShareIcon()}<span>PODELI</span></button>
+      <button class="cs-rental-action cs-rental-message" type="button" onclick="askShoeProductByIndex(event, ${index})">${csViewerMessageIcon()}<span>POŠALJI PORUKU</span></button>
+      <button class="cs-rental-action cs-rental-call" type="button" onclick="callShoeShop(event)">${csViewerPhoneIcon()}<span>POZOVI</span></button>
     </div>
-  </button>`;
+  </article>`;
+}
+
+function csGetProductForAction(index) {
+  const n = Number(index);
+  if (Number.isFinite(n) && products[n]) return products[n];
+  return currentShoeProduct();
+}
+async function shareShoeProductByIndex(e, index) {
+  e?.preventDefault?.();
+  e?.stopPropagation?.();
+  const p = csGetProductForAction(index);
+  const url = csProductUrl(p);
+  const text = `${csProductDisplayName(p) || 'Oglas'} - ${csProductPrice(p)}`;
+  if (navigator.share) {
+    try { await navigator.share({ title: csProductDisplayName(p) || 'Oglas', text, url }); return; } catch (_) {}
+  }
+  try { await navigator.clipboard?.writeText(url); } catch (_) {}
+  window.App?.showMessage?.("Link oglasa je kopiran.", "success");
+}
+function askShoeProductByIndex(e, index) {
+  e?.preventDefault?.();
+  e?.stopPropagation?.();
+  const p = csGetProductForAction(index);
+  const phone = csWhatsAppPhone(currentSalon._publicPhone || currentSalon?.phone || "");
+  if (!phone) return window.App.showMessage("Vlasnik nije upisao WhatsApp/telefon.", "error");
+  const lines = [
+    "Zdravo, zanima me ovaj oglas:",
+    "",
+    `Oglas: ${csProductCode(p)}`,
+    `Naziv: ${csProductDisplayName(p) || p.name || 'Oglas'}`,
+    `Cena: ${csProductPrice(p)}`,
+    `Status: ${csProductStatus(p)}`,
+    csProductPublicDescription(p) ? `Opis: ${csProductPublicDescription(p)}` : "",
+    `Link: ${csProductUrl(p)}`
+  ].filter(Boolean);
+  window.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(lines.join("\n"))}`;
 }
 
 function showProducts() {
@@ -2019,10 +2100,10 @@ function renderShoeViewer() {
           <span>✓ Direktan kontakt</span>
         </div>
 
-        <div class="cs-pv-actions">
-          <button class="cs-pv-action cs-pv-whatsapp" type="button" onclick="askShoeProduct(event)">${csViewerMessageIcon()}<span><b>Pitaj</b><small>WhatsApp</small></span></button>
-          <button class="cs-pv-action" type="button" onclick="callShoeShop(event)">${csViewerPhoneIcon()}<span><b>Pozovi</b><small>Poziv</small></span></button>
-          <button class="cs-pv-action" type="button" onclick="shareShoeProduct(event)">${csViewerShareIcon()}<span><b>Podeli</b><small>Oglas</small></span></button>
+        <div class="cs-pv-actions cs-rental-viewer-actions">
+          <button class="cs-pv-action cs-rental-share" type="button" onclick="shareShoeProduct(event)">${csViewerShareIcon()}<span><b>PODELI</b></span></button>
+          <button class="cs-pv-action cs-rental-message" type="button" onclick="askShoeProduct(event)">${csViewerMessageIcon()}<span><b>POŠALJI PORUKU</b></span></button>
+          <button class="cs-pv-action cs-rental-call" type="button" onclick="callShoeShop(event)">${csViewerPhoneIcon()}<span><b>POZOVI</b></span></button>
         </div>
 
         <div class="cs-pv-description">
@@ -2097,4 +2178,4 @@ function askShoeProduct(e) {
 }
 function callShoeShop(e) { e?.stopPropagation?.(); const phone=csSafePhone(currentSalon._publicPhone || ""); if(!phone) return window.App.showMessage("Telefon nije upisan.", "error"); window.location.href=`tel:${phone}`; }
 
-Object.assign(window, { openCityStyleMaps, openShoeViewer, closeShoeViewer, shoeChangeProduct, shoeChangeImage, shoeSetImage, shareShoeProduct, askShoeProduct, callShoeShop, csSmartCropShoeImage, csToggleShoeZoom, csApplyShoePanZoom, csOpenRealShoeZoom, csViewerZoomIcon });
+Object.assign(window, { openCityStyleMaps, openShoeViewer, closeShoeViewer, shoeChangeProduct, shoeChangeImage, shoeSetImage, shareShoeProduct, shareShoeProductByIndex, askShoeProduct, askShoeProductByIndex, callShoeShop, csSmartCropShoeImage, csToggleShoeZoom, csApplyShoePanZoom, csOpenRealShoeZoom, csViewerZoomIcon });
