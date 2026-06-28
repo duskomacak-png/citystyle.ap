@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle v250 - shop slika tri dugmeta
-const CACHE_NAME = "citystyle-v250_shop_slika_tri_dugmeta";
+// CityStyle v251 - shop perfect slika tri dugmeta
+const CACHE_NAME = "citystyle-v251_shop_perfect_slika_tri_dugmeta";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
