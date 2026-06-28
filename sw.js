@@ -1,6 +1,6 @@
 // sw.js
-// CityStyle v249 - samo polje rubrika dropdown
-const CACHE_NAME = "citystyle-v249_samo_polje_rubrika_dropdown";
+// CityStyle v250 - shop slika tri dugmeta
+const CACHE_NAME = "citystyle-v250_shop_slika_tri_dugmeta";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
