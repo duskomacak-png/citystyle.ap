@@ -12718,3 +12718,158 @@ body:has(.shoe-shop-page) #app{
 #shoeViewer.cs-simple-viewer .cs-simple-viewer-image{
   background:#fff !important;
 }
+
+/* === V255 MOBILE ONLY: shop oglas skoro preko cele sirine telefona ===
+   Ne dira salon. Ne dira laptop/tablet prikaz jer je sve zatvoreno u max-width:759px. */
+@media (max-width: 759px){
+  body:has(.shoe-shop-page){
+    background:#f3f4f6 !important;
+    overflow-x:hidden !important;
+  }
+  body:has(.shoe-shop-page) #app{
+    width:100% !important;
+    max-width:none !important;
+    padding:0 !important;
+    overflow-x:hidden !important;
+  }
+  .shoe-shop-page{
+    width:100% !important;
+    max-width:none !important;
+    margin:0 !important;
+    padding:8px 0 24px !important;
+    overflow-x:hidden !important;
+    box-sizing:border-box !important;
+  }
+  .shoe-shop-page .shoe-cover,
+  .shoe-shop-page .shoe-info-row,
+  .shoe-shop-page .shoe-install-row,
+  .shoe-shop-page .shoe-products-section,
+  .shoe-shop-page .shoe-grid,
+  .shoe-shop-page .cs-simple-ad-card{
+    width:100% !important;
+    max-width:none !important;
+    margin-left:0 !important;
+    margin-right:0 !important;
+    box-sizing:border-box !important;
+  }
+  .shoe-shop-page .shoe-products-section{
+    padding:0 !important;
+  }
+  .shoe-shop-page .shoe-grid{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:18px !important;
+    justify-items:stretch !important;
+  }
+  .shoe-shop-page .cs-simple-ad-card{
+    border-radius:0 !important;
+    border-left:0 !important;
+    border-right:0 !important;
+    box-shadow:none !important;
+    overflow:hidden !important;
+    background:#fff !important;
+  }
+  .shoe-shop-page .cs-simple-ad-image{
+    width:100% !important;
+    max-width:none !important;
+    display:block !important;
+    padding:0 !important;
+    margin:0 !important;
+    border-radius:0 !important;
+    background:#fff !important;
+    overflow:hidden !important;
+  }
+  .shoe-shop-page .cs-simple-ad-image img{
+    display:block !important;
+    width:100% !important;
+    max-width:none !important;
+    height:auto !important;
+    max-height:none !important;
+    aspect-ratio:auto !important;
+    object-fit:contain !important;
+    object-position:center top !important;
+    border-radius:0 !important;
+    background:#fff !important;
+  }
+  .shoe-shop-page .cs-simple-ad-actions{
+    width:100% !important;
+    max-width:none !important;
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    gap:8px !important;
+    padding:10px 8px 12px !important;
+    border-radius:0 !important;
+    background:#fff !important;
+    box-sizing:border-box !important;
+  }
+
+  /* Klik na oglas / uvećani mobilni prikaz: slika ide preko cele širine, bez malog kontejnera. */
+  #shoeViewer.cs-simple-viewer{
+    width:100vw !important;
+    height:100dvh !important;
+    background:#fff !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+    touch-action:pan-y pinch-zoom !important;
+  }
+  #shoeViewer.cs-simple-viewer .cs-simple-viewer-phone{
+    width:100% !important;
+    max-width:none !important;
+    min-height:100dvh !important;
+    height:auto !important;
+    margin:0 !important;
+    padding:0 0 calc(8px + env(safe-area-inset-bottom,0px)) !important;
+    display:block !important;
+    overflow:visible !important;
+    background:#fff !important;
+    box-sizing:border-box !important;
+  }
+  #shoeViewer.cs-simple-viewer .cs-simple-viewer-image{
+    width:100% !important;
+    height:auto !important;
+    min-height:0 !important;
+    max-height:none !important;
+    margin:0 !important;
+    padding:0 !important;
+    display:block !important;
+    overflow:visible !important;
+    border-radius:0 !important;
+    background:#fff !important;
+    touch-action:pan-y pinch-zoom !important;
+  }
+  #shoeViewer.cs-simple-viewer .cs-simple-viewer-image .cs-pv-main-img{
+    display:block !important;
+    width:100% !important;
+    max-width:none !important;
+    height:auto !important;
+    max-height:none !important;
+    aspect-ratio:auto !important;
+    object-fit:contain !important;
+    object-position:center top !important;
+    border-radius:0 !important;
+    background:#fff !important;
+  }
+  #shoeViewer.cs-simple-viewer .cs-simple-viewer-actions-sheet{
+    width:100% !important;
+    margin:0 !important;
+    padding:0 !important;
+    border-radius:0 !important;
+    background:#fff !important;
+    box-shadow:none !important;
+  }
+  #shoeViewer.cs-simple-viewer .cs-simple-viewer-actions{
+    width:100% !important;
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    gap:8px !important;
+    padding:10px 8px calc(10px + env(safe-area-inset-bottom,0px)) !important;
+    background:#fff !important;
+    box-sizing:border-box !important;
+  }
+  #shoeViewer.cs-simple-viewer .cs-simple-back{
+    position:fixed !important;
+    left:12px !important;
+    top:calc(12px + env(safe-area-inset-top,0px)) !important;
+    z-index:50 !important;
+  }
+}
