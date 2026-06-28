@@ -13418,12 +13418,64 @@ body:has(.shoe-shop-page) #app{
   }
 }
 
-/* v270 product images panel */
-.product-images-modal .legal-modal-body.product-images-body{display:grid;grid-template-columns:minmax(240px,360px) 1fr;gap:18px;align-items:start}
-.product-images-upload-card{position:sticky;top:12px}
-.product-images-grid.owner-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px}
-.owner-product-image-card{gap:10px;text-align:center}
-.owner-product-image-card img{width:100%;aspect-ratio:9/16;object-fit:cover;border-radius:14px;border:1px solid rgba(255,255,255,.16);background:#0f172a}
-.owner-main-image-card{outline:2px solid rgba(34,197,94,.7);box-shadow:0 0 0 4px rgba(34,197,94,.12)}
-.owner-product-image-card .badge{display:inline-flex;align-items:center;justify-content:center;padding:8px 10px;border-radius:999px;background:rgba(34,197,94,.14);color:#bbf7d0;font-weight:800;border:1px solid rgba(34,197,94,.35)}
-@media(max-width:760px){.product-images-modal .legal-modal-body.product-images-body{display:block}.product-images-upload-card{position:static;margin-bottom:14px}.product-images-grid.owner-gallery-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* === v270: profesionalni panel za slike proizvoda / oglasa (samo prodavnica) === */
+.product-images-modal { max-width: 980px; }
+.product-images-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: 16px;
+  align-items: start;
+}
+.product-images-upload-card { grid-column: 1 / -1; }
+.product-image-pro-note {
+  border: 1px solid rgba(34, 197, 94, .28);
+  background: linear-gradient(135deg, rgba(34, 197, 94, .12), rgba(59, 130, 246, .10));
+  border-radius: 18px;
+  padding: 16px;
+  color: #fff;
+  box-shadow: 0 16px 35px rgba(0,0,0,.18);
+}
+.product-image-pro-note strong { display:block; font-size: 1.05rem; margin-bottom: 8px; }
+.product-image-pro-note p { margin:0; color: rgba(255,255,255,.82); line-height: 1.45; }
+.product-images-grid {
+  grid-column: 1 / 2;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.product-image-card { position: relative; overflow: hidden; }
+.product-image-card img {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 9 / 16 !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  background: #0b0f19 !important;
+  border-radius: 16px !important;
+}
+.product-image-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, .82);
+  border: 1px solid rgba(255,255,255,.18);
+  color: #fff;
+  font-weight: 900;
+  font-size: .72rem;
+  letter-spacing: .04em;
+}
+.product-image-main .product-image-badge {
+  background: rgba(34,197,94,.9);
+  color: #052e16;
+}
+.product-image-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+@media (max-width: 720px) {
+  .product-images-body { display:block; }
+  .product-image-pro-note { margin: 12px 0; }
+  .product-images-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
