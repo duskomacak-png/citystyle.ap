@@ -535,7 +535,7 @@ async function renderSalonHome() {
           <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(primaryActionLabel)}</button>
           ${(!isSalonBookingProfile && products.length) ? `<button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>` : ""}
           ${garageListings.length ? `<button class="btn btn-dark" type="button" onclick="showGarage()">Garaža / oglasi</button>` : ""}
-          ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app")}</button>`}
+          ${ownerPreviewMode ? "" : `<button class="btn btn-dark install-app-btn" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app")}</button>`}
         </div>
       </div>
 
@@ -1549,7 +1549,7 @@ async function renderSalonHome() {
           <button class="btn btn-primary" type="button" onclick="showBookingForm()">${escapeHtml(primaryActionLabel)}</button>
           ${(!isSalonBookingProfile && products.length) ? `<button class="btn btn-dark" type="button" onclick="showProducts()">${C("productsCatalog", "Proizvodi / cenovnik")}</button>` : ""}
           ${garageListings.length ? `<button class="btn btn-dark" type="button" onclick="showGarage()">Garaža / oglasi</button>` : ""}
-          ${ownerPreviewMode ? "" : `<button class="btn btn-dark" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app")}</button>`}
+          ${ownerPreviewMode ? "" : `<button class="btn btn-dark install-app-btn" type="button" onclick="installCurrentSalonApp()">${C("installThisProfile", "Preuzmi app")}</button>`}
         </div>
       </div>
       <div id="client-extra">${isSalonBookingProfile ? "" : renderClientServicesPreview()}${renderClientProductsPreview()}${renderClientGaragePreview()}${renderClientGalleryPreview()}${renderClientWorkingHours(workingHours || [])}</div>

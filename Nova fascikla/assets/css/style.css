@@ -13138,3 +13138,5 @@ body:has(.shoe-shop-page) #app{
     min-height: 58px !important;
   }
 }
+
+@media(max-width:768px){.install-app-btn{max-width:340px!important;width:80%!important;margin:16px auto!important;display:block!important;border-radius:16px!important}.phone-chip i,.phone-chip svg,.phone-icon{color:#22c55e!important;fill:#22c55e!important}}
