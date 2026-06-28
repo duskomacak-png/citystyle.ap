@@ -116,7 +116,8 @@ async function uploadImage(file, salonId, type = "home") {
   return data.publicUrl;
 }
 
-async function deleteImage(imageUrl) {
+async function deleteImage(imageUrl, options = {}) {
+  const silent = !!options.silent;
   if (!imageUrl) return false;
   const marker = "/storage/v1/object/public/salon-assets/";
   const index = imageUrl.indexOf(marker);
@@ -126,7 +127,7 @@ async function deleteImage(imageUrl) {
   const { error } = await window.db.storage.from("salon-assets").remove([path]);
   if (error) {
     console.error(error);
-    window.App.showMessage("Greška pri brisanju slike.", "error");
+    if (!silent) window.App.showMessage("Greška pri brisanju slike.", "error");
     return false;
   }
   return true;
