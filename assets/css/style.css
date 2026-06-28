@@ -13417,3 +13417,23 @@ body:has(.shoe-shop-page) #app{
     transform: translateY(-1px) !important;
   }
 }
+
+
+/* v269 - Profesionalni panel za slike oglasa u prodavnici */
+.shop-images-card { max-width: min(1120px, 96vw); }
+.shop-images-body { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+.shop-images-upload-card { grid-column: 1 / 2; }
+.shop-images-help-card { grid-column: 2 / 3; position: sticky; top: 12px; border: 1px solid rgba(34,197,94,.22); background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(240,253,244,.96)); }
+.shop-images-list-wrap { grid-column: 1 / -1; }
+.shop-images-grid { align-items: stretch; }
+.shop-image-card { position: relative; overflow: hidden; }
+.shop-image-card img { width: 100%; aspect-ratio: 9 / 16; object-fit: contain; background: #fff; border-radius: 14px; display: block; }
+.shop-image-card.is-main { border: 2px solid #22c55e; box-shadow: 0 12px 30px rgba(34,197,94,.16); }
+.shop-image-badge { position: absolute; left: 10px; top: 10px; z-index: 2; padding: 6px 10px; border-radius: 999px; background: #16a34a; color: #fff; font-weight: 900; font-size: 12px; letter-spacing: .04em; box-shadow: 0 8px 20px rgba(0,0,0,.25); }
+.shop-image-actions { justify-content: center; gap: 8px; margin-top: 10px; }
+.shop-image-actions .btn { min-height: 38px; padding: 9px 12px; }
+@media (max-width: 720px) {
+  .shop-images-body { grid-template-columns: 1fr; }
+  .shop-images-upload-card, .shop-images-help-card, .shop-images-list-wrap { grid-column: 1 / -1; }
+  .shop-images-help-card { position: static; }
+}
