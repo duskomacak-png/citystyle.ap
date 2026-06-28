@@ -13297,3 +13297,47 @@ body:has(.shoe-shop-page) #app{
     background: rgba(209,213,219,.72) !important;
   }
 }
+
+
+/* =========================================================
+   v265 MOBILE SHOP VIEWER ONLY - centered X close button
+   Menja samo X u zumiranom prikazu oglasa. Salon i laptop nisu dirani.
+   ========================================================= */
+@media (max-width: 759px) {
+  body:not(.salon-page) #shoeViewer.cs-simple-viewer .cs-viewer-close-x {
+    position: fixed !important;
+    left: 10px !important;
+    top: calc(10px + env(safe-area-inset-top, 0px)) !important;
+    z-index: 99999 !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    max-width: 38px !important;
+    max-height: 38px !important;
+    box-sizing: border-box !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(255,255,255,.55) !important;
+    background: rgba(229,231,235,.58) !important;
+    color: #050505 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 26px !important;
+    font-weight: 900 !important;
+    line-height: 38px !important;
+    text-align: center !important;
+    text-indent: 0 !important;
+    letter-spacing: 0 !important;
+    box-shadow: 0 6px 18px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.65) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(145%) !important;
+    backdrop-filter: blur(10px) saturate(145%) !important;
+  }
+  body:not(.salon-page) #shoeViewer.cs-simple-viewer .cs-viewer-close-x::before,
+  body:not(.salon-page) #shoeViewer.cs-simple-viewer .cs-viewer-close-x::after {
+    content: none !important;
+    display: none !important;
+  }
+}

@@ -1,6 +1,6 @@
 // sw.js
 // CityStyle v251 - shop perfect slika tri dugmeta
-const CACHE_NAME = "citystyle-v263_shop_mobile_button_green_border";
+const CACHE_NAME = "citystyle-v265_shop_viewer_x_center";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
