@@ -2017,13 +2017,29 @@ function renderShoeViewer() {
     const t = e.changedTouches[0];
     const dx = t.clientX - csViewerState.startX;
     const dy = t.clientY - csViewerState.startY;
+    // Levo/desno = sledeća slika istog oglasa. Gore/dole = sledeći oglas kao TikTok.
+    if (Math.abs(dy) > 65 && Math.abs(dy) > Math.abs(dx) * 1.15) {
+      shoeChangeProduct(dy < 0 ? 1 : -1);
+      return;
+    }
     if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) shoeChangeImage(dx < 0 ? 1 : -1);
+  };
+  viewer.onwheel = e => {
+    if (!csViewerState) return;
+    if (Math.abs(e.deltaY || 0) < 40) return;
+    e.preventDefault();
+    const now = Date.now();
+    if (viewer.dataset.lastWheelProduct && now - Number(viewer.dataset.lastWheelProduct) < 650) return;
+    viewer.dataset.lastWheelProduct = String(now);
+    shoeChangeProduct(e.deltaY > 0 ? 1 : -1);
   };
   document.onkeydown = e => {
     if (!document.getElementById("shoeViewer")) return;
     if (e.key === "Escape") closeShoeViewer();
     if (e.key === "ArrowLeft") shoeChangeImage(-1);
     if (e.key === "ArrowRight") shoeChangeImage(1);
+    if (e.key === "ArrowDown") shoeChangeProduct(1);
+    if (e.key === "ArrowUp") shoeChangeProduct(-1);
   };
 }
 function shoeChangeProduct(delta) {
