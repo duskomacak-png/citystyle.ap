@@ -1903,7 +1903,13 @@ function csSetupPvPinchZoom(viewer) {
   const panel = viewer?.querySelector?.('.cs-pv-image-panel');
   const img = viewer?.querySelector?.('.cs-pv-main-img');
   if (!panel || !img) return;
-  const z = { scale: 1, x: 0, y: 0, startX: 0, startY: 0, startPanX: 0, startPanY: 0, startDist: 0, startScale: 1, pinching: false, panning: false };
+  const z = {
+    scale: 1, x: 0, y: 0,
+    startX: 0, startY: 0, startPanX: 0, startPanY: 0,
+    startDist: 0, startScale: 1,
+    pinching: false, panning: false, hadPinch: false,
+    swipeX: 0, swipeY: 0, swipeTime: 0
+  };
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
   const dist = touches => {
     if (!touches || touches.length < 2) return 0;
@@ -1911,35 +1917,44 @@ function csSetupPvPinchZoom(viewer) {
     return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
   };
   const apply = () => {
-    z.scale = clamp(z.scale, 1, 4);
+    z.scale = clamp(z.scale, 1, 4.5);
     if (z.scale <= 1.01) { z.scale = 1; z.x = 0; z.y = 0; }
     const rect = panel.getBoundingClientRect();
     const maxX = rect.width * (z.scale - 1) / 2;
     const maxY = rect.height * (z.scale - 1) / 2;
     z.x = clamp(z.x, -maxX, maxX);
     z.y = clamp(z.y, -maxY, maxY);
-    img.style.transform = `translate3d(${z.x}px, ${z.y}px, 0) scale(${z.scale})`;
+    img.style.setProperty('--pan-x', `${z.x}px`);
+    img.style.setProperty('--pan-y', `${z.y}px`);
+    img.style.setProperty('--zoom-scale', String(z.scale));
     img.style.transformOrigin = 'center center';
     panel.classList.toggle('is-zoomed', z.scale > 1.01);
   };
+  const reset = () => { z.scale = 1; z.x = 0; z.y = 0; z.panning = false; z.pinching = false; apply(); };
+
   panel.addEventListener('touchstart', e => {
     if (e.touches.length >= 2) {
       z.pinching = true;
+      z.hadPinch = true;
       z.startDist = dist(e.touches);
       z.startScale = z.scale;
       e.preventDefault();
       e.stopPropagation();
       return;
     }
-    if (e.touches.length === 1 && z.scale > 1.01) {
-      z.panning = true;
+    if (e.touches.length === 1) {
       const t = e.touches[0];
-      z.startX = t.clientX; z.startY = t.clientY;
-      z.startPanX = z.x; z.startPanY = z.y;
-      e.preventDefault();
+      z.swipeX = t.clientX; z.swipeY = t.clientY; z.swipeTime = Date.now();
+      if (z.scale > 1.01) {
+        z.panning = true;
+        z.startX = t.clientX; z.startY = t.clientY;
+        z.startPanX = z.x; z.startPanY = z.y;
+        e.preventDefault();
+      }
       e.stopPropagation();
     }
   }, { passive:false });
+
   panel.addEventListener('touchmove', e => {
     if (e.touches.length >= 2) {
       const d = dist(e.touches);
@@ -1956,20 +1971,63 @@ function csSetupPvPinchZoom(viewer) {
       apply();
       e.preventDefault();
       e.stopPropagation();
+      return;
+    }
+    // Kada slika nije uvećana, dozvoli prirodan swipe bez skrolovanja strane.
+    if (e.touches.length === 1) {
+      e.preventDefault();
+      e.stopPropagation();
     }
   }, { passive:false });
+
   panel.addEventListener('touchend', e => {
+    const t = e.changedTouches?.[0];
+    const wasZoomed = z.scale > 1.01;
     if (e.touches.length < 2) z.pinching = false;
     if (!e.touches.length) z.panning = false;
-    if (z.scale < 1.08) { z.scale = 1; z.x = 0; z.y = 0; apply(); }
+    if (!e.touches.length && z.hadPinch) {
+      z.hadPinch = false;
+      if (z.scale < 1.08) reset();
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    if (!wasZoomed && t && !e.touches.length) {
+      const dx = t.clientX - z.swipeX;
+      const dy = t.clientY - z.swipeY;
+      const dt = Date.now() - z.swipeTime;
+      if (dt < 900 && Math.abs(dy) > 60 && Math.abs(dy) > Math.abs(dx) * 1.15) {
+        shoeChangeProduct(dy < 0 ? 1 : -1); // gore = sledeći oglas, dole = prethodni
+      } else if (dt < 900 && Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) {
+        shoeChangeImage(dx < 0 ? 1 : -1);   // levo/desno = slike istog oglasa
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    if (z.scale < 1.08) reset();
+    e.preventDefault();
     e.stopPropagation();
   }, { passive:false });
+
   panel.addEventListener('dblclick', e => {
-    z.scale = z.scale > 1.1 ? 1 : 2.5;
+    z.scale = z.scale > 1.1 ? 1 : 2.4;
     z.x = 0; z.y = 0; apply();
     e.preventDefault();
     e.stopPropagation();
   });
+
+  panel.addEventListener('wheel', e => {
+    if (e.ctrlKey || e.metaKey) {
+      z.scale = clamp(z.scale + (e.deltaY < 0 ? .22 : -.22), 1, 4.5);
+      if (z.scale <= 1.01) { z.x = 0; z.y = 0; }
+      apply();
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, { passive:false });
+
+  apply();
 }
 
 function renderShoeViewer() {
@@ -1991,7 +2049,7 @@ function renderShoeViewer() {
     <div class="cs-pv-phone cs-simple-viewer-phone">
       <button class="cs-pv-round cs-pv-back cs-simple-back" type="button" onclick="closeShoeViewer()" aria-label="Nazad">‹</button>
       <section class="cs-pv-image-panel cs-simple-viewer-image">
-        ${img ? `<img class="cs-pv-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(name)}" onclick="event.stopPropagation(); csToggleShoeZoom()" ondblclick="event.stopPropagation(); csToggleShoeZoom()">` : `<div class="cs-pv-no-img">Bez slike</div>`}
+        ${img ? `<img class="cs-pv-main-img" src="${escapeHtml(img)}" alt="${escapeHtml(name)}">` : `<div class="cs-pv-no-img">Bez slike</div>`}
         ${imgs.length > 1 ? `<button class="cs-pv-arrow cs-pv-arrow-left" type="button" onclick="event.stopPropagation(); shoeChangeImage(-1)">‹</button><button class="cs-pv-arrow cs-pv-arrow-right" type="button" onclick="event.stopPropagation(); shoeChangeImage(1)">›</button>` : ``}
       </section>
       <section class="cs-pv-sheet cs-simple-viewer-actions-sheet">

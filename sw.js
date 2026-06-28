@@ -1,6 +1,6 @@
 // sw.js
 // CityStyle v251 - shop perfect slika tri dugmeta
-const CACHE_NAME = "citystyle-v251_shop_perfect_slika_tri_dugmeta";
+const CACHE_NAME = "citystyle-v253_tiktok_viewer_slika_dugmad";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
