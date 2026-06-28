@@ -1555,6 +1555,54 @@ function ensureAllSalonCurrencyOptions() {
   ensureSalonCurrencyOptions("garage-currency", document.getElementById("garage-currency")?.value || "EUR");
 }
 
+
+async function getProductGalleryImages(productId) {
+  try {
+    const { data, error } = await window.db
+      .from("product_images")
+      .select("*")
+      .eq("product_id", productId)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.warn("Product images not available:", error);
+    return [];
+  }
+}
+
+async function syncProductMainImage(productId) {
+  const { data: product } = await window.db
+    .from("products")
+    .select("image_url")
+    .eq("id", productId)
+    .eq("salon_id", currentSalonId)
+    .maybeSingle();
+  const imgs = await getProductGalleryImages(productId);
+  const nextUrl = imgs?.[0]?.image_url || product?.image_url || null;
+  await window.db
+    .from("products")
+    .update({ image_url: nextUrl, updated_at: new Date().toISOString() })
+    .eq("id", productId)
+    .eq("salon_id", currentSalonId);
+  return nextUrl;
+}
+
+async function collectProductImageUrls(productId) {
+  const urls = new Set();
+  const { data: product } = await window.db
+    .from("products")
+    .select("image_url")
+    .eq("id", productId)
+    .eq("salon_id", currentSalonId)
+    .maybeSingle();
+  if (product?.image_url) urls.add(product.image_url);
+  const imgs = await getProductGalleryImages(productId);
+  imgs.forEach(img => { if (img?.image_url) urls.add(img.image_url); });
+  return Array.from(urls);
+}
+
 function productStatusLabel(status) {
   return {
     available: "Na stanju",
@@ -1572,10 +1620,16 @@ async function toggleProductActive(id, currentActive) {
 
 async function deleteProduct(id) {
   if (stopAdminOwnerPreviewEdit()) return;
-  if (!confirm("Obrisati proizvod iz kataloga? Ako ga samo trenutno nemate, bolje ga sakrijte.")) return;
+  if (!confirm("Obrisati proizvod iz kataloga? Brišu se i sve njegove slike iz baze i Storage-a.")) return;
+  const imageUrls = await collectProductImageUrls(id);
+  try { await window.db.from("product_images").delete().eq("product_id", id); } catch (e) { console.warn(e); }
   const { error } = await window.db.from("products").delete().eq("id", id).eq("salon_id", currentSalonId);
   if (error) return window.App.showMessage("Greška pri brisanju proizvoda.", "error");
+  for (const url of imageUrls) {
+    try { await window.StorageHelper.deleteImage(url); } catch (err) { console.warn(err); }
+  }
   await loadProducts();
+  window.App.showMessage("Oglas i slike su obrisani.", "success");
 }
 
 
@@ -2199,10 +2253,28 @@ async function loadProducts() {
   const { data: products, error } = await window.db.from("products").select("*").eq("salon_id", currentSalonId).order("sort_order", { ascending: true }).order("created_at", { ascending: false });
   if (error) { list.innerHTML = `<div class="card"><p class="error-text">Proizvodi trenutno nisu dostupni. Pokušajte ponovo kasnije.</p></div>`; return; }
   if (!products?.length) { list.innerHTML = `<div class="card center"><p class="muted">Još nema proizvoda.</p><button class="btn btn-primary" onclick="showAddProductForm()">Dodaj prvi proizvod</button></div>`; return; }
-  list.innerHTML = products.map(product => `
+
+  const ids = products.map(p => p.id).filter(Boolean);
+  const byProduct = {};
+  if (ids.length) {
+    try {
+      const { data: allImages } = await window.db
+        .from("product_images")
+        .select("*")
+        .in("product_id", ids)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true });
+      (allImages || []).forEach(img => (byProduct[img.product_id] ||= []).push(img));
+    } catch (e) { console.warn(e); }
+  }
+
+  list.innerHTML = products.map(product => {
+    const galleryFirst = byProduct[product.id]?.[0]?.image_url || "";
+    const thumb = galleryFirst || product.image_url || "";
+    return `
     <div class="card product-card ${product.active ? "" : "muted-card"}">
       <div class="product-card-main">
-        ${product.image_url ? `<img class="owner-product-thumb" src="${salonEscapeHtml(product.image_url)}" alt="${salonEscapeHtml(product.name)}">` : `<div class="owner-product-thumb owner-product-empty">Bez slike</div>`}
+        ${thumb ? `<img class="owner-product-thumb" src="${salonEscapeHtml(thumb)}" alt="${salonEscapeHtml(product.name)}">` : `<div class="owner-product-thumb owner-product-empty">Bez slike</div>`}
         <div><strong>${salonEscapeHtml(product.name)}</strong>${product.category ? `<span>${salonEscapeHtml(product.category)}</span>` : ""}${product.description ? `<p class="muted">${salonEscapeHtml(product.description)}</p>` : ""}<p class="muted">${salonEscapeHtml(product.public_code || String(product.id).slice(0,8).toUpperCase())}</p></div>
         <div class="product-price-box"><b>${productPriceLabel(product)}</b><small>${productStatusLabel(product.stock_status)}</small><small>${product.active ? "Javno prikazan" : "Sakriven"}</small></div>
       </div>
@@ -2214,7 +2286,8 @@ async function loadProducts() {
         <button class="btn btn-dark" type="button" onclick="toggleProductActive('${product.id}', ${product.active ? "true" : "false"})">${product.active ? "Sakrij" : "Aktiviraj"}</button>
         <button class="btn btn-danger" type="button" onclick="deleteProduct('${product.id}')">Obriši</button>
       </div>
-    </div>`).join("");
+    </div>`;
+  }).join("");
 }
 
 async function showAddProductForm(productId = null) {
@@ -2269,13 +2342,98 @@ async function saveProduct() {
 }
 
 async function showProductImages(productId) {
+  if (stopAdminOwnerPreviewEdit()) return;
   const { data: product } = await window.db.from("products").select("*").eq("id", productId).eq("salon_id", currentSalonId).maybeSingle();
-  let imgs = [];
-  try { const { data } = await window.db.from("product_images").select("*").eq("product_id", productId).order("sort_order", { ascending:true }).order("created_at", { ascending:true }); imgs = data || []; } catch(e) {}
-  const modal = document.createElement("div"); modal.className = "legal-modal-backdrop"; modal.innerHTML = `<div class="legal-modal-card"><div class="legal-modal-head"><h2>Slike: ${salonEscapeHtml(product?.name || 'Proizvod')}</h2><button class="btn btn-dark" onclick="this.closest('.legal-modal-backdrop').remove()">Zatvori</button></div><div class="legal-modal-body"><div class="card"><label>Dodaj dodatne slike<input id="product-extra-images" type="file" accept="image/png,image/jpeg,image/webp" multiple></label><p class="field-help product-upload-tip"><strong>Preporuka:</strong> najbolje rade uspravne slike približno <strong>2:3 ili 3:4</strong>, sa proizvodom jasno dole/sredina i čistim prostorom iznad.</p><button class="btn btn-primary" onclick="uploadProductExtraImages('${productId}')">Upload slika</button></div><div class="owner-gallery-grid">${imgs.map(img => `<div class="card owner-gallery-card"><img src="${salonEscapeHtml(img.image_url)}" alt="Slika"><button class="btn btn-danger btn-small" onclick="deleteProductExtraImage('${img.id}','${productId}','${salonEscapeJs(img.image_url)}')">Obriši</button></div>`).join("") || '<p class="muted">Nema dodatnih slika.</p>'}</div></div></div>`; document.body.appendChild(modal);
+  if (!product) return window.App.showMessage("Oglas nije pronađen.", "error");
+  const imgs = await getProductGalleryImages(productId);
+  const galleryUrls = new Set(imgs.map(img => img.image_url).filter(Boolean));
+  const mainIsOnlyLegacy = product.image_url && !galleryUrls.has(product.image_url);
+  const cards = [];
+  if (mainIsOnlyLegacy) {
+    cards.push(`<div class="card owner-gallery-card owner-product-image-card owner-main-image-card">
+      <img src="${salonEscapeHtml(product.image_url)}" alt="Naslovna slika">
+      <strong>NASLOVNA / STARA GLAVNA</strong>
+      <p class="field-help">Ova slika je u starom polju oglasa. Ako vidiš dugmad u slici, obriši je i dodaj čistu 9:16 sliku.</p>
+      <button class="btn btn-danger btn-small" onclick="deleteProductMainImage('${salonEscapeJs(productId)}','${salonEscapeJs(product.image_url)}')">Obriši ovu sliku</button>
+    </div>`);
+  }
+  cards.push(...imgs.map((img, index) => `<div class="card owner-gallery-card owner-product-image-card ${index === 0 ? 'owner-main-image-card' : ''}">
+      <img src="${salonEscapeHtml(img.image_url)}" alt="Slika oglasa ${index + 1}">
+      <strong>${index === 0 ? 'NASLOVNA' : `Slika ${index + 1}`}</strong>
+      <div class="card-actions admin-image-actions">
+        ${index === 0 ? `<span class="badge">Prva slika</span>` : `<button class="btn btn-dark btn-small" onclick="setProductFirstImage('${salonEscapeJs(img.id)}','${salonEscapeJs(productId)}')">Postavi kao prvu</button>`}
+        <button class="btn btn-danger btn-small" onclick="deleteProductExtraImage('${salonEscapeJs(img.id)}','${salonEscapeJs(productId)}','${salonEscapeJs(img.image_url)}')">Obriši sliku</button>
+      </div>
+    </div>`));
+
+  const modal = document.createElement("div");
+  modal.className = "legal-modal-backdrop";
+  modal.innerHTML = `<div class="legal-modal-card product-images-modal"><div class="legal-modal-head"><h2>Slike oglasa: ${salonEscapeHtml(product?.category || product?.name || 'Oglas')}</h2><button class="btn btn-dark" onclick="this.closest('.legal-modal-backdrop').remove()">Zatvori</button></div><div class="legal-modal-body product-images-body"><div class="card product-images-upload-card"><h3>Dodaj slike oglasa</h3><label>Dodaj jednu ili više slika<input id="product-extra-images" type="file" accept="image/png,image/jpeg,image/webp" multiple></label><p class="field-help product-upload-tip"><strong>Najbolji format:</strong> 9:16, idealno <strong>1080×1920 px</strong>. U oglas dodaj samo čistu sliku iz galerije, bez screenshot-a aplikacije, bez status bara i bez dugmadi.</p><p class="field-help"><strong>Opis proizvoda:</strong> možeš napraviti preko ChatGPT-a direktno na slici: naziv firme gore, cena dole, alat u sredini. Onda tu gotovu sliku dodaš ovde.</p><button class="btn btn-primary" onclick="uploadProductExtraImages('${salonEscapeJs(productId)}')">Dodaj sliku/e</button></div><div class="owner-gallery-grid product-images-grid">${cards.join("") || '<p class="muted">Nema slika. Dodaj čistu 9:16 sliku oglasa.</p>'}</div></div></div>`;
+  document.body.appendChild(modal);
 }
-async function uploadProductExtraImages(productId) { const files = Array.from(document.getElementById("product-extra-images")?.files || []).slice(0,10); for (const file of files) { const url = await window.StorageHelper.uploadImage(file, currentSalonId, "product_extra"); if (url) await window.db.from("product_images").insert({ product_id: productId, image_url: url, sort_order: 100 }); } document.querySelector('.legal-modal-backdrop')?.remove(); await showProductImages(productId); }
-async function deleteProductExtraImage(imageId, productId, imageUrl) { await window.StorageHelper.deleteImage(imageUrl); await window.db.from("product_images").delete().eq("id", imageId); document.querySelector('.legal-modal-backdrop')?.remove(); await showProductImages(productId); }
+
+async function uploadProductExtraImages(productId) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  const files = Array.from(document.getElementById("product-extra-images")?.files || []).slice(0,15);
+  if (!files.length) return window.App.showMessage("Izaberi slike za upload.", "error");
+  const existing = await getProductGalleryImages(productId);
+  let order = existing.length ? Math.max(...existing.map(x => Number(x.sort_order || 100))) + 10 : 0;
+  let firstNewUrl = "";
+  for (const file of files) {
+    const url = await window.StorageHelper.uploadImage(file, currentSalonId, "product_extra");
+    if (!url) continue;
+    if (!firstNewUrl) firstNewUrl = url;
+    await window.db.from("product_images").insert({ product_id: productId, image_url: url, sort_order: order });
+    order += 10;
+  }
+  const after = await getProductGalleryImages(productId);
+  if (after.length && (!existing.length || firstNewUrl)) await syncProductMainImage(productId);
+  document.querySelector('.legal-modal-backdrop')?.remove();
+  await loadProducts();
+  await showProductImages(productId);
+}
+
+async function setProductFirstImage(imageId, productId) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  const imgs = await getProductGalleryImages(productId);
+  const selected = imgs.find(img => String(img.id) === String(imageId));
+  if (!selected) return window.App.showMessage("Slika nije pronađena.", "error");
+  let order = 10;
+  await window.db.from("product_images").update({ sort_order: 0 }).eq("id", imageId).eq("product_id", productId);
+  for (const img of imgs) {
+    if (String(img.id) === String(imageId)) continue;
+    await window.db.from("product_images").update({ sort_order: order }).eq("id", img.id).eq("product_id", productId);
+    order += 10;
+  }
+  await window.db.from("products").update({ image_url: selected.image_url, updated_at: new Date().toISOString() }).eq("id", productId).eq("salon_id", currentSalonId);
+  document.querySelector('.legal-modal-backdrop')?.remove();
+  await loadProducts();
+  await showProductImages(productId);
+}
+
+async function deleteProductMainImage(productId, imageUrl) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  if (!confirm("Obrisati ovu glavnu sliku?")) return;
+  const imgs = await getProductGalleryImages(productId);
+  const nextUrl = imgs?.[0]?.image_url || null;
+  await window.db.from("products").update({ image_url: nextUrl, updated_at: new Date().toISOString() }).eq("id", productId).eq("salon_id", currentSalonId);
+  try { await window.StorageHelper.deleteImage(imageUrl); } catch (err) { console.warn(err); }
+  document.querySelector('.legal-modal-backdrop')?.remove();
+  await loadProducts();
+  await showProductImages(productId);
+}
+
+async function deleteProductExtraImage(imageId, productId, imageUrl) {
+  if (stopAdminOwnerPreviewEdit()) return;
+  if (!confirm("Obrisati ovu sliku iz oglasa?")) return;
+  await window.db.from("product_images").delete().eq("id", imageId).eq("product_id", productId);
+  try { await window.StorageHelper.deleteImage(imageUrl); } catch (err) { console.warn(err); }
+  await syncProductMainImage(productId);
+  document.querySelector('.legal-modal-backdrop')?.remove();
+  await loadProducts();
+  await showProductImages(productId);
+}
+
 function copyProductLink(productId) { const code = productId; const link = `${window.App.getSalonPublicLink(currentSalon.slug)}&product=${encodeURIComponent(code)}`; navigator.clipboard.writeText(link).then(()=>window.App.showMessage("Link oglasa je kopiran.", "success")).catch(()=>prompt("Kopiraj link oglasa:", link)); }
 function previewProductAsClient(productId) { window.location.href = `${window.App.getSalonPublicLink(currentSalon.slug)}&product=${encodeURIComponent(productId)}&ownerPreview=1`; }
 
@@ -2327,7 +2485,7 @@ async function uploadCoverImage() {
   await loadCurrentSettings(); window.App.showMessage("Početna slika je postavljena. Panel prečica će je koristiti samo ako nema logo/sliku profila. Galerijske slike se ne koriste za prečicu.", "success");
 }
 
-Object.assign(window, { editProduct, showAddProductForm, saveProduct, hideProductForm, showProductImages, uploadProductExtraImages, deleteProductExtraImage, copyProductLink, previewProductAsClient, uploadCoverImage, ensureOwnerPushIsActive });
+Object.assign(window, { editProduct, showAddProductForm, saveProduct, hideProductForm, showProductImages, uploadProductExtraImages, setProductFirstImage, deleteProductMainImage, deleteProductExtraImage, copyProductLink, previewProductAsClient, uploadCoverImage, ensureOwnerPushIsActive });
 
 
 // Safety patch: if an older browser/service-worker leaves a select with only RSD, repopulate currencies.

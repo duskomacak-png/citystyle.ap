@@ -1434,11 +1434,17 @@ function csProductCode(product = {}) {
   return product.public_code || String(product.id || "").slice(0, 8).toUpperCase() || "OGLAS";
 }
 function csProductImages(product = {}) {
+  // v270: Za javni prikaz oglasa koristi se čista galerija iz product_images.
+  // Ako oglas ima slike u galeriji, one imaju prednost i ne mešaju se sa starom glavnom slikom.
+  // Ovo sprečava da se u viewer vrate stare/screenshot slike koje su ostale u products.image_url.
   const arr = [];
-  if (product.image_url) arr.push(product.image_url);
-  (csShopProductImages[product.id] || []).forEach(img => {
+  const gallery = (csShopProductImages[product.id] || [])
+    .slice()
+    .sort((a, b) => Number(a?.sort_order || 100) - Number(b?.sort_order || 100));
+  gallery.forEach(img => {
     if (img?.image_url && !arr.includes(img.image_url)) arr.push(img.image_url);
   });
+  if (!arr.length && product.image_url) arr.push(product.image_url);
   return arr;
 }
 function csProductPrice(product = {}) { return renderProductPrice(product); }
